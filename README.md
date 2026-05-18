@@ -1,75 +1,74 @@
-# React + TypeScript + Vite
+# DistilUmbert — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Interfaz web para el sistema de evaluación docente desarrollado como proyecto de tesis. Permite a directores, docentes y administradores gestionar evaluaciones, visualizar métricas y administrar cuentas.
 
-Currently, two official plugins are available:
+## Herramientas y versiones
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+| Herramienta | Versión |
+|---|---|
+| Node.js | >= 20 |
+| pnpm | >= 9 |
+| React | 19 |
+| TypeScript | 6 |
+| Vite | 8 |
+| Tailwind CSS | 4 |
 
-## React Compiler
+## Instalación
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+```bash
+# Clonar el repositorio
+git clone <url-del-repo>
+cd DistilUmbert-front
 
-Note: This will impact Vite dev & build performances.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Instalar dependencias
+pnpm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Comandos
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```bash
+# Servidor de desarrollo (http://localhost:5173)
+pnpm dev
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Build de producción
+pnpm build
+
+# Vista previa del build
+pnpm preview
+
+# Linter
+pnpm lint
 ```
+
+## Rutas disponibles
+
+| Ruta | Descripción | Rol |
+|---|---|---|
+| `/login` | Inicio de sesión | Todos |
+| `/dashboard` | Panel principal | Director |
+| `/teachers` | Listado de docentes | Director |
+| `/teachers/:id` | Detalle de docente | Director |
+| `/matrix` | Matriz de evaluación | Director |
+| `/plans` | Planes de mejora | Director |
+| `/upload-evaluations` | Carga de evaluaciones | Director |
+| `/upload-teachers` | Carga de docentes | Director |
+| `/me/summary` | Mi resumen | Docente |
+| `/me/history` | Mi historial | Docente |
+| `/me/profile` | Mi perfil | Docente |
+| `/admin/directors` | Gestión de directores | Super Admin |
+| `/admin/periods` | Gestión de periodos | Super Admin |
+| `/admin/logs` | Registros del sistema | Super Admin |
+
+## Estructura del proyecto
+
+```
+src/
+├── app/          # Punto de entrada, rutas, estilos globales
+├── pages/        # Páginas por ruta
+├── widgets/      # Bloques de UI compuestos (layout, header, sidebar)
+├── features/     # Funcionalidades acotadas (ej: carga de cuentas)
+├── entities/     # Modelos de dominio (docente, evaluación)
+└── shared/       # UI base, utilidades y assets reutilizables
+```
+
+La arquitectura sigue la metodología [Feature-Sliced Design](https://feature-sliced.design/).
