@@ -135,6 +135,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
             uid: user.uid,
             name: user.displayName || "",
             username: user.email.split("@")[0],
+            department_id: null,
+            avatar_url: user.photoURL || "",
             active: true,
             roles: [],
             createdAt: new Date().toISOString(),

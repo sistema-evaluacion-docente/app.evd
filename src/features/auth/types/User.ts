@@ -4,7 +4,7 @@ export interface User {
   username: string;
   email: string;
   active: boolean;
-  department_id: number;
+  department_id: number | null;
   roles: string[];
   avatar_url: string;
 
