@@ -1,19 +1,19 @@
-import { Redirect, Route, Switch } from 'wouter'
+import { Redirect, Route, Switch } from "wouter";
 
-import { AdminDirectorsPage } from '@/pages/admin-directors'
-import { AdminLogsPage } from '@/pages/admin-logs'
-import { AdminPeriodsPage } from '@/pages/admin-periods'
-import { DashboardPage } from '@/pages/dashboard'
-import { LoginPage } from '@/pages/login'
-import { MatrixPage } from '@/pages/matrix'
-import { MyHistoryPage } from '@/pages/my-history'
-import { MyProfilePage } from '@/pages/my-profile'
-import { MySummaryPage } from '@/pages/my-summary'
-import { PlansPage } from '@/pages/plans'
-import { TeacherDetailPage } from '@/pages/teacher-detail'
-import { TeachersPage } from '@/pages/teachers'
-import { UploadEvaluationsPage } from '@/pages/upload-evaluations'
-import { UploadTeachersPage } from '@/pages/upload-teachers'
+import { AdminDirectorsPage } from "@/pages/admin-directors";
+import { AdminLogsPage } from "@/pages/admin-logs";
+import { AdminPeriodsPage } from "@/pages/admin-periods";
+import { DashboardPage } from "@/pages/dashboard";
+import { LoginPage } from "@/pages/login";
+import { MatrixPage } from "@/pages/matrix";
+import { MyHistoryPage } from "@/pages/my-history";
+import { MyProfilePage } from "@/pages/my-profile";
+import { MySummaryPage } from "@/pages/my-summary";
+import { PlansPage } from "@/pages/plans";
+import { TeacherDetailPage } from "@/pages/teacher-detail";
+import { TeachersPage } from "@/pages/teachers";
+import { UploadEvaluationsPage } from "@/pages/upload-evaluations";
+import { UploadTeachersPage } from "@/pages/upload-teachers";
 
 function App() {
   return (
@@ -44,7 +44,7 @@ function App() {
         <Redirect to="/login" />
       </Route>
     </Switch>
-  )
+  );
 }
 
-export default App
+export default App;
