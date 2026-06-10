@@ -5,7 +5,7 @@ export interface UserContextType {
   user: User | null;
   token: string | null;
   selectedRole: string | null;
-  setSelectedRole: (role: string | null) => void;
+  setSelectedRole: (role: string) => void;
   isLoading: boolean;
   registerWithEmail: (
     email: string,

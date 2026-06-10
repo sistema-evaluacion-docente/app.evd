@@ -92,7 +92,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       .then(() => {
         setUser(null);
         setToken(null);
-        setSelectedRole(null);
+        // setSelectedRole(null);
         setIsLoading(false);
         setLocation("/login");
       })
@@ -172,13 +172,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
         handleSignIn(userInfo, token);
       } else {
         setIsLoading(false);
+        setLocation("/login");
       }
     });
 
     return () => {
       unsuscribeStateChanged();
     };
-  }, [handleSignIn]);
+  }, [handleSignIn, setLocation]);
 
   const value = useMemo(() => {
     return {
