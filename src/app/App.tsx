@@ -16,6 +16,7 @@ import { UploadEvaluationsPage } from "@/pages/upload-evaluations";
 import { UploadTeachersPage } from "@/pages/upload-teachers";
 
 import LoginPage from "@/features/auth/pages/LoginPage";
+import UsersPage from "@/pages/users";
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
       <Route path="/upload-teachers" component={UploadTeachersPage} />
 
       {/* Super Admin */}
+      <Route path="/users" component={UsersPage} />
       <Route path="/admin/directors" component={AdminDirectorsPage} />
       <Route path="/admin/periods" component={AdminPeriodsPage} />
       <Route path="/admin/logs" component={AdminLogsPage} />
