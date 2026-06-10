@@ -1,6 +1,8 @@
 import { cn } from "@/lib/utils";
 import { useState, type ReactNode } from "react";
 
+import AppLayoutSkeleton from "@/components/skeletons/AppLayoutSkeleton";
+import useAuth from "@/shared/hooks/useAuth";
 import { AppHeader, type AppHeaderProps } from "./AppHeader";
 import { AppSidebar } from "./AppSidebar";
 
@@ -18,6 +20,12 @@ export function AppLayout({
   header,
 }: AppLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const { isLoading } = useAuth();
+
+  if (isLoading) {
+    return <AppLayoutSkeleton />;
+  }
 
   return (
     <div className="flex min-h-screen bg-ink-50">
