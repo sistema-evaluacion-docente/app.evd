@@ -4,7 +4,6 @@ import { AdminDirectorsPage } from "@/pages/admin-directors";
 import { AdminLogsPage } from "@/pages/admin-logs";
 import { AdminPeriodsPage } from "@/pages/admin-periods";
 import { DashboardPage } from "@/pages/dashboard";
-import { LoginPage } from "@/pages/login";
 import { MatrixPage } from "@/pages/matrix";
 import { MyHistoryPage } from "@/pages/my-history";
 import { MyProfilePage } from "@/pages/my-profile";
@@ -14,6 +13,8 @@ import { TeacherDetailPage } from "@/pages/teacher-detail";
 import { TeachersPage } from "@/pages/teachers";
 import { UploadEvaluationsPage } from "@/pages/upload-evaluations";
 import { UploadTeachersPage } from "@/pages/upload-teachers";
+
+import LoginPage from "@/features/auth/pages/LoginPage";
 
 function App() {
   return (
