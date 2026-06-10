@@ -1,22 +1,16 @@
 import { Badge } from "@/components/ui/badge";
-import {
-  createColumnHelper,
-  flexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  useReactTable,
-  type SortingState,
-} from "@tanstack/react-table";
-import { useMemo, useState } from "react";
+import { createColumnHelper } from "@tanstack/react-table";
+import { useMemo } from "react";
 
+import DataTable from "@/components/common/DataTable";
 import type { User } from "@/features/auth/types/User";
-import useGetUsers from "../hooks/useGetUsers";
 import formatDate from "@/lib/formatDate";
+
+import useGetUsers from "../hooks/useGetUsers";
 
 const columnHelper = createColumnHelper<User>();
 
 function DataUsers() {
-  const [sorting, setSorting] = useState<SortingState>([]);
   const { data, isLoading, isError, error } = useGetUsers(1);
 
   const users = useMemo(() => data?.data ?? [], [data]);
@@ -25,18 +19,19 @@ function DataUsers() {
     () => [
       columnHelper.accessor("name", {
         header: "Nombre",
-        cell: (info) => <div className="">{info.getValue()}</div>,
+        cell: (info) => <div>{info.getValue()}</div>,
       }),
       columnHelper.accessor("username", {
         header: "Usuario",
-        cell: (info) => <span className="">@{info.getValue()}</span>,
+        cell: (info) => <span>@{info.getValue()}</span>,
       }),
       columnHelper.accessor("email", {
         header: "Correo",
-        cell: (info) => <span className="">{info.getValue()}</span>,
+        cell: (info) => <span>{info.getValue()}</span>,
       }),
       columnHelper.accessor("roles", {
         header: "Roles",
+        enableSorting: false,
         cell: (info) => {
           const roles = info.getValue();
           return (
@@ -48,7 +43,7 @@ function DataUsers() {
                   </Badge>
                 ))
               ) : (
-                <span className="">Sin rol</span>
+                <span>Sin rol</span>
               )}
             </div>
           );
@@ -70,22 +65,11 @@ function DataUsers() {
       }),
       columnHelper.accessor("created_at", {
         header: "Creado",
-        cell: (info) => <span className="">{formatDate(info.getValue())}</span>,
+        cell: (info) => <span>{formatDate(info.getValue())}</span>,
       }),
     ],
     [],
   );
-
-  const table = useReactTable({
-    data: users,
-    columns,
-    state: {
-      sorting,
-    },
-    onSortingChange: setSorting,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-  });
 
   if (isLoading) {
     return (
@@ -105,61 +89,11 @@ function DataUsers() {
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border bg-background">
-      <table className="w-full min-w-230 text-sm">
-        <thead>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr
-              key={headerGroup.id}
-              className="border-b border-ink-200 bg-background/50 font-semibold uppercase"
-            >
-              {headerGroup.headers.map((header) => {
-                return (
-                  <th
-                    key={header.id}
-                    className="px-5 py-3 text-left font-semibold first:pl-6 last:pr-6"
-                  >
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext(),
-                    )}
-                  </th>
-                );
-              })}
-            </tr>
-          ))}
-        </thead>
-
-        <tbody>
-          {table.getRowModel().rows.length === 0 ? (
-            <tr>
-              <td
-                colSpan={columns.length}
-                className="py-14 text-center text-[13px] text-ink-500"
-              >
-                No hay usuarios para mostrar.
-              </td>
-            </tr>
-          ) : (
-            table.getRowModel().rows.map((row) => (
-              <tr
-                key={row.id}
-                className="border-b border-ink-100 transition-colors hover:bg-ink-50/60"
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <td
-                    key={cell.id}
-                    className="px-5 py-3 align-middle first:pl-6 last:pr-6"
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
+    <DataTable
+      data={users}
+      columns={columns}
+      emptyMessage="No hay usuarios para mostrar."
+    />
   );
 }
 
