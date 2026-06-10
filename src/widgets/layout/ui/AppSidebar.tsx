@@ -1,37 +1,57 @@
-import { LogOut, X } from "lucide-react";
+import { cn } from "@/shared/lib/utils";
+import {
+  BarChart3,
+  Calendar,
+  FileText,
+  LayoutGrid,
+  LogOut,
+  TrendingUp,
+  UserSearch,
+  Users,
+  X,
+} from "lucide-react";
 import { Link, useLocation } from "wouter";
 
-import { cn } from "@/shared/lib/utils";
-import { BrandMark } from "@/shared/ui";
-import { ROLE_NAV, ROLE_SUBTITLE, type AppRole } from "../model/nav";
+import { getMenus } from "@/config/security";
 import useAuth from "@/shared/hooks/useAuth";
+import { BrandMark } from "@/shared/ui";
 
 export interface AppSidebarProps {
-  role: AppRole;
   mobileOpen: boolean;
   onClose: () => void;
 }
 
-export function AppSidebar({ role, mobileOpen, onClose }: AppSidebarProps) {
+const DEFAULT_ICON = FileText;
+
+const MENU_ICON_BY_PATH: Record<string, typeof DEFAULT_ICON> = {
+  "/dashboard": LayoutGrid,
+  "/teachers": Users,
+  "/matrix": BarChart3,
+  "/plans": TrendingUp,
+  "/users": Users,
+  "/roles": UserSearch,
+  "/documents": FileText,
+  "/admin/directors": UserSearch,
+  "/admin/periods": Calendar,
+  "/admin/logs": FileText,
+  "/me/summary": Users,
+  "/me/history": TrendingUp,
+  "/me/profile": FileText,
+};
+
+export function AppSidebar({ mobileOpen, onClose }: AppSidebarProps) {
   const [location] = useLocation();
 
-  const { handleLogout } = useAuth();
+  const { handleLogout, selectedRole } = useAuth();
 
-  const items = ROLE_NAV[role];
+  const role = selectedRole ?? "docente";
+  const items = getMenus(role);
 
   const isActive = (href: string) =>
     href !== "#" && (location === href || location.startsWith(`${href}/`));
 
   return (
     <>
-      <div
-        className={cn(
-          "fixed inset-0 z-40 bg-ink-900/40 backdrop-blur-[2px] transition-opacity lg:hidden",
-          mobileOpen ? "opacity-100" : "pointer-events-none opacity-0",
-        )}
-        onClick={onClose}
-        aria-hidden="true"
-      />
       <aside
         className={cn(
           "fixed left-0 top-0 z-50 flex h-screen w-[244px] shrink-0 flex-col border-r border-ink-200 bg-white transition-transform lg:sticky lg:translate-x-0",
@@ -39,16 +59,16 @@ export function AppSidebar({ role, mobileOpen, onClose }: AppSidebarProps) {
         )}
       >
         {/* Logo */}
-        <div className="flex h-[68px] items-center gap-2.5 border-b border-ink-100 px-5">
+        <div className="flex h-17 items-center gap-2.5 border-b border-ink-100 px-5">
           <BrandMark size={36} iconSize={18} />
           <div className="leading-tight">
             <div className="text-[14px] font-semibold text-ink-900">
               Evaluación Docente
             </div>
-            <div className="-mt-0.5 text-[11px] text-ink-500">
-              {ROLE_SUBTITLE[role]}
-            </div>
+
+            <div className="-mt-0.5 text-[11px] text-ink-500">{role}</div>
           </div>
+
           <button
             type="button"
             className="ml-auto text-ink-500 hover:text-ink-900 lg:hidden"
@@ -64,14 +84,16 @@ export function AppSidebar({ role, mobileOpen, onClose }: AppSidebarProps) {
           <div className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-400">
             Menú principal
           </div>
+
           <ul className="space-y-0.5">
             {items.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.href);
+              const Icon = MENU_ICON_BY_PATH[item.path] ?? DEFAULT_ICON;
+              const active = isActive(item.path);
+
               return (
-                <li key={item.id}>
+                <li key={item.path}>
                   <Link
-                    href={item.href}
+                    href={item.path}
                     onClick={onClose}
                     className={cn(
                       "group flex h-9 w-full items-center gap-3 rounded-md px-2.5 text-[13px] font-medium transition-colors",
@@ -88,7 +110,9 @@ export function AppSidebar({ role, mobileOpen, onClose }: AppSidebarProps) {
                           : "text-ink-500 group-hover:text-ink-700"
                       }
                     />
-                    <span>{item.label}</span>
+
+                    <span>{item.name}</span>
+
                     {active && (
                       <span className="ml-auto h-1.5 w-1.5 rounded-full bg-brand-600" />
                     )}

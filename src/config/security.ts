@@ -1,0 +1,53 @@
+const securityConfig = {
+  pages: [
+    {
+      path: "/dashboard",
+      name: "Dashboard",
+      roles: ["DOCENTE", "DIRECTOR"],
+    },
+    {
+      path: "/teachers",
+      name: "Docentes",
+      roles: ["DIRECTOR"],
+    },
+    {
+      path: "/matrix",
+      name: "Matriz Evaluativa",
+      roles: ["DIRECTOR"],
+    },
+    {
+      path: "/plans",
+      name: "Planes de Mejoramiento",
+      roles: ["DIRECTOR"],
+    },
+    {
+      path: "/users",
+      name: "Usuarios",
+      roles: ["ADMIN"],
+    },
+    {
+      path: "/roles",
+      name: "Roles",
+      roles: ["ADMIN"],
+    },
+    {
+      path: "/documents",
+      name: "Documentos",
+      roles: ["ADMIN"],
+    },
+  ],
+};
+
+/**
+ * Returns the menus available for a given role.
+ *
+ * @param role The role to get the menus for.
+ * @returns The menus available for the given role.
+ */
+export function getMenus(role: string): SecurityConfig["pages"] {
+  return securityConfig.pages.filter((page) => page.roles.includes(role));
+}
+
+export type SecurityConfig = typeof securityConfig;
+
+export default securityConfig;
