@@ -44,6 +44,10 @@ export function AppSidebar({ mobileOpen, onClose }: AppSidebarProps) {
 
   const { handleLogout, selectedRole } = useAuth();
 
+  if (!selectedRole) {
+    return null;
+  }
+
   const items = getMenus(selectedRole);
 
   const isActive = (href: string) =>
