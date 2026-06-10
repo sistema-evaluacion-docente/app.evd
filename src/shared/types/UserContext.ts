@@ -4,6 +4,8 @@ import type { ResponseFirebase } from "./Response";
 export interface UserContextType {
   user: User | null;
   token: string | null;
+  selectedRole: string | null;
+  setSelectedRole: (role: string | null) => void;
   isLoading: boolean;
   registerWithEmail: (
     email: string,

@@ -1,16 +1,34 @@
 import {
-  Avatar as AvatarPrimitive,
   AvatarFallback,
   AvatarImage,
+  Avatar as AvatarPrimitive,
 } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import useAuth from "@/shared/hooks/useAuth";
+import { useLocation } from "wouter";
 
 function Avatar() {
-  const { user, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
+  const { user, isLoading, handleLogout, selectedRole, setSelectedRole } =
+    useAuth();
 
   const userName = user?.name;
-  const userRole = user?.roles;
+  const userRoles = user?.roles ?? [];
+  const visibleRole = selectedRole ?? userRoles[0] ?? "Sin rol";
 
   if (isLoading) {
     return (
@@ -25,20 +43,61 @@ function Avatar() {
     <div className="ml-1 flex items-center gap-2.5 border-l border-ink-200 pl-2 sm:pl-3">
       <div className="hidden text-right leading-tight sm:block">
         <div className="text-[13px] font-semibold text-ink-900">{userName}</div>
-        <div className="text-[11px] text-ink-500">{userRole?.join(", ")}</div>
+        <div className="text-[11px] text-ink-500">{visibleRole}</div>
       </div>
 
-      <div className="relative">
-        <AvatarPrimitive>
-          <AvatarImage src={user?.avatar_url} />
+      <DropdownMenu>
+        <DropdownMenuTrigger className="cursor-pointer rounded-full outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+          <div className="relative">
+            <AvatarPrimitive>
+              <AvatarImage src={user?.avatar_url} />
 
-          <AvatarFallback>
-            <span className="text-sm text-ink-500">
-              {userName?.slice(0, 2)}
-            </span>
-          </AvatarFallback>
-        </AvatarPrimitive>
-      </div>
+              <AvatarFallback>
+                <span className="text-sm text-ink-500">
+                  {userName?.slice(0, 2)}
+                </span>
+              </AvatarFallback>
+            </AvatarPrimitive>
+          </div>
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuGroup>
+            <DropdownMenuLabel className="truncate">
+              {userName}
+            </DropdownMenuLabel>
+
+            <DropdownMenuSeparator />
+
+            <DropdownMenuItem onClick={() => setLocation("/me/profile")}>
+              Perfil
+            </DropdownMenuItem>
+
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>Cambiar Rol</DropdownMenuSubTrigger>
+
+              <DropdownMenuSubContent>
+                <DropdownMenuRadioGroup
+                  value={selectedRole ?? ""}
+                  onValueChange={(value) => setSelectedRole(value)}
+                >
+                  {userRoles.map((role) => (
+                    <DropdownMenuRadioItem key={role} value={role}>
+                      {role}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+
+            <DropdownMenuSeparator />
+
+            <DropdownMenuItem variant="destructive" onClick={handleLogout}>
+              Cerrar sesión
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

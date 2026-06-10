@@ -29,7 +29,30 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [selectedRole, setSelectedRoleState] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+
+    return localStorage.getItem("selectedRole");
+  });
   const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  const setSelectedRole = useCallback(
+    (role: string | null) => {
+      if (!role) {
+        setSelectedRoleState(null);
+        localStorage.removeItem("selectedRole");
+        return;
+      }
+
+      if (user && !user.roles.includes(role)) {
+        return;
+      }
+
+      setSelectedRoleState(role);
+      localStorage.setItem("selectedRole", role);
+    },
+    [user],
+  );
 
   const registerWithEmail = async (email: string, password: string) => {
     return signUpWithEmailAndPassword(email, password).then(async (res) => {
@@ -69,6 +92,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       .then(() => {
         setUser(null);
         setToken(null);
+        setSelectedRole(null);
         setIsLoading(false);
         setLocation("/login");
       })
@@ -122,35 +146,33 @@ export function UserProvider({ children }: { children: ReactNode }) {
   );
 
   useEffect(() => {
-    const unsuscribeStateChanged = auth.onAuthStateChanged(
-      async (user: import("@firebase/auth").User | null) => {
-        if (user) {
-          if (user.email === null) {
-            setIsLoading(false);
-            return;
-          }
-
-          const userInfo: User = {
-            email: user.email,
-            uid: user.uid,
-            name: user.displayName || "",
-            username: user.email.split("@")[0],
-            department_id: null,
-            avatar_url: user.photoURL || "",
-            active: true,
-            roles: [],
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          };
-
-          const token = await user.getIdToken(true);
-
-          handleSignIn(userInfo, token);
-        } else {
+    const unsuscribeStateChanged = auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        if (user.email === null) {
           setIsLoading(false);
+          return;
         }
-      },
-    );
+
+        const userInfo: User = {
+          email: user.email,
+          uid: user.uid,
+          name: user.displayName || "",
+          username: user.email.split("@")[0],
+          department_id: null,
+          avatar_url: user.photoURL || "",
+          active: true,
+          roles: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        const token = await user.getIdToken(true);
+
+        handleSignIn(userInfo, token);
+      } else {
+        setIsLoading(false);
+      }
+    });
 
     return () => {
       unsuscribeStateChanged();
@@ -161,6 +183,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return {
       user,
       token,
+      selectedRole,
+      setSelectedRole,
       isLoading,
       registerWithEmail,
       loginWithEmail,
@@ -171,7 +195,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       refreshProfile,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, token, isLoading]);
+  }, [user, token, selectedRole, setSelectedRole, isLoading]);
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 }
