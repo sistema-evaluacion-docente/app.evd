@@ -1,4 +1,4 @@
-import { Redirect, Route, Switch } from "wouter";
+import { Route, Switch } from "wouter";
 
 import { AdminDirectorsPage } from "@/pages/admin-directors";
 import { AdminLogsPage } from "@/pages/admin-logs";
@@ -8,6 +8,7 @@ import { MatrixPage } from "@/pages/matrix";
 import { MyHistoryPage } from "@/pages/my-history";
 import { MyProfilePage } from "@/pages/my-profile";
 import { MySummaryPage } from "@/pages/my-summary";
+import { NotFoundPage } from "@/pages/not-found";
 import { PlansPage } from "@/pages/plans";
 import { TeacherDetailPage } from "@/pages/teacher-detail";
 import { TeachersPage } from "@/pages/teachers";
@@ -40,10 +41,8 @@ function App() {
       <Route path="/me/history" component={MyHistoryPage} />
       <Route path="/me/profile" component={MyProfilePage} />
 
-      {/* Default: redirect to login */}
-      <Route>
-        <Redirect to="/login" />
-      </Route>
+      {/* Default: 404 */}
+      <Route component={NotFoundPage} />
     </Switch>
   );
 }
