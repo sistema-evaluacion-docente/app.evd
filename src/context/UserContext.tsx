@@ -29,17 +29,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [selectedRole, setSelectedRoleState] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
+  const [selectedRole, setSelectedRoleState] = useState<string>(() => {
+    if (typeof window === "undefined") return "DOCENTE";
 
-    return localStorage.getItem("selectedRole");
+    return localStorage.getItem("selectedRole") ?? "DOCENTE";
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const setSelectedRole = useCallback(
-    (role: string | null) => {
+    (role: string) => {
       if (!role) {
-        setSelectedRoleState(null);
+        setSelectedRoleState("DOCENTE");
         localStorage.removeItem("selectedRole");
         return;
       }
@@ -131,6 +131,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
           userInitialData) as User;
 
         setUser(userProfile);
+        setSelectedRole(userProfile.roles[0] ?? "DOCENTE");
       } catch (error) {
         console.error("Failed to fetch user profile:", error);
         setUser(userInitialData);
@@ -142,7 +143,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         setLocation("/dashboard");
       }
     },
-    [user, setLocation, location],
+    [user, setLocation, location, setSelectedRole],
   );
 
   useEffect(() => {

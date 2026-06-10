@@ -1,13 +1,12 @@
-import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import useAuth from "@/shared/hooks/useAuth";
-import { ShieldCheck } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 function LoginForm() {
-  const { user, loginWithGoogle } = useAuth();
+  const { loginWithGoogle } = useAuth();
 
   const [isLoadingLogin, setIsLoadingLogin] = useState(false);
 
@@ -19,7 +18,9 @@ function LoginForm() {
     loginWithGoogle()
       .then((response) => {
         if (response?.status === 200) {
-          toast.success(`Bienvenido, ${user?.name}`);
+          toast.success(
+            `Bienvenido, ${response?.data?.user?.displayName ?? "Usuario"}`,
+          );
         } else {
           toast.error("Ocurrió un error al iniciar sesión");
         }

@@ -44,8 +44,7 @@ export function AppSidebar({ mobileOpen, onClose }: AppSidebarProps) {
 
   const { handleLogout, selectedRole } = useAuth();
 
-  const role = selectedRole ?? "docente";
-  const items = getMenus(role);
+  const items = getMenus(selectedRole);
 
   const isActive = (href: string) =>
     href !== "#" && (location === href || location.startsWith(`${href}/`));
@@ -54,7 +53,7 @@ export function AppSidebar({ mobileOpen, onClose }: AppSidebarProps) {
     <>
       <aside
         className={cn(
-          "fixed left-0 top-0 z-50 flex h-screen w-[244px] shrink-0 flex-col border-r border-ink-200 bg-white transition-transform lg:sticky lg:translate-x-0",
+          "fixed left-0 top-0 z-50 flex h-screen w-60 shrink-0 flex-col border-r border-ink-200 bg-white transition-transform lg:sticky lg:translate-x-0",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
@@ -66,7 +65,9 @@ export function AppSidebar({ mobileOpen, onClose }: AppSidebarProps) {
               Evaluación Docente
             </div>
 
-            <div className="-mt-0.5 text-[11px] text-ink-500">{role}</div>
+            <div className="-mt-0.5 text-[11px] text-ink-500">
+              {selectedRole}
+            </div>
           </div>
 
           <button
