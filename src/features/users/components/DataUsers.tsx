@@ -1,27 +1,15 @@
 import { Badge } from "@/components/ui/badge";
 import { createColumnHelper } from "@tanstack/react-table";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import DataTable from "@/components/common/DataTable";
 import type { User } from "@/features/auth/types/User";
 import formatDate from "@/lib/formatDate";
-
 import useGetUsers from "../hooks/useGetUsers";
-import { useDebounce } from "use-debounce";
 
 const columnHelper = createColumnHelper<User>();
 
 function DataUsers() {
-  const [globalFilter, setGlobalFilter] = useState("");
-  const [value] = useDebounce(globalFilter ?? "", 400);
-
-  const { data, isLoading, isFetching, isError } = useGetUsers({
-    page: 1,
-    search: value,
-  });
-
-  const users = useMemo(() => data?.data ?? [], [data]);
-
   const columns = useMemo(
     () => [
       columnHelper.accessor("name", {
@@ -80,13 +68,9 @@ function DataUsers() {
 
   return (
     <DataTable
-      data={users}
       columns={columns}
+      queryFn={useGetUsers}
       emptyMessage="No hay usuarios para mostrar."
-      globalFilter={globalFilter}
-      setGlobalFilter={setGlobalFilter}
-      isLoading={isLoading || isFetching}
-      isError={isError}
     />
   );
 }

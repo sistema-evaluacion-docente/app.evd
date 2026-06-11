@@ -4,6 +4,7 @@ import type { ResponseAPI } from "@/shared/types/Response";
 
 export default function getAllUsers({
   page = 1,
+  limit = 10,
   search = "",
 }): Promise<ResponseAPI<User[]>> {
   const params: Record<string, string | number> = {};
@@ -13,6 +14,6 @@ export default function getAllUsers({
   }
 
   return api.get(`/users`, {
-    params,
+    params: { ...params, page, limit },
   });
 }

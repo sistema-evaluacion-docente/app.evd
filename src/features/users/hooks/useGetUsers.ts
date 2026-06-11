@@ -8,9 +8,17 @@ import getAllUsers from "../api/getAllUsers";
  * @param page - The page number to fetch.
  * @returns The query result.
  */
-export default function useGetUsers({ page = 1, search = "" }) {
+export default function useGetUsers({
+  page = 1,
+  limit = 10,
+  search = "",
+}: {
+  page: number;
+  limit: number;
+  search: string;
+}) {
   return useQuery({
-    queryKey: ["users", page, search],
-    queryFn: () => getAllUsers({ page, search }),
+    queryKey: ["users", page, limit, search],
+    queryFn: () => getAllUsers({ page, limit, search }),
   });
 }
