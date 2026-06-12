@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 
 import type { User } from "@/features/auth/types/User";
 import { ALLOWED_USER_ROLES, type AllowedUserRole } from "./userRoles";
+import { Save, Undo2 } from "lucide-react";
 
 interface EditUserRolesDrawerProps {
   open: boolean;
@@ -94,10 +95,12 @@ function EditUserRolesDrawer({
             onClick={() => onOpenChange(false)}
             disabled={isSaving}
           >
+            <Undo2 />
             Cancelar
           </Button>
 
           <Button type="button" onClick={onSave} disabled={isSaving}>
+            <Save />
             {isSaving ? "Guardando..." : "Guardar cambios"}
           </Button>
         </DrawerFooter>
