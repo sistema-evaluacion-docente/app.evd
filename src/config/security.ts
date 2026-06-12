@@ -3,22 +3,27 @@ const securityConfig = {
     {
       path: "/dashboard",
       name: "Dashboard",
-      roles: ["DOCENTE", "DIRECTOR"],
+      roles: ["DOCENTE", "DIRECTOR DE DEPARTAMENTO"],
     },
     {
       path: "/teachers",
       name: "Docentes",
-      roles: ["DIRECTOR"],
+      roles: ["DIRECTOR DE DEPARTAMENTO"],
     },
     {
       path: "/matrix",
       name: "Matriz Evaluativa",
-      roles: ["DIRECTOR"],
+      roles: ["DIRECTOR DE DEPARTAMENTO"],
     },
     {
       path: "/plans",
       name: "Planes de Mejoramiento",
-      roles: ["DIRECTOR"],
+      roles: ["DIRECTOR DE DEPARTAMENTO"],
+    },
+    {
+      path: "/dashboard",
+      name: "Inicio",
+      roles: ["ADMIN"],
     },
     {
       path: "/users",
