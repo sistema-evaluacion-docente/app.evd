@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import type { ResponseAPI } from "@/shared/types/Response";
 import type { UseQueryResult } from "@tanstack/react-query";
 import {
   flexRender,
@@ -10,6 +11,7 @@ import {
   type ColumnDef,
   type PaginationState,
 } from "@tanstack/react-table";
+import { EllipsisVertical } from "lucide-react";
 import { useState } from "react";
 import { useDebounce } from "use-debounce";
 import { Button } from "../ui/button";
@@ -21,9 +23,18 @@ import {
 } from "../ui/dropdown-menu";
 import { Input } from "../ui/input";
 import { Skeleton } from "../ui/skeleton";
-import type { ResponseAPI } from "@/shared/types/Response";
+
+export interface DataTableAction<TData> {
+  label: string;
+  onClick: (row: TData) => void;
+  variant?: "default" | "destructive";
+  className?: string;
+  disabled?: (row: TData) => boolean;
+  visible?: (row: TData) => boolean;
+}
 
 interface DataTableProps<TData> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   columns: ColumnDef<TData, any>[];
   emptyMessage?: string;
   minWidthClassName?: string;
@@ -38,6 +49,8 @@ interface DataTableProps<TData> {
   searchPlaceholder?: string;
   pageSize?: number;
   pageSizeOptions?: number[];
+  rowActions?: DataTableAction<TData>[];
+  actionsHeaderLabel?: string;
   queryFn: (params: {
     page: number;
     limit: number;
@@ -60,6 +73,8 @@ function DataTable<TData>({
   searchPlaceholder = "Buscar...",
   pageSize = 10,
   pageSizeOptions = [5, 10, 20, 50],
+  rowActions = [],
+  actionsHeaderLabel = "Acciones",
   queryFn,
 }: DataTableProps<TData>) {
   const [globalFilter, setGlobalFilter] = useState("");
@@ -79,6 +94,7 @@ function DataTable<TData>({
   console.log(data);
 
   const result = (data?.data ?? []) as TData[];
+  const hasRowActions = rowActions.length > 0;
 
   const table = useReactTable({
     data: result,
@@ -142,6 +158,17 @@ function DataTable<TData>({
                     </th>
                   );
                 })}
+
+                {hasRowActions ? (
+                  <th
+                    className={cn(
+                      "px-5 py-3 text-right first:pl-6 last:pr-6 font-semibold bg-muted/50 text-muted-foreground",
+                      headerCellClassName,
+                    )}
+                  >
+                    {actionsHeaderLabel}
+                  </th>
+                ) : null}
               </tr>
             ))}
           </thead>
@@ -157,6 +184,12 @@ function DataTable<TData>({
                           <Skeleton className="w-full h-8" />
                         </td>
                       ))}
+
+                      {hasRowActions ? (
+                        <td className="w-auto px-2 py-1">
+                          <Skeleton className="w-full h-8" />
+                        </td>
+                      ) : null}
                     </tr>
                   ))}
                 </>
@@ -165,7 +198,7 @@ function DataTable<TData>({
                   {table.getRowModel().rows.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={columns.length}
+                        colSpan={columns.length + (hasRowActions ? 1 : 0)}
                         className="text-center py-10"
                       >
                         <p className="text-muted-foreground">{emptyMessage}</p>
@@ -194,6 +227,58 @@ function DataTable<TData>({
                             )}
                           </td>
                         ))}
+
+                        {hasRowActions ? (
+                          <td
+                            className={cn(
+                              "px-5 py-4 align-middle text-right first:pl-6 last:pr-6",
+                              cellClassName,
+                            )}
+                          >
+                            <DropdownMenu>
+                              <DropdownMenuTrigger
+                                render={
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                  >
+                                    <EllipsisVertical />
+                                  </Button>
+                                }
+                              ></DropdownMenuTrigger>
+
+                              <DropdownMenuContent
+                                align="end"
+                                className="w-auto min-w-40"
+                              >
+                                {rowActions
+                                  .filter((action) =>
+                                    action.visible
+                                      ? action.visible(row.original)
+                                      : true,
+                                  )
+                                  .map((action) => (
+                                    <DropdownMenuItem
+                                      key={action.label}
+                                      variant={action.variant ?? "default"}
+                                      className={action.className}
+                                      disabled={
+                                        action.disabled
+                                          ? action.disabled(row.original)
+                                          : false
+                                      }
+                                      onClick={() =>
+                                        action.onClick(row.original)
+                                      }
+                                    >
+                                      {action.label}
+                                    </DropdownMenuItem>
+                                  ))}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </td>
+                        ) : null}
                       </tr>
                     ))
                   )}
