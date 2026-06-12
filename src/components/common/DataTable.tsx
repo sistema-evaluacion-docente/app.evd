@@ -11,7 +11,7 @@ import {
   type ColumnDef,
   type PaginationState,
 } from "@tanstack/react-table";
-import { EllipsisVertical } from "lucide-react";
+import { EllipsisVertical, RotateCcw } from "lucide-react";
 import { useState } from "react";
 import { useDebounce } from "use-debounce";
 import { Button } from "../ui/button";
@@ -85,7 +85,7 @@ function DataTable<TData>({
     pageSize,
   });
 
-  const { data, isLoading } = queryFn({
+  const { data, isLoading, isFetching, refetch } = queryFn({
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     search: value,
@@ -112,8 +112,8 @@ function DataTable<TData>({
 
   return (
     <>
-      {enableSearch ? (
-        <div className="flex gap-2 items-center">
+      <div className="flex gap-2 items-center">
+        {enableSearch ? (
           <Input
             type="text"
             value={globalFilter ?? ""}
@@ -121,8 +121,20 @@ function DataTable<TData>({
             placeholder={searchPlaceholder}
             className="bg-background"
           />
-        </div>
-      ) : null}
+        ) : null}
+
+        <Button
+          size="sm"
+          type="button"
+          variant="outline"
+          onClick={() => refetch()}
+          disabled={isFetching}
+          className="shrink-0"
+        >
+          <RotateCcw className={cn("size-4", isFetching && "animate-spin")} />
+          Recargar
+        </Button>
+      </div>
 
       <div
         className={cn(
