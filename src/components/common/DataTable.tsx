@@ -12,7 +12,7 @@ import {
   type PaginationState,
 } from "@tanstack/react-table";
 import { EllipsisVertical, RotateCcw } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDebounce } from "use-debounce";
 import { Button } from "../ui/button";
 import {
@@ -58,6 +58,44 @@ interface DataTableProps<TData> {
   }) => UseQueryResult<ResponseAPI<TData[]>>;
 }
 
+/**
+ * Get a URL parameter as a number, with a fallback value.
+ * @param paramName The name of the URL parameter to retrieve.
+ * @param fallback The fallback value to return if the parameter is not found or is invalid.
+ * @returns The parsed URL parameter as a number, or the fallback value if not found or invalid.
+ */
+function getUrlParamNumber(paramName: string, fallback: number) {
+  if (typeof window === "undefined") return fallback;
+
+  const rawValue = new URLSearchParams(window.location.search).get(paramName);
+
+  if (!rawValue) return fallback;
+
+  const parsed = Number(rawValue);
+
+  if (!Number.isFinite(parsed) || parsed < 1) return fallback;
+
+  return Math.floor(parsed);
+}
+
+/**
+ * Get a URL parameter as a string, with a fallback value.
+ * @param paramName The name of the URL parameter to retrieve.
+ * @param fallback The fallback value to return if the parameter is not found or is invalid.
+ * @returns The parsed URL parameter as a string, or the fallback value if not found or invalid.
+ */
+function getUrlParamString(paramName: string, fallback = "") {
+  if (typeof window === "undefined") return fallback;
+
+  const rawValue = new URLSearchParams(window.location.search).get(paramName);
+
+  return rawValue ?? fallback;
+}
+
+/**
+ * DataTable component that displays a table with sorting, searching, and pagination capabilities.
+ * @template TData The type of data to display in the table.
+ */
 function DataTable<TData>({
   columns,
   emptyMessage = "Sin datos para mostrar.",
@@ -77,13 +115,15 @@ function DataTable<TData>({
   actionsHeaderLabel = "Acciones",
   queryFn,
 }: DataTableProps<TData>) {
-  const [globalFilter, setGlobalFilter] = useState("");
+  const [globalFilter, setGlobalFilter] = useState(() =>
+    getUrlParamString("search", ""),
+  );
   const [value] = useDebounce(globalFilter ?? "", 400);
 
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize,
-  });
+  const [pagination, setPagination] = useState<PaginationState>(() => ({
+    pageIndex: getUrlParamNumber("page", 1) - 1,
+    pageSize: getUrlParamNumber("limit", pageSize),
+  }));
 
   const { data, isLoading, isFetching, refetch } = queryFn({
     page: pagination.pageIndex + 1,
@@ -95,6 +135,28 @@ function DataTable<TData>({
 
   const result = (data?.data ?? []) as TData[];
   const hasRowActions = rowActions.length > 0;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const params = new URLSearchParams(window.location.search);
+
+    params.set("page", String(pagination.pageIndex + 1));
+    params.set("limit", String(pagination.pageSize));
+
+    if (value) {
+      params.set("search", value);
+    } else {
+      params.delete("search");
+    }
+
+    const queryString = params.toString();
+    const nextUrl = `${window.location.pathname}${
+      queryString ? `?${queryString}` : ""
+    }${window.location.hash}`;
+
+    window.history.replaceState(null, "", nextUrl);
+  }, [pagination.pageIndex, pagination.pageSize, value]);
 
   const table = useReactTable({
     data: result,
@@ -117,7 +179,10 @@ function DataTable<TData>({
           <Input
             type="text"
             value={globalFilter ?? ""}
-            onChange={(event) => setGlobalFilter?.(event.target.value)}
+            onChange={(event) => {
+              setGlobalFilter?.(event.target.value);
+              setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+            }}
             placeholder={searchPlaceholder}
             className="bg-background"
           />
