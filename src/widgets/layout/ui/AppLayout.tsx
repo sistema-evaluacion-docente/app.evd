@@ -8,6 +8,12 @@ import { AppSidebar } from "./AppSidebar";
 
 export interface AppLayoutProps {
   children: ReactNode;
+  /**
+   * Intended audience of the page. Currently the sidebar derives the active
+   * role from auth, so this is accepted for call-site clarity but not consumed
+   * by the shell yet.
+   */
+  role?: "director" | "teacher" | "admin";
   /** Utility classes for the `<main>` content wrapper (max-width, spacing). */
   mainClassName?: string;
   header?: Omit<AppHeaderProps, "onOpenMenu">;
