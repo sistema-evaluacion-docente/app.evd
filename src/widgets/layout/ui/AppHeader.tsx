@@ -27,8 +27,6 @@ export function AppHeader({
   onOpenMenu,
   showBreadcrumb = false,
   breadcrumb,
-  userName = "Director Depto.",
-  userRole = "Ciencias Básicas",
   rightMode = "periodo",
 }: AppHeaderProps) {
   const [periodo, setPeriodo] = useState("2024-1");
