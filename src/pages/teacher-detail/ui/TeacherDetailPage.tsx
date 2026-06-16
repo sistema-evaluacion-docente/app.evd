@@ -4,6 +4,7 @@ import {
   Building2,
   Calendar,
   Check,
+  ChevronDown,
   ClipboardList,
   Clock,
   Eraser,
@@ -189,7 +190,7 @@ const RISK_TONE_CLASS: Record<RiskTone, string> = {
   danger: 'border-rose-200/70 bg-rose-50 text-rose-700',
 }
 
-const COMMENT_PREVIEW = 120
+const COMMENTS_PAGE_SIZE = 5
 
 function StepIcon({ state }: { state: 'done' | 'current' | 'pending' }) {
   if (state === 'done') {
@@ -249,7 +250,7 @@ export function TeacherDetailPage() {
   const [tagFilter, setTagFilter] = useState('todos')
   const [riskFilter, setRiskFilter] = useState('todos')
   const [semesterFilter, setSemesterFilter] = useState(SEMESTERS[0])
-  const [expanded, setExpanded] = useState<Set<number>>(new Set())
+  const [visibleCount, setVisibleCount] = useState(COMMENTS_PAGE_SIZE)
 
   // Cuando cambia el periodo del docente, los comentarios siguen ese semestre.
   // Ajuste de estado durante el render (patrón recomendado por React, sin efecto).
@@ -280,6 +281,17 @@ export function TeacherDetailPage() {
     })
   }, [search, tagFilter, riskFilter, semesterFilter])
 
+  // Reinicia la paginación cuando cambian los filtros (ajuste en render, sin efecto).
+  const filtersKey = `${search}|${tagFilter}|${riskFilter}|${semesterFilter}`
+  const [prevFiltersKey, setPrevFiltersKey] = useState(filtersKey)
+  if (filtersKey !== prevFiltersKey) {
+    setPrevFiltersKey(filtersKey)
+    setVisibleCount(COMMENTS_PAGE_SIZE)
+  }
+
+  const visibleComments = filteredComments.slice(0, visibleCount)
+  const hasMoreComments = visibleCount < filteredComments.length
+
   function clearFilters() {
     setSearch('')
     setTagFilter('todos')
@@ -287,46 +299,18 @@ export function TeacherDetailPage() {
     setSemesterFilter(selectedSemester)
   }
 
-  function toggleExpanded(id: number) {
-    setExpanded((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-
   const commentColumns: DataTableColumn<TeacherComment>[] = [
     {
       header: 'Comentario del estudiante',
       cellClassName: 'align-top py-4',
-      cell: (comment) => {
-        const isOpen = expanded.has(comment.id)
-        const isLong = comment.text.length > COMMENT_PREVIEW
-        const shown =
-          isOpen || !isLong
-            ? comment.text
-            : `${comment.text.slice(0, COMMENT_PREVIEW).trimEnd()}…`
-        return (
-          <div className="max-w-[460px]">
-            <p
-              className="text-[13.5px] leading-relaxed text-ink-800"
-              style={{ textWrap: 'pretty' }}
-            >
-              {shown}
-            </p>
-            {isLong && (
-              <button
-                type="button"
-                onClick={() => toggleExpanded(comment.id)}
-                className="mt-1 text-[12px] font-semibold text-brand-700 transition-colors hover:text-brand-800"
-              >
-                {isOpen ? 'Ver menos' : 'Ver más'}
-              </button>
-            )}
-          </div>
-        )
-      },
+      cell: (comment) => (
+        <p
+          className="max-w-[460px] text-[13.5px] leading-relaxed text-ink-800"
+          style={{ textWrap: 'pretty' }}
+        >
+          {comment.text}
+        </p>
+      ),
     },
     {
       header: 'Materia',
@@ -676,8 +660,8 @@ export function TeacherDetailPage() {
               Análisis automático con clasificación por nivel de riesgo y dimensión.
             </p>
           </div>
-          <div className="mt-4 flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
-            <div className="w-full lg:max-w-xs">
+          <div className="mt-4 flex flex-col gap-2.5 lg:flex-row lg:items-center">
+            <div className="w-full lg:min-w-0 lg:flex-1">
               <Input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
@@ -686,7 +670,7 @@ export function TeacherDetailPage() {
                 aria-label="Buscar comentario"
               />
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 lg:shrink-0">
               <Select
                 value={tagFilter}
                 onChange={setTagFilter}
@@ -732,12 +716,26 @@ export function TeacherDetailPage() {
         </div>
         <DataTable
           columns={commentColumns}
-          rows={filteredComments}
+          rows={visibleComments}
           rowKey={(comment) => comment.id}
           headerVariant="muted"
           minWidth={860}
           emptyMessage="No hay comentarios para este filtro."
         />
+        {hasMoreComments && (
+          <div className="flex flex-col items-center gap-2 border-t border-ink-100 p-4">
+            <Button
+              variant="outline"
+              size="md"
+              onClick={() => setVisibleCount((count) => count + COMMENTS_PAGE_SIZE)}
+            >
+              <ChevronDown size={15} /> Ver más comentarios
+            </Button>
+            <span className="text-[12px] text-ink-500">
+              Mostrando {visibleComments.length} de {filteredComments.length} comentarios
+            </span>
+          </div>
+        )}
       </Card>
 
       <AppFooter>
