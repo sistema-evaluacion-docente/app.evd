@@ -2,6 +2,7 @@ import { ArrowDown, ArrowRight, ArrowUp, ArrowUpDown, ChevronRight, Download, In
 import { useMemo, useState } from 'react'
 import { Link } from 'wouter'
 
+import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/shared/lib/utils'
 import {
   AppFooter,
@@ -143,11 +144,9 @@ export function MyHistoryPage() {
       headerClassName: 'w-10',
       cellClassName: 'pl-4',
       cell: (period) => (
-        <input
-          type="checkbox"
+        <Checkbox
           checked={compareIds.includes(period.id)}
-          onChange={() => toggleCompare(period.id)}
-          className="h-4 w-4 rounded border-ink-300 accent-brand-600"
+          onCheckedChange={() => toggleCompare(period.id)}
           aria-label={`Comparar ${period.period}`}
         />
       ),

@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Drawer,
   DrawerContent,
@@ -74,10 +75,9 @@ function EditUserRolesDrawer({
                     key={role}
                     className="flex items-center gap-2 rounded-md border px-3 py-2"
                   >
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={checked}
-                      onChange={() => onToggleRole(role)}
+                      onCheckedChange={() => onToggleRole(role)}
                       disabled={isSaving}
                     />
                     <span>{role}</span>

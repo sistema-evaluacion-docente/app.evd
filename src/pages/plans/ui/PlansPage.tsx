@@ -1,6 +1,7 @@
 import { MoreHorizontal, Plus, Search, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
+import { Textarea } from '@/components/ui/textarea'
 import { TEACHERS } from '@/entities/teacher'
 import { cn } from '@/shared/lib/utils'
 import {
@@ -342,10 +343,9 @@ export function PlansPage() {
             <Input placeholder="Ej. Fortalecimiento en metodologías activas" />
           </Field>
           <Field label="Descripción">
-            <textarea
+            <Textarea
               rows={3}
               placeholder="Acciones, objetivos y compromisos..."
-              className="w-full rounded-md border border-ink-200 bg-white px-3 py-2 text-[13px] text-ink-900 transition-colors placeholder:text-ink-400 focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/15"
             />
           </Field>
           <div className="grid grid-cols-2 gap-3">
