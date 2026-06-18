@@ -13,5 +13,7 @@ export default function useGetPeriods({
   return useQuery({
     queryKey: ["periods", page, limit, search],
     queryFn: () => getPeriods({ page, limit, search }),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 }
