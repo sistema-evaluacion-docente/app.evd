@@ -3,6 +3,7 @@ import {
   Calendar,
   FileText,
   LayoutGrid,
+  Settings,
   TrendingUp,
   UserSearch,
   Users,
@@ -48,6 +49,12 @@ const ADMIN_NAV: NavItem[] = [
     label: "Periodos académicos",
     icon: Calendar,
     href: "/admin/periods",
+  },
+  {
+    id: "settings",
+    label: "Configuraciones",
+    icon: Settings,
+    href: "/admin/settings",
   },
   {
     id: "logs",

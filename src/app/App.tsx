@@ -3,6 +3,7 @@ import { Route, Switch } from "wouter";
 import { AdminDirectorsPage } from "@/pages/admin-directors";
 import { AdminLogsPage } from "@/pages/admin-logs";
 import { AdminPeriodsPage } from "@/pages/admin-periods";
+import { SettingsPage } from "@/features/settings";
 import { DashboardPage } from "@/pages/dashboard";
 import { MatrixPage } from "@/pages/matrix";
 import { MyHistoryPage } from "@/pages/my-history";
@@ -38,6 +39,7 @@ function App() {
       <Route path="/users" component={UsersPage} />
       <Route path="/admin/directors" component={AdminDirectorsPage} />
       <Route path="/admin/periods" component={AdminPeriodsPage} />
+      <Route path="/settings" component={SettingsPage} />
       <Route path="/admin/logs" component={AdminLogsPage} />
 
       {/* Docente */}
