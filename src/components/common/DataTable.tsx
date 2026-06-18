@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import type { ResponseAPI } from "@/shared/types/Response";
-import type { UseQueryResult } from "@tanstack/react-query";
+import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
 import {
   flexRender,
   getCoreRowModel,
@@ -11,10 +11,18 @@ import {
   type ColumnDef,
   type PaginationState,
 } from "@tanstack/react-table";
-import { EllipsisVertical, RotateCcw } from "lucide-react";
-import { useEffect, useState } from "react";
+import { EllipsisVertical, Plus, RotateCcw } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { useDebounce } from "use-debounce";
 import { Button } from "../ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +30,7 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { Input } from "../ui/input";
+import { Label } from "../ui/label";
 import { Skeleton } from "../ui/skeleton";
 
 export interface DataTableAction<TData> {
@@ -32,6 +41,27 @@ export interface DataTableAction<TData> {
   disabled?: (row: TData) => boolean;
   visible?: (row: TData) => boolean;
 }
+
+interface DataTableCreateConfigBase {
+  label?: string;
+  dialogTitle?: string;
+  dialogDescription?: string;
+}
+
+interface DataTableCreateConfigCustomForm extends DataTableCreateConfigBase {
+  renderForm: (helpers: { close: () => void }) => React.ReactNode;
+}
+
+interface DataTableCreateConfigDefault extends DataTableCreateConfigBase {
+  mutation: UseMutationResult<unknown, Error, { nombre: string }, unknown>;
+  fieldLabel?: string;
+  placeholder?: string;
+  renderForm?: undefined;
+}
+
+export type DataTableCreateConfig =
+  | DataTableCreateConfigCustomForm
+  | DataTableCreateConfigDefault;
 
 interface DataTableProps<TData> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -56,6 +86,7 @@ interface DataTableProps<TData> {
     limit: number;
     search: string;
   }) => UseQueryResult<ResponseAPI<TData[]>>;
+  createConfig?: DataTableCreateConfig;
 }
 
 /**
@@ -114,6 +145,7 @@ function DataTable<TData>({
   rowActions = [],
   actionsHeaderLabel = "Acciones",
   queryFn,
+  createConfig,
 }: DataTableProps<TData>) {
   const [globalFilter, setGlobalFilter] = useState(() =>
     getUrlParamString("search", ""),
@@ -125,17 +157,19 @@ function DataTable<TData>({
     pageSize: getUrlParamNumber("limit", pageSize),
   }));
 
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [newItemName, setNewItemName] = useState("");
+
   const { data, isLoading, isFetching, refetch } = queryFn({
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     search: value,
   });
 
-  console.log(data);
-
   const result = (data?.data ?? []) as TData[];
   const hasRowActions = rowActions.length > 0;
 
+  const prevSearch = useRef(value);
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -157,6 +191,13 @@ function DataTable<TData>({
 
     window.history.replaceState(null, "", nextUrl);
   }, [pagination.pageIndex, pagination.pageSize, value]);
+
+  useEffect(() => {
+    if (value !== prevSearch.current) {
+      prevSearch.current = value;
+      setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+    }
+  }, [value]);
 
   const table = useReactTable({
     data: result,
@@ -180,25 +221,40 @@ function DataTable<TData>({
             type="text"
             value={globalFilter ?? ""}
             onChange={(event) => {
-              setGlobalFilter?.(event.target.value);
-              setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+              setGlobalFilter(event.target.value);
             }}
             placeholder={searchPlaceholder}
             className="bg-background"
           />
         ) : null}
 
-        <Button
-          size="sm"
-          type="button"
-          variant="outline"
-          onClick={() => refetch()}
-          disabled={isFetching}
-          className="shrink-0"
-        >
-          <RotateCcw className={cn("size-4", isFetching && "animate-spin")} />
-          Recargar
-        </Button>
+        <div className="flex gap-2 items-center ml-auto">
+          {createConfig ? (
+            <Button
+              size="sm"
+              type="button"
+              onClick={() => {
+                setNewItemName("");
+                setIsCreateDialogOpen(true);
+              }}
+            >
+              <Plus className="size-4" />
+              {createConfig.label ?? "Nuevo"}
+            </Button>
+          ) : null}
+
+          <Button
+            size="sm"
+            type="button"
+            variant="outline"
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="shrink-0"
+          >
+            <RotateCcw className={cn("size-4", isFetching && "animate-spin")} />
+            Recargar
+          </Button>
+        </div>
       </div>
 
       <div
@@ -419,6 +475,98 @@ function DataTable<TData>({
             </div>
           </div>
         </div>
+      ) : null}
+
+      {createConfig ? (
+        <Dialog
+          open={isCreateDialogOpen}
+          onOpenChange={(open) => {
+            setIsCreateDialogOpen(open);
+            if (!open) setNewItemName("");
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {createConfig.dialogTitle ?? "Crear elemento"}
+              </DialogTitle>
+              {createConfig.dialogDescription ? (
+                <p className="text-sm text-muted-foreground">
+                  {createConfig.dialogDescription}
+                </p>
+              ) : null}
+            </DialogHeader>
+
+            {createConfig.renderForm ? (
+              createConfig.renderForm({
+                close: () => {
+                  setIsCreateDialogOpen(false);
+                  setNewItemName("");
+                },
+              })
+            ) : (
+              <>
+                <div className="grid gap-2">
+                  <Label>{createConfig.fieldLabel ?? "Nombre"}</Label>
+                  <Input
+                    value={newItemName}
+                    onChange={(event) => setNewItemName(event.target.value)}
+                    placeholder={
+                      createConfig.placeholder ?? "Ingrese el nombre..."
+                    }
+                    onKeyDown={(event) => {
+                      if (
+                        event.key === "Enter" &&
+                        newItemName.trim() &&
+                        !createConfig.mutation.isPending
+                      ) {
+                        event.preventDefault();
+                        createConfig.mutation.mutate(
+                          { nombre: newItemName.trim() },
+                          {
+                            onSuccess: () => {
+                              toast.success("Elemento creado exitosamente");
+                              setIsCreateDialogOpen(false);
+                              setNewItemName("");
+                            },
+                            onError: () => {
+                              toast.error("Error al crear el elemento");
+                            },
+                          },
+                        );
+                      }
+                    }}
+                  />
+                </div>
+
+                <DialogFooter>
+                  <Button
+                    onClick={() => {
+                      createConfig.mutation.mutate(
+                        { nombre: newItemName.trim() },
+                        {
+                          onSuccess: () => {
+                            toast.success("Elemento creado exitosamente");
+                            setIsCreateDialogOpen(false);
+                            setNewItemName("");
+                          },
+                          onError: () => {
+                            toast.error("Error al crear el elemento");
+                          },
+                        },
+                      );
+                    }}
+                    disabled={
+                      !newItemName.trim() || createConfig.mutation.isPending
+                    }
+                  >
+                    {createConfig.mutation.isPending ? "Creando..." : "Crear"}
+                  </Button>
+                </DialogFooter>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
       ) : null}
     </>
   );

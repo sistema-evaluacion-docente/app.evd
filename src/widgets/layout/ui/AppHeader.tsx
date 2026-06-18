@@ -1,8 +1,9 @@
-import { Bell, Calendar, ChevronDown, Menu, Search } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { Bell, Calendar, Menu, Search } from "lucide-react";
+import type { ReactNode } from "react";
 import { Input } from "@/shared/ui";
 
 import Avatar from "@/features/auth/components/Avatar";
+import { PeriodsSelector } from "@/features/periods";
 
 export interface AppHeaderProps {
   onOpenMenu: () => void;
@@ -14,8 +15,6 @@ export interface AppHeaderProps {
   rightMode?: "periodo" | "search";
 }
 
-const PERIODS = ["2024-1", "2023-2", "2023-1"];
-
 export function AppHeader({
   onOpenMenu,
   showBreadcrumb = false,
@@ -24,7 +23,6 @@ export function AppHeader({
   userRole = "Ciencias Básicas",
   rightMode = "periodo",
 }: AppHeaderProps) {
-  const [periodo, setPeriodo] = useState("2024-1");
 
   return (
     <header className="sticky top-0 z-30 border-b border-ink-200 bg-white/85 backdrop-blur-md">
@@ -53,25 +51,10 @@ export function AppHeader({
               />
             </div>
           ) : (
-            <div className="hidden h-9 items-center gap-2 rounded-md border border-ink-200 bg-white px-3 text-[13px] text-ink-700 md:flex">
+            <div className="hidden items-center gap-2 md:flex">
               <Calendar size={14} className="text-ink-400" />
-              <span>Periodo Académico:</span>
-              <select
-                value={periodo}
-                onChange={(event) => setPeriodo(event.target.value)}
-                className="cursor-pointer appearance-none bg-transparent pr-4 font-medium text-ink-900 focus:outline-none"
-                aria-label="Periodo académico"
-              >
-                {PERIODS.map((value) => (
-                  <option key={value} value={value}>
-                    {value}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown
-                size={12}
-                className="pointer-events-none -ml-3 text-ink-500"
-              />
+              <span className="whitespace-nowrap text-[13px] text-ink-700">Periodo Académico:</span>
+              <PeriodsSelector />
             </div>
           )}
 
