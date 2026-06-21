@@ -1,1 +1,1 @@
-export { MyProfilePage } from './ui/MyProfilePage'
+export { MyProfilePage } from "@/features/profile";
