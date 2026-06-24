@@ -7,9 +7,10 @@ import {
   Info,
   Users,
 } from 'lucide-react'
-import { useCallback, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link } from 'wouter'
 
+import { useUploadEvaluation, type UploadStatus } from '@/features/evaluations'
 import { cn } from '@/shared/lib/utils'
 import {
   AppFooter,
@@ -21,8 +22,6 @@ import {
 } from '@/shared/ui'
 import { AppLayout } from '@/widgets/layout'
 
-type UploadStatus = 'idle' | 'uploading' | 'processing' | 'success' | 'error'
-
 const STATUS_HEADING: Record<Exclude<UploadStatus, 'idle'>, string> = {
   uploading: 'Estado: Subiendo archivo',
   processing: 'Estado: Procesando contenido',
@@ -30,84 +29,19 @@ const STATUS_HEADING: Record<Exclude<UploadStatus, 'idle'>, string> = {
   error: 'Estado: Error al procesar',
 }
 
-const MAX_SIZE = 50 * 1024 * 1024
-
 export function UploadEvaluationsPage() {
   const inputRef = useRef<HTMLInputElement>(null)
   const [dragOver, setDragOver] = useState(false)
-  const [status, setStatus] = useState<UploadStatus>('idle')
-  const [progress, setProgress] = useState(0)
-  const [fileName, setFileName] = useState('')
-  const [error, setError] = useState('')
-  const [stats, setStats] = useState({ teachers: 0, comments: 0 })
-
-  const startUpload = useCallback((name: string) => {
-    setFileName(name)
-    setError('')
-    setProgress(0)
-    setStatus('uploading')
-
-    let value = 0
-    const uploadTimer = window.setInterval(() => {
-      value += Math.max(2, 9 - value / 14)
-      if (value >= 70) {
-        window.clearInterval(uploadTimer)
-        setProgress(70)
-        setStatus('processing')
-        let processed = 70
-        const processTimer = window.setInterval(() => {
-          processed += 3.5
-          if (processed >= 100) {
-            window.clearInterval(processTimer)
-            setProgress(100)
-            setStats({ teachers: 142, comments: 3892 })
-            setStatus('success')
-          } else {
-            setProgress(processed)
-          }
-        }, 90)
-      } else {
-        setProgress(value)
-      }
-    }, 70)
-  }, [])
+  const { status, progress, fileName, error, stats, upload, reset, loadSample } = useUploadEvaluation()
 
   const handleFile = (file: File | undefined) => {
     if (!file) return
-    if (
-      file.type &&
-      file.type !== 'application/pdf' &&
-      !file.name.toLowerCase().endsWith('.pdf')
-    ) {
-      setFileName(file.name)
-      setProgress(0)
-      setError('Solo se aceptan archivos en formato PDF Institucional.')
-      setStatus('error')
-      return
-    }
-    if (file.size > MAX_SIZE) {
-      setFileName(file.name)
-      setProgress(0)
-      setError('El archivo excede el tamaño máximo de 50MB.')
-      setStatus('error')
-      return
-    }
-    startUpload(file.name)
+    upload(file)
   }
 
-  const reset = () => {
-    setStatus('idle')
-    setProgress(0)
-    setFileName('')
-    setError('')
-    setStats({ teachers: 0, comments: 0 })
-  }
-
-  const loadSample = () => {
-    setFileName('evaluaciones_finales_2023_Q2.pdf')
-    setProgress(100)
-    setStats({ teachers: 142, comments: 3892 })
-    setStatus('success')
+  const handleReset = () => {
+    reset()
+    if (inputRef.current) inputRef.current.value = ''
   }
 
   const busy = status === 'uploading' || status === 'processing'
@@ -240,7 +174,7 @@ export function UploadEvaluationsPage() {
             {(status === 'success' || status === 'error') && (
               <button
                 type="button"
-                onClick={reset}
+                onClick={handleReset}
                 className="shrink-0 text-[12.5px] font-medium text-brand-600 hover:text-brand-700"
               >
                 Cambiar archivo
