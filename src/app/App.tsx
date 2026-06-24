@@ -13,7 +13,8 @@ import { NotFoundPage } from "@/pages/not-found";
 import { PlansPage } from "@/pages/plans";
 import { TeacherDetailPage } from "@/pages/teacher-detail";
 import { TeachersPage } from "@/pages/teachers";
-import { UploadEvaluationsPage } from "@/pages/upload-evaluations";
+import { EvaluationsPage } from "@/pages/evaluations";
+import { UploadEvaluationsPage } from "@/pages/evaluations/upload";
 import { UploadTeachersPage } from "@/pages/upload-teachers";
 
 import LoginPage from "@/features/auth/pages/LoginPage";
@@ -31,6 +32,8 @@ function App() {
       <Route path="/teachers/:id" component={TeacherDetailPage} />
       <Route path="/matrix" component={MatrixPage} />
       <Route path="/plans" component={PlansPage} />
+      <Route path="/evaluations" component={EvaluationsPage} />
+      <Route path="/evaluations/upload" component={UploadEvaluationsPage} />
       <Route path="/upload-evaluations" component={UploadEvaluationsPage} />
       <Route path="/upload-teachers" component={UploadTeachersPage} />
       <Route path="/periods" component={PeriodsPage} />
