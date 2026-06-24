@@ -7,6 +7,9 @@ export interface Audit {
   updated_at: string;
   user_name: string;
   user_avatar: string;
+  element: string;
+  description: string;
+  element_data: string;
 }
 
 export interface AuditResponse {
