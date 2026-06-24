@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
 
+import { API_URL } from "@/config";
 import type { EvaluationRecord } from "../api/evaluationService";
 
 const columnHelper = createColumnHelper<EvaluationRecord>();
@@ -69,10 +70,12 @@ export default function useEvaluationColumns() {
         header: "PDF",
         cell: (info) => {
           const url = info.getValue();
+
           if (!url) return "—";
+
           return (
             <a
-              href={url}
+              href={`${API_URL}/${url}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-brand-600 hover:text-brand-700 underline underline-offset-2 text-xs"
