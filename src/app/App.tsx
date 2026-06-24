@@ -45,7 +45,7 @@ function App() {
       <Route path="/admin/periods" component={AdminPeriodsPage} />
       <Route path="/settings" component={SettingsPage} />
       <Route path="/departments" component={AdminDepartmentsPage} />
-      <Route path="/admin/logs" component={AdminLogsPage} />
+      <Route path="/logs" component={AdminLogsPage} />
 
       {/* Docente */}
       <Route path="/me/summary" component={MySummaryPage} />

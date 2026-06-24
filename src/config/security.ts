@@ -55,6 +55,11 @@ const securityConfig = {
       name: "Configuración",
       roles: ["ADMIN"],
     },
+    {
+      path: "/logs",
+      name: "Logs",
+      roles: ["ADMIN"],
+    },
   ],
 };
 
