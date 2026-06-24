@@ -86,6 +86,7 @@ interface DataTableProps<TData> {
     limit: number;
     search: string;
   }) => UseQueryResult<ResponseAPI<TData[]>>;
+  extraFilterParams?: Record<string, string | undefined>;
   createConfig?: DataTableCreateConfig;
 }
 
@@ -111,6 +112,7 @@ function DataTable<TData>({
   rowActions = [],
   actionsHeaderLabel = "Acciones",
   queryFn,
+  extraFilterParams,
   createConfig,
 }: DataTableProps<TData>) {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -132,6 +134,7 @@ function DataTable<TData>({
     page,
     limit,
     search: value,
+    ...extraFilterParams,
   });
 
   const result = (data?.data ?? []) as TData[];
