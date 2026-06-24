@@ -9,12 +9,12 @@ import {
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
-  type PaginationState,
 } from "@tanstack/react-table";
 import { EllipsisVertical, Plus, RotateCcw } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useDebounce } from "use-debounce";
+import { useSearchParams } from "wouter";
 import { Button } from "../ui/button";
 import {
   Dialog,
@@ -90,40 +90,6 @@ interface DataTableProps<TData> {
 }
 
 /**
- * Get a URL parameter as a number, with a fallback value.
- * @param paramName The name of the URL parameter to retrieve.
- * @param fallback The fallback value to return if the parameter is not found or is invalid.
- * @returns The parsed URL parameter as a number, or the fallback value if not found or invalid.
- */
-function getUrlParamNumber(paramName: string, fallback: number) {
-  if (typeof window === "undefined") return fallback;
-
-  const rawValue = new URLSearchParams(window.location.search).get(paramName);
-
-  if (!rawValue) return fallback;
-
-  const parsed = Number(rawValue);
-
-  if (!Number.isFinite(parsed) || parsed < 1) return fallback;
-
-  return Math.floor(parsed);
-}
-
-/**
- * Get a URL parameter as a string, with a fallback value.
- * @param paramName The name of the URL parameter to retrieve.
- * @param fallback The fallback value to return if the parameter is not found or is invalid.
- * @returns The parsed URL parameter as a string, or the fallback value if not found or invalid.
- */
-function getUrlParamString(paramName: string, fallback = "") {
-  if (typeof window === "undefined") return fallback;
-
-  const rawValue = new URLSearchParams(window.location.search).get(paramName);
-
-  return rawValue ?? fallback;
-}
-
-/**
  * DataTable component that displays a table with sorting, searching, and pagination capabilities.
  * @template TData The type of data to display in the table.
  */
@@ -147,65 +113,34 @@ function DataTable<TData>({
   queryFn,
   createConfig,
 }: DataTableProps<TData>) {
-  const [globalFilter, setGlobalFilter] = useState(() =>
-    getUrlParamString("search", ""),
-  );
-  const [value] = useDebounce(globalFilter ?? "", 400);
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [pagination, setPagination] = useState<PaginationState>(() => ({
-    pageIndex: getUrlParamNumber("page", 1) - 1,
-    pageSize: getUrlParamNumber("limit", pageSize),
-  }));
+  const pageValue = searchParams.get("page") ?? 1;
+  const limitValue = searchParams.get("limit") ?? pageSize;
+  const searchValue = searchParams.get("search") ?? "";
+
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(Number(pageValue ?? 1));
+  const [limit, setLimit] = useState(Number(limitValue ?? pageSize));
+
+  const [value] = useDebounce(search ?? "", 400);
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newItemName, setNewItemName] = useState("");
 
   const { data, isLoading, isFetching, refetch } = queryFn({
-    page: pagination.pageIndex + 1,
-    limit: pagination.pageSize,
+    page,
+    limit,
     search: value,
   });
 
   const result = (data?.data ?? []) as TData[];
+  const paginationData = data?.pagination;
   const hasRowActions = rowActions.length > 0;
-
-  const prevSearch = useRef(value);
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const params = new URLSearchParams(window.location.search);
-
-    params.set("page", String(pagination.pageIndex + 1));
-    params.set("limit", String(pagination.pageSize));
-
-    if (value) {
-      params.set("search", value);
-    } else {
-      params.delete("search");
-    }
-
-    const queryString = params.toString();
-    const nextUrl = `${window.location.pathname}${
-      queryString ? `?${queryString}` : ""
-    }${window.location.hash}`;
-
-    window.history.replaceState(null, "", nextUrl);
-  }, [pagination.pageIndex, pagination.pageSize, value]);
-
-  useEffect(() => {
-    if (value !== prevSearch.current) {
-      prevSearch.current = value;
-      setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-    }
-  }, [value]);
 
   const table = useReactTable({
     data: result,
     columns,
-    state: {
-      pagination,
-    },
-    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -213,15 +148,46 @@ function DataTable<TData>({
     enableSorting,
   });
 
+  useEffect(() => {
+    if (
+      searchValue === undefined &&
+      pageValue === undefined &&
+      limitValue === undefined
+    )
+      return;
+
+    setSearchParams((prev) => {
+      return {
+        ...prev,
+        search: "",
+        page: 1,
+        limit: pageSize,
+      };
+    });
+  }, []);
+
+  useEffect(() => {
+    if (page !== 1 || limit !== pageSize) {
+      setSearchParams((prev) => {
+        return {
+          ...prev,
+          page: page,
+          limit: limit,
+          search: value,
+        };
+      });
+    }
+  }, [page, limit, pageSize, value, setSearchParams]);
+
   return (
     <>
       <div className="flex gap-2 items-center">
         {enableSearch ? (
           <Input
             type="text"
-            value={globalFilter ?? ""}
+            value={search ?? ""}
             onChange={(event) => {
-              setGlobalFilter(event.target.value);
+              setSearch(event.target.value);
             }}
             placeholder={searchPlaceholder}
             className="bg-background"
@@ -431,14 +397,12 @@ function DataTable<TData>({
               <DropdownMenuTrigger
                 render={<Button variant="outline" size="sm" />}
               >
-                {table.getState().pagination.pageSize}
+                {limit}
               </DropdownMenuTrigger>
+
               <DropdownMenuContent align="start" className="w-24">
                 {pageSizeOptions.map((size) => (
-                  <DropdownMenuItem
-                    key={size}
-                    onClick={() => table.setPageSize(size)}
-                  >
+                  <DropdownMenuItem key={size} onClick={() => setLimit(size)}>
                     {size}
                   </DropdownMenuItem>
                 ))}
@@ -448,8 +412,7 @@ function DataTable<TData>({
 
           <div className="flex items-center gap-3">
             <span>
-              Página {table.getState().pagination.pageIndex + 1} de{" "}
-              {table.getPageCount() || 1}
+              Página {page} de {paginationData?.pages ?? 1}
             </span>
 
             <div className="flex items-center gap-2">
@@ -457,8 +420,8 @@ function DataTable<TData>({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
+                onClick={() => setPage(page - 1)}
+                disabled={page === 1}
               >
                 Anterior
               </Button>
@@ -467,8 +430,8 @@ function DataTable<TData>({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
+                onClick={() => setPage(page + 1)}
+                disabled={page >= (paginationData?.pages ?? 0)}
               >
                 Siguiente
               </Button>

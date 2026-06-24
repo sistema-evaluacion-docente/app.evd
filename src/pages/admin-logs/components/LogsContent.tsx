@@ -17,7 +17,6 @@ export function LogsContent() {
         columns={columns}
         queryFn={useGetAudits}
         enableSearch={false}
-        emptyMessage="Sin registros que coincidan con los filtros aplicados."
       />
     </>
   );

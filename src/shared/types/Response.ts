@@ -10,6 +10,12 @@ export interface ResponseAPI<T = unknown> {
   status: number;
   message: string;
   data: T;
+  pagination?: {
+    total: number;
+    page: number;
+    pages: number;
+    limit: number;
+  };
   error: string | null;
   errors?: Record<string, string>;
 }
