@@ -9,6 +9,12 @@ export interface EvaluationRecord {
   pdf_url: string;
   status: "PROCESSING" | "COMPLETED" | "FAILED";
   count: number | null;
+  academic_period_name?: string;
+  active: boolean;
+}
+
+export interface EvaluationStatusUpdate {
+  active: boolean;
 }
 
 export interface EvaluationScore {
@@ -66,4 +72,11 @@ export function getComments(
   evaluationId: number,
 ): Promise<ResponseAPI<EvaluationComment[]>> {
   return api.get(`/comments/by-evaluation/${evaluationId}`);
+}
+
+export function updateEvaluationStatus(
+  evaluationId: number,
+  payload: EvaluationStatusUpdate,
+): Promise<ResponseAPI<EvaluationRecord>> {
+  return api.patch(`/evaluations/${evaluationId}/status`, payload);
 }

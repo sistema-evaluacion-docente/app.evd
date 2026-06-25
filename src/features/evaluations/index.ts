@@ -3,7 +3,7 @@ export type {
   EvaluationScore,
   QuestionScore,
   EvaluationComment,
-} from './api/evaluationService'
+} from "./api/evaluationService";
 
 export {
   uploadEvaluation,
@@ -11,6 +11,13 @@ export {
   getEvaluationScores,
   getQuestionScores,
   getComments,
-} from './api/evaluationService'
+  updateEvaluationStatus,
+} from "./api/evaluationService";
 
-export { useUploadEvaluation, type UploadStatus } from './hooks/useUploadEvaluation'
+export {
+  useUploadEvaluation,
+  type UploadStatus,
+} from "./hooks/useUploadEvaluation";
+export { default as useGetEvaluations } from "./hooks/useGetEvaluations";
+export { default as useEvaluationColumns } from "./hooks/useEvaluationColumns";
+export { default as useUpdateEvaluationStatus } from "./hooks/useUpdateEvaluationStatus";

@@ -21,8 +21,23 @@ const securityConfig = {
       roles: ["DIRECTOR DE DEPARTAMENTO"],
     },
     {
+      path: "/evaluations",
+      name: "Evaluaciones",
+      roles: ["DIRECTOR DE DEPARTAMENTO"],
+    },
+    {
       path: "/dashboard",
       name: "Inicio",
+      roles: ["ADMIN"],
+    },
+    {
+      path: "/faculties",
+      name: "Facultades",
+      roles: ["ADMIN"],
+    },
+    {
+      path: "/departments",
+      name: "Departamentos",
       roles: ["ADMIN"],
     },
     {
@@ -43,6 +58,11 @@ const securityConfig = {
     {
       path: "/settings",
       name: "Configuración",
+      roles: ["ADMIN"],
+    },
+    {
+      path: "/logs",
+      name: "Logs",
       roles: ["ADMIN"],
     },
   ],
