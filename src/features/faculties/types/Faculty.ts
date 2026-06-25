@@ -1,22 +1,19 @@
-export interface Department {
+export interface Faculty {
   id: number;
   name: string;
   code?: string;
-  faculty_id?: number;
   active: boolean;
   created_at?: string;
   updated_at?: string;
 }
 
-export interface CreateDepartmentPayload {
+export interface CreateFacultyPayload {
   name: string;
   code?: string;
-  faculty_id?: number;
 }
 
-export interface UpdateDepartmentPayload {
+export interface UpdateFacultyPayload {
   name?: string;
   code?: string;
-  faculty_id?: number;
   active?: boolean;
 }

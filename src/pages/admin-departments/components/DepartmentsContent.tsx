@@ -1,12 +1,20 @@
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PageHeader } from "@/shared/ui";
-import { useQuery } from "@tanstack/react-query";
+import { getFaculties } from "@/features/faculties";
 
 import DataTable, {
   type DataTableAction,
@@ -36,7 +44,17 @@ export function DepartmentsContent() {
   const { mutateAsync: updateDepartment, isPending: isSavingDepartment } =
     useUpdateDepartment();
 
-  const [createForm, setCreateForm] = useState({ name: "", code: "" });
+  const { data: facultiesData } = useQuery({
+    queryKey: ["faculties"],
+    queryFn: getFaculties,
+  });
+  const faculties = facultiesData?.data ?? [];
+
+  const [createForm, setCreateForm] = useState({
+    name: "",
+    code: "",
+    faculty_id: "",
+  });
 
   const [editingDepartment, setEditingDepartment] = useState<Department | null>(
     null,
@@ -56,11 +74,14 @@ export function DepartmentsContent() {
               {
                 name: createForm.name,
                 code: createForm.code || undefined,
+                faculty_id: createForm.faculty_id
+                  ? Number(createForm.faculty_id)
+                  : undefined,
               },
               {
                 onSuccess: () => {
                   toast.success("Departamento creado exitosamente");
-                  setCreateForm({ name: "", code: "" });
+                  setCreateForm({ name: "", code: "", faculty_id: "" });
                   close();
                 },
                 onError: () => {
@@ -94,6 +115,31 @@ export function DepartmentsContent() {
                 placeholder="Código opcional"
               />
             </div>
+
+            <div className="space-y-2">
+              <Label>Facultad</Label>
+              <Select
+                value={createForm.faculty_id}
+                onValueChange={(value) =>
+                  setCreateForm((prev) => ({
+                    ...prev,
+                    faculty_id: value ?? "",
+                  }))
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Seleccionar facultad" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Sin facultad</SelectItem>
+                  {faculties.map((f) => (
+                    <SelectItem key={f.id} value={String(f.id)}>
+                      {f.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <DialogFooter className="mt-6">
@@ -110,7 +156,7 @@ export function DepartmentsContent() {
         </form>
       ),
     }),
-    [createMutation, createForm],
+    [createMutation, createForm, faculties],
   );
 
   const rowActions = useMemo<DataTableAction<Department>[]>(
@@ -146,6 +192,7 @@ export function DepartmentsContent() {
     id: number;
     name: string;
     code?: string;
+    faculty_id?: number;
   }) => {
     try {
       await updateDepartment(data);

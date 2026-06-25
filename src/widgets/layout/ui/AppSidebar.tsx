@@ -1,6 +1,7 @@
 import { cn } from "@/shared/lib/utils";
 import {
   BarChart3,
+  Building2,
   Calendar,
   FileText,
   LayoutGrid,
@@ -31,6 +32,7 @@ const MENU_ICON_BY_PATH: Record<string, typeof DEFAULT_ICON> = {
   "/users": Users,
   "/roles": UserSearch,
   "/documents": FileText,
+  "/faculties": Building2,
   "/admin/directors": UserSearch,
   "/admin/periods": Calendar,
   "/admin/logs": FileText,
