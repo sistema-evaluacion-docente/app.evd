@@ -1,15 +1,8 @@
 import { Bell, Calendar, Menu, Search } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Input } from "@/shared/ui";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
 import Avatar from "@/features/auth/components/Avatar";
+import { PeriodsSelector } from "@/features/periods";
 
 export interface AppHeaderProps {
   onOpenMenu: () => void;
@@ -21,15 +14,12 @@ export interface AppHeaderProps {
   rightMode?: "periodo" | "search";
 }
 
-const PERIODS = ["2024-1", "2023-2", "2023-1"];
-
 export function AppHeader({
   onOpenMenu,
   showBreadcrumb = false,
   breadcrumb,
   rightMode = "periodo",
 }: AppHeaderProps) {
-  const [periodo, setPeriodo] = useState("2024-1");
 
   return (
     <header className="sticky top-0 z-30 border-b border-ink-200 bg-white/85 backdrop-blur-md">
@@ -58,27 +48,10 @@ export function AppHeader({
               />
             </div>
           ) : (
-            <div className="hidden h-9 items-center gap-2 rounded-md border border-ink-200 bg-white px-3 text-[13px] text-ink-700 md:flex">
+            <div className="hidden items-center gap-2 md:flex">
               <Calendar size={14} className="text-ink-400" />
-              <span>Periodo Académico:</span>
-              <Select
-                value={periodo}
-                onValueChange={(value) => setPeriodo(value as string)}
-              >
-                <SelectTrigger
-                  aria-label="Periodo académico"
-                  className="h-auto gap-1 border-0 bg-transparent p-0 text-[13px] font-medium text-ink-900 shadow-none data-[size=default]:h-auto focus-visible:ring-0"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PERIODS.map((value) => (
-                    <SelectItem key={value} value={value}>
-                      {value}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <span className="whitespace-nowrap text-[13px] text-ink-700">Periodo Académico:</span>
+              <PeriodsSelector />
             </div>
           )}
 

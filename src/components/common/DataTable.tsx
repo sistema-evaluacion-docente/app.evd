@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import type { ResponseAPI } from "@/shared/types/Response";
-import type { UseQueryResult } from "@tanstack/react-query";
+import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
 import {
   flexRender,
   getCoreRowModel,
@@ -9,12 +9,20 @@ import {
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
-  type PaginationState,
 } from "@tanstack/react-table";
-import { EllipsisVertical, RotateCcw } from "lucide-react";
+import { EllipsisVertical, Plus, RotateCcw } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { useDebounce } from "use-debounce";
+import { useSearchParams } from "wouter";
 import { Button } from "../ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +30,7 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { Input } from "../ui/input";
+import { Label } from "../ui/label";
 import { Skeleton } from "../ui/skeleton";
 
 export interface DataTableAction<TData> {
@@ -32,6 +41,27 @@ export interface DataTableAction<TData> {
   disabled?: (row: TData) => boolean;
   visible?: (row: TData) => boolean;
 }
+
+interface DataTableCreateConfigBase {
+  label?: string;
+  dialogTitle?: string;
+  dialogDescription?: string;
+}
+
+interface DataTableCreateConfigCustomForm extends DataTableCreateConfigBase {
+  renderForm: (helpers: { close: () => void }) => React.ReactNode;
+}
+
+interface DataTableCreateConfigDefault extends DataTableCreateConfigBase {
+  mutation: UseMutationResult<unknown, Error, { nombre: string }, unknown>;
+  fieldLabel?: string;
+  placeholder?: string;
+  renderForm?: undefined;
+}
+
+export type DataTableCreateConfig =
+  | DataTableCreateConfigCustomForm
+  | DataTableCreateConfigDefault;
 
 interface DataTableProps<TData> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -56,40 +86,8 @@ interface DataTableProps<TData> {
     limit: number;
     search: string;
   }) => UseQueryResult<ResponseAPI<TData[]>>;
-}
-
-/**
- * Get a URL parameter as a number, with a fallback value.
- * @param paramName The name of the URL parameter to retrieve.
- * @param fallback The fallback value to return if the parameter is not found or is invalid.
- * @returns The parsed URL parameter as a number, or the fallback value if not found or invalid.
- */
-function getUrlParamNumber(paramName: string, fallback: number) {
-  if (typeof window === "undefined") return fallback;
-
-  const rawValue = new URLSearchParams(window.location.search).get(paramName);
-
-  if (!rawValue) return fallback;
-
-  const parsed = Number(rawValue);
-
-  if (!Number.isFinite(parsed) || parsed < 1) return fallback;
-
-  return Math.floor(parsed);
-}
-
-/**
- * Get a URL parameter as a string, with a fallback value.
- * @param paramName The name of the URL parameter to retrieve.
- * @param fallback The fallback value to return if the parameter is not found or is invalid.
- * @returns The parsed URL parameter as a string, or the fallback value if not found or invalid.
- */
-function getUrlParamString(paramName: string, fallback = "") {
-  if (typeof window === "undefined") return fallback;
-
-  const rawValue = new URLSearchParams(window.location.search).get(paramName);
-
-  return rawValue ?? fallback;
+  extraFilterParams?: Record<string, string | undefined>;
+  createConfig?: DataTableCreateConfig;
 }
 
 /**
@@ -114,57 +112,38 @@ function DataTable<TData>({
   rowActions = [],
   actionsHeaderLabel = "Acciones",
   queryFn,
+  extraFilterParams,
+  createConfig,
 }: DataTableProps<TData>) {
-  const [globalFilter, setGlobalFilter] = useState(() =>
-    getUrlParamString("search", ""),
-  );
-  const [value] = useDebounce(globalFilter ?? "", 400);
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [pagination, setPagination] = useState<PaginationState>(() => ({
-    pageIndex: getUrlParamNumber("page", 1) - 1,
-    pageSize: getUrlParamNumber("limit", pageSize),
-  }));
+  const pageValue = searchParams.get("page") ?? 1;
+  const limitValue = searchParams.get("limit") ?? pageSize;
+  const searchValue = searchParams.get("search") ?? "";
+
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(Number(pageValue ?? 1));
+  const [limit, setLimit] = useState(Number(limitValue ?? pageSize));
+
+  const [value] = useDebounce(search ?? "", 400);
+
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [newItemName, setNewItemName] = useState("");
 
   const { data, isLoading, isFetching, refetch } = queryFn({
-    page: pagination.pageIndex + 1,
-    limit: pagination.pageSize,
+    page,
+    limit,
     search: value,
+    ...extraFilterParams,
   });
 
-  console.log(data);
-
   const result = (data?.data ?? []) as TData[];
+  const paginationData = data?.pagination;
   const hasRowActions = rowActions.length > 0;
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const params = new URLSearchParams(window.location.search);
-
-    params.set("page", String(pagination.pageIndex + 1));
-    params.set("limit", String(pagination.pageSize));
-
-    if (value) {
-      params.set("search", value);
-    } else {
-      params.delete("search");
-    }
-
-    const queryString = params.toString();
-    const nextUrl = `${window.location.pathname}${
-      queryString ? `?${queryString}` : ""
-    }${window.location.hash}`;
-
-    window.history.replaceState(null, "", nextUrl);
-  }, [pagination.pageIndex, pagination.pageSize, value]);
 
   const table = useReactTable({
     data: result,
     columns,
-    state: {
-      pagination,
-    },
-    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -172,33 +151,79 @@ function DataTable<TData>({
     enableSorting,
   });
 
+  useEffect(() => {
+    if (
+      searchValue === undefined &&
+      pageValue === undefined &&
+      limitValue === undefined
+    )
+      return;
+
+    setSearchParams((prev) => {
+      return {
+        ...prev,
+        search: "",
+        page: 1,
+        limit: pageSize,
+      };
+    });
+  }, []);
+
+  useEffect(() => {
+    if (page !== 1 || limit !== pageSize) {
+      setSearchParams((prev) => {
+        return {
+          ...prev,
+          page: page,
+          limit: limit,
+          search: value,
+        };
+      });
+    }
+  }, [page, limit, pageSize, value, setSearchParams]);
+
   return (
     <>
       <div className="flex gap-2 items-center">
         {enableSearch ? (
           <Input
             type="text"
-            value={globalFilter ?? ""}
+            value={search ?? ""}
             onChange={(event) => {
-              setGlobalFilter?.(event.target.value);
-              setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+              setSearch(event.target.value);
             }}
             placeholder={searchPlaceholder}
             className="bg-background"
           />
         ) : null}
 
-        <Button
-          size="sm"
-          type="button"
-          variant="outline"
-          onClick={() => refetch()}
-          disabled={isFetching}
-          className="shrink-0"
-        >
-          <RotateCcw className={cn("size-4", isFetching && "animate-spin")} />
-          Recargar
-        </Button>
+        <div className="flex gap-2 items-center ml-auto">
+          {createConfig ? (
+            <Button
+              size="sm"
+              type="button"
+              onClick={() => {
+                setNewItemName("");
+                setIsCreateDialogOpen(true);
+              }}
+            >
+              <Plus className="size-4" />
+              {createConfig.label ?? "Nuevo"}
+            </Button>
+          ) : null}
+
+          <Button
+            size="sm"
+            type="button"
+            variant="outline"
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="shrink-0"
+          >
+            <RotateCcw className={cn("size-4", isFetching && "animate-spin")} />
+            Recargar
+          </Button>
+        </div>
       </div>
 
       <div
@@ -375,14 +400,12 @@ function DataTable<TData>({
               <DropdownMenuTrigger
                 render={<Button variant="outline" size="sm" />}
               >
-                {table.getState().pagination.pageSize}
+                {limit}
               </DropdownMenuTrigger>
+
               <DropdownMenuContent align="start" className="w-24">
                 {pageSizeOptions.map((size) => (
-                  <DropdownMenuItem
-                    key={size}
-                    onClick={() => table.setPageSize(size)}
-                  >
+                  <DropdownMenuItem key={size} onClick={() => setLimit(size)}>
                     {size}
                   </DropdownMenuItem>
                 ))}
@@ -392,8 +415,7 @@ function DataTable<TData>({
 
           <div className="flex items-center gap-3">
             <span>
-              Página {table.getState().pagination.pageIndex + 1} de{" "}
-              {table.getPageCount() || 1}
+              Página {page} de {paginationData?.pages ?? 1}
             </span>
 
             <div className="flex items-center gap-2">
@@ -401,8 +423,8 @@ function DataTable<TData>({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
+                onClick={() => setPage(page - 1)}
+                disabled={page === 1}
               >
                 Anterior
               </Button>
@@ -411,14 +433,106 @@ function DataTable<TData>({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
+                onClick={() => setPage(page + 1)}
+                disabled={page >= (paginationData?.pages ?? 0)}
               >
                 Siguiente
               </Button>
             </div>
           </div>
         </div>
+      ) : null}
+
+      {createConfig ? (
+        <Dialog
+          open={isCreateDialogOpen}
+          onOpenChange={(open) => {
+            setIsCreateDialogOpen(open);
+            if (!open) setNewItemName("");
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {createConfig.dialogTitle ?? "Crear elemento"}
+              </DialogTitle>
+              {createConfig.dialogDescription ? (
+                <p className="text-sm text-muted-foreground">
+                  {createConfig.dialogDescription}
+                </p>
+              ) : null}
+            </DialogHeader>
+
+            {createConfig.renderForm ? (
+              createConfig.renderForm({
+                close: () => {
+                  setIsCreateDialogOpen(false);
+                  setNewItemName("");
+                },
+              })
+            ) : (
+              <>
+                <div className="grid gap-2">
+                  <Label>{createConfig.fieldLabel ?? "Nombre"}</Label>
+                  <Input
+                    value={newItemName}
+                    onChange={(event) => setNewItemName(event.target.value)}
+                    placeholder={
+                      createConfig.placeholder ?? "Ingrese el nombre..."
+                    }
+                    onKeyDown={(event) => {
+                      if (
+                        event.key === "Enter" &&
+                        newItemName.trim() &&
+                        !createConfig.mutation.isPending
+                      ) {
+                        event.preventDefault();
+                        createConfig.mutation.mutate(
+                          { nombre: newItemName.trim() },
+                          {
+                            onSuccess: () => {
+                              toast.success("Elemento creado exitosamente");
+                              setIsCreateDialogOpen(false);
+                              setNewItemName("");
+                            },
+                            onError: () => {
+                              toast.error("Error al crear el elemento");
+                            },
+                          },
+                        );
+                      }
+                    }}
+                  />
+                </div>
+
+                <DialogFooter>
+                  <Button
+                    onClick={() => {
+                      createConfig.mutation.mutate(
+                        { nombre: newItemName.trim() },
+                        {
+                          onSuccess: () => {
+                            toast.success("Elemento creado exitosamente");
+                            setIsCreateDialogOpen(false);
+                            setNewItemName("");
+                          },
+                          onError: () => {
+                            toast.error("Error al crear el elemento");
+                          },
+                        },
+                      );
+                    }}
+                    disabled={
+                      !newItemName.trim() || createConfig.mutation.isPending
+                    }
+                  >
+                    {createConfig.mutation.isPending ? "Creando..." : "Crear"}
+                  </Button>
+                </DialogFooter>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
       ) : null}
     </>
   );
