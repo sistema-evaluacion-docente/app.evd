@@ -30,22 +30,24 @@ const columns: ColumnDef<Teacher>[] = [
     header: "Nombre",
     accessorKey: "name",
     cell: ({ row }) => (
-      <div className="flex items-center gap-3">
-        <Avatar>
-          <AvatarFallback>
-            {row.original?.user?.name?.charAt(0).toUpperCase()}
-          </AvatarFallback>
+      <Link href={`/teachers/${row.original?.id}`}>
+        <div className="flex items-center gap-3">
+          <Avatar>
+            <AvatarFallback>
+              {row.original?.user?.name?.charAt(0).toUpperCase()}
+            </AvatarFallback>
 
-          <AvatarImage
-            alt={row.original?.user?.name}
-            src={row.original?.user?.avatar_url}
-          />
-        </Avatar>
+            <AvatarImage
+              alt={row.original?.user?.name}
+              src={row.original?.user?.avatar_url}
+            />
+          </Avatar>
 
-        <span className="font-medium text-ink-900">
-          {row.original?.user?.name}
-        </span>
-      </div>
+          <span className="font-medium text-ink-900">
+            {row.original?.user?.name}
+          </span>
+        </div>
+      </Link>
     ),
   },
   {
@@ -114,18 +116,21 @@ function TeachersContent() {
         description="Listado de docentes registrados en el sistema."
         actions={
           <div className="flex items-center gap-2">
+            <Link href="/upload-teachers">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsDrawerOpen(true)}
+              >
+                <Plus size={14} strokeWidth={2.25} />
+                Cargar docentes
+              </Button>
+            </Link>
+
             <Button type="button" onClick={() => setIsDrawerOpen(true)}>
               <Plus size={14} strokeWidth={2.25} />
               Nuevo docente
             </Button>
-
-            <Link
-              href="/upload-teachers"
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-brand-600 px-4 text-[13.5px] font-semibold text-white transition-colors hover:bg-brand-700"
-            >
-              <Plus size={14} strokeWidth={2.25} />
-              Cargar docentes
-            </Link>
           </div>
         }
       />
