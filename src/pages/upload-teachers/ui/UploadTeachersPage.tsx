@@ -1,243 +1,77 @@
-import { Building2, ChevronLeft, ChevronRight, Search, Trash2 } from 'lucide-react'
-import { useMemo, useState } from 'react'
-import { Link } from 'wouter'
-
 import {
-  CsvAccountUpload,
-  ManualAccountForm,
-  type AccountCsvRow,
-  type AccountFormValues,
-  type AccountUploadConfig,
-} from '@/features/account-upload'
-import { useToast } from '@/shared/lib/use-toast'
-import {
-  AppFooter,
-  Avatar,
-  Badge,
-  Card,
-  DataTable,
-  Input,
-  PageHeader,
-  SegmentedTabs,
-  Toast,
-  type DataTableColumn,
-} from '@/shared/ui'
-import { AppLayout } from '@/widgets/layout'
+    AlertTriangle,
+    Check,
+    ChevronLeft,
+    FileSpreadsheet,
+    FileUp,
+    Info,
+    UserPlus,
+    Users,
+    UserX,
+} from "lucide-react";
+import { useRef, useState } from "react";
+import { Link } from "wouter";
 
-const FACULTY = 'Facultad de Ingeniería'
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { useUploadTeachers, type UploadStatus } from "@/features/teachers";
+import { cn } from "@/lib/utils";
+import { PageHeader, StatTile } from "@/shared/ui";
+import { AppLayout } from "@/widgets/layout";
 
-const PROGRAMS = [
-  'Ingeniería de Sistemas',
-  'Ingeniería Civil',
-  'Ingeniería Electrónica',
-  'Ingeniería Industrial',
-  'Ingeniería Mecánica',
-]
-
-const CSV_EXAMPLE_LINES = [
-  'DOC-2031,Dra. Elena Ramírez,e.ramirez@universidad.edu.co,Tiempo Completo',
-  'DOC-2032,Ing. Andrés Posada,a.posada@universidad.edu.co,Catedrático',
-  'DOC-2033,Mg. Camila Mosquera,c.mosquera@universidad.edu.co,Medio Tiempo',
-]
-
-const TEACHER_CONFIG: AccountUploadConfig = {
-  codeRegex: /^DOC-\d{3,5}$/i,
-  codeFormatHint: 'DOC-XXXX',
-  codePlaceholder: 'DOC-2031',
-  extraLabel: 'Programa',
-  extraOptions: PROGRAMS,
-  extraHelp: 'Programa adscrito al departamento',
-  csvFileName: 'plantilla_docentes.csv',
-  csvTemplate: `codigo,nombre,email,vinculacion\n${CSV_EXAMPLE_LINES.join('\n')}`,
-  csvExampleLines: CSV_EXAMPLE_LINES,
-  entitySingular: 'docente',
-  entityPlural: 'docentes',
-}
-
-interface TeacherRecord {
-  id: string
-  codigo: string
-  nombre: string
-  email: string
-  vinculacion: string
-  programa: string
-  addedAt: string
-  status: 'active' | 'pending'
-}
-
-const INITIAL_TEACHERS: TeacherRecord[] = [
-  { id: 'DOC-2014', codigo: 'DOC-2014', nombre: 'Dra. Patricia Salgado', email: 'p.salgado@universidad.edu.co', vinculacion: 'Tiempo Completo', programa: 'Ingeniería de Sistemas', addedAt: 'Hace 12 min', status: 'active' },
-  { id: 'DOC-2015', codigo: 'DOC-2015', nombre: 'Ing. Jorge Iván Méndez', email: 'j.mendez@universidad.edu.co', vinculacion: 'Catedrático', programa: 'Ingeniería Industrial', addedAt: 'Hace 1 hora', status: 'pending' },
-  { id: 'DOC-2016', codigo: 'DOC-2016', nombre: 'Mg. Lucía Herrera', email: 'l.herrera@universidad.edu.co', vinculacion: 'Medio Tiempo', programa: 'Ingeniería Civil', addedAt: 'Hace 3 horas', status: 'active' },
-]
-
-function StatusPill({ status }: { status: 'active' | 'pending' }) {
-  if (status === 'active') {
-    return (
-      <span className="inline-flex h-6 items-center gap-1.5 rounded-full border border-emerald-200/70 bg-emerald-50 px-2.5 text-[11px] font-semibold uppercase text-emerald-700">
-        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-        Activo
-      </span>
-    )
-  }
-  return (
-    <span className="inline-flex h-6 items-center gap-1.5 rounded-full border border-amber-200/70 bg-amber-50 px-2.5 text-[11px] font-semibold uppercase text-amber-700">
-      <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-      Pendiente
-    </span>
-  )
-}
+const STATUS_HEADING: Record<Exclude<UploadStatus, "idle">, string> = {
+  uploading: "Estado: Subiendo archivo",
+  success: "Estado: Archivo procesado",
+  error: "Estado: Error al procesar",
+};
 
 export function UploadTeachersPage() {
-  const [mode, setMode] = useState('manual')
-  const [teachers, setTeachers] = useState<TeacherRecord[]>(INITIAL_TEACHERS)
-  const [search, setSearch] = useState('')
-  const { toast, showToast } = useToast()
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const { status, progress, fileName, error, result, upload, reset } =
+    useUploadTeachers();
 
-  const handleCreate = (values: AccountFormValues) => {
-    setTeachers((prev) => [
-      {
-        id: values.codigo,
-        codigo: values.codigo,
-        nombre: values.nombre,
-        email: values.email,
-        vinculacion: values.vinculacion,
-        programa: values.extra,
-        addedAt: 'Hace unos segundos',
-        status: 'pending',
-      },
-      ...prev,
-    ])
-    showToast(`Docente ${values.codigo} creado · invitación enviada`)
-  }
+  const handleFile = (file: File | undefined) => {
+    if (!file) return;
+    upload(file);
+  };
 
-  const handleImport = (rows: AccountCsvRow[]) => {
-    setTeachers((prev) => [
-      ...rows.map((row) => ({
-        id: row.codigo,
-        ...row,
-        programa: PROGRAMS[Math.floor(Math.random() * PROGRAMS.length)],
-        addedAt: 'Hace unos segundos',
-        status: 'pending' as const,
-      })),
-      ...prev,
-    ])
-    showToast(
-      `${rows.length} ${rows.length === 1 ? 'docente importado' : 'docentes importados'} correctamente`,
-    )
-  }
+  const handleReset = () => {
+    reset();
+    if (inputRef.current) inputRef.current.value = "";
+  };
 
-  const handleRemove = (id: string) => {
-    setTeachers((prev) => prev.filter((teacher) => teacher.id !== id))
-    showToast('Docente eliminado', 'warning')
-  }
-
-  const filtered = useMemo(() => {
-    if (!search) return teachers
-    const query = search.toLowerCase()
-    return teachers.filter(
-      (teacher) =>
-        teacher.nombre.toLowerCase().includes(query) ||
-        teacher.email.toLowerCase().includes(query) ||
-        teacher.codigo.toLowerCase().includes(query),
-    )
-  }, [teachers, search])
-
-  const columns: DataTableColumn<TeacherRecord>[] = [
-    {
-      header: 'Docente',
-      cell: (teacher) => (
-        <div className="flex items-center gap-3">
-          <Avatar name={teacher.nombre} size={36} />
-          <div className="leading-tight">
-            <div className="text-[14px] font-semibold text-ink-900">
-              {teacher.nombre}
-            </div>
-            <div className="text-[12px] text-ink-500">{teacher.email}</div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      header: 'Código',
-      cell: (teacher) => (
-        <span className="num font-medium tabular-nums text-ink-800">
-          {teacher.codigo}
-        </span>
-      ),
-    },
-    {
-      header: 'Vinculación',
-      cell: (teacher) => (
-        <Badge
-          variant="outline"
-          className="text-[12px] font-medium normal-case tracking-normal"
-        >
-          {teacher.vinculacion}
-        </Badge>
-      ),
-    },
-    {
-      header: 'Programa',
-      cell: (teacher) => (
-        <span className="text-[13px] text-ink-700">{teacher.programa}</span>
-      ),
-    },
-    {
-      header: 'Estado',
-      cell: (teacher) => <StatusPill status={teacher.status} />,
-    },
-    {
-      header: 'Creado',
-      cell: (teacher) => (
-        <span className="text-[12.5px] text-ink-500">{teacher.addedAt}</span>
-      ),
-    },
-    {
-      header: 'Acción',
-      headerClassName: 'text-right',
-      cellClassName: 'text-right',
-      cell: (teacher) => (
-        <button
-          type="button"
-          onClick={() => handleRemove(teacher.id)}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-ink-500 hover:bg-brand-50 hover:text-brand-700"
-          aria-label={`Eliminar ${teacher.nombre}`}
-        >
-          <Trash2 size={14} />
-        </button>
-      ),
-    },
-  ]
+  const busy = status === "uploading";
+  const ready = status === "success";
+  const createdCount = result?.created.length ?? 0;
+  const skippedCount = result?.skipped.length ?? 0;
+  const errorsCount = result?.errors.length ?? 0;
 
   return (
     <AppLayout
-      role="director"
       mainClassName="max-w-[1200px] space-y-5"
       header={{
-        userName: 'Director Depto.',
-        userRole: FACULTY,
+        userName: "Director Depto.",
+        userRole: "Ciencias Básicas",
         showBreadcrumb: true,
         breadcrumb: (
           <>
-            <Link href="/teachers" className="transition-colors hover:text-ink-900">
+            <Link
+              href="/teachers"
+              className="transition-colors hover:text-ink-900"
+            >
               Docentes
             </Link>
-            <ChevronRight size={12} className="text-ink-300" />
+            <span className="mx-2 text-ink-300">/</span>
             <span className="font-medium text-ink-900">Cargar docentes</span>
           </>
         ),
       }}
     >
       <PageHeader
-        title="Cargar Docentes"
-        description={
-          <>
-            Registre los docentes de su departamento. Los docentes creados se
-            asignan automáticamente a la{' '}
-            <span className="font-semibold text-ink-700">{FACULTY}</span>.
-          </>
-        }
+        title="Carga de Docentes"
+        description="Suba un archivo Excel (.xlsx o .xls) con la lista de docentes para crear masivamente en su departamento."
         actions={
           <Link
             href="/teachers"
@@ -248,68 +82,331 @@ export function UploadTeachersPage() {
         }
       />
 
-      <SegmentedTabs
-        value={mode}
-        onChange={setMode}
-        tabs={[
-          { value: 'manual', label: 'Carga manual', description: 'Un docente a la vez' },
-          { value: 'masiva', label: 'Carga masiva', description: 'Importar desde CSV' },
-        ]}
-      />
-
-      {mode === 'manual' ? (
-        <ManualAccountForm
-          config={TEACHER_CONFIG}
-          title="Agregar docente manualmente"
-          subtitle="Registre un nuevo docente del departamento."
-          footerNote="El docente recibirá un correo institucional con sus credenciales de acceso."
-          headerRight={
-            <span className="inline-flex h-7 items-center gap-1.5 rounded-full bg-ink-100 px-2.5 text-[11px] font-medium text-ink-700">
-              <Building2 size={12} /> {FACULTY}
-            </span>
-          }
-          onCreate={handleCreate}
-        />
-      ) : (
-        <CsvAccountUpload config={TEACHER_CONFIG} onImport={handleImport} />
-      )}
-
-      <Card className="overflow-hidden">
-        <div className="flex flex-col justify-between gap-3 border-b border-ink-100 px-5 py-4 sm:flex-row sm:items-center sm:px-6">
-          <div>
-            <h2 className="text-[16px] font-semibold text-ink-900">
-              Docentes registrados recientemente
-            </h2>
-            <p className="mt-0.5 text-[12.5px] text-ink-500">
-              Total:{' '}
-              <span className="num font-semibold tabular-nums text-ink-800">
-                {teachers.length}
-              </span>{' '}
-              · {FACULTY}
-            </p>
+      {/* Dropzone */}
+      <Card className="p-5 sm:p-6">
+        <div
+          onDragEnter={(event) => {
+            event.preventDefault();
+            if (!busy) setDragOver(true);
+          }}
+          onDragOver={(event) => event.preventDefault()}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(event) => {
+            event.preventDefault();
+            setDragOver(false);
+            if (!busy) handleFile(event.dataTransfer.files[0]);
+          }}
+          className={cn(
+            "flex flex-col items-center rounded-lg border-2 border-dashed px-6 py-10 text-center transition-colors sm:py-14",
+            dragOver
+              ? "border-brand-600 bg-brand-50/60"
+              : "border-brand-200 bg-brand-50/20",
+            busy && "pointer-events-none opacity-60",
+          )}
+        >
+          <div className="inline-flex h-16 w-16 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+            <FileUp size={28} strokeWidth={1.75} />
           </div>
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Filtrar docentes..."
-            icon={<Search size={14} />}
-            className="sm:w-[240px]"
+
+          <h3 className="mt-5 text-[18px] font-semibold tracking-tight text-ink-900">
+            Arrastre su archivo aquí
+          </h3>
+
+          <p className="mt-1.5 text-[13px] text-ink-500">
+            Formatos aceptados:{" "}
+            <span className="font-medium text-brand-600">.xlsx · .xls</span>
+          </p>
+
+          <Button
+            size="lg"
+            disabled={busy}
+            className="mt-6 px-5"
+            onClick={() => inputRef.current?.click()}
+          >
+            <FileSpreadsheet size={16} />
+            Seleccionar Archivo Excel
+          </Button>
+
+          <p className="mt-5 text-[11.5px] text-ink-400">
+            Columnas requeridas: nombre, email, codigo institucional, tipo de
+            contrato
+          </p>
+
+          <input
+            ref={inputRef}
+            type="file"
+            accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+            className="hidden"
+            onChange={(event) => handleFile(event.target.files?.[0])}
           />
         </div>
-        <DataTable
-          columns={columns}
-          rows={filtered}
-          rowKey={(teacher) => teacher.id}
-          minWidth={860}
-          rowClassName="h-[64px]"
-          emptyMessage="Sin docentes para este filtro."
-        />
       </Card>
 
-      <AppFooter>
-        Director · {FACULTY} · Sistema de Evaluación Docente · v2.1
-      </AppFooter>
-      <Toast toast={toast} />
+      {/* Status card */}
+      {status !== "idle" && (
+        <Card className="p-5 sm:p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              {status === "success" ? (
+                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                  <Check size={13} strokeWidth={2.5} />
+                </span>
+              ) : status === "error" ? (
+                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-brand-100 text-brand-600">
+                  <AlertTriangle size={13} />
+                </span>
+              ) : (
+                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-ink-100">
+                  <span className="h-2.5 w-2.5 animate-spin rounded-full border-2 border-ink-300 border-t-brand-600" />
+                </span>
+              )}
+              <span className="truncate text-[14px] font-semibold text-ink-900">
+                {STATUS_HEADING[status]}
+              </span>
+            </div>
+            <span className="num text-[13px] font-semibold text-ink-700">
+              {Math.round(progress)}%
+            </span>
+          </div>
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-ink-100">
+            <div
+              className="h-full bg-brand-600 transition-all duration-200"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <div className="mt-3 flex items-center justify-between gap-3 text-[12.5px] text-ink-500">
+            <span className="inline-flex min-w-0 items-center gap-1.5">
+              <Info size={14} />
+              {status === "success" && (
+                <span className="truncate">
+                  Archivo "
+                  <span className="font-medium text-ink-700">{fileName}</span>"
+                  procesado exitosamente.
+                </span>
+              )}
+              {status === "uploading" && (
+                <span className="truncate">
+                  Subiendo "
+                  <span className="font-medium text-ink-700">{fileName}</span>"…
+                </span>
+              )}
+              {status === "error" && (
+                <span className="text-brand-700">{error}</span>
+              )}
+            </span>
+            {(status === "success" || status === "error") && (
+              <button
+                type="button"
+                onClick={handleReset}
+                className="shrink-0 text-[12.5px] font-medium text-brand-600 hover:text-brand-700"
+              >
+                Subir otro archivo
+              </button>
+            )}
+          </div>
+        </Card>
+      )}
+
+      {/* Result stats */}
+      {ready && (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <StatTile
+            label="Creados"
+            value={createdCount.toLocaleString("es-CO")}
+            valueClassName="text-emerald-700 text-[40px]"
+            icon={
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-emerald-50 text-emerald-600">
+                <UserPlus size={18} />
+              </span>
+            }
+            className="p-5 sm:p-6"
+          />
+
+          <StatTile
+            label="Omitidos"
+            value={skippedCount.toLocaleString("es-CO")}
+            valueClassName="text-amber-700 text-[40px]"
+            icon={
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-amber-50 text-amber-600">
+                <UserX size={18} />
+              </span>
+            }
+            className="p-5 sm:p-6"
+          />
+
+          <StatTile
+            label="Errores"
+            value={errorsCount.toLocaleString("es-CO")}
+            valueClassName="text-brand-700 text-[40px]"
+            icon={
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-brand-50 text-brand-600">
+                <AlertTriangle size={18} />
+              </span>
+            }
+            className="p-5 sm:p-6"
+          />
+        </div>
+      )}
+
+      {/* Detailed results */}
+      {ready && (createdCount > 0 || skippedCount > 0 || errorsCount > 0) && (
+        <Card className="p-5 sm:p-6">
+          <h3 className="text-[16px] font-semibold text-ink-900">
+            Detalle de la importación
+          </h3>
+          <p className="mt-0.5 text-[13px] text-ink-500">
+            Desglose de cada fila procesada del archivo Excel.
+          </p>
+
+          <Separator className="my-4" />
+
+          {createdCount > 0 && (
+            <div className="mb-5">
+              <h4 className="mb-2 flex items-center gap-2 text-[14px] font-semibold text-emerald-800">
+                <UserPlus size={15} /> Creados ({createdCount})
+              </h4>
+              <div className="overflow-x-auto rounded-lg border border-ink-200">
+                <table className="min-w-full text-left text-[13px]">
+                  <thead className="bg-ink-50 text-[11px] font-semibold uppercase tracking-[0.05em] text-ink-500">
+                    <tr>
+                      <th className="px-4 py-2.5">Nombre</th>
+                      <th className="px-4 py-2.5">Email</th>
+                      <th className="px-4 py-2.5">Código</th>
+                      <th className="px-4 py-2.5">Contrato</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-ink-100">
+                    {result!.created.map((row, i) => (
+                      <tr key={i} className="hover:bg-ink-50/50">
+                        <td className="px-4 py-2 font-medium text-ink-900">
+                          {row.nombre}
+                        </td>
+                        <td className="px-4 py-2 text-ink-600">{row.email}</td>
+                        <td className="px-4 py-2 font-mono text-ink-700">
+                          {row.codigo_institucional}
+                        </td>
+                        <td className="px-4 py-2 text-ink-600">
+                          {row.tipo_contrato ?? "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {skippedCount > 0 && (
+            <div className="mb-5">
+              <h4 className="mb-2 flex items-center gap-2 text-[14px] font-semibold text-amber-800">
+                <UserX size={15} /> Omitidos ({skippedCount})
+              </h4>
+              <div className="overflow-x-auto rounded-lg border border-ink-200">
+                <table className="min-w-full text-left text-[13px]">
+                  <thead className="bg-ink-50 text-[11px] font-semibold uppercase tracking-[0.05em] text-ink-500">
+                    <tr>
+                      <th className="px-4 py-2.5">Nombre</th>
+                      <th className="px-4 py-2.5">Email</th>
+                      <th className="px-4 py-2.5">Código</th>
+                      <th className="px-4 py-2.5">Razón</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-ink-100">
+                    {result!.skipped.map((row, i) => (
+                      <tr key={i} className="hover:bg-ink-50/50">
+                        <td className="px-4 py-2 font-medium text-ink-900">
+                          {row.fila.nombre}
+                        </td>
+                        <td className="px-4 py-2 text-ink-600">
+                          {row.fila.email}
+                        </td>
+                        <td className="px-4 py-2 font-mono text-ink-700">
+                          {row.fila.codigo_institucional}
+                        </td>
+                        <td className="px-4 py-2 text-brand-700">
+                          {row.razon}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {errorsCount > 0 && (
+            <div>
+              <h4 className="mb-2 flex items-center gap-2 text-[14px] font-semibold text-brand-800">
+                <AlertTriangle size={15} /> Errores ({errorsCount})
+              </h4>
+              <div className="overflow-x-auto rounded-lg border border-ink-200">
+                <table className="min-w-full text-left text-[13px]">
+                  <thead className="bg-ink-50 text-[11px] font-semibold uppercase tracking-[0.05em] text-ink-500">
+                    <tr>
+                      <th className="px-4 py-2.5">Nombre</th>
+                      <th className="px-4 py-2.5">Email</th>
+                      <th className="px-4 py-2.5">Código</th>
+                      <th className="px-4 py-2.5">Razón</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-ink-100">
+                    {result!.errors.map((row, i) => (
+                      <tr key={i} className="hover:bg-ink-50/50">
+                        <td className="px-4 py-2 font-medium text-ink-900">
+                          {row.fila.nombre}
+                        </td>
+                        <td className="px-4 py-2 text-ink-600">
+                          {row.fila.email}
+                        </td>
+                        <td className="px-4 py-2 font-mono text-ink-700">
+                          {row.fila.codigo_institucional}
+                        </td>
+                        <td className="px-4 py-2 text-brand-700">
+                          {row.razon}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </Card>
+      )}
+
+      {/* Placeholder stats when idle */}
+      {!ready && status !== "error" && (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {["Creados", "Omitidos", "Errores"].map((label) => (
+            <Card key={label} className="border-dashed p-5 sm:p-6">
+              <div className="flex items-start justify-between gap-3">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-400">
+                  {label}
+                </div>
+                <div className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-ink-50 text-ink-300">
+                  <Users size={18} />
+                </div>
+              </div>
+              <div className="num mt-5 text-[40px] font-semibold leading-none tracking-tight text-ink-300">
+                —
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <Separator className="my-2" />
+
+      <div className="flex flex-col justify-between gap-3 pt-2 sm:flex-row sm:items-center">
+        <div className="text-[12.5px] text-ink-500">
+          {status === "idle" &&
+            "Esperando archivo. Use el área superior para subir un Excel con los docentes."}
+          {status === "uploading" && "Procesando subida del archivo…"}
+          {status === "success" &&
+            "Archivo procesado. Los docentes creados ya están disponibles en el sistema."}
+          {status === "error" && "Corrija el archivo e intente nuevamente."}
+        </div>
+      </div>
     </AppLayout>
-  )
+  );
 }
