@@ -196,14 +196,17 @@ function TeachersContent() {
 
       <CreateTeacherDrawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen} />
 
-      <EditTeacherDrawer
-        open={isEditDrawerOpen}
-        teacher={editingTeacher}
-        onOpenChange={(open) => {
-          setIsEditDrawerOpen(open);
-          if (!open) setEditingTeacher(null);
-        }}
-      />
+      {editingTeacher && (
+        <EditTeacherDrawer
+          key={editingTeacher.id}
+          open={isEditDrawerOpen}
+          teacher={editingTeacher}
+          onOpenChange={(open) => {
+            setIsEditDrawerOpen(open);
+            if (!open) setEditingTeacher(null);
+          }}
+        />
+      )}
     </div>
   );
 }

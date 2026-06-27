@@ -1,6 +1,3 @@
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -21,6 +18,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useState } from "react";
+import { toast } from "sonner";
+
 import useUpdateTeacher from "../hooks/useUpdateTeacher";
 import type { Teacher } from "../types/Teacher";
 
@@ -44,24 +44,12 @@ function EditTeacherDrawer({
   const updateMutation = useUpdateTeacher();
 
   const [form, setForm] = useState({
-    name: "",
-    email: "",
-    institutional_code: "",
-    contract_type: "",
-    active: true,
+    name: teacher?.user?.name ?? "",
+    email: teacher?.user?.email ?? "",
+    institutional_code: teacher?.institutional_code ?? "",
+    contract_type: teacher?.contract_type ?? "",
+    active: teacher?.active ?? true,
   });
-
-  useEffect(() => {
-    if (teacher) {
-      setForm({
-        name: teacher.user?.name ?? "",
-        email: teacher.user?.email ?? "",
-        institutional_code: teacher.institutional_code ?? "",
-        contract_type: teacher.contract_type ?? "",
-        active: teacher.active,
-      });
-    }
-  }, [teacher]);
 
   const isSubmitting = updateMutation.isPending;
   const isValid =
@@ -69,6 +57,7 @@ function EditTeacherDrawer({
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
     if (!isValid || !teacher) return;
 
     updateMutation.mutate(
@@ -81,7 +70,12 @@ function EditTeacherDrawer({
         active: form.active,
       },
       {
-        onSuccess: () => {
+        onSuccess: (data) => {
+          if (data?.status !== 200) {
+            toast.error(`Error: ${data?.message}`);
+            return;
+          }
+
           toast.success("Docente actualizado exitosamente");
           onOpenChange(false);
         },
@@ -93,7 +87,12 @@ function EditTeacherDrawer({
   }
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange} direction="right">
+    <Drawer
+      key={teacher?.id}
+      open={open}
+      onOpenChange={onOpenChange}
+      direction="right"
+    >
       <DrawerContent className="w-full sm:max-w-xl">
         <DrawerHeader>
           <DrawerTitle>Editar docente</DrawerTitle>
