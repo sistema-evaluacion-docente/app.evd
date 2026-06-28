@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Plus } from "lucide-react";
@@ -7,30 +9,45 @@ import { Link, useLocation } from "wouter";
 
 import DataTable from "@/components/common/DataTable";
 import { PageHeader } from "@/shared/ui";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import useGetTeachers from "../hooks/useGetTeachers";
+import useDeleteTeacher from "../hooks/useDeleteTeacher";
 import type { Teacher } from "../types/Teacher";
+import CreateTeacherDrawer from "./CreateTeacherDrawer";
+import EditTeacherDrawer from "./EditTeacherDrawer";
 
 const columns: ColumnDef<Teacher>[] = [
   {
     header: "Nombre",
     accessorKey: "name",
     cell: ({ row }) => (
-      <div className="flex items-center gap-3">
-        <Avatar>
-          <AvatarFallback>
-            {row.original?.user?.name?.charAt(0).toUpperCase()}
-          </AvatarFallback>
+      <Link href={`/teachers/${row.original?.id}`}>
+        <div className="flex items-center gap-3">
+          <Avatar>
+            <AvatarFallback>
+              {row.original?.user?.name?.charAt(0).toUpperCase()}
+            </AvatarFallback>
 
-          <AvatarImage
-            alt={row.original?.user?.name}
-            src={row.original?.user?.avatar_url}
-          />
-        </Avatar>
+            <AvatarImage
+              alt={row.original?.user?.name}
+              src={row.original?.user?.avatar_url}
+            />
+          </Avatar>
 
-        <span className="font-medium text-ink-900">
-          {row.original?.user?.name}
-        </span>
-      </div>
+          <span className="font-medium text-ink-900">
+            {row.original?.user?.name}
+          </span>
+        </div>
+      </Link>
     ),
   },
   {
@@ -73,6 +90,24 @@ const columns: ColumnDef<Teacher>[] = [
 
 function TeachersContent() {
   const [, navigate] = useLocation();
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
+  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
+  const [deletingTeacher, setDeletingTeacher] = useState<Teacher | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  const deleteTeacher = useDeleteTeacher();
+
+  const handleDeleteConfirm = () => {
+    if (!deletingTeacher) return;
+
+    deleteTeacher.mutate(deletingTeacher.id, {
+      onSuccess: () => {
+        setDeletingTeacher(null);
+        setIsDeleteDialogOpen(false);
+      },
+    });
+  };
 
   return (
     <div className="space-y-5">
@@ -80,13 +115,23 @@ function TeachersContent() {
         title="Gestión de Docentes"
         description="Listado de docentes registrados en el sistema."
         actions={
-          <Link
-            href="/upload-teachers"
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-brand-600 px-4 text-[13.5px] font-semibold text-white transition-colors hover:bg-brand-700"
-          >
-            <Plus size={14} strokeWidth={2.25} />
-            Cargar docentes
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link href="/upload-teachers">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsDrawerOpen(true)}
+              >
+                <Plus size={14} strokeWidth={2.25} />
+                Cargar docentes
+              </Button>
+            </Link>
+
+            <Button type="button" onClick={() => setIsDrawerOpen(true)}>
+              <Plus size={14} strokeWidth={2.25} />
+              Nuevo docente
+            </Button>
+          </div>
         }
       />
 
@@ -98,12 +143,75 @@ function TeachersContent() {
         pageSize={10}
         rowActions={[
           {
+            label: "Editar",
+            onClick: (row) => {
+              setEditingTeacher(row);
+              setIsEditDrawerOpen(true);
+            },
+          },
+          {
             label: "Ver detalle",
-            onClick: (row) => navigate(`/teachers/${row.uid}`),
+            onClick: (row) => navigate(`/teachers/${row.id}`),
+          },
+          {
+            label: "Eliminar",
+            variant: "destructive",
+            onClick: (row) => {
+              setDeletingTeacher(row);
+              setIsDeleteDialogOpen(true);
+            },
           },
         ]}
         actionsHeaderLabel="Acciones"
       />
+
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={(open) => {
+          setIsDeleteDialogOpen(open);
+          if (!open) setDeletingTeacher(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar docente</AlertDialogTitle>
+            <AlertDialogDescription>
+              <p>
+                ¿Estás seguro de que deseas eliminarlo? Esta acción no se puede
+                deshacer.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteTeacher.isPending}>
+              Cancelar
+            </AlertDialogCancel>
+
+            <AlertDialogAction
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={deleteTeacher.isPending}
+            >
+              {deleteTeacher.isPending ? "Eliminando..." : "Eliminar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <CreateTeacherDrawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen} />
+
+      {editingTeacher && (
+        <EditTeacherDrawer
+          key={editingTeacher.id}
+          open={isEditDrawerOpen}
+          teacher={editingTeacher}
+          onOpenChange={(open) => {
+            setIsEditDrawerOpen(open);
+            if (!open) setEditingTeacher(null);
+          }}
+        />
+      )}
     </div>
   );
 }
