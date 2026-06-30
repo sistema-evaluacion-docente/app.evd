@@ -30,3 +30,18 @@ export interface UpdateTeacherPayload {
   contract_type?: string;
   active?: boolean;
 }
+
+export interface TeacherHistoryEntry {
+  evaluation_id: number;
+  period_code: string;
+  period_name: string;
+  overall_average: number;
+  group_count: number;
+}
+
+export interface TeacherHistoryData {
+  teacher_id: number;
+  institutional_code: string;
+  name: string;
+  history: TeacherHistoryEntry[];
+}

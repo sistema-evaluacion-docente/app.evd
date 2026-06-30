@@ -13,14 +13,28 @@ const AVATAR_PALETTES = [
 
 export interface AvatarProps {
   name: string
+  /** Optional image URL. When provided, shows the photo instead of initials. */
+  src?: string
   size?: number
   /** Force a palette index; otherwise derived from the name hash. */
   paletteIndex?: number
   className?: string
 }
 
-/** Circular initials avatar with a deterministic color palette. */
-export function Avatar({ name, size = 36, paletteIndex, className }: AvatarProps) {
+/** Circular avatar — shows a photo when `src` is provided, otherwise colored initials. */
+export function Avatar({ name, src, size = 36, paletteIndex, className }: AvatarProps) {
+  if (src) {
+    return (
+      <div
+        className={cn('inline-flex shrink-0 overflow-hidden rounded-full ring-1 ring-ink-200', className)}
+        style={{ width: size, height: size }}
+        aria-hidden="true"
+      >
+        <img src={src} alt={name} className="h-full w-full object-cover" />
+      </div>
+    )
+  }
+
   const palette =
     AVATAR_PALETTES[(paletteIndex ?? hashString(name)) % AVATAR_PALETTES.length]
   return (

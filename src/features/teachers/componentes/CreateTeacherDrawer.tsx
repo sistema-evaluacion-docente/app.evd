@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useGetDepartments } from "@/features/departments";
 import useCreateTeacher from "../hooks/useCreateTeacher";
 
@@ -167,24 +168,24 @@ function CreateTeacherDrawer({ open, onOpenChange }: CreateTeacherDrawerProps) {
 
               <div className="space-y-2">
                 <Label>Tipo de contrato</Label>
-                <Select
+                <RadioGroup
                   value={form.contract_type}
                   onValueChange={(value) =>
-                    setForm((prev) => ({ ...prev, contract_type: value ?? "" }))
+                    setForm((prev) => ({ ...prev, contract_type: value }))
                   }
+                  className="mt-1 gap-2"
                 >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Seleccionar" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Sin especificar</SelectItem>
-                    {CONTRACT_TYPES.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="" id="create-ct-none" />
+                    <Label htmlFor="create-ct-none" className="font-normal">Sin especificar</Label>
+                  </div>
+                  {CONTRACT_TYPES.map((type) => (
+                    <div key={type} className="flex items-center gap-2">
+                      <RadioGroupItem value={type} id={`create-ct-${type}`} />
+                      <Label htmlFor={`create-ct-${type}`} className="font-normal">{type}</Label>
+                    </div>
+                  ))}
+                </RadioGroup>
               </div>
             </div>
 
