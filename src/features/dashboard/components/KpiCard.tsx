@@ -1,54 +1,52 @@
-import { TrendingUp } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { ArrowDown, ArrowUp } from "lucide-react";
 
 function KpiCard({
   label,
   value,
   icon,
   trend,
-  trendColor = "text-emerald-600",
-  progress,
-  progressColor = "bg-blue-500",
 }: {
   label: string;
   value: string | number;
   icon: React.ReactNode;
-  trend?: string;
+  trend: number;
   trendColor?: string;
   progress?: number;
   progressColor?: string;
 }) {
   return (
-    <div className="rounded-xl border border-ink-200 bg-card p-5 shadow-xs">
-      <div className="flex items-start justify-between">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-ink-50 text-ink-600">
+    <Card className="relative">
+      <CardContent>
+        <div className="flex items-center gap-2 mb-6 font-semibold">
+          <div className="text-sm text-muted-foreground uppercase">{label}</div>
+        </div>
+
+        <div className="absolute right-6 top-6 text-muted-foreground opacity-30">
           {icon}
         </div>
 
-        {trend && (
-          <span
-            className={`flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold ${trendColor}`}
-          >
-            <TrendingUp size={12} />
-            {trend}
-          </span>
-        )}
-      </div>
+        <div className="flex items-center gap-4">
+          <div className="num text-3xl font-bold leading-none tabular-nums">
+            <span>{value}</span>
+          </div>
 
-      <div className="mt-4 text-[12px] font-medium text-ink-500">{label}</div>
+          {trend && (
+            <span
+              className={`flex items-center gap-2 text-xl text-muted-foreground`}
+            >
+              {trend > 0 ? (
+                <ArrowUp size={16} className={`text-emerald-600`} />
+              ) : trend < 0 ? (
+                <ArrowDown size={16} className={`text-rose-600`} />
+              ) : null}
 
-      <div className="num mt-1.5 text-[28px] font-semibold leading-none tabular-nums text-ink-900">
-        {value}
-      </div>
-
-      {progress !== undefined && (
-        <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-ink-100">
-          <div
-            className={`h-full rounded-full transition-all ${progressColor}`}
-            style={{ width: `${progress}%` }}
-          />
+              {trend > 0 ? `+${trend}` : trend < 0 ? `${trend}` : null}
+            </span>
+          )}
         </div>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 

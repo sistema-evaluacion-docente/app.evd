@@ -12,6 +12,6 @@ export default function getCommentCount(
   academicPeriodId: string,
 ): Promise<ResponseAPI<CommentCountResponse>> {
   return api.get("/comments/count", {
-    params: { academic_period_id: academicPeriodId },
+    params: { academic_period_id: academicPeriodId, risk_level: 2 },
   });
 }

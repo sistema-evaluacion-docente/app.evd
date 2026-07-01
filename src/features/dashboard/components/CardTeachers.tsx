@@ -17,9 +17,7 @@ function CardTeachers() {
   return (
     <KpiCard
       value={teacherCount}
-      trend={
-        previousTeacherCount ? `+${teacherCount - previousTeacherCount}` : "0"
-      }
+      trend={teacherCount - previousTeacherCount}
       progress={100}
       icon={<Users size={18} />}
       label="Docentes registrados"

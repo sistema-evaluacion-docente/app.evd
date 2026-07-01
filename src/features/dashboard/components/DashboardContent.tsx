@@ -5,8 +5,9 @@ import { Link } from "wouter";
 
 import useAuth from "@/shared/hooks/useAuth";
 import CardComments from "./CardComments";
-import CardTeachers from "./CardTeachers";
+import CardDepartmentAverage from "./CardDepartmentAverage";
 import ChartsSection from "./ChartsSection";
+import TeacherPerformanceSection from "./TeacherPerformanceSection";
 
 function DashboardContent() {
   const { user } = useAuth();
@@ -33,12 +34,17 @@ function DashboardContent() {
         }
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <CardComments />
-        <CardTeachers />
-      </div>
+      <section className="space-y-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+          <CardDepartmentAverage />
+          <CardComments />
+        </div>
 
-      <ChartsSection />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_0.5fr] gap-4 items-start">
+          <ChartsSection />
+          <TeacherPerformanceSection />
+        </div>
+      </section>
     </div>
   );
 }

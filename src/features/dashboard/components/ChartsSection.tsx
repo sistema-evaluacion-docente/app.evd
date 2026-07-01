@@ -1,6 +1,8 @@
 import { AreaChart } from "@/shared/ui";
 import { TrendingUp } from "lucide-react";
 
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import useGetStats from "../hooks/useGetStats";
 import type { ChartDataPoint } from "../types/Dashboard";
 
@@ -15,6 +17,7 @@ function computeHistoricalData(stats: ChartDataPoint[]) {
 
 function ChartsSection() {
   const { data: statsResponse, isLoading } = useGetStats();
+
   const stats = statsResponse?.data ?? [];
 
   const historicalData: ChartDataPoint[] = stats.map((s) => ({
@@ -25,58 +28,49 @@ function ChartsSection() {
   const { data: historical, delta } = computeHistoricalData(historicalData);
 
   if (isLoading) {
-    return (
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="rounded-xl border border-ink-200 bg-card p-5 shadow-xs lg:col-span-2">
-          <div className="h-48 animate-pulse rounded-lg bg-ink-100" />
-        </div>
-
-        <div className="rounded-xl border border-ink-200 bg-card p-5 shadow-xs">
-          <div className="h-48 animate-pulse rounded-lg bg-ink-100" />
-        </div>
-      </div>
-    );
+    return <Skeleton />;
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-      <div className="rounded-xl border border-ink-200 bg-card p-5 shadow-xs lg:col-span-2">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h3 className="text-base font-semibold text-ink-900">
-              Evolución Histórica
-            </h3>
+    <section>
+      <div className="grid grid-cols-1 gap-4">
+        <Card className="pt-0">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Evolución Histórica</CardTitle>
+            </div>
+          </CardHeader>
 
-            <p className="mt-0.5 text-[12px] text-ink-500">
-              Promedio global del departamento por período académico
-            </p>
-          </div>
+          <CardContent>
+            <div className="mb-4 flex items-center justify-end">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
+                  <div className="h-2 w-2 rounded-full bg-brand-600" />
 
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5">
-              <div className="h-2 w-2 rounded-full bg-brand-600" />
-              <span className="text-[11px] font-medium text-ink-600">
-                Promedio
-              </span>
+                  <span className="text-[11px] font-medium text-ink-600">
+                    Promedio
+                  </span>
+                </div>
+
+                <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
+                  <TrendingUp size={12} />
+                  {delta >= 0 ? "+" : ""}
+                  {delta.toFixed(1)} pts
+                </span>
+              </div>
             </div>
 
-            <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
-              <TrendingUp size={12} />
-              {delta >= 0 ? "+" : ""}
-              {delta.toFixed(1)} pts
-            </span>
-          </div>
-        </div>
-
-        <AreaChart
-          yMin={0}
-          yMax={5}
-          data={historical}
-          yTicks={[0, 1, 2, 3, 4, 5]}
-          formatValue={(v) => v.toString()}
-        />
+            <AreaChart
+              yMin={0}
+              yMax={5}
+              data={historical}
+              yTicks={[0, 1, 2, 3, 4, 5]}
+              formatValue={(v) => v.toString()}
+            />
+          </CardContent>
+        </Card>
       </div>
-    </div>
+    </section>
   );
 }
 

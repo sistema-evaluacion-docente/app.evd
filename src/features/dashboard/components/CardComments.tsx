@@ -3,6 +3,7 @@ import { MessageSquare } from "lucide-react";
 
 import useGetCommentCount from "../hooks/useGetCommentCount";
 import KpiCard from "./KpiCard";
+import { Link } from "wouter";
 
 function CardComments() {
   const { data, isLoading } = useGetCommentCount();
@@ -15,17 +16,17 @@ function CardComments() {
   }
 
   return (
-    <KpiCard
-      value={commentCount}
-      trend={
-        previousCommentCount ? `+${commentCount - previousCommentCount}` : "0"
-      }
-      trendColor="text-brand-600"
-      progress={100}
-      icon={<MessageSquare size={18} className="text-brand-600" />}
-      label="Comentarios"
-      progressColor="bg-brand-600"
-    />
+    <Link to={`/evaluaciones/`} className="transition-opacity hover:opacity-80">
+      <KpiCard
+        value={commentCount}
+        trend={commentCount - previousCommentCount}
+        trendColor="text-brand-600"
+        progress={100}
+        icon={<MessageSquare size={30} />}
+        label="Comentarios Riesgo"
+        progressColor="bg-brand-600"
+      />
+    </Link>
   );
 }
 
