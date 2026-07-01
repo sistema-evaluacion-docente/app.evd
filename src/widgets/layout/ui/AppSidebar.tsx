@@ -68,13 +68,10 @@ export function AppSidebar({ mobileOpen, onClose }: AppSidebarProps) {
         {/* Logo */}
         <div className="flex h-17 items-center gap-2.5 border-b border-ink-100 px-5">
           <BrandMark size={36} iconSize={18} />
+
           <div className="leading-tight">
             <div className="text-[14px] font-semibold text-ink-900">
               Evaluación Docente
-            </div>
-
-            <div className="-mt-0.5 text-[11px] text-ink-500">
-              {selectedRole}
             </div>
           </div>
 
