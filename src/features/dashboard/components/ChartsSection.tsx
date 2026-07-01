@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import useGetStats from "../hooks/useGetStats";
 import type { ChartDataPoint } from "../types/Dashboard";
+import GradeDistributionSection from "./GradeDistributionSection";
 
 function computeHistoricalData(stats: ChartDataPoint[]) {
   const sorted = [...stats].sort((a, b) => a.label.localeCompare(b.label));
@@ -32,7 +33,7 @@ function ChartsSection() {
   }
 
   return (
-    <section>
+    <section className="space-y-4">
       <div className="grid grid-cols-1 gap-4">
         <Card className="pt-0">
           <CardHeader>
@@ -70,6 +71,8 @@ function ChartsSection() {
           </CardContent>
         </Card>
       </div>
+
+      <GradeDistributionSection />
     </section>
   );
 }

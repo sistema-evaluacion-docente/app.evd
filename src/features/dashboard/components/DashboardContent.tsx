@@ -31,7 +31,7 @@ function DashboardContent() {
           <CardComments />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_0.5fr] gap-4 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_0.5fr] gap-4 items-start">
           <ChartsSection />
           <TeacherPerformanceSection />
         </div>

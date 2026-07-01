@@ -3,8 +3,6 @@ import { AlertTriangle, Award } from "lucide-react";
 
 import useGetTeacherPerformance from "../hooks/useGetTeacherPerformance";
 import TeacherRankingChart from "./TeacherRankingChart";
-import { Link } from "wouter";
-import { Button } from "@/components/ui/button";
 
 function TeacherPerformanceSection() {
   const { data: response, isLoading } = useGetTeacherPerformance();
