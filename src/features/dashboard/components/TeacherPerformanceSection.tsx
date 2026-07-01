@@ -1,4 +1,3 @@
-import { Skeleton } from "@/components/ui/skeleton";
 import { AlertTriangle, Award } from "lucide-react";
 
 import useGetTeacherPerformance from "../hooks/useGetTeacherPerformance";
@@ -9,33 +8,29 @@ function TeacherPerformanceSection() {
 
   const performance = response?.data;
 
-  if (isLoading) {
-    return <Skeleton />;
-  }
-
-  if (!performance) return null;
-
   return (
     <section>
       <div className="grid grid-cols-1 gap-4">
         <TeacherRankingChart
           title="Destacados"
           subtitle="Mayores promedios globales del semestre"
-          teachers={performance.top_5}
+          teachers={performance?.top_5 ?? []}
           barColor="bg-emerald-500"
           barBg="bg-emerald-100"
           scoreColor="text-emerald-600"
           icon={Award}
+          isLoading={isLoading}
         />
 
         <TeacherRankingChart
           title="Menores promedios"
           subtitle="Menores promedios globales del semestre"
-          teachers={performance.bottom_5}
+          teachers={performance?.bottom_5 ?? []}
           barColor="bg-red-500"
           barBg="bg-red-100"
           scoreColor="text-red-600"
           icon={AlertTriangle}
+          isLoading={isLoading}
         />
       </div>
     </section>

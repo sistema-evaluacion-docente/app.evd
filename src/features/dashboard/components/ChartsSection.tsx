@@ -1,8 +1,8 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { AreaChart } from "@/shared/ui";
 import { TrendingUp } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import useGetStats from "../hooks/useGetStats";
 import type { ChartDataPoint } from "../types/Dashboard";
 import GradeDistributionSection from "./GradeDistributionSection";
@@ -17,7 +17,7 @@ function computeHistoricalData(stats: ChartDataPoint[]) {
 }
 
 function ChartsSection() {
-  const { data: statsResponse, isLoading } = useGetStats();
+  const { data: statsResponse, isLoading, isFetched } = useGetStats();
 
   const stats = statsResponse?.data ?? [];
 
@@ -28,12 +28,29 @@ function ChartsSection() {
 
   const { data: historical, delta } = computeHistoricalData(historicalData);
 
-  if (isLoading) {
-    return <Skeleton />;
+  if (isLoading || !isFetched) {
+    return (
+      <Card className="pt-0">
+        <CardHeader>
+          <Skeleton className="h-6 w-48" />
+        </CardHeader>
+
+        <CardContent>
+          <div className="mb-4 flex items-center justify-end">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+          </div>
+
+          <Skeleton className="h-75 w-full" />
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-4 animate-fade-in">
       <div className="grid grid-cols-1 gap-4">
         <Card className="pt-0">
           <CardHeader>

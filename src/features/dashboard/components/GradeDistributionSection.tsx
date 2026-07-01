@@ -5,7 +5,11 @@ import { HistogramChart } from "@/shared/ui";
 import useGetGradeDistribution from "../hooks/useGetGradeDistribution";
 
 function GradeDistributionSection() {
-  const { data: distributionResponse, isLoading } = useGetGradeDistribution();
+  const {
+    data: distributionResponse,
+    isLoading,
+    isFetched,
+  } = useGetGradeDistribution();
 
   const bins = distributionResponse?.data?.bins ?? [];
 
@@ -14,12 +18,21 @@ function GradeDistributionSection() {
     value: bin.teacher_count,
   }));
 
-  if (isLoading) {
-    return <Skeleton />;
+  if (isLoading || !isFetched) {
+    return (
+      <Card className="pt-0">
+        <CardHeader>
+          <Skeleton className="h-6 w-56" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-[300px] w-full" />
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
-    <section>
+    <section className="animate-fade-in">
       <Card className="pt-0">
         <CardHeader>
           <CardTitle>Distribución de Calificaciones</CardTitle>

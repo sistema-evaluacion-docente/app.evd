@@ -9,5 +9,6 @@ export default function useGetStats(departmentId?: number) {
   return useQuery({
     queryKey: ["stats", departmentId, selectedPeriod?.id],
     queryFn: () => getStats(departmentId),
+    enabled: !!selectedPeriod?.id, // Only fetch if selectedPeriod is defined
   });
 }

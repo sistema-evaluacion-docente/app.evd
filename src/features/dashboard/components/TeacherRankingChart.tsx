@@ -1,10 +1,10 @@
-import type { LucideIcon } from "lucide-react";
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { TeacherRankItem } from "../api/getTeacherPerformance";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { LucideIcon } from "lucide-react";
 import { Link } from "wouter";
-import { Button } from "@/components/ui/button";
+
+import type { TeacherRankItem } from "../api/getTeacherPerformance";
 
 interface TeacherRankingChartProps {
   title: string;
@@ -15,6 +15,7 @@ interface TeacherRankingChartProps {
   scoreColor: string;
   icon: LucideIcon;
   maxScore?: number;
+  isLoading?: boolean;
 }
 
 function TeacherRankingChart({
@@ -23,7 +24,34 @@ function TeacherRankingChart({
   teachers,
   scoreColor,
   icon: Icon,
+  isLoading = false,
 }: TeacherRankingChartProps) {
+  if (isLoading) {
+    return (
+      <Card className="pt-0">
+        <CardHeader>
+          <Skeleton className="h-6 w-40" />
+        </CardHeader>
+
+        <CardContent>
+          <div className="space-y-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <Skeleton className="h-9 w-9 rounded-full" />
+
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-32" />
+                </div>
+
+                <Skeleton className="h-4 w-12" />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (teachers.length === 0) {
     return (
       <Card>
@@ -44,7 +72,7 @@ function TeacherRankingChart({
   }
 
   return (
-    <Card className="pt-0">
+    <Card className="pt-0 animate-fade-in">
       <CardHeader>
         <div className="flex items-center justify-between gap-2">
           <CardTitle>{title}</CardTitle>
