@@ -3,12 +3,13 @@ import { PageHeader } from "@/shared/ui";
 import { Plus } from "lucide-react";
 import { Link } from "wouter";
 
+import TeacherPeriodTable from "@/features/evaluations/components/TeacherPeriodTable";
 import CardComments from "./CardComments";
 import CardDepartmentAverage from "./CardDepartmentAverage";
 import ChartsSection from "./ChartsSection";
 import GradeDistributionSection from "./GradeDistributionSection";
+import RecentCommentsCard from "./RecentCommentsCard";
 import TeacherPerformanceSection from "./TeacherPerformanceSection";
-import TeacherPeriodTable from "@/features/evaluations/components/TeacherPeriodTable";
 
 function DashboardContent() {
   return (
@@ -34,12 +35,15 @@ function DashboardContent() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-[1fr_0.5fr] gap-4 items-start">
-          <div className="space-y-4">
+          <div className="w-full space-y-4">
             <ChartsSection />
             <GradeDistributionSection />
           </div>
 
-          <TeacherPerformanceSection />
+          <div className="w-full space-y-4">
+            <TeacherPerformanceSection />
+            <RecentCommentsCard />
+          </div>
         </div>
       </section>
 
