@@ -1,33 +1,24 @@
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/shared/ui";
-import { Download, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Link } from "wouter";
 
-import useAuth from "@/shared/hooks/useAuth";
 import CardComments from "./CardComments";
 import CardDepartmentAverage from "./CardDepartmentAverage";
 import ChartsSection from "./ChartsSection";
 import TeacherPerformanceSection from "./TeacherPerformanceSection";
 
 function DashboardContent() {
-  const { user } = useAuth();
-
   return (
     <div className="space-y-5">
       <PageHeader
         title="Panel de Control"
-        description={`Bienvenido, ${user?.name}.`}
         actions={
           <>
-            <Button variant="outline">
-              <Download size={15} />
-              Descargar Informe
-            </Button>
-
-            <Link href="/upload-evaluations">
-              <Button>
+            <Link href="/matrix">
+              <Button variant="outline" size="sm" className="gap-2">
                 <Plus size={15} strokeWidth={2.25} />
-                Nueva Evaluación
+                Ver evaluacion detallada
               </Button>
             </Link>
           </>
