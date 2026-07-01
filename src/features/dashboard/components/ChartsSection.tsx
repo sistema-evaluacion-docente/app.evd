@@ -5,7 +5,6 @@ import { TrendingUp } from "lucide-react";
 
 import useGetStats from "../hooks/useGetStats";
 import type { ChartDataPoint } from "../types/Dashboard";
-import GradeDistributionSection from "./GradeDistributionSection";
 
 function computeHistoricalData(stats: ChartDataPoint[]) {
   const sorted = [...stats].sort((a, b) => a.label.localeCompare(b.label));
@@ -88,8 +87,6 @@ function ChartsSection() {
           </CardContent>
         </Card>
       </div>
-
-      <GradeDistributionSection />
     </section>
   );
 }

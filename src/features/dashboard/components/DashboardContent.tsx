@@ -6,6 +6,7 @@ import { Link } from "wouter";
 import CardComments from "./CardComments";
 import CardDepartmentAverage from "./CardDepartmentAverage";
 import ChartsSection from "./ChartsSection";
+import GradeDistributionSection from "./GradeDistributionSection";
 import TeacherPerformanceSection from "./TeacherPerformanceSection";
 
 function DashboardContent() {
@@ -32,7 +33,11 @@ function DashboardContent() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-[1fr_0.5fr] gap-4 items-start">
-          <ChartsSection />
+          <div className="space-y-4">
+            <ChartsSection />
+            <GradeDistributionSection />
+          </div>
+
           <TeacherPerformanceSection />
         </div>
       </section>
