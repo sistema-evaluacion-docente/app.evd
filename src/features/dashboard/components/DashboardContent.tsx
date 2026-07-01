@@ -8,6 +8,7 @@ import CardDepartmentAverage from "./CardDepartmentAverage";
 import ChartsSection from "./ChartsSection";
 import GradeDistributionSection from "./GradeDistributionSection";
 import TeacherPerformanceSection from "./TeacherPerformanceSection";
+import TeacherPeriodTable from "@/features/evaluations/components/TeacherPeriodTable";
 
 function DashboardContent() {
   return (
@@ -41,6 +42,8 @@ function DashboardContent() {
           <TeacherPerformanceSection />
         </div>
       </section>
+
+      <TeacherPeriodTable />
     </div>
   );
 }
