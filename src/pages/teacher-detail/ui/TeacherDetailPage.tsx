@@ -7,19 +7,19 @@ import {
   FileText,
   Info,
   Mail,
+  MessageSquare,
   Plus,
   TrendingUp,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link, useParams } from "wouter";
 
 import { useGetTeacherById, useGetTeacherHistory } from "@/features/teachers";
 import {
-  useGetComments,
   useGetEvaluations,
   useGetTeacherEvaluationDetail,
+  useGetTeacherComments,
 } from "@/features/evaluations";
-import type { EvaluationComment } from "@/features/evaluations";
 import { usePeriodsStore } from "@/features/periods";
 import { cn } from "@/shared/lib/utils";
 import {
@@ -28,9 +28,7 @@ import {
   Avatar,
   Button,
   Card,
-  DataTable,
   Separator,
-  type DataTableColumn,
 } from "@/shared/ui";
 import { AppLayout } from "@/widgets/layout";
 
@@ -107,17 +105,19 @@ export function TeacherDetailPage() {
   const { id } = useParams<{ id: string }>();
   const teacherId = parseInt(id ?? "0", 10);
   const { selectedPeriod } = usePeriodsStore();
+  const [activeCommentCourse, setActiveCommentCourse] = useState<string | "todas">("todas");
 
   const { data: teacherRes, isLoading: teacherLoading } =
     useGetTeacherById(teacherId);
   const teacher = teacherRes?.data;
 
-  const { data: evaluationsRes } = useGetEvaluations({
+  const { data: evaluationsRes, isLoading: evaluationsLoading } = useGetEvaluations({
     page: 1,
     limit: 1,
     search: "",
     period_id: selectedPeriod?.id ?? "",
     department_id: teacher?.department_id,
+    enabled: !!teacher,
   });
   const evaluation = evaluationsRes?.data?.[0];
 
@@ -125,13 +125,30 @@ export function TeacherDetailPage() {
     useGetTeacherEvaluationDetail(evaluation?.id, teacherId);
   const detail = detailRes?.data;
 
+  const isLoading = teacherLoading || evaluationsLoading || detailLoading;
+  const noData = !isLoading && !detail;
+
   const { data: historyRes } = useGetTeacherHistory(teacherId);
   const history = historyRes?.data?.history ?? [];
 
-  const { data: commentsRes } = useGetComments(evaluation?.id);
-  const teacherComments = useMemo(
-    () => (commentsRes?.data ?? []).filter((c) => c.teacher_id === teacherId),
-    [commentsRes, teacherId],
+  const { data: commentsRes } = useGetTeacherComments(evaluation?.id, teacherId);
+  const commentCourses = commentsRes?.data?.courses ?? [];
+
+  const courseKey = (c: { course_code: string; group_name: string }) =>
+    `${c.course_code}-${c.group_name}`;
+
+  const selectedCommentCourse =
+    activeCommentCourse === "todas"
+      ? null
+      : commentCourses.find((c) => courseKey(c) === activeCommentCourse) ?? null;
+
+  const displayComments =
+    selectedCommentCourse?.comments ??
+    commentCourses.flatMap((c) => c.comments);
+
+  const totalCommentCount = commentCourses.reduce(
+    (acc, c) => acc + c.comments.length,
+    0,
   );
 
   const recurrentLowPerformance = useMemo(() => {
@@ -150,27 +167,11 @@ export function TeacherDetailPage() {
     value: h.overall_average,
   }));
 
-  const commentColumns: DataTableColumn<EvaluationComment>[] = [
-    {
-      header: "Comentario del estudiante",
-      cellClassName: "align-top py-4 max-w-[720px]",
-      cell: (comment) => (
-        <p
-          className='text-[13.5px] leading-relaxed text-ink-800'
-          style={{ textWrap: "pretty" }}
-        >
-          <span className='text-ink-400'>"</span>
-          {comment.original_text}
-          <span className='text-ink-400'>"</span>
-        </p>
-      ),
-    },
-  ];
 
   return (
     <AppLayout
       header={{
-        rightMode: "search",
+        rightMode: "periodo",
         showBreadcrumb: true,
         breadcrumb: (
           <>
@@ -314,17 +315,46 @@ export function TeacherDetailPage() {
         <Separator className='my-5' />
 
         <div className='flex flex-wrap gap-2'>
-          <Button variant='brand' size='lg'>
-            <FileText size={15} /> Generar Reporte Detallado
-          </Button>
+          <Link href={`/matrix/${teacherId}`}>
+            <Button variant='brand' size='lg'>
+              <FileText size={15} /> Ver Reporte Detallado Del docente
+            </Button>
+          </Link>
           <Button variant='outline' size='lg'>
             <Mail size={15} /> Enviar Citación
           </Button>
-          <Button variant='outline' size='lg'>
-            <FileText size={15} /> Exportar Evaluación Individual (PDF)
-          </Button>
         </div>
       </Card>
+
+      {noData ? (
+        <Card className='p-10'>
+          <div className='flex flex-col items-center gap-4 text-center'>
+            <div className='flex h-14 w-14 items-center justify-center rounded-xl bg-ink-100'>
+              <FileText size={24} className='text-ink-400' />
+            </div>
+            <div>
+              <p className='text-[15px] font-semibold text-ink-800'>
+                Sin evaluación disponible
+              </p>
+              <p className='mt-1.5 max-w-sm text-[13px] text-ink-500'>
+                {selectedPeriod ? (
+                  <>
+                    Este docente no cuenta con evaluación docente en el periodo
+                    académico{' '}
+                    <span className='font-semibold text-ink-700'>
+                      {selectedPeriod.name}
+                    </span>
+                    .
+                  </>
+                ) : (
+                  'Selecciona un periodo académico en la barra superior.'
+                )}
+              </p>
+            </div>
+          </div>
+        </Card>
+      ) : (
+        <>
 
       {/* Dimensiones + Materias */}
       <div className='grid grid-cols-1 gap-5 lg:grid-cols-2'>
@@ -438,37 +468,99 @@ export function TeacherDetailPage() {
 
       {/* Comments */}
       <Card className='overflow-hidden'>
+        {/* Header */}
         <div className='flex flex-col justify-between gap-3 p-5 sm:flex-row sm:items-center sm:p-6'>
           <div>
             <h2 className='text-[20px] font-semibold text-ink-900'>
               Comentarios Detallados
             </h2>
             <p className='mt-1 text-[13px] text-ink-500'>
-              Comentarios de estudiantes registrados en la evaluación del
-              periodo.
+              Comentarios de estudiantes registrados en la evaluación del periodo.
             </p>
           </div>
-          {teacherComments.length > 0 && (
+          {totalCommentCount > 0 && (
             <span className='text-[13px] font-medium text-ink-500'>
-              {teacherComments.length} comentario
-              {teacherComments.length !== 1 ? "s" : ""}
+              {displayComments.length}{activeCommentCourse !== "todas" && ` de ${totalCommentCount}`} comentario
+              {totalCommentCount !== 1 ? "s" : ""}
             </span>
           )}
         </div>
-        <DataTable
-          columns={commentColumns}
-          rows={teacherComments}
-          rowKey={(comment) =>
-            `${comment.evaluation_id}-${comment.academic_groups_id}`
-          }
-          headerVariant='muted'
-          minWidth={480}
-          emptyMessage={
-            selectedPeriod
-              ? "No hay comentarios registrados para este docente en el periodo seleccionado."
-              : "Selecciona un periodo académico para ver los comentarios."
-          }
-        />
+
+        {/* Course filter tabs — only when there are courses with comments */}
+        {commentCourses.length > 0 && (
+          <div className='border-b border-ink-100 px-5 pb-3 sm:px-6'>
+            <div className='flex flex-wrap gap-1.5'>
+              <button
+                type='button'
+                onClick={() => setActiveCommentCourse("todas")}
+                className={cn(
+                  "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[12px] font-medium transition-colors",
+                  activeCommentCourse === "todas"
+                    ? "bg-ink-900 text-white"
+                    : "border border-ink-200 bg-white text-ink-600 hover:bg-ink-50",
+                )}
+              >
+                Todas las materias
+              </button>
+              {commentCourses.map((course) => {
+                const key = courseKey(course);
+                const isActive = activeCommentCourse === key;
+                return (
+                  <button
+                    key={key}
+                    type='button'
+                    onClick={() => setActiveCommentCourse(key)}
+                    className={cn(
+                      "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[12px] font-medium transition-colors",
+                      isActive
+                        ? "bg-ink-900 text-white"
+                        : "border border-ink-200 bg-white text-ink-600 hover:bg-ink-50",
+                    )}
+                  >
+                    {course.course_name}
+                    <span
+                      className={cn(
+                        "inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold",
+                        isActive ? "bg-white/20 text-white" : "bg-ink-100 text-ink-500",
+                      )}
+                    >
+                      {course.comments.length}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Comment list */}
+        {displayComments.length === 0 ? (
+          <div className='flex flex-col items-center gap-3 px-6 py-12 text-center'>
+            <MessageSquare size={28} className='text-ink-300' />
+            <p className='text-[13px] text-ink-500'>
+              {activeCommentCourse !== "todas"
+                ? "Esta materia no obtuvo comentarios en esta evaluación docente."
+                : selectedPeriod
+                  ? "No hay comentarios registrados para este docente en el periodo seleccionado."
+                  : "Selecciona un periodo académico para ver los comentarios."}
+            </p>
+          </div>
+        ) : (
+          <ul className='divide-y divide-ink-100'>
+            {displayComments.map((text, i) => (
+              <li key={i} className='px-5 py-4 sm:px-6'>
+                <p
+                  className='max-w-180 text-[13.5px] leading-relaxed text-ink-800'
+                  style={{ textWrap: "pretty" }}
+                >
+                  <span className='text-ink-400'>"</span>
+                  {text}
+                  <span className='text-ink-400'>"</span>
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
       </Card>
 
       {/* Evolución Histórica — ancho completo */}
@@ -612,6 +704,8 @@ export function TeacherDetailPage() {
           ))}
         </div>
       </Card>
+        </>
+      )}
 
       <AppFooter>
         {periodLabel} · Sistema de Evaluación Docente · v2.1
