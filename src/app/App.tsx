@@ -7,7 +7,7 @@ import { AdminLogsPage } from "@/pages/admin-logs";
 import { AdminPeriodsPage } from "@/pages/admin-periods";
 import { SettingsPage } from "@/features/settings";
 import { DashboardPage } from "@/pages/dashboard";
-import { MatrixPage } from "@/pages/matrix";
+import { MatrixPage, MatrixPageMock, MatrixIndexPage } from "@/pages/matrix";
 import { MyHistoryPage } from "@/pages/my-history";
 import { MyProfilePage } from "@/pages/my-profile";
 import { MySummaryPage } from "@/pages/my-summary";
@@ -32,7 +32,9 @@ function App() {
       <Route path="/dashboard" component={DashboardPage} />
       <Route path="/teachers" component={TeachersPage} />
       <Route path="/teachers/:id" component={TeacherDetailPage} />
-      <Route path="/matrix" component={MatrixPage} />
+      <Route path="/matrix" component={MatrixIndexPage} />
+      <Route path="/matrix/:id" component={MatrixPage} />
+      <Route path="/matrix-mock" component={MatrixPageMock} />
       <Route path="/plans" component={PlansPage} />
       <Route path="/evaluations" component={EvaluationsPage} />
       <Route path="/evaluations/upload" component={UploadEvaluationsPage} />
