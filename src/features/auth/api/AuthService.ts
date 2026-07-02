@@ -168,6 +168,10 @@ const confirmPasswordResetCode = async (
 };
 
 async function getToken(): Promise<string | null> {
+  // Wait for Firebase to restore the session before reading currentUser.
+  // On a hard reload, currentUser is null until onAuthStateChanged fires.
+  await auth.authStateReady();
+
   const t = (await auth.currentUser?.getIdToken()) || null;
 
   if (!t) throw new Error("Token not found");

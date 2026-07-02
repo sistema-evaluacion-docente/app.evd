@@ -74,6 +74,81 @@ export function getComments(
   return api.get(`/comments/by-evaluation/${evaluationId}`);
 }
 
+export interface QuestionDetail {
+  id: number;
+  code: string;
+  text: string;
+  score: number;
+}
+
+export interface EvaluationDimensionScore {
+  dimension: string;
+  average: number;
+  questions?: QuestionDetail[];
+}
+
+export interface TeacherCourse {
+  course_code: string;
+  course_name: string;
+  group_name: string;
+  respondent_count: number;
+  overall_average: number;
+  dimensions: EvaluationDimensionScore[];
+}
+
+export interface TeacherCommentCourse {
+  course_code: string;
+  course_name: string;
+  group_name: string;
+  comments: string[];
+}
+
+export interface TeacherCommentsData {
+  teacher_id: number;
+  evaluation_id: number;
+  courses: TeacherCommentCourse[];
+}
+
+export interface TeacherEvaluationDetail {
+  teacher_id: number;
+  institutional_code: string;
+  name: string;
+  contract_type: string;
+  evaluation_id: number;
+  period_code: string;
+  period_name: string;
+  overall_average: number;
+  group_count: number;
+  courses: TeacherCourse[];
+  dimensions: EvaluationDimensionScore[];
+}
+
+export function getTeacherEvaluationDetail(
+  evaluationId: number,
+  teacherId: number,
+): Promise<ResponseAPI<TeacherEvaluationDetail>> {
+  return api.get(`/evaluations/${evaluationId}/teachers/${teacherId}`);
+}
+
+export function getTeacherComments(
+  evaluationId: number,
+  teacherId: number,
+): Promise<ResponseAPI<TeacherCommentsData>> {
+  return api.get(`/evaluations/${evaluationId}/teachers/${teacherId}/comments`);
+}
+
+export function exportTeacherMatrix(
+  evaluationId: number,
+  teacherId: number,
+  includeComments: boolean,
+): Promise<Blob> {
+  const params = includeComments ? '?include_comments=true' : '';
+  return api.get(
+    `/evaluations/${evaluationId}/teachers/${teacherId}/export${params}`,
+    { responseType: 'blob' },
+  ) as unknown as Promise<Blob>;
+}
+
 export function updateEvaluationStatus(
   evaluationId: number,
   payload: EvaluationStatusUpdate,
