@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HistogramChart } from "@/shared/ui";
 
-import useGetGradeDistribution from "../hooks/useGetGradeDistribution";
+import useGetGradeDistribution from "../../hooks/useGetGradeDistribution";
 
 function GradeDistributionSection() {
   const {

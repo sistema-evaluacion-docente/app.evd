@@ -165,6 +165,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
           avatar_url: user.photoURL || "",
           active: true,
           roles: [],
+          teacher_id: null,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };

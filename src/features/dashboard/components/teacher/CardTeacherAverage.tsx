@@ -3,16 +3,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TrendingUp } from "lucide-react";
 import { Link } from "wouter";
 
-import useGetDepartmentAverage from "../hooks/useGetDepartmentAverage";
-import KpiCard from "./KpiCard";
+import useGetTeacherAverage from "../../hooks/useGetTeacherAverage";
+import KpiCard from "../KpiCard";
 
-function CardDepartmentAverage() {
-  const { data, isLoading, isFetched } = useGetDepartmentAverage();
+function CardTeacherAverage() {
+  const { data, isLoading, isFetched } = useGetTeacherAverage();
 
-  const { global_average, previous_global_average } = data?.data ?? {};
+  const { overall_average, previous_overall_average } = data?.data ?? {};
 
-  const globalAverage = Number(global_average ?? 0);
-  const prevGlobalAverage = Number(previous_global_average ?? 0);
+  const overallAverage = Number(overall_average ?? 0);
+  const prevOverallAverage = Number(previous_overall_average ?? 0);
 
   if (isLoading || !isFetched) {
     return (
@@ -33,20 +33,22 @@ function CardDepartmentAverage() {
 
   return (
     <Link
-      to={`/evaluaciones/`}
+      to={`/matrix`}
       className="transition-opacity hover:opacity-80 animate-fade-in"
     >
       <KpiCard
-        value={globalAverage.toFixed(2)}
-        trend={parseFloat((globalAverage - prevGlobalAverage)?.toFixed(2)) ?? 0}
+        value={overallAverage.toFixed(2)}
+        trend={
+          parseFloat((overallAverage - prevOverallAverage)?.toFixed(2)) ?? 0
+        }
         trendColor="text-brand-600"
-        progress={globalAverage * 20}
+        progress={overallAverage * 20}
         icon={<TrendingUp size={30} />}
-        label="Promedio Departamento"
+        label="Mi Promedio"
         progressColor="bg-brand-600"
       />
     </Link>
   );
 }
 
-export default CardDepartmentAverage;
+export default CardTeacherAverage;

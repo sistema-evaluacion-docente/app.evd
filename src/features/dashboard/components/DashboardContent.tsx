@@ -1,55 +1,19 @@
-import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/shared/ui";
-import { Plus } from "lucide-react";
-import { Link } from "wouter";
-
-import TeacherPeriodTable from "@/features/evaluations/components/TeacherPeriodTable";
-import CardComments from "./CardComments";
-import CardDepartmentAverage from "./CardDepartmentAverage";
-import ChartsSection from "./ChartsSection";
-import GradeDistributionSection from "./GradeDistributionSection";
-import RecentCommentsCard from "./RecentCommentsCard";
-import TeacherPerformanceSection from "./TeacherPerformanceSection";
+import useAuth from "@/shared/hooks/useAuth";
+import DashboardContentDirector from "./DashboardContentDirector";
+import DashboardContentTeacher from "./DashboardContentTeacher";
 
 function DashboardContent() {
-  return (
-    <div className="space-y-5">
-      <PageHeader
-        title="Panel de Control"
-        actions={
-          <>
-            <Link href="/matrix">
-              <Button variant="outline" size="sm" className="gap-2">
-                <Plus size={15} strokeWidth={2.25} />
-                Ver evaluacion detallada
-              </Button>
-            </Link>
-          </>
-        }
-      />
+  const { selectedRole } = useAuth();
 
-      <section className="space-y-4">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-          <CardDepartmentAverage />
-          <CardComments />
-        </div>
+  if (selectedRole === "DIRECTOR DE DEPARTAMENTO") {
+    return <DashboardContentDirector />;
+  }
 
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_0.5fr] gap-4 items-start">
-          <div className="w-full space-y-4">
-            <ChartsSection />
-            <GradeDistributionSection />
-          </div>
+  if (selectedRole === "DOCENTE") {
+    return <DashboardContentTeacher />;
+  }
 
-          <div className="w-full space-y-4">
-            <TeacherPerformanceSection />
-            <RecentCommentsCard />
-          </div>
-        </div>
-      </section>
-
-      <TeacherPeriodTable />
-    </div>
-  );
+  return <span>ADMIN</span>;
 }
 
 export default DashboardContent;

@@ -1,6 +1,6 @@
 import { AlertTriangle, Award } from "lucide-react";
 
-import useGetTeacherPerformance from "../hooks/useGetTeacherPerformance";
+import useGetTeacherPerformance from "../../hooks/useGetTeacherPerformance";
 import TeacherRankingChart from "./TeacherRankingChart";
 
 function TeacherPerformanceSection() {

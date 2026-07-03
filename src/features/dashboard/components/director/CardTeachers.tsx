@@ -1,8 +1,8 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Users } from "lucide-react";
 
-import useGetTeacherCount from "../hooks/useGetTeacherCount";
-import KpiCard from "./KpiCard";
+import useGetTeacherCount from "../../hooks/useGetTeacherCount";
+import KpiCard from "../KpiCard";
 
 function CardTeachers() {
   const { data, isLoading } = useGetTeacherCount();

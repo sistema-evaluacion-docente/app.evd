@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { LucideIcon } from "lucide-react";
 import { Link } from "wouter";
 
-import type { TeacherRankItem } from "../api/getTeacherPerformance";
+import type { TeacherRankItem } from "../../api/getTeacherPerformance";
 
 interface TeacherRankingChartProps {
   title: string;

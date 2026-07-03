@@ -1,8 +1,8 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { FileText } from "lucide-react";
 
-import useGetEvaluationCount from "../hooks/useGetEvaluationCount";
-import KpiCard from "./KpiCard";
+import useGetEvaluationCount from "../../hooks/useGetEvaluationCount";
+import KpiCard from "../KpiCard";
 
 function CardEvaluation() {
   const { data, isLoading, isFetching } = useGetEvaluationCount();
@@ -16,7 +16,7 @@ function CardEvaluation() {
   return (
     <KpiCard
       value={evaluationCount}
-      trend="+5.2%"
+      trend={0}
       progress={100}
       icon={<FileText size={18} />}
       label="Evaluaciones en curso"

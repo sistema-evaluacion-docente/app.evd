@@ -3,8 +3,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AreaChart } from "@/shared/ui";
 import { TrendingUp } from "lucide-react";
 
-import useGetStats from "../hooks/useGetStats";
-import type { ChartDataPoint } from "../types/Dashboard";
+import useGetStats from "../../hooks/useGetStats";
+import type { ChartDataPoint } from "../../types/Dashboard";
 
 function computeHistoricalData(stats: ChartDataPoint[]) {
   const sorted = [...stats].sort((a, b) => a.label.localeCompare(b.label));

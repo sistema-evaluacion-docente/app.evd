@@ -3,8 +3,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MessageSquare } from "lucide-react";
 import { Link } from "wouter";
 
-import useGetCommentCount from "../hooks/useGetCommentCount";
-import KpiCard from "./KpiCard";
+import useGetCommentCount from "../../hooks/useGetCommentCount";
+import KpiCard from "../KpiCard";
 
 function CardComments() {
   const { data, isLoading, isFetched } = useGetCommentCount();
