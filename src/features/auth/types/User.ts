@@ -7,6 +7,7 @@ export interface User {
   department_id: number | null;
   roles: string[];
   avatar_url: string;
+  teacher_id: number | null;
 
   created_at: string;
   updated_at: string;

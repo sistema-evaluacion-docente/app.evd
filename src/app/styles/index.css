@@ -8,8 +8,8 @@
 
 @theme {
     --font-sans:
-        "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-    --font-mono: "Geist Mono", ui-monospace, monospace;
+        "Figtree Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "Figtree Variable", ui-monospace, monospace;
 
     /* Brand — institutional red #AF1227 */
     --color-brand-50: #fdf2f3;

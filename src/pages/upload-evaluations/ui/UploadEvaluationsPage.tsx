@@ -109,7 +109,7 @@ export function UploadEvaluationsPage() {
           </Button>
 
           <p className="mt-5 text-[11.5px] text-ink-400">
-            Tamaño máximo de archivo: 50MB
+            Tamaño máximo de archivo: 10MB
           </p>
 
           <input
