@@ -1,6 +1,6 @@
+import { Input } from "@/shared/ui";
 import { Bell, Calendar, Menu, Search } from "lucide-react";
 import type { ReactNode } from "react";
-import { Input } from "@/shared/ui";
 
 import Avatar from "@/features/auth/components/Avatar";
 import { PeriodsSelector } from "@/features/periods";
@@ -19,14 +19,11 @@ export function AppHeader({
   onOpenMenu,
   showBreadcrumb = false,
   breadcrumb,
-  userName = "Director Depto.",
-  userRole = "Ciencias Básicas",
   rightMode = "periodo",
 }: AppHeaderProps) {
-
   return (
     <header className="sticky top-0 z-30 border-b border-ink-200 bg-white/85 backdrop-blur-md">
-      <div className="flex h-[68px] items-center gap-3 px-4 lg:px-8">
+      <div className="flex h-17 items-center gap-3 px-4 lg:px-8">
         <button
           type="button"
           onClick={onOpenMenu}
@@ -44,7 +41,7 @@ export function AppHeader({
 
         <div className="ml-auto flex items-center gap-2 sm:gap-3">
           {rightMode === "search" ? (
-            <div className="hidden w-[260px] md:block">
+            <div className="hidden w-65 md:block">
               <Input
                 placeholder="Buscar docente..."
                 icon={<Search size={14} />}
@@ -53,7 +50,11 @@ export function AppHeader({
           ) : (
             <div className="hidden items-center gap-2 md:flex">
               <Calendar size={14} className="text-ink-400" />
-              <span className="whitespace-nowrap text-[13px] text-ink-700">Periodo Académico:</span>
+
+              <span className="whitespace-nowrap text-[13px] text-ink-700">
+                Periodo Académico:
+              </span>
+
               <PeriodsSelector />
             </div>
           )}
