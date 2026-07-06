@@ -5,7 +5,7 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 import useGetPeriods from "../hooks/useGetPeriods";
 import { usePeriodsStore } from "../store/periodsStore";
@@ -31,20 +31,15 @@ function PeriodsSelector({
 
   const { selectedPeriod, setSelectedPeriod } = usePeriodsStore();
 
-  const hasAutoSelected = useRef(false);
-
-  const periods: Period[] = data?.data ?? [];
+  const periods: Period[] = (data?.data ?? []).filter((p) => p.active);
 
   useEffect(() => {
-    if (periods.length === 0 || hasAutoSelected.current) return;
-
-    const active = periods.find((p) => p.active) ?? periods[0];
-
-    if (active) {
-      setSelectedPeriod(active);
-      hasAutoSelected.current = true;
+    if (periods.length === 0) return;
+    const isSelectedActive = periods.some((p) => p.id === selectedPeriod?.id);
+    if (!isSelectedActive) {
+      setSelectedPeriod(periods[0]);
     }
-  }, [periods, setSelectedPeriod]);
+  }, [periods, selectedPeriod, setSelectedPeriod]);
 
   return (
     <div className={className}>
