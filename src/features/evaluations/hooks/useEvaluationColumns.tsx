@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
+import { Link } from "wouter";
 
 import { API_URL } from "@/config";
 import type { EvaluationRecord } from "../api/evaluationService";
@@ -22,7 +23,12 @@ export default function useEvaluationColumns() {
       columnHelper.accessor("id", {
         header: "ID",
         cell: (info) => (
-          <span className="font-mono text-xs">{info.getValue()}</span>
+          <Link
+            href={`/evaluations/${info.getValue()}`}
+            className="font-mono text-xs text-brand-600 hover:text-brand-700 hover:underline"
+          >
+            {info.getValue()}
+          </Link>
         ),
       }),
 

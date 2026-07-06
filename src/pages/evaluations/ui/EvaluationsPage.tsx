@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/shared/ui";
 import { AppLayout } from "@/widgets/layout";
 import { FileUp } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 import DataTable, { type DataTableAction } from "@/components/common/DataTable";
 import type { EvaluationRecord } from "@/features/evaluations";
@@ -13,19 +13,19 @@ import {
 } from "@/features/evaluations";
 
 export function EvaluationsPage() {
+  const [, setLocation] = useLocation();
+
   const columns = useEvaluationColumns();
+
   const { mutate: toggleStatus, isPending: isTogglingStatus } =
     useUpdateEvaluationStatus();
 
   const rowActions: DataTableAction<EvaluationRecord>[] = [
     {
-      label: "Ver PDF",
-      onClick: (row) => {
-        if (row.pdf_url) {
-          window.open(row.pdf_url, "_blank", "noopener,noreferrer");
-        }
+      label: "Ver Detalle",
+      onClick(row) {
+        setLocation(`/evaluations/${row.id}`);
       },
-      visible: (row) => !!row.pdf_url,
     },
     {
       label: "Activar",

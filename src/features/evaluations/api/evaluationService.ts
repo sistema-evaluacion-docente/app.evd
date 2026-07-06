@@ -21,6 +21,7 @@ export interface EvaluationScore {
   id: number;
   evaluation_id: number;
   academic_group_id: number;
+  group_name: string | null;
   respondent_count: number;
   overall_average: string;
 }
@@ -35,7 +36,38 @@ export interface EvaluationComment {
   teacher_id: number;
   evaluation_id: number;
   academic_groups_id: number;
+  group_name: string | null;
+  teacher_name: string | null;
+  teacher_avatar_url: string | null;
+  course_name: string | null;
   original_text: string;
+}
+
+export interface QuestionItem {
+  code: string;
+  text: string;
+  dimension: string;
+}
+
+export interface TeacherRankItem {
+  rank: number;
+  teacher_id: number;
+  institutional_code: string;
+  name: string | null;
+  contract_type: string | null;
+  group_count: number;
+  overall_average: number | null;
+}
+
+export interface EvaluationSummary {
+  evaluation_id: number;
+  period_code: string | null;
+  period_name: string | null;
+  department_average: number | null;
+  teacher_count: number;
+  best_teacher: TeacherRankItem | null;
+  worst_teacher: TeacherRankItem | null;
+  ranking: TeacherRankItem[];
 }
 
 export function uploadEvaluation(
@@ -62,6 +94,21 @@ export function getEvaluationScores(
   return api.get(`/evaluation-scores/by-evaluation/${evaluationId}`);
 }
 
+export function getEvaluationScoresPaginated(
+  evaluationId: number,
+  page: number,
+  limit: number,
+  search: string,
+): Promise<ResponseAPI<EvaluationScore[]>> {
+  const params = new URLSearchParams();
+  params.set("page", String(page));
+  params.set("limit", String(limit));
+  if (search) params.set("search", search);
+  return api.get(
+    `/evaluation-scores/by-evaluation/${evaluationId}?${params.toString()}`,
+  );
+}
+
 export function getQuestionScores(
   scoreId: number,
 ): Promise<ResponseAPI<QuestionScore[]>> {
@@ -72,6 +119,21 @@ export function getComments(
   evaluationId: number,
 ): Promise<ResponseAPI<EvaluationComment[]>> {
   return api.get(`/comments/by-evaluation/${evaluationId}`);
+}
+
+export function getCommentsPaginated(
+  evaluationId: number,
+  page: number,
+  limit: number,
+  search: string,
+): Promise<ResponseAPI<EvaluationComment[]>> {
+  const params = new URLSearchParams();
+  params.set("page", String(page));
+  params.set("limit", String(limit));
+  if (search) params.set("search", search);
+  return api.get(
+    `/comments/by-evaluation/${evaluationId}/paginated?${params.toString()}`,
+  );
 }
 
 export interface QuestionDetail {
@@ -85,6 +147,13 @@ export interface EvaluationDimensionScore {
   dimension: string;
   average: number;
   questions?: QuestionDetail[];
+}
+
+export interface EvaluationDimensionAverage {
+  dimension: string;
+  average: number | null;
+  question_count: number;
+  questions: { code: string; text: string; score: number }[];
 }
 
 export interface TeacherCourse {
@@ -154,4 +223,20 @@ export function updateEvaluationStatus(
   payload: EvaluationStatusUpdate,
 ): Promise<ResponseAPI<EvaluationRecord>> {
   return api.patch(`/evaluations/${evaluationId}/status`, payload);
+}
+
+export function getEvaluationSummary(
+  evaluationId: number,
+): Promise<ResponseAPI<EvaluationSummary>> {
+  return api.get(`/evaluations/${evaluationId}/summary`);
+}
+
+export function getDimensionAverages(
+  evaluationId: number,
+): Promise<ResponseAPI<EvaluationDimensionAverage[]>> {
+  return api.get(`/evaluations/${evaluationId}/dimension-averages`);
+}
+
+export function getQuestions(): Promise<ResponseAPI<QuestionItem[]>> {
+  return api.get("/evaluations/questions");
 }
