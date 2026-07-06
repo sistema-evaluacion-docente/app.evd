@@ -32,6 +32,7 @@ export function UploadEvaluationsPage() {
     status,
     progress,
     fileName,
+    fileSize,
     error,
     stats,
     upload,
@@ -57,12 +58,12 @@ export function UploadEvaluationsPage() {
       header={{ userName: "Director Depto.", userRole: "Ciencias Básicas" }}
     >
       <PageHeader
-        title="Carga de Evaluaciones Docentes"
-        description="Suba el archivo PDF institucional para iniciar el análisis automático de las evaluaciones del periodo académico vigente."
+        title='Carga de Evaluaciones Docentes'
+        description='Suba el archivo PDF institucional para iniciar el análisis automático de las evaluaciones del periodo académico vigente.'
       />
 
       {/* Dropzone */}
-      <Card className="p-5 sm:p-6">
+      <Card className='p-5 sm:p-6'>
         <div
           onDragEnter={(event) => {
             event.preventDefault();
@@ -83,40 +84,40 @@ export function UploadEvaluationsPage() {
             busy && "pointer-events-none opacity-60",
           )}
         >
-          <div className="inline-flex h-16 w-16 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+          <div className='inline-flex h-16 w-16 items-center justify-center rounded-xl bg-brand-50 text-brand-600'>
             <FileUp size={28} strokeWidth={1.75} />
           </div>
 
-          <h3 className="mt-5 text-[18px] font-semibold tracking-tight text-ink-900">
+          <h3 className='mt-5 text-[18px] font-semibold tracking-tight text-ink-900'>
             Arrastre su archivo aquí
           </h3>
 
-          <p className="mt-1.5 text-[13px] text-ink-500">
+          <p className='mt-1.5 text-[13px] text-ink-500'>
             Formato aceptado:{" "}
-            <span className="font-medium text-brand-600">
+            <span className='font-medium text-brand-600'>
               PDF Institucional
             </span>
           </p>
 
           <Button
-            size="lg"
+            size='lg'
             disabled={busy}
-            className="mt-6 px-5"
+            className='mt-6 px-5'
             onClick={() => inputRef.current?.click()}
           >
             <FileText size={16} />
             Seleccionar Archivo PDF
           </Button>
 
-          <p className="mt-5 text-[11.5px] text-ink-400">
+          <p className='mt-5 text-[11.5px] text-ink-400'>
             Tamaño máximo de archivo: 10MB
           </p>
 
           <input
             ref={inputRef}
-            type="file"
-            accept="application/pdf,.pdf"
-            className="hidden"
+            type='file'
+            accept='application/pdf,.pdf'
+            className='hidden'
             onChange={(event) => handleFile(event.target.files?.[0])}
           />
         </div>
@@ -124,67 +125,78 @@ export function UploadEvaluationsPage() {
 
       {/* Status card */}
       {status !== "idle" && (
-        <Card className="p-5 sm:p-6">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-3">
+        <Card className='p-5 sm:p-6'>
+          <div className='flex items-center justify-between gap-3'>
+            <div className='flex min-w-0 items-center gap-3'>
               {status === "success" ? (
-                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                <span className='inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-emerald-700'>
                   <Check size={13} strokeWidth={2.5} />
                 </span>
               ) : status === "error" ? (
-                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-brand-100 text-brand-600">
+                <span className='inline-flex h-5 w-5 items-center justify-center rounded-full bg-brand-100 text-brand-600'>
                   <AlertTriangle size={13} />
                 </span>
               ) : (
-                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-ink-100">
-                  <span className="h-2.5 w-2.5 animate-spin rounded-full border-2 border-ink-300 border-t-brand-600" />
+                <span className='inline-flex h-5 w-5 items-center justify-center rounded-full bg-ink-100'>
+                  <span className='h-2.5 w-2.5 animate-spin rounded-full border-2 border-ink-300 border-t-brand-600' />
                 </span>
               )}
-              <span className="truncate text-[14px] font-semibold text-ink-900">
+              <span className='truncate text-[14px] font-semibold text-ink-900'>
                 {STATUS_HEADING[status]}
               </span>
             </div>
-            <span className="num text-[13px] font-semibold text-ink-700">
+            <span className='num text-[13px] font-semibold text-ink-700'>
               {Math.round(progress)}%
             </span>
           </div>
-          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-ink-100">
+          <div className='mt-3 h-1.5 overflow-hidden rounded-full bg-ink-100'>
             <div
-              className="h-full bg-brand-600 transition-all duration-200"
+              className='h-full bg-brand-600 transition-all duration-200'
               style={{ width: `${progress}%` }}
             />
           </div>
-          <div className="mt-3 flex items-center justify-between gap-3 text-[12.5px] text-ink-500">
-            <span className="inline-flex min-w-0 items-center gap-1.5">
+          <div className='mt-3 flex items-center justify-between gap-3 text-[12.5px] text-ink-500'>
+            <span className='inline-flex min-w-0 items-center gap-1.5'>
               <Info size={14} />
               {status === "success" && (
-                <span className="truncate">
+                <span className='truncate'>
                   Archivo "
-                  <span className="font-medium text-ink-700">{fileName}</span>"
+                  <span className='font-medium text-ink-700'>{fileName}</span>"
+                  {fileSize && (
+                    <span className='text-ink-400'> · {fileSize}</span>
+                  )}{" "}
                   procesado exitosamente.
                 </span>
               )}
               {status === "uploading" && (
-                <span className="truncate">
+                <span className='truncate'>
                   Subiendo "
-                  <span className="font-medium text-ink-700">{fileName}</span>"…
+                  <span className='font-medium text-ink-700'>{fileName}</span>"
+                  {fileSize && (
+                    <span className='text-ink-400'> · {fileSize}</span>
+                  )}
+                  …
                 </span>
               )}
               {status === "processing" && (
-                <span className="truncate">
+                <span className='truncate'>
                   Extrayendo evaluaciones de "
-                  <span className="font-medium text-ink-700">{fileName}</span>"…
+                  <span className='font-medium text-ink-700'>{fileName}</span>"
+                  {fileSize && (
+                    <span className='text-ink-400'> · {fileSize}</span>
+                  )}
+                  …
                 </span>
               )}
               {status === "error" && (
-                <span className="text-brand-700">{error}</span>
+                <span className='text-brand-700'>{error}</span>
               )}
             </span>
             {(status === "success" || status === "error") && (
               <button
-                type="button"
+                type='button'
                 onClick={handleReset}
-                className="shrink-0 text-[12.5px] font-medium text-brand-600 hover:text-brand-700"
+                className='shrink-0 text-[12.5px] font-medium text-brand-600 hover:text-brand-700'
               >
                 Cambiar archivo
               </button>
@@ -195,46 +207,46 @@ export function UploadEvaluationsPage() {
 
       {/* Stats */}
       {ready ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
           <StatTile
-            label="Total docentes detectados"
+            label='Total docentes detectados'
             value={stats.teachers.toLocaleString("es-CO")}
-            valueClassName="text-ink-900 text-[40px]"
+            valueClassName='text-ink-900 text-[40px]'
             icon={
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-brand-50 text-brand-600">
+              <span className='inline-flex h-9 w-9 items-center justify-center rounded-md bg-brand-50 text-brand-600'>
                 <Users size={18} />
               </span>
             }
-            className="p-5 sm:p-6"
+            className='p-5 sm:p-6'
           />
 
           <StatTile
-            label="Total comentarios"
+            label='Total comentarios'
             value={stats.comments.toLocaleString("es-CO")}
-            valueClassName="text-ink-900 text-[40px]"
+            valueClassName='text-ink-900 text-[40px]'
             icon={
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-brand-50 text-brand-600">
+              <span className='inline-flex h-9 w-9 items-center justify-center rounded-md bg-brand-50 text-brand-600'>
                 <FileText size={18} />
               </span>
             }
-            className="p-5 sm:p-6"
+            className='p-5 sm:p-6'
           />
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
           {["Total docentes detectados", "Total comentarios"].map((label) => (
-            <Card key={label} className="border-dashed p-5 sm:p-6">
-              <div className="flex items-start justify-between gap-3">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-400">
+            <Card key={label} className='border-dashed p-5 sm:p-6'>
+              <div className='flex items-start justify-between gap-3'>
+                <div className='text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-400'>
                   {label}
                 </div>
 
-                <div className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-ink-50 text-ink-300">
+                <div className='inline-flex h-9 w-9 items-center justify-center rounded-md bg-ink-50 text-ink-300'>
                   <Users size={18} />
                 </div>
               </div>
 
-              <div className="num mt-5 text-[40px] font-semibold leading-none tracking-tight text-ink-300">
+              <div className='num mt-5 text-[40px] font-semibold leading-none tracking-tight text-ink-300'>
                 —
               </div>
             </Card>
@@ -242,10 +254,10 @@ export function UploadEvaluationsPage() {
         </div>
       )}
 
-      <Separator className="my-2" />
+      <Separator className='my-2' />
 
-      <div className="flex flex-col justify-between gap-3 pt-2 sm:flex-row sm:items-center">
-        <div className="text-[12.5px] text-ink-500">
+      <div className='flex flex-col justify-between gap-3 pt-2 sm:flex-row sm:items-center'>
+        <div className='text-[12.5px] text-ink-500'>
           {status === "idle" &&
             "Esperando archivo. Use el área superior para subir un PDF institucional."}
           {status === "uploading" && "Procesando subida del archivo…"}
@@ -256,7 +268,7 @@ export function UploadEvaluationsPage() {
           {status === "error" && "Corrija el archivo e intente nuevamente."}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className='flex items-center gap-2'>
           <Link
             href={ready ? "/teachers" : "#"}
             onClick={(event) => {

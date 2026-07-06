@@ -13,8 +13,13 @@ export type UploadStatus =
   | "success"
   | "error";
 
-const MAX_SIZE = 50 * 1024 * 1024;
+const MAX_SIZE = 10 * 1024 * 1024;
 const POLL_MS = 3000;
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
 const MAX_POLL_ATTEMPTS = 20; // 60 s máximo de espera
 
 interface UploadStats {
@@ -28,6 +33,7 @@ export function useUploadEvaluation() {
   const [fileName, setFileName] = useState("");
   const [error, setError] = useState("");
   const [stats, setStats] = useState<UploadStats>({ teachers: 0, comments: 0 });
+  const [fileSize, setFileSize] = useState("");
 
   const pollId = useRef<number>(0);
   const tickId = useRef<number>(0);
@@ -54,6 +60,7 @@ export function useUploadEvaluation() {
   const upload = useCallback(async (file: File) => {
     clearTimers();
     setFileName(file.name);
+    setFileSize(formatFileSize(file.size));
     setError("");
     progressVal.current = 0;
     setProgress(0);
@@ -69,7 +76,7 @@ export function useUploadEvaluation() {
     }
 
     if (file.size > MAX_SIZE) {
-      setError("El archivo excede el tamaño máximo de 50MB.");
+      setError("El archivo excede el tamaño máximo de 10MB.");
       setStatus("error");
       return;
     }
@@ -142,6 +149,7 @@ export function useUploadEvaluation() {
     setStatus("idle");
     setProgress(0);
     setFileName("");
+    setFileSize("");
     setError("");
     setStats({ teachers: 0, comments: 0 });
   }, []);
@@ -158,6 +166,7 @@ export function useUploadEvaluation() {
     status,
     progress,
     fileName,
+    fileSize,
     error,
     stats,
     upload,
