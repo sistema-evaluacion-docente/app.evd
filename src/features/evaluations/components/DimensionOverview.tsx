@@ -1,21 +1,25 @@
-import { ChevronDown, Info } from "lucide-react";
-
+import { Card } from "@/components/ui/card";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import type { EvaluationDimensionAverage } from "../types/TeacherEvaluation";
-import { cn } from "@/shared/lib/utils";
-import { Card } from "@/shared/ui";
+import { cn } from "@/lib/utils";
+import { ChevronDown, Info } from "lucide-react";
 
+import { Link } from "wouter";
+import type { EvaluationDimensionAverage } from "../types/TeacherEvaluation";
 import { ScoreBarInline } from "./ScoreBarInline";
 
 interface DimensionOverviewProps {
   dimensions: EvaluationDimensionAverage[];
+  evaluationId: number;
 }
 
-export function DimensionOverview({ dimensions }: DimensionOverviewProps) {
+export function DimensionOverview({
+  dimensions,
+  evaluationId,
+}: DimensionOverviewProps) {
   if (dimensions.length === 0) return null;
 
   return (
@@ -26,7 +30,13 @@ export function DimensionOverview({ dimensions }: DimensionOverviewProps) {
             Dimensiones de Evaluación
           </h2>
         </div>
-        <Info size={15} className="shrink-0 text-ink-400" />
+
+        <Link
+          href={`/evaluations/${evaluationId}/dimensions`}
+          className="flex items-center gap-1 text-[13px] font-medium text-ink-500 hover:text-ink-700"
+        >
+          Ver más <Info size={16} className="text-ink-400" />
+        </Link>
       </div>
 
       <ul className="divide-y divide-ink-100">
@@ -38,17 +48,20 @@ export function DimensionOverview({ dimensions }: DimensionOverviewProps) {
                   <span className="text-[13.5px] font-medium text-ink-700">
                     {dim.dimension}
                   </span>
+
                   <span className="ml-2 text-[11px] text-ink-400">
                     {dim.question_count} pregunta
                     {dim.question_count !== 1 ? "s" : ""}
                   </span>
                 </div>
+
                 <div className="flex items-center gap-2">
                   {dim.average != null ? (
                     <ScoreBarInline score={dim.average} />
                   ) : (
                     <span className="text-[13px] text-ink-400">—</span>
                   )}
+
                   <ChevronDown
                     size={16}
                     className="text-ink-400 transition-transform group-data-[expanded]:rotate-180"
@@ -68,10 +81,12 @@ export function DimensionOverview({ dimensions }: DimensionOverviewProps) {
                           <span className="text-[11px] font-mono text-ink-400">
                             {q.code}
                           </span>
+
                           <p className="text-[12.5px] text-ink-600 leading-snug">
                             {q.text}
                           </p>
                         </div>
+
                         <span
                           className={cn(
                             "shrink-0 text-[12px] font-semibold tabular-nums",

@@ -56,7 +56,10 @@ function EvaluationDetailContent({ evaluationId }: Props) {
 
           <ScoresByGroup evaluationId={evaluationId} />
 
-          <DimensionOverview dimensions={dimensions} />
+          <DimensionOverview
+            dimensions={dimensions}
+            evaluationId={evaluationId}
+          />
 
           <CommentsTable evaluationId={evaluationId} />
         </>
