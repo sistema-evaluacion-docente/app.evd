@@ -7,7 +7,6 @@ import {
   DrawerClose,
   DrawerContent,
   DrawerDescription,
-  DrawerFooter,
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
@@ -20,8 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useGetDepartments } from "@/features/departments";
+import { Save } from "lucide-react";
 import useCreateTeacher from "../hooks/useCreateTeacher";
 
 const CONTRACT_TYPES = [
@@ -96,10 +95,11 @@ function CreateTeacherDrawer({ open, onOpenChange }: CreateTeacherDrawerProps) {
   }
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange} direction="right">
+    <Drawer open={open} onOpenChange={onOpenChange} swipeDirection="right">
       <DrawerContent className="w-full sm:max-w-xl">
-        <DrawerHeader>
+        <DrawerHeader className="mb-4">
           <DrawerTitle>Nuevo docente</DrawerTitle>
+
           <DrawerDescription>
             Complete los datos del nuevo docente.
           </DrawerDescription>
@@ -168,29 +168,33 @@ function CreateTeacherDrawer({ open, onOpenChange }: CreateTeacherDrawerProps) {
 
               <div className="space-y-2">
                 <Label>Tipo de contrato</Label>
-                <RadioGroup
+
+                <Select
                   value={form.contract_type}
                   onValueChange={(value) =>
-                    setForm((prev) => ({ ...prev, contract_type: value }))
+                    setForm((prev) => ({ ...prev, contract_type: value ?? "" }))
                   }
-                  className="mt-1 gap-2"
                 >
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="" id="create-ct-none" />
-                    <Label htmlFor="create-ct-none" className="font-normal">Sin especificar</Label>
-                  </div>
-                  {CONTRACT_TYPES.map((type) => (
-                    <div key={type} className="flex items-center gap-2">
-                      <RadioGroupItem value={type} id={`create-ct-${type}`} />
-                      <Label htmlFor={`create-ct-${type}`} className="font-normal">{type}</Label>
-                    </div>
-                  ))}
-                </RadioGroup>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Seleccionar tipo de contrato" />
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    <SelectItem value="">Sin contrato</SelectItem>
+
+                    {CONTRACT_TYPES.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
             <div className="space-y-2">
               <Label>Departamento</Label>
+
               <Select
                 value={form.department_id}
                 onValueChange={(value) =>
@@ -212,16 +216,18 @@ function CreateTeacherDrawer({ open, onOpenChange }: CreateTeacherDrawerProps) {
             </div>
           </div>
 
-          <DrawerFooter className="px-0 pb-0">
-            <Button type="submit" disabled={!isValid || isSubmitting}>
-              {isSubmitting ? "Creando..." : "Crear docente"}
-            </Button>
-            <DrawerClose asChild>
+          <div className="flex justify-end gap-2 pt-4">
+            <DrawerClose>
               <Button type="button" variant="outline" disabled={isSubmitting}>
                 Cancelar
               </Button>
             </DrawerClose>
-          </DrawerFooter>
+
+            <Button type="submit" disabled={!isValid || isSubmitting}>
+              <Save />
+              {isSubmitting ? "Creando..." : "Crear docente"}
+            </Button>
+          </div>
         </form>
       </DrawerContent>
     </Drawer>
