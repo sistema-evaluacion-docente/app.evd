@@ -5,7 +5,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import type { EvaluationDimensionAverage } from "@/features/evaluations";
+import type { EvaluationDimensionAverage } from "../types/TeacherEvaluation";
 import { cn } from "@/shared/lib/utils";
 import { Card } from "@/shared/ui";
 

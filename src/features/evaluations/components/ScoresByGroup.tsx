@@ -2,9 +2,9 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
 
 import DataTable from "@/components/common/DataTable";
-import type { EvaluationScore } from "@/features/evaluations";
+import type { EvaluationScore } from "../types/Evaluation";
 
-import { createScoresQueryFn } from "../../model/useGetScoresByEvaluation";
+import { createScoresQueryFn } from "./createScoresQueryFn";
 import { ScoreBarInline } from "./ScoreBarInline";
 
 interface ScoresByGroupProps {

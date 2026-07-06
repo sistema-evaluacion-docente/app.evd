@@ -1,7 +1,7 @@
 import { Calendar, ExternalLink, Users } from "lucide-react";
 
 import type { Department } from "@/features/departments";
-import type { EvaluationRecord } from "@/features/evaluations";
+import type { EvaluationRecord } from "../types/Evaluation";
 import { Card } from "@/shared/ui";
 
 interface GeneralInfoCardProps {

@@ -2,10 +2,10 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
 
 import DataTable from "@/components/common/DataTable";
-import type { EvaluationComment } from "@/features/evaluations";
+import type { EvaluationComment } from "../types/Comment";
 import { Avatar } from "@/shared/ui";
 
-import { createCommentsQueryFn } from "../../model/useGetCommentsByEvaluation";
+import { createCommentsQueryFn } from "./createCommentsQueryFn";
 
 interface CommentsTableProps {
   evaluationId: number;

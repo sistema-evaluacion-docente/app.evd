@@ -1,7 +1,8 @@
-import { useGetEvaluationScoresPaginated } from "@/features/evaluations";
-import type { EvaluationScore } from "@/features/evaluations";
-import type { ResponseAPI } from "@/shared/types/Response";
 import type { UseQueryResult } from "@tanstack/react-query";
+
+import type { ResponseAPI } from "@/shared/types/Response";
+import type { EvaluationScore } from "../types/Evaluation";
+import useGetEvaluationScoresPaginated from "../hooks/useGetEvaluationScoresPaginated";
 
 export function createScoresQueryFn(evaluationId: number) {
   return function useScoresQuery({

@@ -1,7 +1,8 @@
-import { useGetCommentsPaginated } from "@/features/evaluations";
-import type { EvaluationComment } from "@/features/evaluations";
-import type { ResponseAPI } from "@/shared/types/Response";
 import type { UseQueryResult } from "@tanstack/react-query";
+
+import type { ResponseAPI } from "@/shared/types/Response";
+import type { EvaluationComment } from "../types/Comment";
+import useGetCommentsPaginated from "../hooks/useGetCommentsPaginated";
 
 export function createCommentsQueryFn(evaluationId: number) {
   return function useCommentsQuery({

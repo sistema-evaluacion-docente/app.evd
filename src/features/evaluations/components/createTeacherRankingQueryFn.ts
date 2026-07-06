@@ -1,7 +1,8 @@
+import type { UseQueryResult } from "@tanstack/react-query";
+
 import { useGetTeacherRanking } from "@/features/stats";
 import type { TeacherRankingItem } from "@/features/stats";
 import type { ResponseAPI } from "@/shared/types/Response";
-import type { UseQueryResult } from "@tanstack/react-query";
 
 export function createTeacherRankingQueryFn(
   academicPeriodId?: number,

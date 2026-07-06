@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { Link } from "wouter";
 
 import { API_URL } from "@/config";
-import type { EvaluationRecord } from "../api/evaluationService";
+import type { EvaluationRecord } from "../types/Evaluation";
 
 const columnHelper = createColumnHelper<EvaluationRecord>();
 

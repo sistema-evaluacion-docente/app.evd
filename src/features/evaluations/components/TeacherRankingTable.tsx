@@ -7,7 +7,7 @@ import DataTable from "@/components/common/DataTable";
 import type { TeacherRankingItem } from "@/features/stats";
 import { Button } from "@/shared/ui";
 
-import { createTeacherRankingQueryFn } from "../../model/useGetTeacherRanking";
+import { createTeacherRankingQueryFn } from "./createTeacherRankingQueryFn";
 import { ScoreBarInline } from "./ScoreBarInline";
 
 interface TeacherRankingTableProps {

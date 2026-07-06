@@ -1,8 +1,8 @@
 import { Award, TrendingDown, TrendingUp, Users } from "lucide-react";
-
-import type { EvaluationSummary } from "@/features/evaluations";
-import { StatTile } from "@/shared/ui";
 import { Link } from "wouter";
+
+import type { EvaluationSummary } from "../types/TeacherEvaluation";
+import { StatTile } from "@/shared/ui";
 
 interface SummaryStatsProps {
   summary: EvaluationSummary | undefined;
