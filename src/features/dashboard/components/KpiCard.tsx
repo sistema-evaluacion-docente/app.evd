@@ -31,7 +31,7 @@ function KpiCard({
             <span>{value}</span>
           </div>
 
-          {trend && (
+          {trend > 0 && (
             <span
               className={`flex items-center gap-2 text-xl text-muted-foreground`}
             >
