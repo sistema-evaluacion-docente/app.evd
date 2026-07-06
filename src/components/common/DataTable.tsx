@@ -88,6 +88,7 @@ interface DataTableProps<TData> {
   }) => UseQueryResult<ResponseAPI<TData[]>>;
   extraFilterParams?: Record<string, string | undefined>;
   createConfig?: DataTableCreateConfig;
+  filters?: React.ReactNode;
 }
 
 /**
@@ -114,6 +115,7 @@ function DataTable<TData>({
   queryFn,
   extraFilterParams,
   createConfig,
+  filters,
 }: DataTableProps<TData>) {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -196,6 +198,8 @@ function DataTable<TData>({
             className="bg-background"
           />
         ) : null}
+
+        {filters}
 
         <div className="flex gap-2 items-center ml-auto">
           {createConfig ? (
