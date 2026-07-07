@@ -3,10 +3,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TrendingUp } from "lucide-react";
 import { Link } from "wouter";
 
+import type { EvaluationRecord } from "@/features/evaluations";
 import useGetDepartmentAverage from "../../hooks/useGetDepartmentAverage";
 import KpiCard from "../KpiCard";
 
-function CardDepartmentAverage() {
+type Props = {
+  evaluation: EvaluationRecord | null;
+  initialLoading?: boolean;
+};
+
+function CardDepartmentAverage({ evaluation, initialLoading }: Props) {
   const { data, isLoading, isFetched } = useGetDepartmentAverage();
 
   const { global_average, previous_global_average } = data?.data ?? {};
@@ -14,9 +20,9 @@ function CardDepartmentAverage() {
   const globalAverage = Number(global_average ?? 0);
   const prevGlobalAverage = Number(previous_global_average ?? 0);
 
-  if (isLoading || !isFetched) {
+  if (initialLoading || isLoading || !isFetched) {
     return (
-      <Card>
+      <Card className="animate-fade-in">
         <CardContent className="relative">
           <Skeleton className="h-4 w-40 mb-6" />
 
@@ -33,7 +39,7 @@ function CardDepartmentAverage() {
 
   return (
     <Link
-      to={`/evaluaciones/`}
+      to={`/evaluations/${evaluation?.id}`}
       className="transition-opacity hover:opacity-80 animate-fade-in"
     >
       <KpiCard

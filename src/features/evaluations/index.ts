@@ -26,6 +26,7 @@ export type {
 export {
   uploadEvaluation,
   getEvaluation,
+  getEvaluationByPeriod,
   getEvaluationScores,
   getEvaluationScoresPaginated,
   getQuestionScores,
@@ -46,6 +47,7 @@ export {
 } from "./hooks/useUploadEvaluation";
 export { default as useGetEvaluations } from "./hooks/useGetEvaluations";
 export { default as useGetEvaluation } from "./hooks/useGetEvaluation";
+export { default as useGetEvaluationByPeriod } from "./hooks/useGetEvaluationByPeriod";
 export { default as useGetEvaluationSummary } from "./hooks/useGetEvaluationSummary";
 export { default as useGetEvaluationScores } from "./hooks/useGetEvaluationScores";
 export { default as useGetEvaluationScoresPaginated } from "./hooks/useGetEvaluationScoresPaginated";
