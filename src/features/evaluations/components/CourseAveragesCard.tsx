@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Info } from "lucide-react";
 
 import type { EvaluationRecord } from "@/features/evaluations";
@@ -16,9 +17,29 @@ export default function CourseAveragesCard({
 }: CourseAveragesCardProps) {
   const { selectedPeriod } = usePeriodsStore();
 
-  const { data: detailRes, isLoading: detailLoading } =
-    useGetTeacherEvaluationDetail(evaluation?.id, teacherId);
-  const detail = detailRes?.data;
+  const { data, isLoading, isFetched } = useGetTeacherEvaluationDetail(
+    evaluation?.id,
+    teacherId,
+  );
+
+  const detail = data?.data;
+
+  if (isLoading || !isFetched) {
+    return (
+      <Card className="h-full p-5 sm:p-6">
+        <Skeleton className="mb-5 h-6 w-44" />
+
+        <ul>
+          {[1, 2, 3, 4].map((i) => (
+            <li key={i} className="flex items-center justify-between py-3.5">
+              <Skeleton className="h-3 w-44" />
+              <Skeleton className="h-6 w-14" />
+            </li>
+          ))}
+        </ul>
+      </Card>
+    );
+  }
 
   return (
     <Card className="h-full p-5 sm:p-6">
@@ -30,20 +51,7 @@ export default function CourseAveragesCard({
         <Info size={15} className="text-ink-400" />
       </div>
 
-      {detailLoading ? (
-        <ul>
-          {[1, 2, 3].map((i) => (
-            <li key={i} className="flex items-center justify-between py-3.5">
-              <div className="space-y-1.5">
-                <div className="h-3 w-40 animate-pulse rounded bg-ink-100" />
-                <div className="h-2.5 w-24 animate-pulse rounded bg-ink-100" />
-              </div>
-
-              <div className="h-6 w-14 animate-pulse rounded bg-ink-100" />
-            </li>
-          ))}
-        </ul>
-      ) : !detail?.courses.length ? (
+      {!detail?.courses.length ? (
         <p className="text-[13px] text-ink-400">
           {selectedPeriod
             ? "Sin materias registradas para este periodo."

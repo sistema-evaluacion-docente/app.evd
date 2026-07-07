@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { Info } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import type { EvaluationRecord } from "@/features/evaluations";
 import { useGetTeacherEvaluationDetail } from "@/features/evaluations";
@@ -16,30 +16,37 @@ export default function DimensionAveragesCard({
 }: DimensionAveragesCardProps) {
   const { selectedPeriod } = usePeriodsStore();
 
-  const { data: detailRes, isLoading: detailLoading } =
-    useGetTeacherEvaluationDetail(evaluation?.id, teacherId);
-  const detail = detailRes?.data;
+  const { data, isLoading, isFetched } = useGetTeacherEvaluationDetail(
+    evaluation?.id,
+    teacherId,
+  );
 
-  return (
-    <Card className="h-full p-5 sm:p-6">
-      <div className="mb-5 flex items-start justify-between">
-        <h2 className="text-[17px] font-semibold text-ink-900">
-          Promedio por Dimensión
-        </h2>
+  const detail = data?.data;
 
-        <Info size={15} className="text-ink-400" />
-      </div>
+  if (isLoading || !isFetched) {
+    return (
+      <Card className="h-full p-5 sm:p-6">
+        <Skeleton className="mb-5 h-6 w-44" />
 
-      {detailLoading ? (
         <ul>
           {[1, 2, 3, 4].map((i) => (
             <li key={i} className="flex items-center justify-between py-3.5">
-              <div className="h-3 w-44 animate-pulse rounded bg-ink-100" />
-              <div className="h-6 w-14 animate-pulse rounded bg-ink-100" />
+              <Skeleton className="h-3 w-44" />
+              <Skeleton className="h-6 w-14" />
             </li>
           ))}
         </ul>
-      ) : !detail?.dimensions.length ? (
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="h-full p-5 sm:p-6">
+      <div className="flex items-start justify-between">
+        <h2 className="text-[17px] font-semibold">Promedio por Dimensión</h2>
+      </div>
+
+      {!detail?.dimensions.length ? (
         <p className="text-[13px] text-ink-400">
           {selectedPeriod
             ? "Sin datos de evaluación para este periodo."
