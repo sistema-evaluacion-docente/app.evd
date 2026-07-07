@@ -1,9 +1,9 @@
 import { Badge } from "@/components/ui/badge";
 import { createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
-import { Link } from "wouter";
 
 import { API_URL } from "@/config";
+import { Link } from "wouter";
 import type { EvaluationRecord } from "../types/Evaluation";
 
 const columnHelper = createColumnHelper<EvaluationRecord>();
@@ -20,23 +20,16 @@ const STATUS_MAP: Record<
 export default function useEvaluationColumns() {
   return useMemo(
     () => [
-      columnHelper.accessor("id", {
-        header: "ID",
-        cell: (info) => (
-          <Link
-            href={`/evaluations/${info.getValue()}`}
-            className="font-mono text-xs text-brand-600 hover:text-brand-700 hover:underline"
-          >
-            {info.getValue()}
-          </Link>
-        ),
-      }),
-
       columnHelper.accessor("academic_period_name", {
         header: "Periodo",
         cell: (info) => {
           const name = info.getValue();
-          return name ?? <span className="text-muted-foreground">—</span>;
+
+          return (
+            <Link to={`/evaluations/${info.row.original.id}`}>
+              {name ?? <span className="text-muted-foreground">—</span>}
+            </Link>
+          );
         },
       }),
 
@@ -68,7 +61,11 @@ export default function useEvaluationColumns() {
         header: "Docentes",
         cell: (info) => {
           const count = info.getValue();
-          return count != null ? count : "—";
+          return (
+            <Link to={`/evaluations/${info.row.original.id}`}>
+              {count != null ? count : "—"}
+            </Link>
+          );
         },
       }),
 
