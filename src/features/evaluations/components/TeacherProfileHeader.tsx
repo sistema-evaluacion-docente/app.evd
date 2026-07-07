@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import {
   Building2,
@@ -31,12 +31,18 @@ export default function TeacherProfileHeader({
 }: TeacherProfileHeaderProps) {
   const { selectedPeriod } = usePeriodsStore();
 
-  const { data: teacherRes, isLoading: teacherLoading } =
-    useGetTeacherById(teacherId);
+  const {
+    data: teacherRes,
+    isLoading: teacherLoading,
+    isFetched: teacherFetched,
+  } = useGetTeacherById(teacherId);
   const teacher = teacherRes?.data;
 
-  const { data: detailRes, isLoading: detailLoading } =
-    useGetTeacherEvaluationDetail(evaluation?.id, teacherId);
+  const {
+    data: detailRes,
+    isLoading: detailLoading,
+    isFetched: detailFetched,
+  } = useGetTeacherEvaluationDetail(evaluation?.id, teacherId);
   const detail = detailRes?.data;
 
   const { data: historyRes } = useGetTeacherHistory(teacherId);
@@ -78,29 +84,39 @@ export default function TeacherProfileHeader({
         </div>
 
         <div className="min-w-0 flex-1">
-          {teacherLoading ? (
-            <div className="h-8 w-48 animate-pulse rounded-md bg-ink-100" />
+          {teacherLoading || !teacherFetched ? (
+            <div className="space-y-3">
+              <Skeleton className="h-8 w-56" />
+
+              <div className="flex flex-wrap gap-x-5 gap-y-1.5">
+                <Skeleton className="h-3.5 w-28" />
+                <Skeleton className="h-3.5 w-24" />
+                <Skeleton className="h-3.5 w-40" />
+              </div>
+            </div>
           ) : (
-            <h1 className="text-[26px] font-semibold leading-tight tracking-tight text-ink-900 sm:text-[28px]">
-              {teacherName}
-            </h1>
+            <>
+              <h1 className="text-[26px] font-semibold leading-tight tracking-tight text-ink-900 sm:text-[28px]">
+                {teacherName}
+              </h1>
+
+              <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-[13.5px] text-ink-600">
+                <li className="inline-flex items-center gap-2">
+                  <Building2 size={14} className="text-ink-400" />
+                  Cód. {teacher?.institutional_code ?? "—"}
+                </li>
+
+                <li className="inline-flex items-center gap-2">
+                  <Clock size={14} className="text-ink-400" /> {contractType}
+                </li>
+
+                <li className="inline-flex items-center gap-2">
+                  <Calendar size={14} className="text-ink-400" /> Periodo
+                  Académico: {periodLabel}
+                </li>
+              </ul>
+            </>
           )}
-
-          <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-[13.5px] text-ink-600">
-            <li className="inline-flex items-center gap-2">
-              <Building2 size={14} className="text-ink-400" />
-              Cód. {teacher?.institutional_code ?? "—"}
-            </li>
-
-            <li className="inline-flex items-center gap-2">
-              <Clock size={14} className="text-ink-400" /> {contractType}
-            </li>
-
-            <li className="inline-flex items-center gap-2">
-              <Calendar size={14} className="text-ink-400" /> Periodo Académico:{" "}
-              {periodLabel}
-            </li>
-          </ul>
         </div>
       </div>
 
@@ -111,19 +127,20 @@ export default function TeacherProfileHeader({
           </div>
 
           <div className="mt-2 flex items-baseline gap-1">
-            {detailLoading ? (
-              <div className="h-8 w-16 animate-pulse rounded-md bg-ink-100" />
+            {detailLoading || !detailFetched ? (
+              <Skeleton className="h-8 w-16" />
             ) : (
-              <>
+              <div className="animate-fade-in">
                 <span className="num text-[32px] font-semibold leading-none tabular-nums text-ink-900">
                   {overallAverage > 0 ? overallAverage : "—"}
                 </span>
+
                 {overallAverage > 0 && (
                   <span className="text-[14px] font-medium text-ink-500">
                     /5.0
                   </span>
                 )}
-              </>
+              </div>
             )}
           </div>
         </div>
@@ -193,7 +210,7 @@ export default function TeacherProfileHeader({
         </div>
       </div>
 
-      <Separator className="my-5" />
+      {/* <Separator className="my-5" /> */}
 
       <div className="flex flex-wrap gap-2">
         <Link href={`/matrix/${teacherId}`}>
