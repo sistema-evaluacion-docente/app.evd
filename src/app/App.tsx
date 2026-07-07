@@ -16,6 +16,8 @@ import { PlansPage } from "@/pages/plans";
 import { TeacherDetailPage } from "@/pages/teacher-detail";
 import { TeachersPage } from "@/pages/teachers";
 import { EvaluationsPage } from "@/pages/evaluations";
+import { EvaluationDetailPage } from "@/pages/evaluations/detail";
+import { EvaluationDimensionsPage } from "@/pages/evaluations/dimensions";
 import { UploadEvaluationsPage } from "@/pages/evaluations/upload";
 import { UploadTeachersPage } from "@/pages/upload-teachers";
 
@@ -37,6 +39,8 @@ function App() {
       <Route path="/matrix-mock" component={MatrixPageMock} />
       <Route path="/plans" component={PlansPage} />
       <Route path="/evaluations" component={EvaluationsPage} />
+      <Route path="/evaluations/:id/dimensions" component={EvaluationDimensionsPage} />
+      <Route path="/evaluations/:id" component={EvaluationDetailPage} />
       <Route path="/evaluations/upload" component={UploadEvaluationsPage} />
       <Route path="/upload-evaluations" component={UploadEvaluationsPage} />
       <Route path="/upload-teachers" component={UploadTeachersPage} />

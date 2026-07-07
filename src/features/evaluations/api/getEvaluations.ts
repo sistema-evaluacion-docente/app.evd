@@ -1,6 +1,6 @@
 import api from "@/config/axios";
 import type { ResponseAPI } from "@/shared/types/Response";
-import type { EvaluationRecord } from "./evaluationService";
+import type { EvaluationRecord } from "../types/Evaluation";
 
 interface GetEvaluationsParams {
   page: number;

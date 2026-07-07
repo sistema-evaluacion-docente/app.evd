@@ -222,10 +222,10 @@ export function AuditDetailDrawer({
   const { data, isLoading } = useGetAudit(open ? auditId : null);
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange} direction="right">
+    <Drawer open={open} onOpenChange={onOpenChange} swipeDirection="right">
       <DrawerContent className="w-full sm:max-w-lg">
         <DrawerHeader className="relative">
-          <DrawerClose className="absolute right-4 top-4" asChild>
+          <DrawerClose className="absolute right-4 top-4">
             <Button type="button" variant="ghost" size="icon">
               <X className="size-4" />
             </Button>

@@ -4,13 +4,11 @@ import {
   DrawerClose,
   DrawerContent,
   DrawerDescription,
-  DrawerFooter,
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -21,6 +19,7 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { Save } from "lucide-react";
 import useUpdateTeacher from "../hooks/useUpdateTeacher";
 import type { Teacher } from "../types/Teacher";
 
@@ -91,7 +90,7 @@ function EditTeacherDrawer({
       key={teacher?.id}
       open={open}
       onOpenChange={onOpenChange}
-      direction="right"
+      swipeDirection="right"
     >
       <DrawerContent className="w-full sm:max-w-xl">
         <DrawerHeader>
@@ -176,43 +175,44 @@ function EditTeacherDrawer({
                   </SelectContent>
                 </Select>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label>Estado</Label>
+              <div className="space-y-2">
+                <Label>Estado</Label>
 
-              <RadioGroup
-                value={String(form.active)}
-                onValueChange={(value) =>
-                  setForm((prev) => ({ ...prev, active: value === "true" }))
-                }
-              >
-                <div className="flex items-center gap-2">
-                  <RadioGroupItem value="true" id="edit-active" />
+                <Select
+                  value={form.active ? "true" : "false"}
+                  onValueChange={(value) =>
+                    setForm((prev) => ({ ...prev, active: value === "true" }))
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <span>{form.active ? "Activo" : "Inactivo"}</span>
+                  </SelectTrigger>
 
-                  <Label htmlFor="edit-active">Activo</Label>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <RadioGroupItem value="false" id="edit-inactive" />
-
-                  <Label htmlFor="edit-inactive">Inactivo</Label>
-                </div>
-              </RadioGroup>
+                  <SelectContent>
+                    {["true", "false"].map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type === "true" ? "Activo" : "Inactivo"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
-          <DrawerFooter className="px-0 pb-0">
-            <Button type="submit" disabled={!isValid || isSubmitting}>
-              {isSubmitting ? "Guardando..." : "Guardar cambios"}
-            </Button>
-
-            <DrawerClose asChild>
+          <div className="flex justify-end gap-2">
+            <DrawerClose>
               <Button type="button" variant="outline" disabled={isSubmitting}>
                 Cancelar
               </Button>
             </DrawerClose>
-          </DrawerFooter>
+
+            <Button type="submit" disabled={!isValid || isSubmitting}>
+              <Save />
+              {isSubmitting ? "Guardando..." : "Guardar cambios"}
+            </Button>
+          </div>
         </form>
       </DrawerContent>
     </Drawer>

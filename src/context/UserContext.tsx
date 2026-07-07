@@ -50,6 +50,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
       setSelectedRoleState(role);
       localStorage.setItem("selectedRole", role);
+
+      if (
+        location === "/login" ||
+        location === "/register" ||
+        location === "/"
+      ) {
+        setLocation("/dashboard", { replace: true });
+      }
     },
     [user],
   );

@@ -1,50 +1,24 @@
 import api from "@/config/axios";
 import type { ResponseAPI } from "@/shared/types/Response";
-
-export interface EvaluationRecord {
-  id: number;
-  user_id: string;
-  academic_period_id: number;
-  department_id: number;
-  pdf_url: string;
-  status: "PROCESSING" | "COMPLETED" | "FAILED";
-  count: number | null;
-  academic_period_name?: string;
-  active: boolean;
-}
-
-export interface EvaluationStatusUpdate {
-  active: boolean;
-}
-
-export interface EvaluationScore {
-  id: number;
-  evaluation_id: number;
-  academic_group_id: number;
-  respondent_count: number;
-  overall_average: string;
-}
-
-export interface QuestionScore {
-  evaluation_score_id: number;
-  question_code: string;
-  score: string;
-}
-
-export interface EvaluationComment {
-  teacher_id: number;
-  evaluation_id: number;
-  academic_groups_id: number;
-  original_text: string;
-}
+import type { EvaluationComment } from "../types/Comment";
+import type {
+  EvaluationRecord,
+  EvaluationScore,
+  EvaluationStatusUpdate,
+} from "../types/Evaluation";
+import type { QuestionItem, QuestionScore } from "../types/Question";
+import type {
+  EvaluationDimensionAverage,
+  EvaluationSummary,
+  TeacherCommentsData,
+  TeacherEvaluationDetail,
+} from "../types/TeacherEvaluation";
 
 export function uploadEvaluation(
   file: File,
 ): Promise<ResponseAPI<EvaluationRecord>> {
   const form = new FormData();
   form.append("file", file);
-  // Content-Type: undefined removes the default 'application/json' header so
-  // the browser can set 'multipart/form-data; boundary=...' automatically.
   return api.post("/evaluations/upload", form, {
     headers: { "Content-Type": undefined },
   });
@@ -62,6 +36,21 @@ export function getEvaluationScores(
   return api.get(`/evaluation-scores/by-evaluation/${evaluationId}`);
 }
 
+export function getEvaluationScoresPaginated(
+  evaluationId: number,
+  page: number,
+  limit: number,
+  search: string,
+): Promise<ResponseAPI<EvaluationScore[]>> {
+  const params = new URLSearchParams();
+  params.set("page", String(page));
+  params.set("limit", String(limit));
+  if (search) params.set("search", search);
+  return api.get(
+    `/evaluation-scores/by-evaluation/${evaluationId}?${params.toString()}`,
+  );
+}
+
 export function getQuestionScores(
   scoreId: number,
 ): Promise<ResponseAPI<QuestionScore[]>> {
@@ -74,53 +63,19 @@ export function getComments(
   return api.get(`/comments/by-evaluation/${evaluationId}`);
 }
 
-export interface QuestionDetail {
-  id: number;
-  code: string;
-  text: string;
-  score: number;
-}
-
-export interface EvaluationDimensionScore {
-  dimension: string;
-  average: number;
-  questions?: QuestionDetail[];
-}
-
-export interface TeacherCourse {
-  course_code: string;
-  course_name: string;
-  group_name: string;
-  respondent_count: number;
-  overall_average: number;
-  dimensions: EvaluationDimensionScore[];
-}
-
-export interface TeacherCommentCourse {
-  course_code: string;
-  course_name: string;
-  group_name: string;
-  comments: string[];
-}
-
-export interface TeacherCommentsData {
-  teacher_id: number;
-  evaluation_id: number;
-  courses: TeacherCommentCourse[];
-}
-
-export interface TeacherEvaluationDetail {
-  teacher_id: number;
-  institutional_code: string;
-  name: string;
-  contract_type: string;
-  evaluation_id: number;
-  period_code: string;
-  period_name: string;
-  overall_average: number;
-  group_count: number;
-  courses: TeacherCourse[];
-  dimensions: EvaluationDimensionScore[];
+export function getCommentsPaginated(
+  evaluationId: number,
+  page: number,
+  limit: number,
+  search: string,
+): Promise<ResponseAPI<EvaluationComment[]>> {
+  const params = new URLSearchParams();
+  params.set("page", String(page));
+  params.set("limit", String(limit));
+  if (search) params.set("search", search);
+  return api.get(
+    `/comments/by-evaluation/${evaluationId}/paginated?${params.toString()}`,
+  );
 }
 
 export function getTeacherEvaluationDetail(
@@ -142,10 +97,10 @@ export function exportTeacherMatrix(
   teacherId: number,
   includeComments: boolean,
 ): Promise<Blob> {
-  const params = includeComments ? '?include_comments=true' : '';
+  const params = includeComments ? "?include_comments=true" : "";
   return api.get(
     `/evaluations/${evaluationId}/teachers/${teacherId}/export${params}`,
-    { responseType: 'blob' },
+    { responseType: "blob" },
   ) as unknown as Promise<Blob>;
 }
 
@@ -154,4 +109,20 @@ export function updateEvaluationStatus(
   payload: EvaluationStatusUpdate,
 ): Promise<ResponseAPI<EvaluationRecord>> {
   return api.patch(`/evaluations/${evaluationId}/status`, payload);
+}
+
+export function getEvaluationSummary(
+  evaluationId: number,
+): Promise<ResponseAPI<EvaluationSummary>> {
+  return api.get(`/evaluations/${evaluationId}/summary`);
+}
+
+export function getDimensionAverages(
+  evaluationId: number,
+): Promise<ResponseAPI<EvaluationDimensionAverage[]>> {
+  return api.get(`/evaluations/${evaluationId}/dimension-averages`);
+}
+
+export function getQuestions(): Promise<ResponseAPI<QuestionItem[]>> {
+  return api.get("/evaluations/questions");
 }
