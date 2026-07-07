@@ -23,6 +23,7 @@ import { useLocation } from "wouter";
 
 function Avatar() {
   const [, setLocation] = useLocation();
+
   const { user, isLoading, handleLogout, selectedRole, setSelectedRole } =
     useAuth();
 
@@ -79,7 +80,10 @@ function Avatar() {
               <DropdownMenuSubContent>
                 <DropdownMenuRadioGroup
                   value={selectedRole ?? ""}
-                  onValueChange={(value) => setSelectedRole(value)}
+                  onValueChange={(value) => {
+                    setLocation("/dashboard");
+                    setSelectedRole(value);
+                  }}
                 >
                   {userRoles.map((role) => (
                     <DropdownMenuRadioItem key={role} value={role}>
