@@ -21,6 +21,13 @@ export {
   getTeacherEvaluationDetail,
   getTeacherComments,
   exportTeacherMatrix,
+  getTeacherVsDepartment,
+} from "./api/evaluationService";
+
+export type {
+  TeacherVsDeptData,
+  TeacherVsDeptDimension,
+  TeacherVsDeptQuestion,
 } from "./api/evaluationService";
 
 export {
@@ -33,3 +40,4 @@ export { default as useUpdateEvaluationStatus } from "./hooks/useUpdateEvaluatio
 export { default as useGetTeacherEvaluationDetail } from "./hooks/useGetTeacherEvaluationDetail";
 export { default as useGetComments } from "./hooks/useGetComments";
 export { default as useGetTeacherComments } from "./hooks/useGetTeacherComments";
+export { default as useGetTeacherVsDepartment } from "./hooks/useGetTeacherVsDepartment";

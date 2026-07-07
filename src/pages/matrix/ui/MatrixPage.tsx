@@ -1,4 +1,13 @@
-import { BarChart3, ChevronRight, Download, FileSpreadsheet, Search } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  BarChart3,
+  ChevronRight,
+  Download,
+  FileSpreadsheet,
+  Minus,
+  Search,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link, useParams } from "wouter";
 
@@ -7,6 +16,7 @@ import {
   exportTeacherMatrix,
   useGetEvaluations,
   useGetTeacherEvaluationDetail,
+  useGetTeacherVsDepartment,
 } from "@/features/evaluations";
 import { useGetTeacherById } from "@/features/teachers";
 import { usePeriodsStore } from "@/features/periods";
@@ -59,11 +69,18 @@ export function MatrixPage() {
     if (!evaluation?.id) return;
     setIsExporting(true);
     try {
-      const blob = await exportTeacherMatrix(evaluation.id, teacherId, includeComments);
+      const blob = await exportTeacherMatrix(
+        evaluation.id,
+        teacherId,
+        includeComments,
+      );
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = `matriz_${teacherName}_${periodLabel}.xlsx`.replace(/\s+/g, '_');
+      a.download = `matriz_${teacherName}_${periodLabel}.xlsx`.replace(
+        /\s+/g,
+        "_",
+      );
       a.click();
       URL.revokeObjectURL(url);
       setShowExportModal(false);
@@ -90,6 +107,30 @@ export function MatrixPage() {
   const { data: detailRes, isLoading: detailLoading } =
     useGetTeacherEvaluationDetail(evaluation?.id, teacherId);
   const detail = detailRes?.data;
+
+  const { data: comparisonRes } = useGetTeacherVsDepartment(
+    teacherId,
+    evaluation?.academic_period_id,
+  );
+  const comparison = comparisonRes?.data;
+
+  const questionDeptScores = useMemo<Record<string, number>>(() => {
+    if (!comparison) return {};
+    const result: Record<string, number> = {};
+    for (const dim of comparison.dimensions) {
+      for (const q of dim.questions) {
+        result[q.code] = q.department_average;
+      }
+    }
+    return result;
+  }, [comparison]);
+
+  const dimDeptScores = useMemo<Record<string, number>>(() => {
+    if (!comparison) return {};
+    return Object.fromEntries(
+      comparison.dimensions.map((d) => [d.dimension, d.department_average]),
+    );
+  }, [comparison]);
 
   const isLoading = teacherLoading || evaluationsLoading || detailLoading;
 
@@ -194,6 +235,7 @@ export function MatrixPage() {
             code: item.code,
             label: item.label,
             score: questionScores[item.code] ?? null,
+            deptScore: questionDeptScores[item.code] ?? null,
           }))
           .filter((item) => {
             if (!search) return true;
@@ -202,12 +244,20 @@ export function MatrixPage() {
               item.label.toLowerCase().includes(q) || item.code.includes(q)
             );
           });
+        const dimScores = dim.items
+          .map((item) => questionScores[item.code])
+          .filter((s): s is number => s !== undefined);
+        const average =
+          dimScores.length > 0
+            ? dimScores.reduce((a, b) => a + b, 0) / dimScores.length
+            : (apiDim?.average ?? 0);
+
         return {
           id: dim.id,
           label: dim.label,
           color: dim.color,
           number: dimIndex + 1,
-          average: apiDim?.average ?? 0,
+          average,
           items,
         };
       })
@@ -281,18 +331,46 @@ export function MatrixPage() {
             </div>
           </div>
           {detail && (
-            <div className='text-right'>
-              <div className='text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-500'>
-                Promedio Global
+            <div className='flex items-center gap-4 sm:gap-6'>
+              <div className='text-right'>
+                <div className='text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-500'>
+                  Promedio Individual
+                </div>
+                <div className='mt-1 flex items-baseline justify-end gap-1'>
+                  <span className='num text-[34px] font-semibold leading-none tabular-nums text-ink-900'>
+                    {detail.overall_average.toFixed(2)}
+                  </span>
+                  <span className='text-[13px] font-medium text-ink-500'>
+                    /5.0
+                  </span>
+                </div>
               </div>
-              <div className='mt-1 flex items-baseline justify-end gap-1'>
-                <span className='num text-[34px] font-semibold leading-none tabular-nums text-ink-900'>
-                  {detail.overall_average.toFixed(2)}
-                </span>
-                <span className='text-[13px] font-medium text-ink-500'>
-                  /5.0
-                </span>
-              </div>
+              {comparison && (
+                <>
+                  <div className='hidden h-12 w-px bg-ink-200 sm:block' />
+                  <div className='text-right'>
+                    <div className='text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-500'>
+                      Promedio Depto.
+                    </div>
+                    <div className='mt-1 flex items-baseline justify-end gap-1'>
+                      <span className='num text-[34px] font-semibold leading-none tabular-nums text-ink-500'>
+                        {comparison.department_overall_average.toFixed(2)}
+                      </span>
+                      <span className='text-[13px] font-medium text-ink-400'>
+                        /5.0
+                      </span>
+                    </div>
+                  </div>
+                  <div className='hidden h-12 w-px bg-ink-200 sm:block' />
+                  <DeltaBadge
+                    delta={
+                      detail.overall_average -
+                      comparison.department_overall_average
+                    }
+                    size='lg'
+                  />
+                </>
+              )}
             </div>
           )}
         </div>
@@ -310,9 +388,18 @@ export function MatrixPage() {
                 Sin evaluación disponible
               </p>
               <p className='mt-1.5 text-[13px] text-ink-500'>
-                {selectedPeriod
-                  ? <>Este docente no cuenta con evaluación docente en el periodo académico <span className='font-semibold text-ink-700'>{selectedPeriod.name}</span>.</>
-                  : 'Selecciona un periodo académico en la barra superior para ver la matriz.'}
+                {selectedPeriod ? (
+                  <>
+                    Este docente no cuenta con evaluación docente en el periodo
+                    académico{" "}
+                    <span className='font-semibold text-ink-700'>
+                      {selectedPeriod.name}
+                    </span>
+                    .
+                  </>
+                ) : (
+                  "Selecciona un periodo académico en la barra superior para ver la matriz."
+                )}
               </p>
             </div>
           </div>
@@ -326,41 +413,57 @@ export function MatrixPage() {
             ? [1, 2, 3, 4].map((i) => (
                 <Card key={i} className='h-32 animate-pulse bg-ink-50' />
               ))
-            : dimensionsWithColor.map((dim, i) => (
-                <Card key={dim.dimension} className='p-5'>
-                  <div className='flex items-start justify-between gap-2'>
-                    <div>
-                      <div className='text-[10.5px] font-semibold uppercase leading-snug tracking-[0.08em] text-ink-500'>
-                        {dim.dimension}
+            : dimensionsWithColor.map((dim, i) => {
+                const deptAvg = dimDeptScores[dim.dimension];
+                const delta =
+                  deptAvg !== undefined ? dim.average - deptAvg : null;
+                return (
+                  <Card key={dim.dimension} className='p-5'>
+                    <div className='flex items-start justify-between gap-2'>
+                      <div>
+                        <div className='text-[10.5px] font-semibold uppercase leading-snug tracking-[0.08em] text-ink-500'>
+                          {dim.dimension}
+                        </div>
+                        <div className='mt-0.5 text-[11px] text-ink-400'>
+                          {EVALUATION_DIMENSIONS[i]?.items.length ?? 0} ítems
+                        </div>
                       </div>
-                      <div className='mt-0.5 text-[11px] text-ink-400'>
-                        {EVALUATION_DIMENSIONS[i]?.items.length ?? 0} ítems
-                      </div>
+                      <span
+                        className='mt-1 h-2 w-2 shrink-0 rounded-full'
+                        style={{ background: dim.color }}
+                      />
                     </div>
-                    <span
-                      className='mt-1 h-2 w-2 shrink-0 rounded-full'
-                      style={{ background: dim.color }}
-                    />
-                  </div>
-                  <div className='mt-4 flex items-baseline gap-1'>
-                    <span className='num text-[32px] font-semibold leading-none tabular-nums text-ink-900'>
-                      {dim.average.toFixed(2)}
-                    </span>
-                    <span className='text-[13px] font-medium text-ink-500'>
-                      /5.0
-                    </span>
-                  </div>
-                  <div className='mt-3 h-1.5 overflow-hidden rounded-full bg-ink-100'>
-                    <div
-                      className='h-full transition-all duration-700'
-                      style={{
-                        width: `${(dim.average / 5) * 100}%`,
-                        background: dim.color,
-                      }}
-                    />
-                  </div>
-                </Card>
-              ))}
+                    <div className='mt-4 flex items-baseline gap-2'>
+                      <span className='num text-[32px] font-semibold leading-none tabular-nums text-ink-900'>
+                        {dim.average.toFixed(2)}
+                      </span>
+                      <span className='text-[13px] font-medium text-ink-500'>
+                        /5.0
+                      </span>
+                      {delta !== null && (
+                        <span className='ml-auto'>
+                          <DeltaBadge delta={delta} />
+                        </span>
+                      )}
+                    </div>
+                    <div className='mt-3 space-y-1.5'>
+                      <ComparisonBar
+                        label='Individual'
+                        value={dim.average}
+                        color={dim.color}
+                        emphasis
+                      />
+                      {deptAvg !== undefined && (
+                        <ComparisonBar
+                          label='Departamento'
+                          value={deptAvg}
+                          color='#9AA0AB'
+                        />
+                      )}
+                    </div>
+                  </Card>
+                );
+              })}
         </div>
       )}
 
@@ -496,7 +599,8 @@ export function MatrixPage() {
         </Card>
       )}
 
-      {!isLoading && hasQuestions &&
+      {!isLoading &&
+        hasQuestions &&
         displayDimensions.map((dim, dimIndex) => (
           <Card key={dim.id} className='overflow-hidden'>
             <div className='flex items-center gap-3 border-b border-ink-100 px-5 py-4 sm:px-6'>
@@ -536,20 +640,38 @@ export function MatrixPage() {
                       {item.label}
                     </div>
                     {item.score !== null && (
-                      <ItemBar value={item.score} color={dim.color} />
+                      <div className='space-y-1'>
+                        <ItemBar
+                          value={item.score}
+                          color={dim.color}
+                          label='Individual'
+                          emphasis
+                        />
+                        {item.deptScore !== null && (
+                          <ItemBar
+                            value={item.deptScore}
+                            color='#9AA0AB'
+                            label='Depto.'
+                          />
+                        )}
+                      </div>
                     )}
                   </div>
-                  <div className='text-right'>
-                    {item.score !== null ? (
-                      <span className='num text-[14px] font-semibold tabular-nums text-ink-900'>
-                        {item.score.toFixed(2)}
-                      </span>
+                  <div className='flex flex-col items-end'>
+                    {item.score !== null && item.deptScore !== null ? (
+                      <DeltaBadge delta={item.score - item.deptScore} />
+                    ) : item.score !== null ? (
+                      <>
+                        <span className='num text-[14px] font-semibold tabular-nums text-ink-900'>
+                          {item.score.toFixed(2)}
+                        </span>
+                        <div className='mt-0.5 text-[10.5px] font-medium uppercase tracking-[0.06em] text-ink-400'>
+                          / 5
+                        </div>
+                      </>
                     ) : (
                       <span className='text-[12px] text-ink-400'>—</span>
                     )}
-                    <div className='mt-0.5 text-[10.5px] font-medium uppercase tracking-[0.06em] text-ink-400'>
-                      / 5
-                    </div>
                   </div>
                 </div>
               ))}
@@ -567,17 +689,22 @@ export function MatrixPage() {
         <div className='p-6'>
           <div className='mb-1 flex items-center gap-2.5'>
             <FileSpreadsheet size={18} className='text-ink-700' />
-            <h2 className='text-[16px] font-semibold text-ink-900'>Exportar matriz</h2>
+            <h2 className='text-[16px] font-semibold text-ink-900'>
+              Exportar matriz
+            </h2>
           </div>
           <p className='mb-6 text-[13px] text-ink-500'>
-            Se generará un archivo Excel con la matriz de evaluación de{' '}
-            <span className='font-medium text-ink-700'>{teacherName}</span> en el periodo{' '}
+            Se generará un archivo Excel con la matriz de evaluación de{" "}
+            <span className='font-medium text-ink-700'>{teacherName}</span> en
+            el periodo{" "}
             <span className='font-medium text-ink-700'>{periodLabel}</span>.
           </p>
 
           <div className='flex items-center justify-between rounded-lg border border-ink-200 bg-ink-50 px-4 py-3'>
             <div>
-              <p className='text-[13px] font-medium text-ink-800'>Incluir comentarios</p>
+              <p className='text-[13px] font-medium text-ink-800'>
+                Incluir comentarios
+              </p>
               <p className='mt-0.5 text-[12px] text-ink-500'>
                 Agrega una hoja con los comentarios por materia
               </p>
@@ -600,7 +727,7 @@ export function MatrixPage() {
             </Button>
             <Button size='sm' onClick={handleExport} disabled={isExporting}>
               {isExporting ? (
-                'Descargando...'
+                "Descargando..."
               ) : (
                 <>
                   <Download size={13} />
@@ -615,13 +742,127 @@ export function MatrixPage() {
   );
 }
 
-function ItemBar({ value, color }: { value: number; color: string }) {
+function ItemBar({
+  value,
+  color,
+  label,
+  emphasis,
+}: {
+  value: number;
+  color: string;
+  label?: string;
+  emphasis?: boolean;
+}) {
   return (
-    <div className='relative h-3 overflow-hidden rounded-full bg-ink-100'>
+    <div className='flex items-center gap-2'>
+      {label && (
+        <span
+          className={cn(
+            "w-20 shrink-0 text-[10px] font-semibold uppercase tracking-[0.04em]",
+            emphasis ? "text-ink-600" : "text-ink-400",
+          )}
+        >
+          {label}
+        </span>
+      )}
+      <div className='relative h-2.5 flex-1 overflow-hidden rounded-full bg-ink-100'>
+        <div
+          className='absolute inset-y-0 left-0 rounded-full transition-all duration-700'
+          style={{ width: `${(value / 5) * 100}%`, background: color }}
+        />
+      </div>
+      {label && (
+        <span
+          className={cn(
+            "num w-8 text-right text-[11px] font-semibold tabular-nums",
+            emphasis ? "text-ink-900" : "text-ink-500",
+          )}
+        >
+          {value.toFixed(2)}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function DeltaBadge({
+  delta,
+  size = "sm",
+}: {
+  delta: number;
+  size?: "sm" | "lg";
+}) {
+  const isAbove = delta > 0.005;
+  const isBelow = delta < -0.005;
+  const Icon = isAbove ? ArrowUp : isBelow ? ArrowDown : Minus;
+  const colorClass = isAbove
+    ? "text-emerald-700"
+    : isBelow
+      ? "text-red-600"
+      : "text-amber-600";
+  const iconSize = size === "lg" ? 16 : 11;
+  const textClass = size === "lg" ? "text-[22px]" : "text-[13px]";
+
+  return (
+    <div
+      className={cn("flex flex-col items-end", size === "lg" && "text-right")}
+    >
+      {size === "lg" && (
+        <div className='text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-500'>
+          Diferencia
+        </div>
+      )}
       <div
-        className='absolute inset-y-0 left-0 rounded-full transition-all duration-700'
-        style={{ width: `${(value / 5) * 100}%`, background: color }}
-      />
+        className={cn(
+          "num mt-0.5 inline-flex items-center gap-0.5 font-semibold tabular-nums",
+          colorClass,
+          textClass,
+        )}
+      >
+        <Icon size={iconSize} />
+        {Math.abs(delta).toFixed(2)}
+      </div>
+      {size === "sm" && (
+        <div className='text-[10px] font-medium uppercase tracking-[0.06em] text-ink-400'>
+          vs. depto.
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ComparisonBar({
+  label,
+  value,
+  color,
+  emphasis,
+}: {
+  label: string;
+  value: number;
+  color: string;
+  emphasis?: boolean;
+}) {
+  return (
+    <div>
+      <div className='flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.06em]'>
+        <span className={emphasis ? "text-ink-700" : "text-ink-400"}>
+          {label}
+        </span>
+        <span
+          className={cn(
+            "num tabular-nums",
+            emphasis ? "text-ink-900" : "text-ink-500",
+          )}
+        >
+          {value.toFixed(2)}
+        </span>
+      </div>
+      <div className='mt-1 h-1.5 overflow-hidden rounded-full bg-ink-100'>
+        <div
+          className='h-full transition-all duration-500'
+          style={{ width: `${(value / 5) * 100}%`, background: color }}
+        />
+      </div>
     </div>
   );
 }
