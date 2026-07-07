@@ -16,6 +16,7 @@ interface TeacherRankingChartProps {
   icon: LucideIcon;
   maxScore?: number;
   isLoading?: boolean;
+  evaluationId?: number;
 }
 
 function TeacherRankingChart({
@@ -25,6 +26,7 @@ function TeacherRankingChart({
   scoreColor,
   icon: Icon,
   isLoading = false,
+  evaluationId,
 }: TeacherRankingChartProps) {
   if (isLoading) {
     return (
@@ -78,7 +80,7 @@ function TeacherRankingChart({
           <CardTitle>{title}</CardTitle>
 
           <Link
-            href={`/teachers`}
+            href={`/evaluations/${evaluationId}`}
             className="text-xs text-muted-foreground underline"
           >
             Ver todos

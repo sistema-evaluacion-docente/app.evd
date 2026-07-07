@@ -3,16 +3,22 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MessageSquare } from "lucide-react";
 import { Link } from "wouter";
 
+import type { EvaluationRecord } from "@/features/evaluations";
 import useGetCommentCount from "../../hooks/useGetCommentCount";
 import KpiCard from "../KpiCard";
 
-function CardComments() {
+type Props = {
+  evaluation: EvaluationRecord | null;
+  initialLoading?: boolean;
+};
+
+function CardComments({ evaluation, initialLoading }: Props) {
   const { data, isLoading, isFetched } = useGetCommentCount();
 
   const commentCount = data?.data?.current_count ?? 0;
   const previousCommentCount = data?.data?.previous_count ?? 0;
 
-  if (isLoading || !isFetched) {
+  if (initialLoading || isLoading || !isFetched) {
     return (
       <Card>
         <CardContent className="relative">
@@ -31,7 +37,7 @@ function CardComments() {
 
   return (
     <Link
-      to={`/evaluaciones/`}
+      to={`/evaluations/${evaluation?.id}`}
       className="transition-opacity hover:opacity-80 animate-fade-in"
     >
       <KpiCard
