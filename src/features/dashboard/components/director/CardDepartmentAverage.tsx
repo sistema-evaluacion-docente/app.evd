@@ -16,7 +16,7 @@ function CardDepartmentAverage() {
 
   if (isLoading || !isFetched) {
     return (
-      <Card>
+      <Card className="animate-fade-in">
         <CardContent className="relative">
           <Skeleton className="h-4 w-40 mb-6" />
 
@@ -33,7 +33,7 @@ function CardDepartmentAverage() {
 
   return (
     <Link
-      to={`/evaluaciones/`}
+      to={`/evaluaciones`}
       className="transition-opacity hover:opacity-80 animate-fade-in"
     >
       <KpiCard
