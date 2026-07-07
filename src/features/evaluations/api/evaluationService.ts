@@ -30,6 +30,12 @@ export function getEvaluation(
   return api.get(`/evaluations/${id}`);
 }
 
+export function getEvaluationByPeriod(
+  periodId: number,
+): Promise<ResponseAPI<EvaluationRecord>> {
+  return api.get(`/evaluations/by-period/${periodId}`);
+}
+
 export function getEvaluationScores(
   evaluationId: number,
 ): Promise<ResponseAPI<EvaluationScore[]>> {
