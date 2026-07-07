@@ -232,7 +232,7 @@ function DataTable<TData>({
 
       <div
         className={cn(
-          "overflow-x-auto rounded-lg border bg-background",
+          "overflow-x-auto rounded-lg border bg-background animate-fade-in",
           containerClassName,
         )}
       >
@@ -286,7 +286,7 @@ function DataTable<TData>({
                   {[0, 1, 2, 3, 4].map((el) => (
                     <tr key={el} className="w-full">
                       {columns.map((cell) => (
-                        <td key={cell.id} className="w-auto px-2 py-1">
+                        <td key={cell.id} className="w-auto px-2 py-1 animate-fade-in">
                           <Skeleton className="w-full h-8" />
                         </td>
                       ))}
@@ -305,7 +305,7 @@ function DataTable<TData>({
                     <tr>
                       <td
                         colSpan={columns.length + (hasRowActions ? 1 : 0)}
-                        className="text-center py-10"
+                        className="text-center py-10 animate-fade-in"
                       >
                         <p className="text-muted-foreground">{emptyMessage}</p>
                       </td>
@@ -323,7 +323,7 @@ function DataTable<TData>({
                           <td
                             key={cell.id}
                             className={cn(
-                              "px-5 py-4 align-middle first:pl-6 last:pr-6",
+                              "px-5 py-4 align-middle first:pl-6 last:pr-6 animate-fade-in",
                               cellClassName,
                             )}
                           >
@@ -337,7 +337,7 @@ function DataTable<TData>({
                         {hasRowActions ? (
                           <td
                             className={cn(
-                              "px-5 py-4 align-middle text-right first:pl-6 last:pr-6",
+                              "px-5 py-4 align-middle text-right first:pl-6 last:pr-6 animate-fade-in",
                               cellClassName,
                             )}
                           >
