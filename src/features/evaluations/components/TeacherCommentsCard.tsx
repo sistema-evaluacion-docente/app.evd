@@ -46,7 +46,7 @@ export default function TeacherCommentsCard({
   );
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden animate-fade-in">
       <div className="flex flex-col justify-between gap-3 p-5 sm:flex-row sm:items-center sm:p-6">
         <div>
           <h2 className="text-[20px] font-semibold text-ink-900">

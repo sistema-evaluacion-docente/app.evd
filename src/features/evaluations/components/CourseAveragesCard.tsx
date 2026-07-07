@@ -26,7 +26,7 @@ export default function CourseAveragesCard({
 
   if (isLoading || !isFetched) {
     return (
-      <Card className="h-full p-5 sm:p-6">
+      <Card className="h-full p-5 sm:p-6 animate-fade-in">
         <Skeleton className="mb-5 h-6 w-44" />
 
         <ul>
@@ -42,7 +42,7 @@ export default function CourseAveragesCard({
   }
 
   return (
-    <Card className="h-full p-5 sm:p-6">
+    <Card className="h-full p-5 sm:p-6 animate-fade-in">
       <div className="mb-5 flex items-start justify-between">
         <h2 className="text-[17px] font-semibold text-ink-900">
           Promedio por Materia

@@ -25,7 +25,7 @@ export default function DimensionAveragesCard({
 
   if (isLoading || !isFetched) {
     return (
-      <Card className="h-full p-5 sm:p-6">
+      <Card className="h-full p-5 sm:p-6 animate-fade-in">
         <Skeleton className="mb-5 h-6 w-44" />
 
         <ul>
@@ -41,7 +41,7 @@ export default function DimensionAveragesCard({
   }
 
   return (
-    <Card className="h-full p-5 sm:p-6">
+    <Card className="h-full p-5 sm:p-6 animate-fade-in">
       <div className="flex items-start justify-between">
         <h2 className="text-[17px] font-semibold">Promedio por Dimensión</h2>
       </div>
