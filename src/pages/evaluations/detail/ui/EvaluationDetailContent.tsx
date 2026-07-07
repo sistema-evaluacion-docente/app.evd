@@ -25,18 +25,17 @@ function EvaluationDetailContent({ evaluationId }: Props) {
         <NotFoundState />
       ) : (
         <>
-          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start md:items-center">
             <div>
-              <h1 className="text-2xl font-semibold leading-tight tracking-tight text-ink-900">
+              <h1 className="text-2xl font-semibold leading-tight tracking-tight">
                 Detalle de Evaluación
-                <span className="ml-2 text-ink-400">#{evaluationId}</span>
+                <span className="ml-2 text-muted-foreground">#{evaluationId}</span>
               </h1>
             </div>
 
             {evaluation && (
               <div className="flex shrink-0 items-center gap-2">
                 <StatusBadge status={evaluation.status} />
-                <ActiveBadge active={evaluation.active} />
               </div>
             )}
           </div>

@@ -12,5 +12,9 @@ export function StatusBadge({ status }: { status: string }) {
 
   const cfg = map[status] ?? { variant: "warning" as const, label: status };
 
-  return <Badge>{cfg.label}</Badge>;
+  return (
+    <Badge variant="outline" className="bg-background">
+      {cfg.label}
+    </Badge>
+  );
 }
