@@ -29,10 +29,7 @@ function UploadEvaluationsContent() {
 
   return (
     <>
-      <PageHeader
-        title="Carga de Evaluaciones Docentes"
-        description="Suba el archivo PDF institucional para iniciar el análisis automático de las evaluaciones del periodo académico vigente."
-      />
+      <PageHeader title="Carga de Evaluaciones Docentes" />
 
       <UploadDropzone key={dropzoneKey} busy={busy} onFile={handleFile} />
 
