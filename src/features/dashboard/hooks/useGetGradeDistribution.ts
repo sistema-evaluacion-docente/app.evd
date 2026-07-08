@@ -9,6 +9,6 @@ export default function useGetGradeDistribution(departmentId?: number) {
   return useQuery({
     queryKey: ["grade-distribution", departmentId, selectedPeriod?.id],
     queryFn: () =>
-      getGradeDistribution(selectedPeriod?.id, departmentId, 0.5),
+      getGradeDistribution(Number(selectedPeriod?.id), departmentId, 0.5),
   });
 }

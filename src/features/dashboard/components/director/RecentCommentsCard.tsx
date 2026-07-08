@@ -5,9 +5,15 @@ import { Link } from "wouter";
 
 import useGetCommentsByPeriod from "@/features/comments/hooks/useGetCommentsByPeriod";
 import type { CommentPeriod } from "@/features/comments/types/CommentPeriod";
+import type { EvaluationRecord } from "@/features/evaluations";
 import { usePeriodsStore } from "@/features/periods/store/periodsStore";
 
-function RecentCommentsCard() {
+type Props = {
+  evaluation: EvaluationRecord | null;
+  initialLoading?: boolean;
+};
+
+function RecentCommentsCard({ evaluation, initialLoading }: Props) {
   const selectedPeriod = usePeriodsStore((state) => state.selectedPeriod);
 
   const { data, isLoading } = useGetCommentsByPeriod({
@@ -39,7 +45,7 @@ function RecentCommentsCard() {
         </CardTitle>
 
         <Link
-          href={`/periods/${selectedPeriod?.id}/comments`}
+          href={`/evaluations/${evaluation?.id}`}
           className="text-xs text-muted-foreground underline"
         >
           Ver todos
@@ -47,7 +53,7 @@ function RecentCommentsCard() {
       </CardHeader>
 
       <CardContent>
-        {isLoading ? (
+        {initialLoading || isLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="space-y-1">

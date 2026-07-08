@@ -202,7 +202,6 @@ export function AdminDirectorsPage() {
 
   return (
     <AppLayout
-      role="admin"
       mainClassName="max-w-[1200px] space-y-5"
       header={{
         userName: 'Super Administrador',

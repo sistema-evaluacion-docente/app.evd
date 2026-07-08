@@ -34,15 +34,17 @@ function PeriodsSelector({
   const periods: Period[] = (data?.data ?? []).filter((p) => p.active);
 
   useEffect(() => {
-    if (periods.length === 0 || selectedPeriod) return;
-
-    setSelectedPeriod(periods[0]);
+    if (periods.length === 0) return;
+    const isSelectedActive = periods.some((p) => p.id === selectedPeriod?.id);
+    if (!isSelectedActive) {
+      setSelectedPeriod(periods[0]);
+    }
   }, [periods, selectedPeriod, setSelectedPeriod]);
 
   return (
     <div className={className}>
       {label && (
-        <label className="mb-1 block text-[13px] font-medium text-ink-700">
+        <label className='mb-1 block text-[13px] font-medium text-ink-700'>
           {label}
         </label>
       )}
