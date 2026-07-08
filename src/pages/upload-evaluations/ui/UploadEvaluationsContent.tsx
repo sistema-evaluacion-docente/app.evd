@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { toast } from "sonner";
 
 import {
   UploadDropzone,
@@ -19,6 +20,10 @@ function UploadEvaluationsContent() {
     upload(file);
   };
 
+  const handleError = (message: string) => {
+    toast.error(message);
+  };
+
   const handleReset = useCallback(() => {
     reset();
     setDropzoneKey((k) => k + 1);
@@ -31,7 +36,12 @@ function UploadEvaluationsContent() {
     <>
       <PageHeader title="Carga de Evaluaciones Docentes" />
 
-      <UploadDropzone key={dropzoneKey} busy={busy} onFile={handleFile} />
+      <UploadDropzone
+        key={dropzoneKey}
+        busy={busy}
+        onFile={handleFile}
+        onError={handleError}
+      />
 
       {status !== "idle" && (
         <UploadStatusCard

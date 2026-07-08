@@ -7,11 +7,22 @@ import { useRef, useState } from "react";
 interface UploadDropzoneProps {
   busy: boolean;
   onFile: (file: File) => void;
+  onError?: (message: string) => void;
 }
 
-export function UploadDropzone({ busy, onFile }: UploadDropzoneProps) {
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+export function UploadDropzone({ busy, onFile, onError }: UploadDropzoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
+
+  const validateAndPassFile = (file: File) => {
+    if (file.size > MAX_FILE_SIZE) {
+      onError?.("El archivo excede el tamaño máximo de 10MB.");
+      return;
+    }
+    onFile(file);
+  };
 
   return (
     <Card className="p-5 sm:p-6">
@@ -27,7 +38,7 @@ export function UploadDropzone({ busy, onFile }: UploadDropzoneProps) {
           setDragOver(false);
           if (!busy) {
             const file = event.dataTransfer.files[0];
-            if (file) onFile(file);
+            if (file) validateAndPassFile(file);
           }
         }}
         className={cn(
@@ -72,8 +83,7 @@ export function UploadDropzone({ busy, onFile }: UploadDropzoneProps) {
           className="hidden"
           onChange={(event) => {
             const file = event.target.files?.[0];
-
-            if (file) onFile(file);
+            if (file) validateAndPassFile(file);
           }}
         />
       </div>
