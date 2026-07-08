@@ -38,13 +38,15 @@ function App() {
       <Route path="/matrix/:id" component={MatrixPage} />
       <Route path="/matrix-mock" component={MatrixPageMock} />
       <Route path="/plans" component={PlansPage} />
+
       <Route path="/evaluations" component={EvaluationsPage} />
       <Route
         path="/evaluations/:id/dimensions"
         component={EvaluationDimensionsPage}
       />
-      <Route path="/evaluations/:id" component={EvaluationDetailPage} />
       <Route path="/evaluations/upload" component={UploadEvaluationsPage} />
+      <Route path="/evaluations/:id" component={EvaluationDetailPage} />
+
       <Route path="/upload-evaluations" component={UploadEvaluationsPage} />
       <Route path="/upload-teachers" component={UploadTeachersPage} />
       <Route path="/periods" component={PeriodsPage} />
