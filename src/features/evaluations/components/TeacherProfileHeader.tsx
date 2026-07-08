@@ -61,9 +61,9 @@ export default function TeacherProfileHeader({
 
   return (
     <Card className="p-5 sm:p-6">
-      <div className="flex items-start gap-4">
+      <div className="flex items-center gap-4">
         <div className="relative shrink-0">
-          <Avatar>
+          <Avatar className="h-16 w-16 sm:h-20 sm:w-20">
             <AvatarFallback>
               {teacherName
                 .split(" ")
@@ -96,23 +96,24 @@ export default function TeacherProfileHeader({
             </div>
           ) : (
             <>
-              <h1 className="text-[26px] font-semibold leading-tight tracking-tight text-ink-900 sm:text-[28px]">
+              <h1 className="text-xl font-semibold leading-tight tracking-tight sm:text-[28px]">
                 {teacherName}
               </h1>
 
-              <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-[13.5px] text-ink-600">
+              <ul className="mt-1 flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-muted-foreground sm:text-sm">
                 <li className="inline-flex items-center gap-2">
-                  <Building2 size={14} className="text-ink-400" />
+                  <Building2 size={14} className="text-muted-foreground" />
                   Cód. {teacher?.institutional_code ?? "—"}
                 </li>
 
                 <li className="inline-flex items-center gap-2">
-                  <Clock size={14} className="text-ink-400" /> {contractType}
+                  <Clock size={14} className="text-muted-foreground" />{" "}
+                  {contractType}
                 </li>
 
                 <li className="inline-flex items-center gap-2">
-                  <Calendar size={14} className="text-ink-400" /> Periodo
-                  Académico: {periodLabel}
+                  <Calendar size={14} className="text-muted-foreground" />{" "}
+                  Periodo Académico: {periodLabel}
                 </li>
               </ul>
             </>
@@ -121,8 +122,8 @@ export default function TeacherProfileHeader({
       </div>
 
       <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <div className="rounded-lg border border-ink-200 bg-ink-50/40 px-4 py-3">
-          <div className="text-[10px] font-semibold uppercase leading-tight tracking-[0.08em] text-ink-500">
+        <div className="rounded-lg border bg-muted/50 px-4 py-3">
+          <div className="text-xs font-semibold uppercase leading-tight tracking-[0.08em] text-ink-500">
             Promedio Global
           </div>
 
@@ -145,8 +146,8 @@ export default function TeacherProfileHeader({
           </div>
         </div>
 
-        <div className="flex flex-col rounded-lg border border-ink-200 px-4 py-3">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ink-500">
+        <div className="flex flex-col rounded-lg border bg-muted/50 px-4 py-3">
+          <div className="text-xs font-semibold uppercase tracking-[0.08em] text-ink-500">
             Nivel de Riesgo
           </div>
 
@@ -168,7 +169,7 @@ export default function TeacherProfileHeader({
 
         <div
           className={cn(
-            "col-span-2 rounded-lg border px-4 py-3 sm:col-span-1",
+            "col-span-2 rounded-lg border bg-muted/50 px-4 py-3 sm:col-span-1",
             recurrentLowPerformance
               ? "border-red-200/70 bg-red-50/50"
               : "border-emerald-200/70 bg-emerald-50/50",
@@ -176,7 +177,7 @@ export default function TeacherProfileHeader({
         >
           <div
             className={cn(
-              "inline-flex items-start gap-2 text-[11px] font-semibold leading-snug tracking-[0.04em]",
+              "inline-flex items-start gap-2 text-xs font-semibold leading-snug tracking-[0.04em]",
               recurrentLowPerformance ? "text-red-700" : "text-emerald-700",
             )}
           >
@@ -199,7 +200,7 @@ export default function TeacherProfileHeader({
 
           <div
             className={cn(
-              "mt-2 text-[10.5px]",
+              "mt-2 text-xs",
               recurrentLowPerformance
                 ? "text-red-700/70"
                 : "text-emerald-700/70",
@@ -210,16 +211,14 @@ export default function TeacherProfileHeader({
         </div>
       </div>
 
-      {/* <Separator className="my-5" /> */}
-
       <div className="flex flex-wrap gap-2">
         <Link href={`/matrix/${teacherId}`}>
-          <Button size="lg">
-            <FileText size={15} /> Ver Reporte Detallado Del docente
+          <Button>
+            <FileText size={15} /> Ver Reporte Detallado
           </Button>
         </Link>
 
-        <Button variant="outline" size="lg">
+        <Button variant="outline">
           <Mail size={15} /> Enviar Citación
         </Button>
       </div>
