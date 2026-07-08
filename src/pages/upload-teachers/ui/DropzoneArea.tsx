@@ -1,9 +1,8 @@
-import { FileSpreadsheet, FileUp } from "lucide-react";
-import type { RefObject } from "react";
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { FileSpreadsheet, FileUp } from "lucide-react";
+import type { RefObject } from "react";
 
 interface DropzoneAreaProps {
   dragOver: boolean;
@@ -52,7 +51,9 @@ export function DropzoneArea({
 
         <p className="mt-1.5 text-[13px] text-ink-500">
           Formatos aceptados:{" "}
-          <span className="font-medium text-brand-600">.xlsx · .xls</span>
+          <span className="font-medium text-brand-600">.xlsx · .xls · .csv</span>
+          {" · "}
+          <span className="font-medium text-brand-600">Máx. 5MB</span>
         </p>
 
         <Button
@@ -73,7 +74,7 @@ export function DropzoneArea({
         <input
           ref={inputRef}
           type="file"
-          accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+          accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv"
           className="hidden"
           onChange={(event) => onFileSelected(event.target.files?.[0])}
         />

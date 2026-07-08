@@ -116,7 +116,7 @@ function TeachersContent() {
         description="Listado de docentes registrados en el sistema."
         actions={
           <div className="flex items-center gap-2">
-            <Link href="/upload-teachers">
+            <Link href="/teachers/upload">
               <Button
                 type="button"
                 variant="outline"

@@ -32,8 +32,11 @@ function App() {
 
       {/* Director */}
       <Route path="/dashboard" component={DashboardPage} />
+
       <Route path="/teachers" component={TeachersPage} />
+      <Route path="/teachers/upload" component={UploadTeachersPage} />
       <Route path="/teachers/:id" component={TeacherDetailPage} />
+
       <Route path="/matrix" component={MatrixIndexPage} />
       <Route path="/matrix/:id" component={MatrixPage} />
       <Route path="/matrix-mock" component={MatrixPageMock} />
@@ -48,7 +51,6 @@ function App() {
       <Route path="/evaluations/:id" component={EvaluationDetailPage} />
 
       <Route path="/upload-evaluations" component={UploadEvaluationsPage} />
-      <Route path="/upload-teachers" component={UploadTeachersPage} />
       <Route path="/periods" component={PeriodsPage} />
 
       {/* Super Admin */}

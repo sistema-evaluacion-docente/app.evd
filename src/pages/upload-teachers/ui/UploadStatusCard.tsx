@@ -1,6 +1,6 @@
+import { Card } from "@/components/ui/card";
 import { AlertTriangle, Check, Info } from "lucide-react";
 
-import { Card } from "@/components/ui/card";
 import type { UploadStatus } from "@/features/teachers";
 
 const STATUS_HEADING: Record<Exclude<UploadStatus, "idle">, string> = {
@@ -25,7 +25,7 @@ export function UploadStatusCard({
   onReset,
 }: UploadStatusCardProps) {
   return (
-    <Card className="p-5 sm:p-6">
+    <Card className="p-5 sm:p-6 animate-fade-in">
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           {status === "success" ? (
@@ -41,23 +41,28 @@ export function UploadStatusCard({
               <span className="h-2.5 w-2.5 animate-spin rounded-full border-2 border-ink-300 border-t-brand-600" />
             </span>
           )}
+
           <span className="truncate text-[14px] font-semibold text-ink-900">
             {STATUS_HEADING[status]}
           </span>
         </div>
+
         <span className="num text-[13px] font-semibold text-ink-700">
           {Math.round(progress)}%
         </span>
       </div>
+
       <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-ink-100">
         <div
           className="h-full bg-brand-600 transition-all duration-200"
           style={{ width: `${progress}%` }}
         />
       </div>
+
       <div className="mt-3 flex items-center justify-between gap-3 text-[12.5px] text-ink-500">
         <span className="inline-flex min-w-0 items-center gap-1.5">
           <Info size={14} />
+
           {status === "success" && (
             <span className="truncate">
               Archivo "
@@ -65,16 +70,19 @@ export function UploadStatusCard({
               procesado exitosamente.
             </span>
           )}
+
           {status === "uploading" && (
             <span className="truncate">
               Subiendo "
               <span className="font-medium text-ink-700">{fileName}</span>"…
             </span>
           )}
+
           {status === "error" && (
             <span className="text-brand-700">{error}</span>
           )}
         </span>
+
         {(status === "success" || status === "error") && (
           <button
             type="button"
