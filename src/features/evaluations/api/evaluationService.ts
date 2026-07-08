@@ -98,6 +98,39 @@ export function getTeacherComments(
   return api.get(`/evaluations/${evaluationId}/teachers/${teacherId}/comments`);
 }
 
+export interface TeacherVsDeptQuestion {
+  code: string;
+  text: string;
+  teacher_average: number;
+  department_average: number;
+}
+
+export interface TeacherVsDeptDimension {
+  dimension: string;
+  teacher_average: number;
+  department_average: number;
+  questions: TeacherVsDeptQuestion[];
+}
+
+export interface TeacherVsDeptData {
+  teacher_id: number;
+  academic_period_id: number;
+  academic_period_code: string;
+  department_id: number;
+  department_name: string;
+  department_overall_average: number;
+  dimensions: TeacherVsDeptDimension[];
+}
+
+export function getTeacherVsDepartment(
+  teacherId: number,
+  academicPeriodId: number,
+): Promise<ResponseAPI<TeacherVsDeptData>> {
+  return api.get('/stats/teacher-vs-department', {
+    params: { teacher_id: teacherId, academic_period_id: academicPeriodId },
+  });
+}
+
 export function exportTeacherMatrix(
   evaluationId: number,
   teacherId: number,

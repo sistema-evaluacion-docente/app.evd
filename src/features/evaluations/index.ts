@@ -37,8 +37,15 @@ export {
   getQuestionScores,
   getTeacherComments,
   getTeacherEvaluationDetail,
+  getTeacherVsDepartment,
   updateEvaluationStatus,
   uploadEvaluation,
+} from "./api/evaluationService";
+
+export type {
+  TeacherVsDeptData,
+  TeacherVsDeptDimension,
+  TeacherVsDeptQuestion,
 } from "./api/evaluationService";
 
 export { default as useCurrentTeacherEvaluation } from "./hooks/useCurrentTeacherEvaluation";
@@ -60,7 +67,7 @@ export {
   useUploadEvaluation,
   type UploadStatus,
 } from "./hooks/useUploadEvaluation";
-
+export { default as useGetTeacherVsDepartment } from "./hooks/useGetTeacherVsDepartment";
 export { default as CourseAveragesCard } from "./components/CourseAveragesCard";
 export { default as DimensionAveragesCard } from "./components/DimensionAveragesCard";
 export { default as HistoricalEvolutionCard } from "./components/HistoricalEvolutionCard";

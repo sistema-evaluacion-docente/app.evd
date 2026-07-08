@@ -44,7 +44,7 @@ function PeriodsSelector({
   return (
     <div className={className}>
       {label && (
-        <label className="mb-1 block text-[13px] font-medium text-ink-700">
+        <label className='mb-1 block text-[13px] font-medium text-ink-700'>
           {label}
         </label>
       )}
