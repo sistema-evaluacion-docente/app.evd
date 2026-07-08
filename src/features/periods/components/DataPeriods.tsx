@@ -219,7 +219,8 @@ function DataPeriods() {
       });
       setIsDialogOpen(false);
       setEditingPeriod(null);
-    } catch {
+    } catch (error) {
+      console.error("Failed to update period:", error);
     }
   };
 
