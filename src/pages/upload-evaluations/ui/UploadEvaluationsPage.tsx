@@ -37,7 +37,6 @@ export function UploadEvaluationsPage() {
     stats,
     upload,
     reset,
-    loadSample,
   } = useUploadEvaluation();
 
   const handleFile = (file: File | undefined) => {

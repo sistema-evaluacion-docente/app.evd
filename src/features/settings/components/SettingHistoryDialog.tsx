@@ -6,8 +6,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import dayjs from "dayjs";
-
 import useGetSettingHistory from "../hooks/useGetSettingHistory";
 import type { Setting } from "../types/Setting";
 import formatDate from "@/lib/formatDate";

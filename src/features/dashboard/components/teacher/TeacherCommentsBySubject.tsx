@@ -10,7 +10,6 @@ function TeacherCommentsBySubject() {
   const { data, isLoading, isFetched } = useGetTeacherCommentsBySubject();
 
   const subjects: TeacherCommentSubjectItem[] = data?.data?.subjects ?? [];
-  const totalComments = data?.data?.total_comments ?? 0;
 
   if (isLoading || !isFetched) {
     return (

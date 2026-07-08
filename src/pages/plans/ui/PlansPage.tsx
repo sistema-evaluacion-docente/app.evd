@@ -227,7 +227,7 @@ export function PlansPage() {
   ]
 
   return (
-    <AppLayout role="director">
+    <AppLayout>
       <PageHeader
         title="Planes de Mejoramiento"
         description="Seguimiento y gestión de compromisos académicos para el fortalecimiento docente."

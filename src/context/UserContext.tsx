@@ -174,8 +174,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
           active: true,
           roles: [],
           teacher_id: null,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         };
 
         const token = await user.getIdToken(true);
