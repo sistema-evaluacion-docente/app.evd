@@ -1,5 +1,4 @@
 import {
-  ActiveBadge,
   CommentsTable,
   DimensionOverview,
   GeneralInfoCard,

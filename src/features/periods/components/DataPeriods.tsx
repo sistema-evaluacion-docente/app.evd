@@ -201,19 +201,25 @@ function DataPeriods() {
 
   const handleSavePeriod = async (data: {
     id: string;
-    codigo: string;
-    nombre: string;
-    start: string;
-    end: string;
-    evalStart: string;
-    evalEnd: string;
+    name: string;
+    start_date: string;
+    end_date: string;
+    evaluation_end_date: string;
+    final_evaluation_date: string;
   }) => {
     try {
-      await updatePeriod(data);
+      await updatePeriod({
+        id: data.id,
+        codigo: "",
+        nombre: data.name,
+        start: data.start_date,
+        end: data.end_date,
+        evalStart: data.evaluation_end_date,
+        evalEnd: data.final_evaluation_date,
+      });
       setIsDialogOpen(false);
       setEditingPeriod(null);
     } catch {
-      // error handled by toast in mutation
     }
   };
 
