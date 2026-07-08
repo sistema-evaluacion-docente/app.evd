@@ -1,5 +1,4 @@
 import { Card } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { PageHeader } from "@/shared/ui";
 import { ChevronLeft, Users } from "lucide-react";
 import { Link } from "wouter";
@@ -33,7 +32,7 @@ function UploadTeachersContent() {
     <div className="space-y-5">
       <PageHeader
         title="Carga de Docentes"
-        description="Suba un archivo Excel (.xlsx o .xls) con la lista de docentes para crear masivamente en su departamento."
+        description="Suba un archivo Excel (.xlsx, .xls) o CSV (.csv) con la lista de docentes para crear masivamente en su departamento."
         actions={
           <Link
             href="/teachers"
@@ -96,9 +95,7 @@ function UploadTeachersContent() {
         </div>
       )}
 
-      <Separator className="my-2" />
-
-      <div className="flex flex-col justify-between gap-3 pt-2 sm:flex-row sm:items-center">
+      <div className="flex flex-col justify-between gap-3 pt-2 sm:flex-row sm:items-center animate-fade-in">
         <div className="text-[12.5px] text-ink-500">
           {status === "idle" &&
             "Esperando archivo. Use el área superior para subir un Excel con los docentes."}
