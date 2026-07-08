@@ -1,9 +1,10 @@
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/shared/ui";
-import { ChevronLeft, Users } from "lucide-react";
+import { ChevronLeft, Download, Users } from "lucide-react";
 import { Link } from "wouter";
 import { DropzoneArea } from "./DropzoneArea";
 
+import { Button } from "@/components/ui/button";
 import { useUploadPage } from "../hooks/useUploadPage";
 import { ResultStats } from "./ResultStats";
 import { ResultTables } from "./ResultTables";
@@ -51,6 +52,18 @@ function UploadTeachersContent() {
         onFileSelected={handleFile}
       />
 
+      <div className="flex items-center justify-end gap-2">
+        <a
+          download
+          href="/DocentesEjemplo.csv"
+          className="inline-flex items-center gap-1.5 text-[13px] font-medium text-ink-500 hover:text-ink-800"
+        >
+          <Button variant="outline" size="sm" className="gap-1.5">
+            <Download size={14} /> Descargar CSV de ejemplo
+          </Button>
+        </a>
+      </div>
+
       {status !== "idle" && (
         <UploadStatusCard
           status={status}
@@ -73,7 +86,7 @@ function UploadTeachersContent() {
         <ResultTables result={result!} />
       )}
 
-      {!ready && status !== "error" && (
+      {!ready && status !== "error" && status !== "idle" && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {["Creados", "Omitidos", "Errores"].map((label) => (
             <Card key={label} className="border-dashed p-5 sm:p-6">
