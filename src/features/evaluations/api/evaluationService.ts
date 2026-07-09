@@ -126,8 +126,30 @@ export function getTeacherVsDepartment(
   teacherId: number,
   academicPeriodId: number,
 ): Promise<ResponseAPI<TeacherVsDeptData>> {
-  return api.get('/stats/teacher-vs-department', {
+  return api.get("/stats/teacher-vs-department", {
     params: { teacher_id: teacherId, academic_period_id: academicPeriodId },
+  });
+}
+
+export interface TeacherMatrixCourseItem {
+  course_name: string;
+  question_averages: Record<string, number>;
+  overall_average: number;
+}
+
+export interface TeacherMatrixData {
+  teacher_id: number;
+  evaluation_id: number;
+  courses: TeacherMatrixCourseItem[];
+  column_averages: Record<string, number>;
+}
+
+export function getTeacherMatrix(
+  teacherId: number,
+  evaluationId: number,
+): Promise<ResponseAPI<TeacherMatrixData>> {
+  return api.get("/stats/teacher-matrix", {
+    params: { teacher_id: teacherId, evaluation_id: evaluationId },
   });
 }
 
