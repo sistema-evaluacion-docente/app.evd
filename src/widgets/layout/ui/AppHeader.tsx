@@ -1,3 +1,4 @@
+import { ThemeSwitcher } from "@/components/common/ThemeSwitcher";
 import { Input } from "@/shared/ui";
 import { Bell, Calendar, Menu, Search } from "lucide-react";
 import type { ReactNode } from "react";
@@ -58,6 +59,8 @@ export function AppHeader({
               <PeriodsSelector />
             </div>
           )}
+
+          <ThemeSwitcher />
 
           <button
             type="button"
