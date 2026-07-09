@@ -59,15 +59,16 @@ function TeacherRankingChart({
       <Card>
         <CardContent>
           <div className="mb-4 flex items-center gap-2">
-            <Icon size={16} className="text-ink-500" />
+            <Icon size={16} className="text-muted-foreground" />
 
             <div>
-              <h3 className="text-base font-semibold text-ink-900">{title}</h3>
-              <p className="mt-0.5 text-[12px] text-ink-500">{subtitle}</p>
+              <h3 className="text-base font-semibold">{title}</h3>
+
+              <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p>
             </div>
           </div>
 
-          <p className="text-sm text-ink-400">Sin datos disponibles</p>
+          <p className="text-sm text-muted-foreground">Sin datos disponibles</p>
         </CardContent>
       </Card>
     );
@@ -108,7 +109,7 @@ function TeacherRankingChart({
                     </Avatar>
 
                     <div>
-                      <p className="text-sm font-medium text-ink-800">
+                      <p className="text-sm font-medium">
                         {teacher.name}
                       </p>
                     </div>
