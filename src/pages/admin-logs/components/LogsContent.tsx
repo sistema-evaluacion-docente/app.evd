@@ -8,7 +8,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useGetAudits, useLogsColumns, type Audit } from "@/features/audits";
+import {
+  DateRangeFilter,
+  useGetAudits,
+  useLogsColumns,
+  type Audit,
+} from "@/features/audits";
 import { PageHeader } from "@/shared/ui";
 import { AuditDetailDrawer } from "./AuditDetailDrawer";
 
@@ -32,6 +37,12 @@ const OPERATIONS = [
   { value: "EXPORT", label: "Exportar" },
 ] as const;
 
+function formatDate(date: Date | undefined): string | undefined {
+  if (!date) return undefined;
+
+  return date.toISOString().split("T")[0];
+}
+
 export function LogsContent() {
   const columns = useLogsColumns();
 
@@ -39,6 +50,8 @@ export function LogsContent() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [tableName, setTableName] = useState("");
   const [operation, setOperation] = useState("");
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
 
   const rowActions = useMemo<DataTableAction<Audit>[]>(
     () => [
@@ -98,10 +111,17 @@ export function LogsContent() {
             ))}
           </SelectContent>
         </Select>
+
+        <DateRangeFilter
+          startDate={startDate}
+          endDate={endDate}
+          onStartDateChange={setStartDate}
+          onEndDateChange={setEndDate}
+        />
       </div>
 
       <DataTable
-        key={`${tableName}-${operation}`}
+        key={`${tableName}-${operation}-${formatDate(startDate)}-${formatDate(endDate)}`}
         columns={columns}
         queryFn={useGetAudits}
         enableSearch
@@ -111,6 +131,8 @@ export function LogsContent() {
         extraFilterParams={{
           table_name: tableName || undefined,
           operation: operation || undefined,
+          start_date: formatDate(startDate),
+          end_date: formatDate(endDate),
         }}
       />
 
