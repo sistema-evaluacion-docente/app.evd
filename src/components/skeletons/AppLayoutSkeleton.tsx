@@ -65,7 +65,7 @@ function AppLayoutSkeleton() {
             </div>
           </header>
 
-          <div className="w-full mx-auto space-y-6">
+          <div className="w-full mx-auto space-y-6 max-w-330 mt-10">
             <div className="grid md:grid-cols-3 gap-6">
               <Skeleton className="h-30 w-full" />
               <Skeleton className="h-30 w-full" />
