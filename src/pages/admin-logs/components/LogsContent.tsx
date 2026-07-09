@@ -10,23 +10,13 @@ import {
 } from "@/components/ui/select";
 import {
   DateRangeFilter,
+  TABLE_NAMES,
   useGetAudits,
   useLogsColumns,
   type Audit,
 } from "@/features/audits";
 import { PageHeader } from "@/shared/ui";
 import { AuditDetailDrawer } from "./AuditDetailDrawer";
-
-const TABLE_NAMES = [
-  { value: "departments", label: "Departamentos" },
-  { value: "users", label: "Usuarios" },
-  { value: "teachers", label: "Docentes" },
-  { value: "periods", label: "Periodos" },
-  { value: "directors", label: "Directores" },
-  { value: "evaluations", label: "Evaluaciones" },
-  { value: "plans", label: "Planes" },
-  { value: "subjects", label: "Materias" },
-] as const;
 
 const OPERATIONS = [
   { value: "CREATE", label: "Crear" },

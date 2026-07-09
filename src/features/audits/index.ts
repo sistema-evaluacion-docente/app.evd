@@ -7,3 +7,5 @@ export { default as useGetAudits } from "./hooks/useGetAudits";
 export { default as useLogsColumns } from "./hooks/useLogsColumns";
 
 export { default as DateRangeFilter } from "./components/DateRangeFilter";
+
+export { TABLE_NAMES } from "./lib/LogTables";

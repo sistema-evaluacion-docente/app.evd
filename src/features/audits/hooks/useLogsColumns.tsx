@@ -4,6 +4,7 @@ import { useMemo } from "react";
 
 import formatDate from "@/lib/formatDate";
 import { cn } from "@/lib/utils";
+import { TABLE_NAMES } from "../lib/LogTables";
 import type { Audit } from "../types/Audit";
 
 type LogAction =
@@ -102,7 +103,10 @@ export default function useLogsColumns() {
         header: "Tabla afectada",
         enableSorting: false,
         cell: (info) => (
-          <span className="text-sm text-foreground">{info.getValue()}</span>
+          <span className="text-sm text-foreground">
+            {TABLE_NAMES.find((t) => t.value === info.getValue())?.label ||
+              info.getValue()}
+          </span>
         ),
       }),
       columnHelper.accessor("operation", {
