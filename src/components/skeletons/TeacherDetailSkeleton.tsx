@@ -11,6 +11,7 @@ function TeacherDetailSkeleton() {
 
           <div className="min-w-0 flex-1 space-y-3">
             <Skeleton className="h-7 w-56" />
+
             <div className="flex flex-wrap gap-x-5 gap-y-1.5">
               <Skeleton className="h-3.5 w-28" />
               <Skeleton className="h-3.5 w-24" />
@@ -20,17 +21,17 @@ function TeacherDetailSkeleton() {
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <div className="rounded-lg border border-ink-200 px-4 py-3">
+          <div className="rounded-lg border px-4 py-3">
             <Skeleton className="h-2.5 w-16" />
             <Skeleton className="mt-2 h-8 w-20" />
           </div>
 
-          <div className="rounded-lg border border-ink-200 px-4 py-3">
+          <div className="rounded-lg border px-4 py-3">
             <Skeleton className="h-2.5 w-20" />
             <Skeleton className="mt-3 h-7 w-24 rounded-full" />
           </div>
 
-          <div className="col-span-2 rounded-lg border border-ink-200 px-4 py-3 sm:col-span-1">
+          <div className="col-span-2 rounded-lg border px-4 py-3 sm:col-span-1">
             <div className="flex items-center gap-2">
               <Skeleton className="h-4 w-4 rounded-full" />
               <Skeleton className="h-3 w-44" />
@@ -53,6 +54,7 @@ function TeacherDetailSkeleton() {
             <Skeleton className="h-5 w-44" />
             <Skeleton className="h-4 w-4 rounded-full" />
           </div>
+
           <ul>
             {[1, 2, 3, 4].map((i) => (
               <li key={i} className="flex items-center justify-between py-3.5">
@@ -90,7 +92,7 @@ function TeacherDetailSkeleton() {
           </div>
           <Skeleton className="h-4 w-20" />
         </div>
-        <div className="border-b border-ink-100 px-5 pb-3 sm:px-6">
+        <div className="border-b px-5 pb-3 sm:px-6">
           <div className="flex flex-wrap gap-1.5">
             <Skeleton className="h-8 w-32 rounded-full" />
             <Skeleton className="h-8 w-24 rounded-full" />
@@ -131,7 +133,10 @@ function TeacherDetailSkeleton() {
           <div className="absolute left-[16%] right-[16%] top-8.5 h-0.5 rounded-full bg-ink-100" />
           <div className="relative grid grid-cols-3 gap-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="flex flex-col items-center px-2 text-center">
+              <div
+                key={i}
+                className="flex flex-col items-center px-2 text-center"
+              >
                 <Skeleton className="h-11 w-11 rounded-md" />
                 <Skeleton className="mt-3 h-3.5 w-20" />
                 <Skeleton className="mt-0.5 h-2.5 w-16" />
@@ -143,10 +148,7 @@ function TeacherDetailSkeleton() {
 
         <div className="mt-7 grid grid-cols-1 gap-3 md:grid-cols-2">
           {[1, 2].map((i) => (
-            <div
-              key={i}
-              className="rounded-lg border border-ink-200 px-4 py-4"
-            >
+            <div key={i} className="rounded-lg border px-4 py-4">
               <div className="flex items-start gap-3">
                 <Skeleton className="h-7 w-7 shrink-0 rounded-full" />
                 <Skeleton className="h-4 w-full" />
