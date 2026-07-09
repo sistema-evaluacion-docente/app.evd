@@ -1,6 +1,6 @@
+import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
@@ -13,8 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PageHeader } from "@/shared/ui";
 import { getFaculties } from "@/features/faculties";
+import { PageHeader } from "@/shared/ui";
 
 import DataTable, {
   type DataTableAction,
@@ -220,16 +220,18 @@ export function DepartmentsContent() {
         createConfig={createConfig}
       />
 
-      <EditDepartmentDialog
-        open={isEditDialogOpen}
-        department={editingDepartment}
-        isSaving={isSavingDepartment}
-        onOpenChange={(open) => {
-          setIsEditDialogOpen(open);
-          if (!open) setEditingDepartment(null);
-        }}
-        onSave={handleSaveDepartment}
-      />
+      {editingDepartment && (
+        <EditDepartmentDialog
+          open={isEditDialogOpen}
+          department={editingDepartment}
+          isSaving={isSavingDepartment}
+          onOpenChange={(open) => {
+            setIsEditDialogOpen(open);
+            if (!open) setEditingDepartment(null);
+          }}
+          onSave={handleSaveDepartment}
+        />
+      )}
     </>
   );
 }

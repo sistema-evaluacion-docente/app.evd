@@ -1,6 +1,11 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
@@ -28,7 +33,7 @@ function EditDepartmentDialog({
   onSave,
 }: EditDepartmentDialogProps) {
   const [facultyId, setFacultyId] = useState<string>(
-    String(department?.faculty_id ?? ""),
+    department?.faculty_id ? String(department.faculty_id) : "",
   );
 
   const { data: facultiesData } = useQuery({
@@ -76,36 +81,47 @@ function EditDepartmentDialog({
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="code">Código</Label>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="code">Código</Label>
 
-          <Input
-            id="code"
-            name="code"
-            defaultValue={department?.code ?? ""}
-            placeholder="Código opcional"
-          />
-        </div>
+            <Input
+              id="code"
+              name="code"
+              defaultValue={department?.code ?? ""}
+              placeholder="Código opcional"
+            />
+          </div>
 
-        <div className="space-y-2">
-          <Label>Facultad</Label>
+          <div className="space-y-2">
+            <Label>Facultad</Label>
 
-          <RadioGroup
-            defaultValue={department?.faculty_id ?? ""}
-            onValueChange={(value) => setFacultyId(value)}
-          >
-            <div className="flex items-center gap-2">
-              <RadioGroupItem value="" id="no-faculty" />
-              <Label htmlFor="no-faculty">Sin facultad</Label>
-            </div>
+            <Select
+              defaultValue={facultyId}
+              onValueChange={(value) => setFacultyId(value as string)}
+            >
+              <SelectTrigger className="w-full cursor-pointer">
+                <span className="text-muted-foreground">
+                  {facultyId
+                    ? (faculties.find((f) => f.id === Number(facultyId))
+                        ?.name ?? "")
+                    : "Sin facultad"}
+                </span>
+              </SelectTrigger>
 
-            {faculties.map((f) => (
-              <div key={f.id} className="flex items-center gap-2">
-                <RadioGroupItem value={f.id} id={`faculty-${f.id}`} />
-                <Label htmlFor={`faculty-${f.id}`}>{f.name}</Label>
-              </div>
-            ))}
-          </RadioGroup>
+              <SelectContent className="w-full">
+                <div className="flex flex-col gap-2 p-2">
+                  <SelectItem value="">Sin facultad</SelectItem>
+
+                  {faculties.map((f) => (
+                    <SelectItem key={f.id} value={String(f.id)}>
+                      {f.name}
+                    </SelectItem>
+                  ))}
+                </div>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
     </FormDrawer>
