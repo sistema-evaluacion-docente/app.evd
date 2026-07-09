@@ -39,10 +39,10 @@ const columns: ColumnDef<EvaluationComment>[] = [
 
           <div className="min-w-0">
             <Link to={`/teachers/${comment.teacher_id}`}>
-              <div className=" font-medium text-ink-800 truncate">{name}</div>
+              <div className=" font-medium truncate">{name}</div>
             </Link>
 
-            <div className="flex items-center gap-2 text-[11px] text-ink-400">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
               {comment.course_name && (
                 <>
                   <span className="truncate max-w-32">
@@ -69,12 +69,12 @@ const columns: ColumnDef<EvaluationComment>[] = [
       const value = getValue() as string | null;
       return (
         <p
-          className="max-w-120 text-[13.5px] leading-relaxed text-ink-800 truncate"
+          className="max-w-120 text-sm leading-relaxed truncate"
           title={value ?? ""}
         >
-          <span className="text-ink-400">&ldquo;</span>
+          <span className="text-muted-foreground">&ldquo;</span>
           {value ?? "—"}
-          <span className="text-ink-400">&rdquo;</span>
+          <span className="text-muted-foreground">&rdquo;</span>
         </p>
       );
     },

@@ -31,7 +31,7 @@ export function PageHeader({
       <div>
         {badge && <div className="mb-3">{badge}</div>}
 
-        <h1 className="inline-block text-2xl font-semibold leading-tight tracking-tight text-ink-900">
+        <h1 className="inline-block text-2xl font-semibold leading-tight tracking-tight">
           {title}
           {underline && (
             <span className="mt-2 block h-1 w-16 rounded-full bg-brand-600" />
@@ -40,7 +40,7 @@ export function PageHeader({
 
         {description && (
           <p
-            className="mt-1.5 max-w-[680px] text-[14px] text-ink-500"
+            className="mt-1.5 text-[14px] text-muted-foreground"
             style={{ textWrap: "pretty" }}
           >
             {description}

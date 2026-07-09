@@ -21,14 +21,14 @@ const columns: ColumnDef<EvaluationScore>[] = [
         score.group_name ?? `Grupo Academico #${score.academic_group_id}`;
       return (
         <div className="flex items-center gap-3">
-          <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-ink-100 text-[11px] font-semibold text-ink-600">
+          <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-card text-xs font-semibold text-muted-foreground">
             {name.charAt(0)}
           </span>
 
           <div>
-            <div className="text-[13.5px] font-medium text-ink-800">{name}</div>
+            <div className="font-medium">{name}</div>
 
-            <div className="text-[12px] text-ink-500">
+            <div className="text-xs text-muted-foreground">
               {score.respondent_count} estudiante
               {score.respondent_count !== 1 ? "s" : ""}
             </div>
