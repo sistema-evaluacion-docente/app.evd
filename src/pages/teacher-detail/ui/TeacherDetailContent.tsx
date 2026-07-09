@@ -4,6 +4,7 @@ import {
   DimensionAveragesCard,
   HistoricalEvolutionCard,
   ImprovementPlanCard,
+  MatrizCard,
   NoEvaluationState,
   TeacherCommentsCard,
   TeacherProfileHeader,
@@ -42,6 +43,8 @@ function TeacherDetailContent({ teacherId }: Props) {
 
             <CourseAveragesCard teacherId={teacherId} evaluation={evaluation} />
           </div>
+
+          <MatrizCard teacherId={teacherId} evaluation={evaluation} />
 
           <TeacherCommentsCard teacherId={teacherId} evaluation={evaluation} />
 

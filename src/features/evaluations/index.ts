@@ -37,12 +37,15 @@ export {
   getQuestionScores,
   getTeacherComments,
   getTeacherEvaluationDetail,
+  getTeacherMatrix,
   getTeacherVsDepartment,
   updateEvaluationStatus,
   uploadEvaluation,
 } from "./api/evaluationService";
 
 export type {
+  TeacherMatrixCourseItem,
+  TeacherMatrixData,
   TeacherVsDeptData,
   TeacherVsDeptDimension,
   TeacherVsDeptQuestion,
@@ -62,6 +65,7 @@ export { default as useGetEvaluationSummary } from "./hooks/useGetEvaluationSumm
 export { default as useGetQuestions } from "./hooks/useGetQuestions";
 export { default as useGetTeacherComments } from "./hooks/useGetTeacherComments";
 export { default as useGetTeacherEvaluationDetail } from "./hooks/useGetTeacherEvaluationDetail";
+export { default as useGetTeacherMatrix } from "./hooks/useGetTeacherMatrix";
 export { default as useUpdateEvaluationStatus } from "./hooks/useUpdateEvaluationStatus";
 export {
   useUploadEvaluation,
@@ -72,6 +76,7 @@ export { default as CourseAveragesCard } from "./components/CourseAveragesCard";
 export { default as DimensionAveragesCard } from "./components/DimensionAveragesCard";
 export { default as HistoricalEvolutionCard } from "./components/HistoricalEvolutionCard";
 export { default as ImprovementPlanCard } from "./components/ImprovementPlanCard";
+export { default as MatrizCard } from "./components/MatrizCard";
 export { default as NoEvaluationState } from "./components/NoEvaluationState";
 export { default as TeacherCommentsCard } from "./components/TeacherCommentsCard";
 export { default as TeacherProfileHeader } from "./components/TeacherProfileHeader";
