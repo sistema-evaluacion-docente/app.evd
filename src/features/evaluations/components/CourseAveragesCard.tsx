@@ -44,43 +44,39 @@ export default function CourseAveragesCard({
   return (
     <Card className="h-full p-5 sm:p-6 animate-fade-in">
       <div className="mb-5 flex items-start justify-between">
-        <h2 className="text-[17px] font-semibold text-ink-900">
-          Promedio por Materia
-        </h2>
+        <h2 className="text-lg font-semibold">Promedio por Materia</h2>
 
-        <Info size={15} className="text-ink-400" />
+        <Info size={15} className="text-muted-foreground" />
       </div>
 
       {!detail?.courses.length ? (
-        <p className="text-[13px] text-ink-400">
+        <p className="text-muted-foreground">
           {selectedPeriod
             ? "Sin materias registradas para este periodo."
             : "Selecciona un periodo académico."}
         </p>
       ) : (
-        <ul className="divide-y divide-ink-100">
+        <ul className="divide-y">
           {detail.courses.map((course) => (
             <li
               key={`${course.course_code}-${course.group_name}`}
               className="flex items-center justify-between gap-4 py-3.5"
             >
               <div className="min-w-0">
-                <p className="truncate text-[13.5px] font-medium text-ink-800">
-                  {course.course_name}
-                </p>
+                <p className="truncate font-medium">{course.course_name}</p>
 
-                <p className="mt-0.5 text-[12px] text-ink-400">
+                <p className="mt-0.5 text-sm text-muted-foreground">
                   {course.group_name} · {course.respondent_count} encuestado
                   {course.respondent_count !== 1 ? "s" : ""}
                 </p>
               </div>
 
               <div className="flex shrink-0 items-baseline gap-0.5 tabular-nums">
-                <span className="num text-[22px] font-semibold text-ink-900">
+                <span className="num text-lg font-semibold">
                   {course.overall_average}
                 </span>
 
-                <span className="text-[12px] font-medium text-ink-400">
+                <span className="text-sm font-medium text-muted-foreground">
                   /5.0
                 </span>
               </div>

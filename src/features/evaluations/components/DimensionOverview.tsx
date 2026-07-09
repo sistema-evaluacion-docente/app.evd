@@ -26,30 +26,30 @@ export function DimensionOverview({
     <Card className="p-5 sm:p-6">
       <div className="mb-4 flex items-start justify-between">
         <div>
-          <h2 className="text-[17px] font-semibold text-ink-900">
+          <h2 className="text-lg font-semibold">
             Dimensiones de Evaluación
           </h2>
         </div>
 
         <Link
           href={`/evaluations/${evaluationId}/dimensions`}
-          className="flex items-center gap-1 text-[13px] font-medium text-ink-500 hover:text-ink-700"
+          className="flex items-center gap-1 font-medium text-muted-foreground hover:text-foreground"
         >
-          Ver más <Info size={16} className="text-ink-400" />
+          Ver más <Info size={16} className="text-muted-foreground" />
         </Link>
       </div>
 
-      <ul className="divide-y divide-ink-100">
+      <ul className="divide-y">
         {dimensions.map((dim) => (
           <li key={dim.dimension}>
             <Collapsible className="group">
-              <CollapsibleTrigger className="cursor-pointer flex w-full items-center justify-between gap-4 py-3.5 text-left transition-colors hover:bg-ink-50/50 -mx-2 px-2 rounded-md">
+              <CollapsibleTrigger className="cursor-pointer flex w-full items-center justify-between gap-4 py-3.5 text-left transition-colors hover:bg-muted -mx-2 px-2 rounded-md">
                 <div className="min-w-0 flex-1">
-                  <span className="text-[13.5px] font-medium text-ink-700">
+                  <span className="font-medium">
                     {dim.dimension}
                   </span>
 
-                  <span className="ml-2 text-[11px] text-ink-400">
+                  <span className="ml-2 text-xs text-muted-foreground">
                     {dim.question_count} pregunta
                     {dim.question_count !== 1 ? "s" : ""}
                   </span>
@@ -71,25 +71,25 @@ export function DimensionOverview({
 
               <CollapsibleContent className="animate-fade-in overflow-hidden data-[expanded]:animate-in data-[collapsed]:animate-out data-[expanded]:slide-in-from-top-2 data-[collapsed]:slide-out-to-top-2">
                 <div className="pb-3 pl-4">
-                  <ul className="space-y-2 border-l-2 border-ink-100 pl-4">
+                  <ul className="space-y-2 border-l-2 pl-4">
                     {dim.questions.map((q) => (
                       <li
                         key={q.code}
                         className="flex items-start justify-between gap-3"
                       >
                         <div className="min-w-0 flex-1">
-                          <span className="text-[11px] font-mono text-ink-400">
+                          <span className="text-xs font-mono text-muted-foreground">
                             {q.code}
                           </span>
 
-                          <p className="text-[12.5px] text-ink-600 leading-snug">
+                          <p className="text-sm text-muted-foreground leading-snug">
                             {q.text}
                           </p>
                         </div>
 
                         <span
                           className={cn(
-                            "shrink-0 text-[12px] font-semibold tabular-nums",
+                            "shrink-0 text-xs font-semibold tabular-nums",
                             q.score >= 4.0
                               ? "text-emerald-600"
                               : q.score >= 3.5

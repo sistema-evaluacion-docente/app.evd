@@ -43,7 +43,7 @@ const columns: ColumnDef<Teacher>[] = [
             />
           </Avatar>
 
-          <span className="font-medium text-ink-900">
+          <span className="font-medium">
             {row.original?.user?.name}
           </span>
         </div>

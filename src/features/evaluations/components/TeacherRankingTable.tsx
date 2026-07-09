@@ -1,3 +1,5 @@
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -5,8 +7,6 @@ import { Link } from "wouter";
 
 import DataTable from "@/components/common/DataTable";
 import type { TeacherRankingItem } from "@/features/stats";
-import { Button } from "@/shared/ui";
-
 import { createTeacherRankingQueryFn } from "./createTeacherRankingQueryFn";
 import { ScoreBarInline } from "./ScoreBarInline";
 
@@ -26,13 +26,24 @@ const columns: ColumnDef<TeacherRankingItem>[] = [
           <div className="min-w-0">
             <Link
               href={`/teachers/${teacher.teacher_id}`}
-              className="text-[13.5px] font-medium text-ink-800 hover:text-brand-600 truncate block"
+              className="font-medium hover:text-brand-600 truncate flex gap-2 items-center"
             >
+              <Avatar>
+                <AvatarFallback>
+                  {teacher.name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")}
+                </AvatarFallback>
+
+                <AvatarImage
+                  src={teacher.avatar_url ?? undefined}
+                  alt={teacher.name ?? ""}
+                />
+              </Avatar>
+
               {teacher.name ?? "—"}
             </Link>
-            <div className="text-[11px] text-ink-400">
-              {teacher.contract_type ?? "—"}
-            </div>
           </div>
         </div>
       );
@@ -44,7 +55,9 @@ const columns: ColumnDef<TeacherRankingItem>[] = [
     cell: ({ getValue }) => {
       const value = getValue() as string;
       return (
-        <span className="font-mono text-[12px] text-ink-600">{value}</span>
+        <span className="font-mono text-[12px] text-muted-foreground">
+          {value}
+        </span>
       );
     },
   },
@@ -53,9 +66,7 @@ const columns: ColumnDef<TeacherRankingItem>[] = [
     header: "Grupos",
     cell: ({ getValue }) => {
       const value = getValue() as number;
-      return (
-        <span className="text-center tabular-nums text-ink-700">{value}</span>
-      );
+      return <span className="text-center tabular-nums">{value}</span>;
     },
   },
   {

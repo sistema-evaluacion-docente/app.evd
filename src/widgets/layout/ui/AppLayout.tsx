@@ -42,7 +42,7 @@ export function AppLayout({
   const authorized = isAuthorizedForPage(location, selectedRole);
 
   return (
-    <div className="flex min-h-screen bg-ink-50">
+    <div className="flex min-h-screen bg-background">
       <AppSidebar
         mobileOpen={mobileOpen}
         onClose={() => setMobileOpen(false)}
@@ -65,11 +65,11 @@ export function AppLayout({
                 <span className="text-4xl text-red-500">!</span>
               </div>
 
-              <h2 className="text-2xl font-semibold text-ink-700">
+              <h2 className="text-2xl font-semibold">
                 Acceso no autorizado
               </h2>
 
-              <p className="mt-2 text-ink- mb-4">
+              <p className="mt-2 mb-4">
                 No tienes permisos para acceder a esta página.
               </p>
 

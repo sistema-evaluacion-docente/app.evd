@@ -96,7 +96,7 @@ export default function TeacherProfileHeader({
             </div>
           ) : (
             <>
-              <h1 className="text-xl font-semibold leading-tight tracking-tight sm:text-[28px]">
+              <h1 className="text-xl font-semibold leading-tight tracking-tight sm:text-xl">
                 {teacherName}
               </h1>
 
@@ -123,7 +123,7 @@ export default function TeacherProfileHeader({
 
       <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
         <div className="rounded-lg border bg-muted/50 px-4 py-3">
-          <div className="text-xs font-semibold uppercase leading-tight tracking-[0.08em] text-ink-500">
+          <div className="text-xs font-semibold uppercase leading-tight tracking-[0.08em] text-muted-foreground">
             Promedio Global
           </div>
 
@@ -132,12 +132,12 @@ export default function TeacherProfileHeader({
               <Skeleton className="h-8 w-16" />
             ) : (
               <div className="animate-fade-in">
-                <span className="num text-[32px] font-semibold leading-none tabular-nums text-ink-900">
+                <span className="num text-2xl font-semibold leading-none tabular-nums">
                   {overallAverage > 0 ? overallAverage : "—"}
                 </span>
 
                 {overallAverage > 0 && (
-                  <span className="text-[14px] font-medium text-ink-500">
+                  <span className="font-medium text-muted-foreground">
                     /5.0
                   </span>
                 )}
@@ -147,7 +147,7 @@ export default function TeacherProfileHeader({
         </div>
 
         <div className="flex flex-col rounded-lg border bg-muted/50 px-4 py-3">
-          <div className="text-xs font-semibold uppercase tracking-[0.08em] text-ink-500">
+          <div className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
             Nivel de Riesgo
           </div>
 
@@ -155,14 +155,14 @@ export default function TeacherProfileHeader({
             {overallAverage > 0 ? (
               <span
                 className={cn(
-                  "inline-flex h-7 items-center rounded-full border px-3 text-[12px] font-semibold",
+                  "inline-flex h-7 items-center rounded-full border px-3 text-xs font-semibold",
                   risk.className,
                 )}
               >
                 {risk.label}
               </span>
             ) : (
-              <span className="text-[12px] text-ink-400">Sin datos</span>
+              <span className="text-xs text-muted-foreground">Sin datos</span>
             )}
           </div>
         </div>
@@ -170,23 +170,16 @@ export default function TeacherProfileHeader({
         <div
           className={cn(
             "col-span-2 rounded-lg border bg-muted/50 px-4 py-3 sm:col-span-1",
-            recurrentLowPerformance
-              ? "border-red-200/70 bg-red-50/50"
-              : "border-emerald-200/70 bg-emerald-50/50",
           )}
         >
           <div
             className={cn(
               "inline-flex items-start gap-2 text-xs font-semibold leading-snug tracking-[0.04em]",
-              recurrentLowPerformance ? "text-red-700" : "text-emerald-700",
             )}
           >
             <span
               className={cn(
                 "mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full",
-                recurrentLowPerformance
-                  ? "bg-red-100 text-red-700"
-                  : "bg-emerald-100 text-emerald-700",
               )}
             >
               <Check size={10} strokeWidth={3} />
@@ -198,14 +191,7 @@ export default function TeacherProfileHeader({
             </span>
           </div>
 
-          <div
-            className={cn(
-              "mt-2 text-xs",
-              recurrentLowPerformance
-                ? "text-red-700/70"
-                : "text-emerald-700/70",
-            )}
-          >
+          <div className={cn("mt-2 text-xs")}>
             * Basado en últimos 4 periodos
           </div>
         </div>

@@ -49,17 +49,15 @@ export default function TeacherCommentsCard({
     <Card className="overflow-hidden animate-fade-in">
       <div className="flex flex-col justify-between gap-3 p-5 sm:flex-row sm:items-center sm:p-6">
         <div>
-          <h2 className="text-[20px] font-semibold text-ink-900">
-            Comentarios Detallados
-          </h2>
+          <h2 className="text-lg font-semibold">Comentarios Detallados</h2>
 
-          <p className="mt-1 text-[13px] text-ink-500">
+          <p className="mt-1 text-muted-foreground">
             Comentarios de estudiantes registrados en la evaluación del periodo.
           </p>
         </div>
 
         {totalCommentCount > 0 && (
-          <span className="text-[13px] font-medium text-ink-500">
+          <span className="font-medium text-muted-foreground">
             {displayComments.length}
             {activeCommentCourse !== "todas" && ` de ${totalCommentCount}`}{" "}
             comentario
@@ -69,13 +67,13 @@ export default function TeacherCommentsCard({
       </div>
 
       {commentCourses.length > 0 && (
-        <div className="border-b border-ink-100 px-5 pb-3 sm:px-6">
+        <div className="border-b px-5 pb-3 sm:px-6">
           <div className="flex flex-wrap gap-1.5">
             <button
               type="button"
               onClick={() => setActiveCommentCourse("todas")}
               className={cn(
-                "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[12px] font-medium transition-colors",
+                "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-sm font-medium transition-colors",
                 activeCommentCourse === "todas"
                   ? "bg-ink-900 text-white"
                   : "border border-ink-200 bg-white text-ink-600 hover:bg-ink-50",
@@ -94,7 +92,7 @@ export default function TeacherCommentsCard({
                   type="button"
                   onClick={() => setActiveCommentCourse(key)}
                   className={cn(
-                    "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[12px] font-medium transition-colors",
+                    "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-sm font-medium transition-colors",
                     isActive
                       ? "bg-ink-900 text-white"
                       : "border border-ink-200 bg-white text-ink-600 hover:bg-ink-50",
@@ -104,7 +102,7 @@ export default function TeacherCommentsCard({
 
                   <span
                     className={cn(
-                      "inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold",
+                      "inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-xs font-semibold",
                       isActive
                         ? "bg-white/20 text-white"
                         : "bg-ink-100 text-ink-500",
@@ -121,9 +119,9 @@ export default function TeacherCommentsCard({
 
       {displayComments.length === 0 ? (
         <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
-          <MessageSquare size={28} className="text-ink-300" />
+          <MessageSquare size={28} className="text-muted-foreground" />
 
-          <p className="text-[13px] text-ink-500">
+          <p className="text-muted-foreground">
             {activeCommentCourse !== "todas"
               ? "Esta materia no obtuvo comentarios en esta evaluación docente."
               : selectedPeriod
@@ -132,18 +130,18 @@ export default function TeacherCommentsCard({
           </p>
         </div>
       ) : (
-        <ul className="divide-y divide-ink-100">
+        <ul className="divide-y">
           {displayComments.map((text, i) => (
             <li key={i} className="px-5 py-4 sm:px-6">
               <p
-                className="max-w-180 text-[13.5px] leading-relaxed text-ink-800"
+                className="max-w-180 leading-relaxed"
                 style={{ textWrap: "pretty" }}
               >
-                <span className="text-ink-400">"</span>
+                <span className="text-muted-foreground">"</span>
 
                 {text}
 
-                <span className="text-ink-400">"</span>
+                <span className="text-muted-foreground">"</span>
               </p>
             </li>
           ))}
