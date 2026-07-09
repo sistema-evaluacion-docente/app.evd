@@ -7,6 +7,8 @@ export interface GetAuditsParams {
   search?: string;
   table_name?: string;
   operation?: string;
+  start_date?: string;
+  end_date?: string;
 }
 
 export default function getAudits({
@@ -15,6 +17,18 @@ export default function getAudits({
   search,
   table_name,
   operation,
+  start_date,
+  end_date,
 }: GetAuditsParams = {}): Promise<AuditResponse> {
-  return api.get("/audits", { params: { page, limit, search, table_name, operation } });
+  return api.get("/audits", {
+    params: {
+      page,
+      limit,
+      search,
+      table_name,
+      operation,
+      start_date,
+      end_date,
+    },
+  });
 }
