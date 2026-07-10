@@ -11,6 +11,12 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/shared/ui";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -34,6 +40,7 @@ function TeachersContent() {
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const [deletingTeacher, setDeletingTeacher] = useState<Teacher | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<string>("all");
 
   const deleteTeacher = useDeleteTeacher();
 
@@ -156,10 +163,33 @@ function TeachersContent() {
         searchPlaceholder="Buscar por nombre, email o usuario..."
         emptyMessage="No se encontraron docentes."
         pageSize={10}
+        filters={
+          <Select
+            value={activeFilter}
+            onValueChange={(value) => setActiveFilter(value ?? "all")}
+          >
+            <SelectTrigger>
+              <span>
+                {activeFilter === "all"
+                  ? "Todos"
+                  : activeFilter === "true"
+                    ? "Activos"
+                    : "Inactivos"}
+              </span>
+            </SelectTrigger>
+
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="true">Activos</SelectItem>
+              <SelectItem value="false">Inactivos</SelectItem>
+            </SelectContent>
+          </Select>
+        }
         extraFilterParams={{
           academic_period_id: selectedPeriod?.id
             ? String(selectedPeriod.id)
             : undefined,
+          active: activeFilter !== "all" ? activeFilter : undefined,
         }}
         rowActions={[
           {
