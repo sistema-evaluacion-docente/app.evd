@@ -28,7 +28,7 @@ function ScoreCell({ score }: { score: number }) {
       >
         {score.toFixed(2)}
       </span>
-      <div className='h-0.75 overflow-hidden rounded-full bg-ink-100'>
+      <div className='h-0.75 overflow-hidden rounded-full bg-muted'>
         <div
           className={cn("h-full rounded-full", scoreBarColor(score))}
           style={{ width: `${(score / 5) * 100}%` }}
@@ -45,11 +45,11 @@ function TrendCell({
   current: number;
   prev: number | null;
 }) {
-  if (prev === null) return <span className='text-[12px] text-ink-400'>—</span>;
+  if (prev === null) return <span className='text-[12px] text-muted-foreground'>—</span>;
   const delta = current - prev;
   if (Math.abs(delta) <= 0.02)
     return (
-      <span className='flex items-center gap-1 text-[12px] text-ink-400 tabular-nums'>
+      <span className='flex items-center gap-1 text-[12px] text-muted-foreground tabular-nums'>
         <Minus size={11} /> 0.00
       </span>
     );
@@ -69,18 +69,18 @@ function TrendCell({
 function DiagnosisBadge({ avg }: { avg: number }) {
   if (avg < 3.5)
     return (
-      <span className='inline-flex rounded px-2 py-0.5 text-[11px] font-medium bg-red-50 text-red-700'>
+      <span className='inline-flex rounded px-2 py-0.5 text-[11px] font-medium bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400'>
         Materia en riesgo
       </span>
     );
   if (avg < 4.0)
     return (
-      <span className='inline-flex rounded px-2 py-0.5 text-[11px] font-medium bg-amber-50 text-amber-700'>
+      <span className='inline-flex rounded px-2 py-0.5 text-[11px] font-medium bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'>
         En seguimiento
       </span>
     );
   return (
-    <span className='inline-flex rounded px-2 py-0.5 text-[11px] font-medium bg-emerald-50 text-emerald-700'>
+    <span className='inline-flex rounded px-2 py-0.5 text-[11px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'>
       Buen desempeño
     </span>
   );
@@ -161,7 +161,7 @@ function SubjectsContent() {
         ].map((chip) => (
           <div
             key={chip.label}
-            className='flex flex-col gap-0.5 rounded-md border border-ink-200 bg-white px-4 py-2.5 shadow-sm'
+            className='flex flex-col gap-0.5 rounded-md border border-border bg-card px-4 py-2.5 shadow-sm'
           >
             <span
               className={cn(
@@ -171,7 +171,7 @@ function SubjectsContent() {
             >
               {chip.value}
             </span>
-            <span className='text-[11px] uppercase tracking-wide text-ink-400'>
+            <span className='text-[11px] uppercase tracking-wide text-muted-foreground'>
               {chip.label}
             </span>
           </div>
@@ -180,19 +180,19 @@ function SubjectsContent() {
 
       {/* Filters */}
       <div className='flex flex-wrap items-center gap-2'>
-        <div className='flex min-w-45 max-w-65 flex-1 items-center gap-2 rounded-md border border-ink-200 bg-white px-3 py-2 shadow-sm'>
-          <Search size={14} className='shrink-0 text-ink-400' />
+        <div className='flex min-w-45 max-w-65 flex-1 items-center gap-2 rounded-md border border-border bg-card px-3 py-2 shadow-sm'>
+          <Search size={14} className='shrink-0 text-muted-foreground' />
           <input
             type='text'
             placeholder='Buscar por nombre o código...'
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className='w-full bg-transparent text-[13px] text-ink-800 outline-none placeholder:text-ink-400'
+            className='w-full bg-transparent text-[13px] text-foreground outline-none placeholder:text-muted-foreground'
           />
         </div>
 
         <div className='flex items-center gap-1.5'>
-          <span className='text-[11px] uppercase tracking-wide text-ink-400'>
+          <span className='text-[11px] uppercase tracking-wide text-muted-foreground'>
             Ordenar:
           </span>
           {SORT_OPTIONS.map((opt) => (
@@ -203,7 +203,7 @@ function SubjectsContent() {
                 "rounded border px-2.5 py-1 text-[12px] transition-colors",
                 sort === opt.key
                   ? "border-brand-500 bg-brand-50 font-medium text-brand-700"
-                  : "border-ink-200 bg-white text-ink-500 hover:border-brand-400 hover:text-brand-600",
+                  : "border-border bg-card text-muted-foreground hover:border-brand-400 hover:text-brand-600",
               )}
             >
               {opt.label}
@@ -213,10 +213,10 @@ function SubjectsContent() {
       </div>
 
       {/* Table */}
-      <div className='overflow-hidden rounded-lg border border-ink-200 bg-white shadow-sm'>
+      <div className='overflow-hidden rounded-lg border border-border bg-card shadow-sm'>
         <div className='overflow-x-auto'>
           <table className='w-full min-w-205 border-collapse'>
-            <thead className='bg-ink-50'>
+            <thead className='bg-muted'>
               <tr>
                 {[
                   "Código",
@@ -230,7 +230,7 @@ function SubjectsContent() {
                 ].map((h) => (
                   <th
                     key={h}
-                    className='border-b border-ink-200 px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-ink-400'
+                    className='border-b border-border px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground'
                   >
                     {h}
                   </th>
@@ -238,13 +238,13 @@ function SubjectsContent() {
               </tr>
             </thead>
 
-            <tbody className='divide-y divide-ink-100'>
+            <tbody className='divide-y divide-border'>
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i}>
                     {Array.from({ length: 8 }).map((_, j) => (
                       <td key={j} className='px-4 py-3'>
-                        <div className='h-4 animate-pulse rounded bg-ink-100' />
+                        <div className='h-4 animate-pulse rounded bg-muted' />
                       </td>
                     ))}
                   </tr>
@@ -253,7 +253,7 @@ function SubjectsContent() {
                 <tr>
                   <td
                     colSpan={8}
-                    className='px-4 py-12 text-center text-[13px] text-ink-400'
+                    className='px-4 py-12 text-center text-[13px] text-muted-foreground'
                   >
                     <div className='flex flex-col items-center gap-3'>
                       <BookOpen size={28} className='opacity-30' />
@@ -265,11 +265,11 @@ function SubjectsContent() {
                 filtered.map((subject) => (
                   <tr
                     key={subject.course_id}
-                    className='cursor-pointer transition-colors hover:bg-ink-50/70'
+                    className='cursor-pointer transition-colors hover:bg-muted/70'
                   >
                     <td className='px-4 py-3'>
                       <Link href={`/subjects/${subject.course_id}`}>
-                        <span className='font-mono text-[14px] font-medium text-ink-600'>
+                        <span className='font-mono text-[14px] font-medium text-muted-foreground'>
                           {subject.course_code}
                         </span>
                       </Link>
@@ -278,10 +278,10 @@ function SubjectsContent() {
                     <td className='px-4 py-3'>
                       <Link href={`/subjects/${subject.course_id}`}>
                         <div>
-                          <p className='text-[13.5px] font-medium text-ink-800 hover:text-brand-600'>
+                          <p className='text-[13.5px] font-medium text-foreground hover:text-brand-600'>
                             {subject.course_name}
                           </p>
-                          <p className='text-[11px] text-ink-400'>
+                          <p className='text-[11px] text-muted-foreground'>
                             {subject.department_name}
                           </p>
                         </div>
@@ -289,13 +289,13 @@ function SubjectsContent() {
                     </td>
 
                     <td className='px-4 py-3 text-center'>
-                      <span className='text-[13px] tabular-nums text-ink-600'>
+                      <span className='text-[13px] tabular-nums text-muted-foreground'>
                         {subject.teacher_count}
                       </span>
                     </td>
 
                     <td className='px-4 py-3 text-center'>
-                      <span className='text-[13px] tabular-nums text-ink-600'>
+                      <span className='text-[13px] tabular-nums text-muted-foreground'>
                         {subject.group_count}
                       </span>
                     </td>
@@ -312,7 +312,7 @@ function SubjectsContent() {
                     </td>
 
                     <td className='px-4 py-3'>
-                      <span className='inline-block max-w-40 truncate rounded border border-ink-200 bg-ink-50 px-1.5 py-0.5 text-[11px] text-ink-500'>
+                      <span className='inline-block max-w-40 truncate rounded border border-border bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground'>
                         {subject.weakest_dimension}
                       </span>
                     </td>

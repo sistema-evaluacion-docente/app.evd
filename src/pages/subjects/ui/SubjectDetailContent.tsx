@@ -99,20 +99,20 @@ function SubjectDetailContent({ courseId }: Props) {
   }, [teachers]);
 
   const diagnosisStyles = {
-    alert: "border-red-200 bg-red-50 text-red-700",
-    warn: "border-amber-200 bg-amber-50 text-amber-700",
-    ok: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    neutral: "border-ink-200 bg-ink-50 text-ink-500",
+    alert: "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-400",
+    warn: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-400",
+    ok: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400",
+    neutral: "border-border bg-muted text-muted-foreground",
   };
 
   if (isLoading) {
     return (
       <>
-        <div className="h-4 w-24 animate-pulse rounded bg-ink-100" />
-        <div className="h-28 animate-pulse rounded-lg bg-ink-100" />
+        <div className="h-4 w-24 animate-pulse rounded bg-muted" />
+        <div className="h-28 animate-pulse rounded-lg bg-muted" />
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-20 animate-pulse rounded-lg bg-ink-100" />
+            <div key={i} className="h-20 animate-pulse rounded-lg bg-muted" />
           ))}
         </div>
       </>
@@ -121,7 +121,7 @@ function SubjectDetailContent({ courseId }: Props) {
 
   if (!subject) {
     return (
-      <div className="flex flex-col items-center gap-3 py-20 text-center text-ink-400">
+      <div className="flex flex-col items-center gap-3 py-20 text-center text-muted-foreground">
         <Info size={28} className="opacity-40" />
         <p className="text-[13px]">No se encontró información de la materia.</p>
         <Link href="/subjects" className="text-[13px] text-brand-600 hover:underline">
@@ -134,29 +134,29 @@ function SubjectDetailContent({ courseId }: Props) {
   return (
     <>
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-[13px] text-ink-500">
+      <nav className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
         <Link
           href="/subjects"
-          className="flex items-center gap-1 hover:text-ink-800"
+          className="flex items-center gap-1 hover:text-foreground"
         >
           <ArrowLeft size={13} />
           Materias
         </Link>
-        <span className="text-ink-300">/</span>
-        <span className="font-medium text-ink-800">{subject.course_name}</span>
+        <span className="text-muted-foreground">/</span>
+        <span className="font-medium text-foreground">{subject.course_name}</span>
       </nav>
 
       {/* Hero */}
-      <div className="rounded-lg border border-ink-200 bg-white p-5 shadow-sm">
+      <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="font-mono text-[12px] font-medium text-ink-400">
+            <p className="font-mono text-[12px] font-medium text-muted-foreground">
               {subject.course_code}
             </p>
-            <h1 className="mt-1 text-[22px] font-semibold leading-tight text-ink-900">
+            <h1 className="mt-1 text-[22px] font-semibold leading-tight text-foreground">
               {subject.course_name}
             </h1>
-            <p className="mt-0.5 text-[13px] text-ink-400">
+            <p className="mt-0.5 text-[13px] text-muted-foreground">
               Período: {subject.academic_period_code}
             </p>
           </div>
@@ -197,7 +197,7 @@ function SubjectDetailContent({ courseId }: Props) {
         <StatTile
           label="Grupos"
           value={teachers.reduce((a, t) => a + t.group_count, 0)}
-          icon={<Info size={16} className="text-ink-400" />}
+          icon={<Info size={16} className="text-muted-foreground" />}
         />
         <StatTile
           label="Brecha docentes"
@@ -227,22 +227,22 @@ function SubjectDetailContent({ courseId }: Props) {
           label="Tendencia"
           value="—"
           sub="vs período ant."
-          icon={<ArrowUp size={16} className="text-ink-300" />}
+          icon={<ArrowUp size={16} className="text-muted-foreground" />}
         />
       </div>
 
       {/* Teacher comparison */}
-      <div className="rounded-lg border border-ink-200 bg-white p-5 shadow-sm">
-        <p className="mb-4 border-b border-ink-100 pb-3 text-[11px] font-semibold uppercase tracking-wider text-ink-400">
+      <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+        <p className="mb-4 border-b border-border pb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           Comparación de docentes en esta materia
         </p>
 
         {sortedTeachers.length === 0 ? (
-          <p className="py-6 text-center text-[13px] text-ink-400">
+          <p className="py-6 text-center text-[13px] text-muted-foreground">
             Sin docentes registrados
           </p>
         ) : (
-          <div className="space-y-0 divide-y divide-ink-100">
+          <div className="space-y-0 divide-y divide-border">
             {sortedTeachers.map((teacher, i) => {
               const vs = teacher.overall_average - courseAverage;
               return (
@@ -270,14 +270,14 @@ function SubjectDetailContent({ courseId }: Props) {
                     <div className="min-w-0">
                       <Link
                         href={`/teachers/${teacher.teacher_id}`}
-                        className="block truncate text-[13px] font-medium text-ink-800 hover:text-brand-600"
+                        className="block truncate text-[13px] font-medium text-foreground hover:text-brand-600"
                       >
                         {i === 0 && (
                           <span className="mr-1 text-amber-500">★</span>
                         )}
                         {teacher.name ?? "—"}
                       </Link>
-                      <p className="text-[11px] text-ink-400">
+                      <p className="text-[11px] text-muted-foreground">
                         {teacher.group_count} grupo
                         {teacher.group_count !== 1 ? "s" : ""} ·{" "}
                         {teacher.contract_type ?? "—"}
@@ -287,7 +287,7 @@ function SubjectDetailContent({ courseId }: Props) {
 
                   {/* Bar */}
                   <div className="flex flex-1 flex-col gap-1">
-                    <div className="h-2 overflow-hidden rounded-full bg-ink-100">
+                    <div className="h-2 overflow-hidden rounded-full bg-muted">
                       <div
                         className={cn(
                           "h-full rounded-full transition-all",
@@ -307,7 +307,7 @@ function SubjectDetailContent({ courseId }: Props) {
                       className={cn(
                         "text-[11px] tabular-nums",
                         Math.abs(vs) <= 0.05
-                          ? "text-ink-400"
+                          ? "text-muted-foreground"
                           : vs > 0
                             ? "text-emerald-600"
                             : "text-red-600",
@@ -329,12 +329,12 @@ function SubjectDetailContent({ courseId }: Props) {
 
       {/* Dimension averages */}
       {dimensionAverages.length > 0 && (
-        <div className="rounded-lg border border-ink-200 bg-white p-5 shadow-sm">
-          <p className="mb-4 border-b border-ink-100 pb-3 text-[11px] font-semibold uppercase tracking-wider text-ink-400">
+        <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+          <p className="mb-4 border-b border-border pb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             Promedio por dimensión
           </p>
 
-          <div className="space-y-0 divide-y divide-ink-100">
+          <div className="space-y-0 divide-y divide-border">
             {dimensionAverages.map((dim, i) => {
               const isWeakest = i === 0;
               return (
@@ -344,19 +344,19 @@ function SubjectDetailContent({ courseId }: Props) {
                       "w-50 shrink-0 text-[13px]",
                       isWeakest
                         ? "font-medium text-red-600"
-                        : "text-ink-600",
+                        : "text-muted-foreground",
                     )}
                   >
                     {dim.dimension}
                     {isWeakest && (
-                      <span className="ml-2 rounded bg-red-50 px-1 py-0.5 text-[10px] font-semibold text-red-600">
+                      <span className="ml-2 rounded bg-red-50 px-1 py-0.5 text-[10px] font-semibold text-red-600 dark:bg-red-950/40 dark:text-red-400">
                         Débil
                       </span>
                     )}
                   </p>
 
                   <div className="flex flex-1 items-center gap-3">
-                    <div className="flex-1 overflow-hidden rounded-full bg-ink-100 h-1.5">
+                    <div className="flex-1 overflow-hidden rounded-full bg-muted h-1.5">
                       <div
                         className={cn("h-full rounded-full", scoreBarColor(dim.average))}
                         style={{ width: `${(dim.average / 5) * 100}%` }}

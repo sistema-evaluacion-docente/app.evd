@@ -15,12 +15,12 @@ export function Modal({ open, onClose, children, widthClass = 'max-w-lg' }: Moda
   if (!open) return null
   return (
     <div
-      className="animate-fade-in fixed inset-0 z-60 flex items-end justify-center bg-ink-900/40 p-3 backdrop-blur-[2px] sm:items-center sm:p-6"
+      className="animate-fade-in fixed inset-0 z-60 flex items-end justify-center bg-foreground/40 p-3 backdrop-blur-[2px] sm:items-center sm:p-6"
       onClick={onClose}
     >
       <div
         className={cn(
-          'w-full overflow-hidden rounded-lg bg-white shadow-pop',
+          'w-full overflow-hidden rounded-lg bg-card shadow-pop',
           widthClass,
         )}
         onClick={(event) => event.stopPropagation()}
