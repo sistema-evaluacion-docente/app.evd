@@ -123,7 +123,7 @@ function DataTable<TData>({
   const limitValue = searchParams.get("limit") ?? pageSize;
   const searchValue = searchParams.get("search") ?? "";
 
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(searchValue);
   const [page, setPage] = useState(Number(pageValue ?? 1));
   const [limit, setLimit] = useState(Number(limitValue ?? pageSize));
 
@@ -154,35 +154,15 @@ function DataTable<TData>({
   });
 
   useEffect(() => {
-    if (
-      searchValue === undefined &&
-      pageValue === undefined &&
-      limitValue === undefined
-    )
-      return;
-
     setSearchParams((prev) => {
       return {
         ...prev,
-        search: "",
-        page: 1,
-        limit: pageSize,
+        page: page,
+        limit: limit,
+        search: value,
       };
     });
-  }, []);
-
-  useEffect(() => {
-    if (page !== 1 || limit !== pageSize) {
-      setSearchParams((prev) => {
-        return {
-          ...prev,
-          page: page,
-          limit: limit,
-          search: value,
-        };
-      });
-    }
-  }, [page, limit, pageSize, value, setSearchParams]);
+  }, [page, limit, value, setSearchParams]);
 
   return (
     <>
@@ -286,7 +266,10 @@ function DataTable<TData>({
                   {[0, 1, 2, 3, 4].map((el) => (
                     <tr key={el} className="w-full">
                       {columns.map((cell) => (
-                        <td key={cell.id} className="w-auto px-2 py-1 animate-fade-in">
+                        <td
+                          key={cell.id}
+                          className="w-auto px-2 py-1 animate-fade-in"
+                        >
                           <Skeleton className="w-full h-8" />
                         </td>
                       ))}
