@@ -1,14 +1,13 @@
-import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Plus } from "lucide-react";
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
 
 import DataTable from "@/components/common/DataTable";
-import { PageHeader } from "@/shared/ui";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,8 +18,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import useGetTeachers from "../hooks/useGetTeachers";
+import { PageHeader } from "@/shared/ui";
 import useDeleteTeacher from "../hooks/useDeleteTeacher";
+import useGetTeachers from "../hooks/useGetTeachers";
 import type { Teacher } from "../types/Teacher";
 import CreateTeacherDrawer from "./CreateTeacherDrawer";
 import EditTeacherDrawer from "./EditTeacherDrawer";
@@ -43,9 +43,7 @@ const columns: ColumnDef<Teacher>[] = [
             />
           </Avatar>
 
-          <span className="font-medium">
-            {row.original?.user?.name}
-          </span>
+          <span className="font-medium">{row.original?.user?.name}</span>
         </div>
       </Link>
     ),
@@ -113,7 +111,6 @@ function TeachersContent() {
     <div className="space-y-5">
       <PageHeader
         title="Gestión de Docentes"
-        description="Listado de docentes registrados en el sistema."
         actions={
           <div className="flex items-center gap-2">
             <Link href="/teachers/upload">
