@@ -1,5 +1,5 @@
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
 import { ArrowRight } from "lucide-react";
 import { Link } from "wouter";
 
@@ -35,14 +35,10 @@ export function UploadFooter({ status, ready }: UploadFooterProps) {
               if (!ready) event.preventDefault();
             }}
             aria-disabled={!ready}
-            className={cn(
-              "inline-flex h-10 items-center justify-center gap-2 rounded-md px-5 text-[13.5px] font-semibold text-white transition-colors",
-              ready
-                ? "bg-brand-600 hover:bg-brand-700"
-                : "pointer-events-none bg-brand-600/40",
-            )}
           >
-            Analizar evaluaciones <ArrowRight size={15} />
+            <Button size="lg" disabled={!ready}>
+              Analizar evaluaciones <ArrowRight size={15} />
+            </Button>
           </Link>
         </div>
       </div>
