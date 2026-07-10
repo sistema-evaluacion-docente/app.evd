@@ -22,6 +22,7 @@ function AdminUsersSummary({
         <CardHeader>
           <Skeleton className="h-6 w-40" />
         </CardHeader>
+
         <CardContent>
           <div className="space-y-4">
             {Array.from({ length: 3 }).map((_, i) => (
@@ -48,15 +49,18 @@ function AdminUsersSummary({
           <Users size={16} className="text-ink-500" />
           <CardTitle>Resumen de Usuarios</CardTitle>
         </div>
+
         <Link href="/users" className="text-xs text-muted-foreground underline">
           Ver todos
         </Link>
       </CardHeader>
+
       <CardContent>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Total</span>
-            <span className="text-2xl font-bold tabular-nums text-ink-800">
+
+            <span className="text-2xl font-bold tabular-nums">
               {counts.users}
             </span>
           </div>
@@ -65,18 +69,21 @@ function AdminUsersSummary({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                <span className="text-sm text-ink-600">Activos</span>
+                <span className="text-sm text-muted-foreground">Activos</span>
               </div>
+
               <span className="text-sm font-semibold tabular-nums text-emerald-600">
                 {activeUsers}
               </span>
             </div>
+
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="h-2.5 w-2.5 rounded-full bg-ink-300" />
-                <span className="text-sm text-ink-600">Inactivos</span>
+                <div className="h-2.5 w-2.5 rounded-full bg-muted" />
+                <span className="text-sm text-muted-foreground">Inactivos</span>
               </div>
-              <span className="text-sm font-semibold tabular-nums text-ink-500">
+
+              <span className="text-sm font-semibold tabular-nums text-muted-foreground">
                 {inactiveUsers}
               </span>
             </div>
@@ -87,7 +94,8 @@ function AdminUsersSummary({
               <span>Tasa de activacion</span>
               <span>{activePercent}%</span>
             </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-ink-100">
+
+            <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
               <div
                 className="h-full rounded-full bg-emerald-500 transition-all duration-500"
                 style={{ width: `${activePercent}%` }}
@@ -95,10 +103,13 @@ function AdminUsersSummary({
             </div>
           </div>
 
-          <div className="rounded-lg border border-border/50 bg-muted/30 p-3">
+          <div className="rounded-lg border border-border/50 bg-muted p-3">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Docentes registrados</span>
-              <span className="font-semibold tabular-nums text-ink-800">
+              <span className="text-muted-foreground">
+                Docentes registrados
+              </span>
+
+              <span className="font-semibold tabular-nums">
                 {counts.teachers}
               </span>
             </div>
