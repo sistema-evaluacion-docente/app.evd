@@ -22,6 +22,7 @@ import { UploadTeachersPage } from "@/pages/upload-teachers";
 
 import LoginPage from "@/features/auth/pages/LoginPage";
 import { PeriodsPage } from "@/features/periods";
+import { SubjectsPage, SubjectDetailPage } from "@/pages/subjects";
 import { SummaryPage } from "@/pages/summary/ui/SummaryPage";
 import UsersPage from "@/pages/users";
 
@@ -41,6 +42,8 @@ function App() {
       <Route path="/matrix/:id" component={MatrixPage} />
       <Route path="/matrix-mock" component={MatrixPageMock} />
       <Route path="/plans" component={PlansPage} />
+      <Route path="/subjects" component={SubjectsPage} />
+      <Route path="/subjects/:id" component={SubjectDetailPage} />
 
       <Route path="/evaluations" component={EvaluationsPage} />
       <Route

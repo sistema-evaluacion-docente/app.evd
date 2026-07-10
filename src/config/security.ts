@@ -26,6 +26,11 @@ const securityConfig = {
       roles: ["DIRECTOR DE DEPARTAMENTO"],
     },
     {
+      path: "/subjects",
+      name: "Materias",
+      roles: ["DIRECTOR DE DEPARTAMENTO"],
+    },
+    {
       path: "/plans",
       name: "Planes de Mejoramiento",
       roles: ["DIRECTOR DE DEPARTAMENTO"],
