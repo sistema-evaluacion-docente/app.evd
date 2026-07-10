@@ -154,15 +154,27 @@ function DataTable<TData>({
   });
 
   useEffect(() => {
+    const currentSearch = searchParams.get("search") ?? "";
+    const currentPage = Number(searchParams.get("page") ?? 1);
+    const currentLimit = Number(searchParams.get("limit") ?? pageSize);
+
+    if (
+      currentSearch === value &&
+      currentPage === page &&
+      currentLimit === limit
+    ) {
+      return;
+    }
+
     setSearchParams((prev) => {
       return {
         ...prev,
-        page: page,
-        limit: limit,
+        page: String(page),
+        limit: String(limit),
         search: value,
       };
     });
-  }, [page, limit, value, setSearchParams]);
+  }, [page, limit, value, searchParams, setSearchParams, pageSize]);
 
   return (
     <>
