@@ -3,6 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollText } from "lucide-react";
 import { Link } from "wouter";
 
+import { TABLE_NAMES } from "@/features/audits";
 import type { AdminAuditItem } from "../../api/getAdminDashboard";
 
 interface AdminRecentLogsProps {
@@ -53,10 +54,7 @@ function AdminRecentLogs({ audits, isLoading }: AdminRecentLogsProps) {
           <CardTitle>Actividad Reciente</CardTitle>
         </div>
 
-        <Link
-          href="/logs"
-          className="text-xs text-muted-foreground underline"
-        >
+        <Link href="/logs" className="text-xs text-muted-foreground underline">
           Ver todos
         </Link>
       </CardHeader>
@@ -96,7 +94,7 @@ function AdminRecentLogs({ audits, isLoading }: AdminRecentLogsProps) {
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <p className="truncate text-sm font-medium text-ink-800">
+                    <p className="truncate text-sm font-medium">
                       {audit.description ?? audit.element ?? "—"}
                     </p>
                   </div>
@@ -108,9 +106,12 @@ function AdminRecentLogs({ audits, isLoading }: AdminRecentLogsProps) {
 
                     {audit.table_name && (
                       <>
-                        <span className="text-ink-300">·</span>
-                        <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px]">
-                          {audit.table_name}
+                        <span className="text-muted-foreground">·</span>
+
+                        <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
+                          {TABLE_NAMES?.find(
+                            (t) => t.value === audit.table_name,
+                          )?.label ?? audit.table_name}
                         </span>
                       </>
                     )}
