@@ -1,8 +1,10 @@
 import {
   BarChart3,
+  BookOpen,
   Calendar,
   FileText,
   LayoutGrid,
+  Settings,
   TrendingUp,
   UserSearch,
   Users,
@@ -33,6 +35,12 @@ const DIRECTOR_NAV: NavItem[] = [
     icon: TrendingUp,
     href: "/plans",
   },
+  {
+    id: "subjects",
+    label: "Materias",
+    icon: BookOpen,
+    href: "/subjects",
+  },
   { id: "docs", label: "Documentos", icon: FileText, href: "#" },
 ];
 
@@ -48,6 +56,12 @@ const ADMIN_NAV: NavItem[] = [
     label: "Periodos académicos",
     icon: Calendar,
     href: "/admin/periods",
+  },
+  {
+    id: "settings",
+    label: "Configuraciones",
+    icon: Settings,
+    href: "/admin/settings",
   },
   {
     id: "logs",

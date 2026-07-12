@@ -1,9 +1,12 @@
 import { cn } from "@/shared/lib/utils";
 import {
   BarChart3,
-  Calendar,
+  BookOpenText,
+  Building2,
+  Clock,
   FileText,
   LayoutGrid,
+  Library,
   LogOut,
   TrendingUp,
   UserSearch,
@@ -28,11 +31,14 @@ const MENU_ICON_BY_PATH: Record<string, typeof DEFAULT_ICON> = {
   "/teachers": Users,
   "/matrix": BarChart3,
   "/plans": TrendingUp,
+  "/subjects": BookOpenText,
   "/users": Users,
   "/roles": UserSearch,
   "/documents": FileText,
+  "/faculties": Building2,
+  "/departments": Library,
   "/admin/directors": UserSearch,
-  "/admin/periods": Calendar,
+  "/periods": Clock,
   "/admin/logs": FileText,
   "/me/summary": Users,
   "/me/history": TrendingUp,
@@ -57,40 +63,35 @@ export function AppSidebar({ mobileOpen, onClose }: AppSidebarProps) {
     <>
       <aside
         className={cn(
-          "fixed left-0 top-0 z-50 flex h-screen w-60 shrink-0 flex-col border-r border-ink-200 bg-white transition-transform lg:sticky lg:translate-x-0",
+          "fixed left-0 top-0 z-50 flex h-screen w-75 shrink-0 flex-col border-r bg-background transition-transform lg:sticky lg:translate-x-0",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
         {/* Logo */}
-        <div className="flex h-17 items-center gap-2.5 border-b border-ink-100 px-5">
+        <div className='flex h-17 items-center gap-2.5 border-b px-5'>
           <BrandMark size={36} iconSize={18} />
-          <div className="leading-tight">
-            <div className="text-[14px] font-semibold text-ink-900">
-              Evaluación Docente
-            </div>
 
-            <div className="-mt-0.5 text-[11px] text-ink-500">
-              {selectedRole}
-            </div>
+          <div className='leading-tight'>
+            <div className='text-sm font-semibold'>Evaluación Docente</div>
           </div>
 
           <button
-            type="button"
-            className="ml-auto text-ink-500 hover:text-ink-900 lg:hidden"
+            type='button'
+            className='ml-auto text-ink-500 lg:hidden'
             onClick={onClose}
-            aria-label="Cerrar menú"
+            aria-label='Cerrar menú'
           >
             <X size={18} />
           </button>
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto px-3 py-5">
-          <div className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-400">
+        <nav className='flex-1 overflow-y-auto px-3 py-5'>
+          <div className='mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-400'>
             Menú principal
           </div>
 
-          <ul className="space-y-0.5">
+          <ul className='space-y-0.5'>
             {items.map((item) => {
               const Icon = MENU_ICON_BY_PATH[item.path] ?? DEFAULT_ICON;
               const active = isActive(item.path);
@@ -101,10 +102,10 @@ export function AppSidebar({ mobileOpen, onClose }: AppSidebarProps) {
                     href={item.path}
                     onClick={onClose}
                     className={cn(
-                      "group flex h-9 w-full items-center gap-3 rounded-md px-2.5 text-[13px] font-medium transition-colors",
+                      "group flex h-9 w-full items-center gap-3 rounded-md px-2.5 text-xs font-medium transition-colors",
                       active
                         ? "bg-brand-50 text-brand-700"
-                        : "text-ink-600 hover:bg-ink-50 hover:text-ink-900",
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
                     )}
                   >
                     <Icon
@@ -112,14 +113,14 @@ export function AppSidebar({ mobileOpen, onClose }: AppSidebarProps) {
                       className={
                         active
                           ? "text-brand-600"
-                          : "text-ink-500 group-hover:text-ink-700"
+                          : "text-muted-foreground group-hover:text-foreground"
                       }
                     />
 
                     <span>{item.name}</span>
 
                     {active && (
-                      <span className="ml-auto h-1.5 w-1.5 rounded-full bg-brand-600" />
+                      <span className='ml-auto h-1.5 w-1.5 rounded-full bg-brand-600' />
                     )}
                   </Link>
                 </li>
@@ -129,10 +130,10 @@ export function AppSidebar({ mobileOpen, onClose }: AppSidebarProps) {
         </nav>
 
         {/* Logout */}
-        <div className="border-t p-2">
+        <div className='border-t p-2'>
           <div
             onClick={handleLogout}
-            className="border-ink-100 p-3 text-xs cursor-pointer flex h-9 w-full items-center gap-3 rounded-md px-2.5 font-medium text-brand-600 transition-colors hover:bg-brand-50"
+            className='border-ink-100 p-3 text-xs cursor-pointer flex h-9 w-full items-center gap-3 rounded-md px-2.5 font-medium text-brand-600 transition-colors hover:bg-brand-50'
           >
             <LogOut size={16} />
             <span>Cerrar Sesión</span>

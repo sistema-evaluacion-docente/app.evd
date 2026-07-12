@@ -1,8 +1,10 @@
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import type { User } from "@/features/auth/types/User";
-import formatDate from "@/lib/formatDate";
 import { createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
+
+import type { User } from "@/features/auth/types/User";
+import formatDate from "@/lib/formatDate";
 
 const columnHelper = createColumnHelper<User>();
 
@@ -11,7 +13,18 @@ export default function useUserColumns() {
     () => [
       columnHelper.accessor("name", {
         header: "Nombre",
-        cell: (info) => <div>{info.getValue()}</div>,
+        cell: (info) => (
+          <div className="flex items-center gap-2">
+            <Avatar>
+              <AvatarImage src={info.row.original.avatar_url} />
+              <AvatarFallback>
+                {info.row.original.name?.slice(0, 2)}
+              </AvatarFallback>
+            </Avatar>
+
+            <span>{info.getValue()}</span>
+          </div>
+        ),
       }),
       columnHelper.accessor("username", {
         header: "Usuario",

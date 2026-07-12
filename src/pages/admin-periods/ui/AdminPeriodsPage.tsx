@@ -414,7 +414,6 @@ export function AdminPeriodsPage() {
 
   return (
     <AppLayout
-      role="admin"
       header={{
         userName: 'Super Administrador',
         userRole: 'División de Sistemas',

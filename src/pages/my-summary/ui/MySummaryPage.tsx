@@ -145,7 +145,6 @@ export function MySummaryPage() {
 
   return (
     <AppLayout
-      role="teacher"
       header={{ userName: ME.name, userRole: ME.faculty }}
     >
       <PageHeader

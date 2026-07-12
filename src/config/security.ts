@@ -3,7 +3,17 @@ const securityConfig = {
     {
       path: "/dashboard",
       name: "Dashboard",
-      roles: ["DOCENTE", "DIRECTOR DE DEPARTAMENTO"],
+      roles: ["DOCENTE", "DIRECTOR DE DEPARTAMENTO", "ADMIN"],
+    },
+    {
+      path: "/summary",
+      name: "Mi Resumen",
+      roles: ["DOCENTE"],
+    },
+    {
+      path: "/evaluations",
+      name: "Evaluaciones",
+      roles: ["DIRECTOR DE DEPARTAMENTO"],
     },
     {
       path: "/teachers",
@@ -16,13 +26,28 @@ const securityConfig = {
       roles: ["DIRECTOR DE DEPARTAMENTO"],
     },
     {
+      path: "/subjects",
+      name: "Materias",
+      roles: ["DIRECTOR DE DEPARTAMENTO"],
+    },
+    {
       path: "/plans",
       name: "Planes de Mejoramiento",
       roles: ["DIRECTOR DE DEPARTAMENTO"],
     },
     {
-      path: "/dashboard",
-      name: "Inicio",
+      path: "/faculties",
+      name: "Facultades",
+      roles: ["ADMIN"],
+    },
+    {
+      path: "/departments",
+      name: "Departamentos",
+      roles: ["ADMIN"],
+    },
+    {
+      path: "/periods",
+      name: "Períodos",
       roles: ["ADMIN"],
     },
     {
@@ -33,6 +58,16 @@ const securityConfig = {
     {
       path: "/documents",
       name: "Documentos",
+      roles: ["ADMIN"],
+    },
+    {
+      path: "/settings",
+      name: "Configuración",
+      roles: ["ADMIN"],
+    },
+    {
+      path: "/logs",
+      name: "Logs",
       roles: ["ADMIN"],
     },
   ],

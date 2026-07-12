@@ -258,7 +258,6 @@ export function MyHistoryPage() {
 
   return (
     <AppLayout
-      role="teacher"
       header={{ userName: 'Dr. Roberto Jiménez', userRole: 'Facultad de Ingeniería' }}
     >
       <PageHeader

@@ -50,6 +50,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
       setSelectedRoleState(role);
       localStorage.setItem("selectedRole", role);
+
+      if (
+        location === "/login" ||
+        location === "/register" ||
+        location === "/"
+      ) {
+        setLocation("/dashboard", { replace: true });
+      }
     },
     [user],
   );
@@ -165,8 +173,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
           avatar_url: user.photoURL || "",
           active: true,
           roles: [],
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          teacher_id: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         };
 
         const token = await user.getIdToken(true);
