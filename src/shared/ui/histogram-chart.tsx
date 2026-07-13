@@ -88,7 +88,7 @@ export function HistogramChart({
                       onClick={() => toggleLabel(label)}
                       className={`rounded-md border px-2 py-0.5 text-xs transition-colors ${
                         isActive
-                          ? "border-brand-600 bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300"
+                          ? "border-brand-600 bg-brand-50 text-brand-700"
                           : "border-border bg-muted text-muted-foreground"
                       }`}
                     >

@@ -88,7 +88,7 @@ export function MatrixIndexPage() {
                       className={cn(
                         'flex items-center gap-3 rounded-lg px-2.5 py-2 text-[13px] transition-colors',
                         active
-                          ? 'bg-brand-50 text-brand-900'
+                          ? 'bg-brand-50 text-brand-700'
                           : 'text-foreground hover:bg-muted hover:text-foreground',
                       )}
                     >
@@ -149,7 +149,7 @@ export function MatrixIndexPage() {
         </div>
 
         {!selectedPeriod && (
-          <div className='rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-[12px] text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-400'>
+          <div className='rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-[12px] text-amber-700'>
             Selecciona un periodo académico en la barra superior
           </div>
         )}

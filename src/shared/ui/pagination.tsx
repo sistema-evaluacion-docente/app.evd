@@ -43,7 +43,7 @@ export function Pagination({ page, totalPages, onChange, summary }: PaginationPr
             className={cn(
               'inline-flex h-9 w-9 items-center justify-center rounded-md text-[13px] font-semibold transition-colors',
               value === page
-                ? 'border border-brand-600 bg-brand-50 text-brand-700 dark:bg-brand-600/20 dark:text-brand-300'
+                ? 'border border-brand-600 bg-brand-50 text-brand-700'
                 : 'border border-ink-200 bg-card text-ink-700 hover:bg-ink-50',
             )}
           >
