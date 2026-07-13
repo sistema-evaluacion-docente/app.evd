@@ -62,6 +62,9 @@ export function ScoresByGroup({ evaluationId }: ScoresByGroupProps) {
       pageSize={10}
       minWidthClassName="min-w-120"
       enableSorting={false}
+      enableSearch={false}
+      disabledPagination={true}
+      enableFilters={false}
     />
   );
 }

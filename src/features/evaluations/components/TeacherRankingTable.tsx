@@ -107,6 +107,9 @@ export function TeacherRankingTable({
       pageSize={10}
       minWidthClassName="min-w-150"
       enableSorting={false}
+      enableSearch={false}
+      disabledPagination={true}
+      enableFilters={false}
       filters={
         <Button
           variant="outline"
