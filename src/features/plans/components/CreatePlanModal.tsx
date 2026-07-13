@@ -1,15 +1,29 @@
-import { Plus, Trash2, X } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { Button, Input, Modal, Select } from "@/shared/ui";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import useCreatePlan from "../hooks/useCreatePlan";
 import { TARGET_TYPE_LABEL } from "../lib/planStatus";
-import type {
-  AtRiskTeacher,
-  PlanItemInput,
-  TargetType,
-} from "../types/Plan";
+import type { AtRiskTeacher, PlanItemInput, TargetType } from "../types/Plan";
 
 const DIMENSIONS = [
   "Desarrollo del Conocimiento",
@@ -21,6 +35,8 @@ const DIMENSIONS = [
 const TARGET_OPTIONS = Object.entries(TARGET_TYPE_LABEL).map(
   ([value, label]) => ({ value, label }),
 );
+
+const DIMENSION_OPTIONS = DIMENSIONS.map((value) => ({ value, label: value }));
 
 interface DraftItem extends PlanItemInput {
   key: string;
@@ -37,9 +53,14 @@ interface CreatePlanModalProps {
 let keySeq = 0;
 const nextKey = () => `item-${keySeq++}`;
 
+/**
+ * Seeds the form with a single baseline commitment (raise the overall average).
+ * The teacher's weak dimensions are not expanded into one item each — that
+ * produced a wall of pre-filled rows; they're added on demand instead.
+ */
 function buildItemsFor(teacher: AtRiskTeacher | undefined): DraftItem[] {
   if (!teacher) return [];
-  const items: DraftItem[] = [
+  return [
     {
       key: nextKey(),
       description: "Elevar el promedio general por encima del umbral (3.5).",
@@ -49,17 +70,6 @@ function buildItemsFor(teacher: AtRiskTeacher | undefined): DraftItem[] {
       target_value: 3.5,
     },
   ];
-  for (const dim of teacher.weak_dimensions) {
-    items.push({
-      key: nextKey(),
-      description: dim.suggestions[0] ?? `Mejorar ${dim.dimension}`,
-      target_type: "DIMENSION",
-      target_ref: dim.dimension,
-      baseline_value: dim.average,
-      target_value: 3.5,
-    });
-  }
-  return items;
 }
 
 export function CreatePlanModal({
@@ -82,6 +92,16 @@ export function CreatePlanModal({
   const selectedTeacher = useMemo(
     () => atRiskTeachers.find((t) => String(t.teacher_id) === teacherId),
     [atRiskTeachers, teacherId],
+  );
+
+  // `items` is what lets the trigger render the label instead of the raw value.
+  const teacherOptions = useMemo(
+    () =>
+      atRiskTeachers.map((teacher) => ({
+        value: String(teacher.teacher_id),
+        label: `${teacher.name ?? "Docente"} — ${teacher.overall_average.toFixed(2)}`,
+      })),
+    [atRiskTeachers],
   );
 
   // Prefill items/title when the selected teacher changes.
@@ -184,197 +204,222 @@ export function CreatePlanModal({
   };
 
   return (
-    <Modal open={open} onClose={handleClose} widthClass="max-w-2xl">
-      <div className="flex items-start justify-between gap-3 border-b border-ink-100 p-6">
-        <div>
-          <h3 className="text-[18px] font-semibold text-ink-900">
-            Crear Plan de Seguimiento
-          </h3>
-          <p className="mt-1 text-[13px] text-ink-500">
-            Los ítems se pre-cargan con las dimensiones donde el docente salió
-            por debajo del umbral. Puedes quitarlos, editarlos o añadir nuevos.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={handleClose}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-ink-500 hover:bg-ink-100"
-          aria-label="Cerrar"
-        >
-          <X size={16} />
-        </button>
-      </div>
+    <Dialog open={open} onOpenChange={(next) => !next && handleClose()}>
+      <DialogContent className="sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Crear Plan de Seguimiento</DialogTitle>
+          <DialogDescription>
+            Al elegir docente se pre-carga un compromiso base sobre su promedio
+            general. Puedes editarlo, quitarlo o añadir los que necesites.
+          </DialogDescription>
+        </DialogHeader>
 
-      <form
-        className="max-h-[70vh] space-y-4 overflow-y-auto p-6"
-        onSubmit={handleSubmit}
-      >
-        <Field label="Docente (bajo umbral)">
-          <Select
-            value={teacherId}
-            onChange={setTeacherId}
-            placeholder="Seleccione un docente..."
-            options={atRiskTeachers.map((t) => ({
-              value: String(t.teacher_id),
-              label: `${t.name ?? "Docente"} — ${t.overall_average.toFixed(2)}`,
-            }))}
-          />
-          {atRiskTeachers.length === 0 && (
-            <p className="mt-1 text-[12px] text-ink-500">
-              No hay docentes bajo umbral sin plan en el periodo seleccionado.
-            </p>
-          )}
-        </Field>
+        <form className="grid gap-4" onSubmit={handleSubmit}>
+          <div className="max-h-[60vh] space-y-4 overflow-y-auto pr-1">
+            <div className="space-y-2">
+              <Label>Docente (bajo umbral)</Label>
 
-        <Field label="Título del plan">
-          <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Ej. Plan de mejoramiento · Juan Pérez"
-          />
-        </Field>
-
-        <Field label="Descripción (opcional)">
-          <textarea
-            rows={2}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Contexto del compromiso consensuado..."
-            className="w-full rounded-md border border-ink-200 bg-card px-3 py-2 text-[13px] text-ink-900 transition-colors placeholder:text-ink-400 focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/15"
-          />
-        </Field>
-
-        <div>
-          <div className="mb-2 flex items-center justify-between">
-            <label className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-600">
-              Compromisos / ítems
-            </label>
-            <Button type="button" variant="soft" size="sm" onClick={addItem}>
-              <Plus size={14} />
-              Añadir ítem
-            </Button>
-          </div>
-
-          <div className="space-y-3">
-            {items.map((item) => (
-              <div
-                key={item.key}
-                className="rounded-lg border border-ink-200 p-3"
+              <Select
+                items={teacherOptions}
+                value={teacherId}
+                onValueChange={(value) => setTeacherId((value as string) ?? "")}
               >
-                <div className="flex items-start gap-2">
-                  <textarea
-                    rows={2}
-                    value={item.description}
-                    onChange={(e) =>
-                      updateItem(item.key, { description: e.target.value })
-                    }
-                    placeholder="Acción de mejora concreta..."
-                    className="min-w-0 flex-1 rounded-md border border-ink-200 bg-card px-3 py-2 text-[13px] text-ink-900 placeholder:text-ink-400 focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/15"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeItem(item.key)}
-                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-ink-500 hover:bg-brand-50 hover:text-brand-700"
-                    aria-label="Quitar ítem"
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                </div>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Seleccione un docente..." />
+                </SelectTrigger>
 
-                <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
-                  <div>
-                    <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-ink-500">
-                      Indicador
-                    </span>
-                    <Select
-                      value={item.target_type}
-                      onChange={(value) =>
-                        updateItem(item.key, {
-                          target_type: value as TargetType,
-                          target_ref:
-                            value === "DIMENSION" ? DIMENSIONS[0] : null,
-                        })
-                      }
-                      options={TARGET_OPTIONS}
-                    />
-                  </div>
+                <SelectContent alignItemWithTrigger={false}>
+                  {teacherOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-                  {item.target_type === "DIMENSION" && (
-                    <div>
-                      <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-ink-500">
-                        Dimensión
-                      </span>
-                      <Select
-                        value={item.target_ref ?? DIMENSIONS[0]}
-                        onChange={(value) =>
-                          updateItem(item.key, { target_ref: value })
-                        }
-                        options={DIMENSIONS}
-                      />
-                    </div>
-                  )}
+              {atRiskTeachers.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  No hay docentes bajo umbral sin plan en el periodo
+                  seleccionado.
+                </p>
+              )}
+            </div>
 
-                  {item.target_type !== "QUALITATIVE" && (
-                    <div>
-                      <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-ink-500">
-                        Meta (≥)
-                      </span>
-                      <Input
-                        type="number"
-                        step="0.1"
-                        min="1"
-                        max="5"
-                        value={item.target_value ?? ""}
-                        onChange={(e) =>
+            <div className="space-y-2">
+              <Label htmlFor="plan-title">Título del plan</Label>
+
+              <Input
+                id="plan-title"
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                placeholder="Ej. Plan de mejoramiento · Juan Pérez"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="plan-description">Descripción (opcional)</Label>
+
+              <Textarea
+                id="plan-description"
+                rows={2}
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder="Contexto del compromiso consensuado..."
+              />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Compromisos / ítems</Label>
+
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={addItem}
+                >
+                  <Plus className="size-4" />
+                  Añadir ítem
+                </Button>
+              </div>
+
+              <div className="space-y-3">
+                {items.map((item) => (
+                  <div key={item.key} className="rounded-lg border p-3">
+                    <div className="flex items-start gap-2">
+                      <Textarea
+                        rows={2}
+                        value={item.description}
+                        onChange={(event) =>
                           updateItem(item.key, {
-                            target_value:
-                              e.target.value === ""
-                                ? null
-                                : Number(e.target.value),
+                            description: event.target.value,
                           })
                         }
-                        placeholder="3.5"
+                        placeholder="Acción de mejora concreta..."
+                        className="min-w-0 flex-1"
                       />
+
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => removeItem(item.key)}
+                        aria-label="Quitar ítem"
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
                     </div>
-                  )}
-                </div>
+
+                    <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Indicador</Label>
+
+                        <Select
+                          items={TARGET_OPTIONS}
+                          value={item.target_type}
+                          onValueChange={(value) =>
+                            updateItem(item.key, {
+                              target_type: value as TargetType,
+                              target_ref:
+                                value === "DIMENSION" ? DIMENSIONS[0] : null,
+                            })
+                          }
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+
+                          <SelectContent alignItemWithTrigger={false}>
+                            {TARGET_OPTIONS.map((option) => (
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                              >
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {item.target_type === "DIMENSION" && (
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Dimensión</Label>
+
+                          <Select
+                            items={DIMENSION_OPTIONS}
+                            value={item.target_ref ?? DIMENSIONS[0]}
+                            onValueChange={(value) =>
+                              updateItem(item.key, {
+                                target_ref: value as string,
+                              })
+                            }
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue/>
+                            </SelectTrigger>
+
+                            <SelectContent alignItemWithTrigger={false} className="w-auto">
+                              {DIMENSION_OPTIONS.map((option) => (
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+
+                      {item.target_type !== "QUALITATIVE" && (
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Meta (≥)</Label>
+
+                          <Input
+                            type="number"
+                            step="0.1"
+                            min="1"
+                            max="5"
+                            value={item.target_value ?? ""}
+                            onChange={(event) =>
+                              updateItem(item.key, {
+                                target_value:
+                                  event.target.value === ""
+                                    ? null
+                                    : Number(event.target.value),
+                              })
+                            }
+                            placeholder="3.5"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                {items.length === 0 && (
+                  <p className="rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground">
+                    Selecciona un docente para pre-cargar los compromisos, o
+                    añade uno manualmente.
+                  </p>
+                )}
               </div>
-            ))}
-            {items.length === 0 && (
-              <p className="rounded-lg border border-dashed border-ink-200 p-4 text-center text-[12.5px] text-ink-500">
-                Selecciona un docente para pre-cargar los compromisos, o añade
-                uno manualmente.
-              </p>
-            )}
+            </div>
           </div>
-        </div>
 
-        <div className="flex justify-end gap-2 border-t border-ink-100 pt-4">
-          <Button type="button" variant="outline" onClick={handleClose}>
-            Cancelar
-          </Button>
-          <Button type="submit" variant="brand" disabled={createPlan.isPending}>
-            {createPlan.isPending ? "Creando..." : "Crear Plan"}
-          </Button>
-        </div>
-      </form>
-    </Modal>
-  );
-}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={handleClose}>
+              Cancelar
+            </Button>
 
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-600">
-        {label}
-      </label>
-      {children}
-    </div>
+            <Button type="submit" disabled={createPlan.isPending}>
+              {createPlan.isPending ? "Creando..." : "Crear Plan"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
