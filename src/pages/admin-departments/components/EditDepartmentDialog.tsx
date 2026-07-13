@@ -76,8 +76,8 @@ function EditDepartmentDialog({
           <Input
             id="name"
             name="name"
-            defaultValue={department?.name ?? ""}
             required
+            defaultValue={department?.name ?? ""}
           />
         </div>
 
@@ -88,8 +88,9 @@ function EditDepartmentDialog({
             <Input
               id="code"
               name="code"
+              required
               defaultValue={department?.code ?? ""}
-              placeholder="Código opcional"
+              placeholder="Código"
             />
           </div>
 
@@ -111,8 +112,6 @@ function EditDepartmentDialog({
 
               <SelectContent className="w-full">
                 <div className="flex flex-col gap-2 p-2">
-                  <SelectItem value="">Sin facultad</SelectItem>
-
                   {faculties.map((f) => (
                     <SelectItem key={f.id} value={String(f.id)}>
                       {f.name}
