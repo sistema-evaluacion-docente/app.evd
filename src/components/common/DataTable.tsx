@@ -86,7 +86,7 @@ interface DataTableProps<TData> {
     limit: number;
     search: string;
   }) => UseQueryResult<ResponseAPI<TData[]>>;
-  extraFilterParams?: Record<string, string | undefined>;
+  extraFilterParams?: Record<string, string | number | undefined>;
   createConfig?: DataTableCreateConfig;
   filters?: React.ReactNode;
 }
@@ -131,6 +131,16 @@ function DataTable<TData>({
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newItemName, setNewItemName] = useState("");
+
+  // A page number is only meaningful for the result set it was drawn from, so
+  // snap back to the first page whenever the search term or an external filter
+  // changes — otherwise a narrower result set leaves you stranded on an empty page.
+  const filterKey = JSON.stringify([value, extraFilterParams]);
+  const [appliedFilterKey, setAppliedFilterKey] = useState(filterKey);
+  if (appliedFilterKey !== filterKey) {
+    setAppliedFilterKey(filterKey);
+    setPage(1);
+  }
 
   const { data, isLoading, isFetching, refetch } = queryFn({
     page,
@@ -285,8 +295,11 @@ function DataTable<TData>({
                 <>
                   {[0, 1, 2, 3, 4].map((el) => (
                     <tr key={el} className="w-full">
-                      {columns.map((cell) => (
-                        <td key={cell.id} className="w-auto px-2 py-1 animate-fade-in">
+                      {columns.map((column, index) => (
+                        <td
+                          key={column.id ?? index}
+                          className="w-auto px-2 py-1 animate-fade-in"
+                        >
                           <Skeleton className="w-full h-8" />
                         </td>
                       ))}
