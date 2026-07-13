@@ -2,24 +2,32 @@ import { Plus } from "lucide-react";
 import { useState } from "react";
 
 import DataTable, { type DataTableAction } from "@/components/common/DataTable";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { usePeriodsStore } from "@/features/periods";
 import {
   CreatePlanModal,
   PlanDetailModal,
   PLAN_STATUS_FILTERS,
+  PLAN_STATUS_FILTER_ALL,
   useAtRiskTeachers,
   useGetPlans,
   usePlanColumns,
   type Plan,
 } from "@/features/plans";
-import { AppFooter, Button, FilterPills, PageHeader } from "@/shared/ui";
+import { AppFooter, Button, PageHeader } from "@/shared/ui";
 import { AppLayout } from "@/widgets/layout";
 
 export function PlansPage() {
   const selectedPeriod = usePeriodsStore((state) => state.selectedPeriod);
   const periodId = selectedPeriod?.id ? Number(selectedPeriod.id) : undefined;
 
-  const [statusFilter, setStatusFilter] = useState("todos");
+  const [statusFilter, setStatusFilter] = useState(PLAN_STATUS_FILTER_ALL);
   const [createOpen, setCreateOpen] = useState(false);
   const [detailId, setDetailId] = useState<number | null>(null);
 
@@ -57,11 +65,24 @@ export function PlansPage() {
         searchPlaceholder="Buscar docentes o planes..."
         emptyMessage="Aún no hay planes de seguimiento."
         filters={
-          <FilterPills
+          <Select
             value={statusFilter}
-            onChange={setStatusFilter}
-            options={PLAN_STATUS_FILTERS}
-          />
+            onValueChange={(value) =>
+              setStatusFilter(value ?? PLAN_STATUS_FILTER_ALL)
+            }
+          >
+            <SelectTrigger className="w-44">
+              <SelectValue placeholder="Todos" />
+            </SelectTrigger>
+
+            <SelectContent>
+              {PLAN_STATUS_FILTERS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         }
       />
 

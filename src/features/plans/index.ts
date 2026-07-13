@@ -15,6 +15,7 @@ export * from "./types/Plan";
 export {
   PLAN_STATUS_META,
   PLAN_STATUS_FILTERS,
+  PLAN_STATUS_FILTER_ALL,
   TARGET_TYPE_LABEL,
   statusMeta,
   isClosed,

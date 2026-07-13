@@ -56,13 +56,13 @@ export const PLAN_STATUS_META: Record<PlanStatus, StatusMeta> = {
   },
 };
 
+/** Value sent when no status filter is applied; `getPlans` drops it from the query. */
+export const PLAN_STATUS_FILTER_ALL = "Todos";
+
 export const PLAN_STATUS_FILTERS: { value: string; label: string }[] = [
-  { value: "todos", label: "Todos" },
-  { value: "EN_SEGUIMIENTO", label: "En Seguimiento" },
-  { value: "RESULTADO_DISPONIBLE", label: "Resultado Disponible" },
+  { value: PLAN_STATUS_FILTER_ALL, label: "Todos" },
   { value: "CERRADO_CUMPLIDO", label: "Cumplidos" },
   { value: "CERRADO_NO_CUMPLIDO", label: "No cumplidos" },
-  { value: "CERRADO_MANUAL", label: "Cierre manual" },
 ];
 
 export const TARGET_TYPE_LABEL: Record<string, string> = {
