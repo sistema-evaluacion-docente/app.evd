@@ -43,9 +43,8 @@ function DashboardContentDirector() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           <CardDepartmentAverage evaluation={evaluation} initialLoading={isLoading} />
           <CardComments evaluation={evaluation} initialLoading={isLoading} />
+          <CriticalCasesCard periodId={selectedPeriodId} initialLoading={isLoading} />
         </div>
-
-        {/* <CriticalCasesCard periodId={selectedPeriodId} /> */}
 
         <div className="grid grid-cols-1 md:grid-cols-[1fr_0.5fr] gap-4 items-start">
           <div className="w-full space-y-4">
