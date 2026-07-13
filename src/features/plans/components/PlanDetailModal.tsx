@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/shared/lib/utils";
 import { Avatar } from "@/shared/ui";
 import useClosePlan from "../hooks/useClosePlan";
@@ -46,6 +47,12 @@ export function PlanDetailModal({ planId, onClose }: PlanDetailModalProps) {
   const closePlan = useClosePlan();
 
   const plan = data?.data;
+
+  // The three close buttons share one mutation, so `isPending` alone would spin
+  // all of them. The in-flight variables tell us which one was actually clicked.
+  const closingResult = closePlan.isPending
+    ? closePlan.variables?.data.result
+    : undefined;
 
   const handleEvaluate = () => {
     if (!planId) return;
@@ -192,8 +199,14 @@ export function PlanDetailModal({ planId, onClose }: PlanDetailModalProps) {
                   onClick={handleEvaluate}
                   disabled={evaluatePlan.isPending}
                 >
-                  <RefreshCw className="size-4" />
-                  Recalcular cumplimiento
+                  {evaluatePlan.isPending ? (
+                    <Spinner />
+                  ) : (
+                    <RefreshCw className="size-4" />
+                  )}
+                  {evaluatePlan.isPending
+                    ? "Recalculando..."
+                    : "Recalcular cumplimiento"}
                 </Button>
 
                 <div className="flex flex-wrap gap-2">
@@ -204,6 +217,7 @@ export function PlanDetailModal({ planId, onClose }: PlanDetailModalProps) {
                     onClick={() => handleClose("MANUAL")}
                     disabled={closePlan.isPending}
                   >
+                    {closingResult === "MANUAL" && <Spinner />}
                     Cierre manual
                   </Button>
 
@@ -214,6 +228,7 @@ export function PlanDetailModal({ planId, onClose }: PlanDetailModalProps) {
                     onClick={() => handleClose("NO_CUMPLIDO")}
                     disabled={closePlan.isPending}
                   >
+                    {closingResult === "NO_CUMPLIDO" && <Spinner />}
                     Cerrar · No cumplió
                   </Button>
 
@@ -223,6 +238,7 @@ export function PlanDetailModal({ planId, onClose }: PlanDetailModalProps) {
                     onClick={() => handleClose("CUMPLIDO")}
                     disabled={closePlan.isPending}
                   >
+                    {closingResult === "CUMPLIDO" && <Spinner />}
                     Cerrar · Cumplió
                   </Button>
                 </div>
