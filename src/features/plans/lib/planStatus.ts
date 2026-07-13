@@ -8,9 +8,9 @@ export interface StatusMeta {
   border: string;
 }
 
-// The `bar` colors are saturated 500/600 steps and read correctly on either
-// theme. The tint/text/border steps are light-only, so each carries a `dark:`
-// counterpart. `ink-*` already flips with the theme and needs none.
+// No `dark:` variants on purpose: the ramp flip in index.css already darkens the
+// 50/200 tints and lightens the 700 text step, and the saturated 500/600 bars
+// read correctly on either theme.
 export const PLAN_STATUS_META: Record<PlanStatus, StatusMeta> = {
   BORRADOR: {
     label: "Borrador",
