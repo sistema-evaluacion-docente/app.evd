@@ -8,6 +8,7 @@ export interface EvaluationRecord {
   count: number | null;
   academic_period_name?: string;
   active: boolean;
+  overall_average: number | null;
 }
 
 export interface EvaluationStatusUpdate {

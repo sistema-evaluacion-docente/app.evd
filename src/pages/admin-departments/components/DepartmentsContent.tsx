@@ -11,7 +11,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import { getFaculties } from "@/features/faculties";
 import { PageHeader } from "@/shared/ui";
@@ -94,8 +93,10 @@ export function DepartmentsContent() {
           <div className="grid gap-4">
             <div className="space-y-2">
               <Label htmlFor="create-name">Nombre</Label>
+
               <Input
                 id="create-name"
+                required
                 value={createForm.name}
                 onChange={(e) =>
                   setCreateForm((prev) => ({ ...prev, name: e.target.value }))
@@ -106,18 +107,21 @@ export function DepartmentsContent() {
 
             <div className="space-y-2">
               <Label htmlFor="create-code">Código</Label>
+
               <Input
                 id="create-code"
+                required
                 value={createForm.code}
                 onChange={(e) =>
                   setCreateForm((prev) => ({ ...prev, code: e.target.value }))
                 }
-                placeholder="Código opcional"
+                placeholder="Código"
               />
             </div>
 
             <div className="space-y-2">
               <Label>Facultad</Label>
+
               <Select
                 value={createForm.faculty_id}
                 onValueChange={(value) =>
@@ -128,10 +132,15 @@ export function DepartmentsContent() {
                 }
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Seleccionar facultad" />
+                  <span>
+                    {createForm.faculty_id
+                      ? (faculties.find((f) => f.id === Number(createForm.faculty_id))
+                        ?.name ?? "")
+                      : "Sin facultad"}
+                  </span>
                 </SelectTrigger>
+
                 <SelectContent>
-                  <SelectItem value="">Sin facultad</SelectItem>
                   {faculties.map((f) => (
                     <SelectItem key={f.id} value={String(f.id)}>
                       {f.name}

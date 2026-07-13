@@ -57,6 +57,18 @@ export default function useEvaluationColumns() {
         ),
       }),
 
+      columnHelper.accessor("overall_average", {
+        header: "Promedio",
+        cell: (info) => {
+          const avg = info.getValue();
+          return (
+            <span className="font-semibold">
+              {avg != null ? avg.toFixed(2) : "—"}
+            </span>
+          );
+        },
+      }),
+
       columnHelper.accessor("count", {
         header: "Docentes",
         cell: (info) => {

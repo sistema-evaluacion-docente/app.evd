@@ -34,7 +34,7 @@ function LoginForm() {
     <section className="flex items-center justify-center bg-background px-6 py-12">
       <div className="flex w-full max-w-100 flex-col">
         <header className="mb-7 text-center">
-          <h1 className="text-lg font-semibold tracking-tight text-ink-900">
+          <h1 className="text-lg font-semibold tracking-tight">
             Acceso al Sistema
           </h1>
 

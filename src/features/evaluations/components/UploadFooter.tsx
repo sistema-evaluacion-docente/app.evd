@@ -1,5 +1,5 @@
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
 import { ArrowRight } from "lucide-react";
 import { Link } from "wouter";
 
@@ -16,33 +16,30 @@ const STATUS_MESSAGE: Record<UploadStatus, string> = {
 interface UploadFooterProps {
   status: UploadStatus;
   ready: boolean;
+  evaluationId: number | null;
 }
 
-export function UploadFooter({ status, ready }: UploadFooterProps) {
+export function UploadFooter({ status, ready, evaluationId }: UploadFooterProps) {
   return (
     <>
       <Separator className="my-2" />
 
       <div className="flex flex-col justify-between gap-3 pt-2 sm:flex-row sm:items-center">
-        <div className="text-[12.5px] text-ink-500">
+        <div className="text-sm text-muted-foreground">
           {STATUS_MESSAGE[status]}
         </div>
 
         <div className="flex items-center gap-2">
           <Link
-            href={ready ? "/teachers" : "#"}
+            href={ready ? `/evaluations/${evaluationId}` : "#"}
             onClick={(event) => {
               if (!ready) event.preventDefault();
             }}
             aria-disabled={!ready}
-            className={cn(
-              "inline-flex h-10 items-center justify-center gap-2 rounded-md px-5 text-[13.5px] font-semibold text-white transition-colors",
-              ready
-                ? "bg-brand-600 hover:bg-brand-700"
-                : "pointer-events-none bg-brand-600/40",
-            )}
           >
-            Analizar evaluaciones <ArrowRight size={15} />
+            <Button size="lg" disabled={!ready}>
+              Analizar evaluaciones <ArrowRight size={15} />
+            </Button>
           </Link>
         </div>
       </div>

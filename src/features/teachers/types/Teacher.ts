@@ -8,6 +8,7 @@ export interface Teacher {
   user_id?: number;
   user?: User;
   active: boolean;
+  overall_average?: number | null;
   created_at: string;
   updated_at: string;
 }

@@ -9,6 +9,8 @@ import {
   TeacherRankingTable,
 } from "@/features/evaluations";
 import { useEvaluationDetail } from "../model/useEvaluationDetail";
+import { Separator } from "@/components/ui/separator";
+import EvaluationSection from "./EvaluationSection";
 
 type Props = {
   evaluationId: number;
@@ -28,7 +30,9 @@ function EvaluationDetailContent({ evaluationId }: Props) {
             <div>
               <h1 className="text-2xl font-semibold leading-tight tracking-tight">
                 Detalle de Evaluación
-                <span className="ml-2 text-muted-foreground">#{evaluationId}</span>
+                <span className="ml-2 text-muted-foreground">
+                  #{evaluationId}
+                </span>
               </h1>
             </div>
 
@@ -47,16 +51,33 @@ function EvaluationDetailContent({ evaluationId }: Props) {
 
           <SummaryStats summary={summary} />
 
+          <DimensionOverview
+            dimensions={dimensions}
+            evaluationId={evaluationId}
+          />
+
+          <Separator />
+
+          <EvaluationSection
+            title="Docentes"
+            url={`/evaluations/${evaluationId}/teachers`}
+          />
+
           <TeacherRankingTable
             academicPeriodId={evaluation?.academic_period_id}
             departmentId={evaluation?.department_id}
           />
 
+          <EvaluationSection
+            title="Grupos"
+            url={`/evaluations/${evaluationId}/groups`}
+          />
+
           <ScoresByGroup evaluationId={evaluationId} />
 
-          <DimensionOverview
-            dimensions={dimensions}
-            evaluationId={evaluationId}
+          <EvaluationSection
+            title="Comentarios"
+            url={`/evaluations/${evaluationId}/comments`}
           />
 
           <CommentsTable evaluationId={evaluationId} />
