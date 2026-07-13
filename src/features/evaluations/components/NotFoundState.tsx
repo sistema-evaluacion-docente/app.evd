@@ -21,7 +21,7 @@ export function NotFoundState() {
         </div>
 
         <Link href="/evaluations">
-          <button className="mt-2 rounded-md bg-brand-600 px-4 py-2 text-[13px] font-semibold text-white hover:bg-brand-700">
+          <button className="mt-2 rounded-md bg-primary px-4 py-2 text-[13px] font-semibold text-primary-foreground hover:bg-primary-hover">
             Volver a Evaluaciones
           </button>
         </Link>

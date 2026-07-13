@@ -248,7 +248,7 @@ export function MyHistoryPage() {
       cell: () => (
         <Link
           href="/me/summary"
-          className="inline-flex h-8 items-center justify-center rounded-md bg-brand-600 px-3 text-[12.5px] font-semibold text-white hover:bg-brand-700"
+          className="inline-flex h-8 items-center justify-center rounded-md bg-primary px-3 text-[12.5px] font-semibold text-primary-foreground hover:bg-primary-hover"
         >
           Ver Detalle
         </Link>
@@ -522,7 +522,7 @@ function PeriodDetail({ period }: { period: PeriodRecord }) {
         </ul>
         <Link
           href="/me/summary"
-          className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-brand-600 hover:text-brand-700"
+          className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-brand-700 hover:text-brand-800"
         >
           Abrir expediente completo <ArrowRight size={13} />
         </Link>

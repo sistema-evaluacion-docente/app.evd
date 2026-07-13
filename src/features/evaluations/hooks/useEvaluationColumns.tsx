@@ -87,7 +87,7 @@ export default function useEvaluationColumns() {
               href={`${API_URL}/${url}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-brand-600 hover:text-brand-700 underline underline-offset-2 text-xs"
+              className="text-brand-700 hover:text-brand-800 underline underline-offset-2 text-xs"
             >
               Ver PDF
             </a>

@@ -38,7 +38,7 @@ export function UploadFooter({ status, ready }: UploadFooterProps) {
             className={cn(
               "inline-flex h-10 items-center justify-center gap-2 rounded-md px-5 text-[13.5px] font-semibold text-white transition-colors",
               ready
-                ? "bg-brand-600 hover:bg-brand-700"
+                ? "bg-primary hover:bg-primary-hover"
                 : "pointer-events-none bg-brand-600/40",
             )}
           >
