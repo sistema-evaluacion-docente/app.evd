@@ -134,6 +134,7 @@ body {
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
   --color-primary: var(--primary);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
@@ -172,7 +173,11 @@ body {
      oklch value) so `bg-primary` and `bg-brand-600` are the same color and the
      two button kits can't drift apart. Held identical in .dark on purpose. */
   --primary: var(--color-brand-600);
-  --primary-foreground: oklch(0.971 0.013 17.38);
+  --primary-foreground: #fff;
+  /* Hover fill for primary/brand buttons. It needs its own token because
+     brand-600 is pinned as --primary while brand-700 gets lightened by the
+     dark ramp flip below — so the raw `hover:bg-brand-700` would go pink. */
+  --primary-hover: var(--color-brand-700);
   --secondary: oklch(0.967 0.001 286.375);
   --secondary-foreground: oklch(0.21 0.006 285.885);
   --muted: oklch(0.97 0 0);
@@ -222,7 +227,10 @@ body {
   /* Same red as light mode — see :root. The old value here was a brighter,
      more saturated red that read as neon against the dark surfaces. */
   --primary: var(--color-brand-600);
-  --primary-foreground: oklch(0.971 0.013 17.38);
+  --primary-foreground: #fff;
+  /* Dark surfaces expect hover to lighten, not darken: brand-500 is a brighter
+     red. (brand-700 is remapped to a light pink here, so it can't be used.) */
+  --primary-hover: var(--color-brand-500);
   --secondary: oklch(0.26 0.006 285.82);
   --secondary-foreground: oklch(0.93 0.004 285.82);
   --muted: oklch(0.25 0.005 285.82);
