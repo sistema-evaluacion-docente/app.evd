@@ -16,21 +16,22 @@ const STATUS_MESSAGE: Record<UploadStatus, string> = {
 interface UploadFooterProps {
   status: UploadStatus;
   ready: boolean;
+  evaluationId: number | null;
 }
 
-export function UploadFooter({ status, ready }: UploadFooterProps) {
+export function UploadFooter({ status, ready, evaluationId }: UploadFooterProps) {
   return (
     <>
       <Separator className="my-2" />
 
       <div className="flex flex-col justify-between gap-3 pt-2 sm:flex-row sm:items-center">
-        <div className="text-[12.5px] text-ink-500">
+        <div className="text-sm text-muted-foreground">
           {STATUS_MESSAGE[status]}
         </div>
 
         <div className="flex items-center gap-2">
           <Link
-            href={ready ? "/teachers" : "#"}
+            href={ready ? `/evaluations/${evaluationId}` : "#"}
             onClick={(event) => {
               if (!ready) event.preventDefault();
             }}
