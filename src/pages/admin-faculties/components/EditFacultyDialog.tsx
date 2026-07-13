@@ -46,6 +46,7 @@ function EditFacultyDialog({
       <div className="grid gap-4">
         <div className="space-y-2">
           <Label htmlFor="name">Nombre</Label>
+
           <Input
             id="name"
             name="name"
@@ -56,11 +57,12 @@ function EditFacultyDialog({
 
         <div className="space-y-2">
           <Label htmlFor="code">Código</Label>
+
           <Input
             id="code"
             name="code"
             defaultValue={faculty?.code ?? ""}
-            placeholder="Código opcional"
+            placeholder="Código"
           />
         </div>
       </div>
