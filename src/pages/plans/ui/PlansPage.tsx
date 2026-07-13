@@ -20,7 +20,8 @@ import {
   usePlanColumns,
   type Plan,
 } from "@/features/plans";
-import { AppFooter, Button, PageHeader } from "@/shared/ui";
+import { AppFooter, PageHeader } from "@/shared/ui";
+import { Button } from "@/components/ui/button";
 import { AppLayout } from "@/widgets/layout";
 
 export function PlansPage() {
@@ -49,8 +50,8 @@ export function PlansPage() {
         title="Planes de Seguimiento"
         description="Gestión y trazabilidad de los compromisos de mejoramiento docente."
         actions={
-          <Button variant="brand" size="lg" onClick={() => setCreateOpen(true)}>
-            <Plus size={16} strokeWidth={2.25} />
+          <Button type="button" onClick={() => setCreateOpen(true)} className="cursor-pointer">
+            <Plus size={14} strokeWidth={2.25} />
             Crear Nuevo Plan
           </Button>
         }
@@ -66,6 +67,7 @@ export function PlansPage() {
         emptyMessage="Aún no hay planes de seguimiento."
         filters={
           <Select
+            items={PLAN_STATUS_FILTERS}
             value={statusFilter}
             onValueChange={(value) =>
               setStatusFilter(value ?? PLAN_STATUS_FILTER_ALL)
@@ -75,7 +77,7 @@ export function PlansPage() {
               <SelectValue placeholder="Todos" />
             </SelectTrigger>
 
-            <SelectContent>
+            <SelectContent alignItemWithTrigger={false}>
               {PLAN_STATUS_FILTERS.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
