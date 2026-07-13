@@ -1,5 +1,6 @@
 import api from "@/config/axios";
 import type { ResponseAPI } from "@/shared/types/Response";
+import { PLAN_STATUS_FILTER_ALL } from "../lib/planStatus";
 import type { Plan } from "../types/Plan";
 
 export interface GetPlansParams {
@@ -21,7 +22,7 @@ export default function getPlans({
 }: GetPlansParams): Promise<ResponseAPI<Plan[]>> {
   const params: Record<string, string | number> = { page, limit };
   if (search) params.search = search;
-  if (status && status !== "todos") params.status = status;
+  if (status && status !== PLAN_STATUS_FILTER_ALL) params.status = status;
   if (period_id) params.period_id = period_id;
   if (department_id) params.department_id = department_id;
   return api.get("/improvement-plans/", { params });
