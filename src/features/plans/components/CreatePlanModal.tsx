@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import useCreatePlan from "../hooks/useCreatePlan";
 import { TARGET_TYPE_LABEL } from "../lib/planStatus";
@@ -415,7 +416,8 @@ export function CreatePlanModal({
             </Button>
 
             <Button type="submit" disabled={createPlan.isPending}>
-              {createPlan.isPending ? "Creando..." : "Crear Plan"}
+              {createPlan.isPending && <Spinner />}
+              {createPlan.isPending ? "Creando plan..." : "Crear Plan"}
             </Button>
           </DialogFooter>
         </form>
