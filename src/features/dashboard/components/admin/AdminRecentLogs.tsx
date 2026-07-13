@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollText } from "lucide-react";
 import { Link } from "wouter";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import { TABLE_NAMES } from "@/features/audits";
 import type { AdminAuditItem } from "../../api/getAdminDashboard";
@@ -32,18 +33,6 @@ function formatRelativeTime(dateStr: string | null): string {
   });
 }
 
-function getOperationColor(operation: string | null): string {
-  switch (operation?.toUpperCase()) {
-    case "CREATE":
-      return "bg-emerald-100 text-emerald-700";
-    case "UPDATE":
-      return "bg-amber-100 text-amber-700";
-    case "DELETE":
-      return "bg-rose-100 text-rose-700";
-    default:
-      return "bg-ink-100 text-ink-600";
-  }
-}
 
 function AdminRecentLogs({ audits, isLoading }: AdminRecentLogsProps) {
   return (
@@ -84,13 +73,15 @@ function AdminRecentLogs({ audits, isLoading }: AdminRecentLogsProps) {
             {audits.map((audit) => (
               <div
                 key={audit.id}
-                className="flex items-start gap-3 transition-colors hover:bg-muted/50"
+                className="flex items-start gap-3 transition-colors"
               >
-                <div
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded text-xs font-bold ${getOperationColor(audit.operation)}`}
-                >
-                  {audit.operation?.charAt(0) ?? "?"}
-                </div>
+                <Avatar>
+                  <AvatarFallback>
+                    {audit.user_name?.charAt(0)}
+                  </AvatarFallback>
+
+                  <AvatarImage src={audit?.user_avatar ?? ""} alt={audit?.user_name ?? "Username"} />
+                </Avatar>
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
