@@ -215,7 +215,7 @@ export function HistogramChart({
 
       {hover !== null && filteredData[hover] && (
         <div
-          className="pointer-events-none absolute -translate-x-1/2 -translate-y-full rounded-md bg-ink-900 px-2.5 py-1.5 text-[11.5px] text-white shadow-pop"
+          className="pointer-events-none absolute -translate-x-1/2 -translate-y-full rounded-md bg-ink-900 px-2.5 py-1.5 text-[11.5px] text-ink-50 shadow-pop"
           style={{
             left: `${((pad.l + barGap + hover * (barWidth + barGap) + barWidth / 2) / width) * 100}%`,
             top: `${((pad.t + innerH - (filteredData[hover].value / maxCount) * innerH) / height) * 100}%`,
@@ -223,7 +223,7 @@ export function HistogramChart({
         >
           <div className="font-semibold">{filteredData[hover].label}</div>
 
-          <div className="num text-white/80 tabular-nums">
+          <div className="num text-ink-50/80 tabular-nums">
             {filteredData[hover].value} docente
             {filteredData[hover].value !== 1 ? "s" : ""}
           </div>

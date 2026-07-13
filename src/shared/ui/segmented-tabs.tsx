@@ -28,7 +28,7 @@ export function SegmentedTabs({ value, onChange, tabs }: SegmentedTabsProps) {
               className={cn(
                 'rounded-md px-4 py-3 text-left transition-colors',
                 active
-                  ? 'bg-ink-900 text-white shadow-card'
+                  ? 'bg-ink-900 text-ink-50 shadow-card'
                   : 'text-ink-700 hover:bg-ink-50',
               )}
             >
@@ -36,7 +36,7 @@ export function SegmentedTabs({ value, onChange, tabs }: SegmentedTabsProps) {
               <div
                 className={cn(
                   'mt-0.5 text-[11.5px]',
-                  active ? 'text-white/70' : 'text-ink-500',
+                  active ? 'text-ink-50/70' : 'text-ink-500',
                 )}
               >
                 {tab.description}

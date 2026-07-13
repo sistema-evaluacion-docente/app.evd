@@ -29,7 +29,7 @@ export function Pagination({ page, totalPages, onChange, summary }: PaginationPr
           type="button"
           onClick={() => onChange(Math.max(1, page - 1))}
           disabled={page <= 1}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-ink-200 bg-white text-ink-700 hover:bg-ink-50 disabled:pointer-events-none disabled:opacity-40"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-ink-200 bg-card text-ink-700 hover:bg-ink-50 disabled:pointer-events-none disabled:opacity-40"
           aria-label="Página anterior"
         >
           <ChevronLeft size={14} />
@@ -43,8 +43,8 @@ export function Pagination({ page, totalPages, onChange, summary }: PaginationPr
             className={cn(
               'inline-flex h-9 w-9 items-center justify-center rounded-md text-[13px] font-semibold transition-colors',
               value === page
-                ? 'border border-brand-600 bg-brand-50 text-brand-700'
-                : 'border border-ink-200 bg-white text-ink-700 hover:bg-ink-50',
+                ? 'border border-brand-600 bg-brand-50 text-brand-700 dark:bg-brand-600/20 dark:text-brand-300'
+                : 'border border-ink-200 bg-card text-ink-700 hover:bg-ink-50',
             )}
           >
             {value}
@@ -54,7 +54,7 @@ export function Pagination({ page, totalPages, onChange, summary }: PaginationPr
           type="button"
           onClick={() => onChange(Math.min(totalPages, page + 1))}
           disabled={page >= totalPages}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-ink-200 bg-white text-ink-700 hover:bg-ink-50 disabled:pointer-events-none disabled:opacity-40"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-ink-200 bg-card text-ink-700 hover:bg-ink-50 disabled:pointer-events-none disabled:opacity-40"
           aria-label="Página siguiente"
         >
           <ChevronRight size={14} />
