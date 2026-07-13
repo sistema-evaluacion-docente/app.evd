@@ -37,7 +37,7 @@ function UploadTeachersContent() {
         actions={
           <Link
             href="/teachers"
-            className="inline-flex h-10 items-center gap-2 rounded-md border border-ink-200 bg-white px-4 text-[13px] font-semibold text-ink-800 hover:bg-ink-50"
+            className="inline-flex h-10 items-center gap-2 rounded-md border border-ink-200 bg-card px-4 text-[13px] font-semibold text-ink-800 hover:bg-ink-50"
           >
             <ChevronLeft size={14} /> Volver a Docentes
           </Link>

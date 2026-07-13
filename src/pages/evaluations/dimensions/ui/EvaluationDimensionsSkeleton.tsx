@@ -62,7 +62,7 @@ function EvaluationDimensionsSkeleton() {
                   </tr>
                 </thead>
 
-                <tbody className="divide-y divide-ink-100 bg-white">
+                <tbody className="divide-y divide-ink-100 bg-card">
                   {[1, 2, 3].map((rowIdx) => (
                     <tr key={rowIdx}>
                       <td className="px-4 py-3">

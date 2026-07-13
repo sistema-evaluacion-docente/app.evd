@@ -122,7 +122,7 @@ function EvaluationDimensionsContent({ evaluationId }: Props) {
                         </tr>
                       </thead>
 
-                      <tbody className="divide-y divide-ink-100 bg-white">
+                      <tbody className="divide-y divide-ink-100 bg-card">
                         {dim.questions.map((q) => (
                           <tr
                             key={q.code}
