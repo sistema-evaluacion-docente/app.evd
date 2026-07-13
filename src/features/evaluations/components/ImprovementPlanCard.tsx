@@ -75,7 +75,7 @@ export default function ImprovementPlanCard() {
         </div>
         <button
           disabled
-          className='inline-flex h-10 cursor-not-allowed items-center justify-center gap-2 rounded-md border border-ink-200 bg-white px-4 text-[13px] font-semibold text-ink-400'
+          className='inline-flex h-10 cursor-not-allowed items-center justify-center gap-2 rounded-md border border-ink-200 bg-card px-4 text-[13px] font-semibold text-ink-400'
         >
           <Plus size={14} strokeWidth={2} /> Crear Plan de Mejoramiento
         </button>
@@ -125,7 +125,7 @@ export default function ImprovementPlanCard() {
         {PLAN_GOALS.map((goal) => (
           <div
             key={goal.title}
-            className='rounded-lg border border-ink-200 bg-white px-4 py-4'
+            className='rounded-lg border border-ink-200 bg-card px-4 py-4'
           >
             <div className='flex items-start gap-3'>
               <span
