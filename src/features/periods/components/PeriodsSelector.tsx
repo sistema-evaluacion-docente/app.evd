@@ -49,9 +49,12 @@ function PeriodsSelector({
         </label>
       )}
 
+      {/* Controlled: the store picks a period asynchronously, so a `defaultValue`
+          would be read once (empty) and then change, which Base UI warns about.
+          It also has to be the id — that is what the items carry, not the name. */}
       <Select
         disabled={isLoading || isFetching}
-        defaultValue={selectedPeriod?.name ?? ""}
+        value={selectedPeriod?.id ?? ""}
         onValueChange={(value) => {
           const period = periods.find((p) => p.id === value);
 
@@ -69,7 +72,9 @@ function PeriodsSelector({
         <SelectContent>
           <SelectGroup>
             {periods?.map((p) => (
-              <SelectItem value={p.id}>{p.name}</SelectItem>
+              <SelectItem key={p.id} value={p.id}>
+                {p.name}
+              </SelectItem>
             ))}
           </SelectGroup>
         </SelectContent>
