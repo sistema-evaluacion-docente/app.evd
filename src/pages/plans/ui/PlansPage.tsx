@@ -15,7 +15,6 @@ import {
   PlanDetailModal,
   PLAN_STATUS_FILTERS,
   PLAN_STATUS_FILTER_ALL,
-  useAtRiskTeachers,
   useGetPlans,
   usePlanColumns,
   type Plan,
@@ -33,9 +32,6 @@ export function PlansPage() {
   const [detailId, setDetailId] = useState<number | null>(null);
 
   const columns = usePlanColumns();
-
-  const { data: atRiskData } = useAtRiskTeachers(periodId);
-  const atRiskTeachers = atRiskData?.data ?? [];
 
   const rowActions: DataTableAction<Plan>[] = [
     {
@@ -98,7 +94,6 @@ export function PlansPage() {
         open={createOpen}
         onClose={() => setCreateOpen(false)}
         originPeriodId={periodId}
-        atRiskTeachers={atRiskTeachers}
       />
 
       <PlanDetailModal planId={detailId} onClose={() => setDetailId(null)} />
