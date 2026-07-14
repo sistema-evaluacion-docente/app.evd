@@ -14,8 +14,11 @@ import { UploadEvaluationsPage } from "@/pages/evaluations/upload";
 import { MatrixIndexPage, MatrixPage, MatrixPageMock } from "@/pages/matrix";
 import { MyHistoryPage } from "@/pages/my-history";
 import { MyProfilePage } from "@/pages/my-profile";
+import { MyPlansPage } from "@/pages/my-plans";
 import { NotFoundPage } from "@/pages/not-found";
 import { PlansPage } from "@/pages/plans";
+import { PlanDetailPage } from "@/pages/plans/detail";
+import { CreatePlanPage } from "@/pages/plans/new";
 import { TeacherDetailPage } from "@/pages/teacher-detail";
 import { TeachersPage } from "@/pages/teachers";
 import { UploadTeachersPage } from "@/pages/upload-teachers";
@@ -42,6 +45,8 @@ function App() {
       <Route path="/matrix/:id" component={MatrixPage} />
       <Route path="/matrix-mock" component={MatrixPageMock} />
       <Route path="/plans" component={PlansPage} />
+      <Route path="/plans/new" component={CreatePlanPage} />
+      <Route path="/plans/:id" component={PlanDetailPage} />
       <Route path="/subjects" component={SubjectsPage} />
       <Route path="/subjects/:id" component={SubjectDetailPage} />
 
@@ -67,6 +72,7 @@ function App() {
 
       {/* Docente */}
       <Route path="/summary" component={SummaryPage} />
+      <Route path="/my-plans" component={MyPlansPage} />
       <Route path="/me/history" component={MyHistoryPage} />
       <Route path="/me/profile" component={MyProfilePage} />
 

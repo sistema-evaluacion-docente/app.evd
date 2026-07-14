@@ -31,6 +31,7 @@ const MENU_ICON_BY_PATH: Record<string, typeof DEFAULT_ICON> = {
   "/teachers": Users,
   "/matrix": BarChart3,
   "/plans": TrendingUp,
+  "/my-plans": TrendingUp,
   "/subjects": BookOpenText,
   "/users": Users,
   "/roles": UserSearch,
