@@ -1,4 +1,4 @@
-# DistilUmbert — Frontend
+# EVD - Frontend App
 
 Interfaz web para el sistema de evaluación docente desarrollado como proyecto de tesis. Permite a directores, docentes y administradores gestionar evaluaciones, visualizar métricas y administrar cuentas.
 
