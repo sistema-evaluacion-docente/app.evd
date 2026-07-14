@@ -1,5 +1,6 @@
 import { Plus } from "lucide-react";
 import { useState } from "react";
+import { useLocation } from "wouter";
 
 import DataTable, { type DataTableAction } from "@/components/common/DataTable";
 import {
@@ -11,8 +12,6 @@ import {
 } from "@/components/ui/select";
 import { usePeriodsStore } from "@/features/periods";
 import {
-  CreatePlanModal,
-  PlanDetailModal,
   PLAN_STATUS_FILTERS,
   PLAN_STATUS_FILTER_ALL,
   useGetPlans,
@@ -24,19 +23,19 @@ import { Button } from "@/components/ui/button";
 import { AppLayout } from "@/widgets/layout";
 
 export function PlansPage() {
+  const [, navigate] = useLocation();
+
   const selectedPeriod = usePeriodsStore((state) => state.selectedPeriod);
   const periodId = selectedPeriod?.id ? Number(selectedPeriod.id) : undefined;
 
   const [statusFilter, setStatusFilter] = useState(PLAN_STATUS_FILTER_ALL);
-  const [createOpen, setCreateOpen] = useState(false);
-  const [detailId, setDetailId] = useState<number | null>(null);
 
   const columns = usePlanColumns();
 
   const rowActions: DataTableAction<Plan>[] = [
     {
       label: "Ver detalle",
-      onClick: (plan) => setDetailId(plan.id),
+      onClick: (plan) => navigate(`/plans/${plan.id}`),
     },
   ];
 
@@ -46,7 +45,11 @@ export function PlansPage() {
         title="Planes de Seguimiento"
         description="Gestión y trazabilidad de los compromisos de mejoramiento docente."
         actions={
-          <Button type="button" onClick={() => setCreateOpen(true)} className="cursor-pointer">
+          <Button
+            type="button"
+            onClick={() => navigate("/plans/new")}
+            className="cursor-pointer"
+          >
             <Plus size={14} strokeWidth={2.25} />
             Crear Nuevo Plan
           </Button>
@@ -89,14 +92,6 @@ export function PlansPage() {
           ? `Periodo ${selectedPeriod.code} · Sistema de Evaluación Docente`
           : "Sistema de Evaluación Docente"}
       </AppFooter>
-
-      <CreatePlanModal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        originPeriodId={periodId}
-      />
-
-      <PlanDetailModal planId={detailId} onClose={() => setDetailId(null)} />
     </AppLayout>
   );
 }
