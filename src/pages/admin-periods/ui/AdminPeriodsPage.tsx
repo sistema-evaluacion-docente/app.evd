@@ -414,7 +414,6 @@ export function AdminPeriodsPage() {
 
   return (
     <AppLayout
-      role="admin"
       header={{
         userName: 'Super Administrador',
         userRole: 'División de Sistemas',
@@ -571,7 +570,7 @@ export function AdminPeriodsPage() {
                               'info',
                             )
                           }
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-ink-200 bg-white text-ink-700 hover:bg-ink-50"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-ink-200 bg-card text-ink-700 hover:bg-ink-50"
                           aria-label={`Editar ${period.codigo}`}
                         >
                           <Pencil size={13} />

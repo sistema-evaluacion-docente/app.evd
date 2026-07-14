@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  BookOpen,
   Calendar,
   FileText,
   LayoutGrid,
@@ -33,6 +34,12 @@ const DIRECTOR_NAV: NavItem[] = [
     label: "Planes de Mejoramiento",
     icon: TrendingUp,
     href: "/plans",
+  },
+  {
+    id: "subjects",
+    label: "Materias",
+    icon: BookOpen,
+    href: "/subjects",
   },
   { id: "docs", label: "Documentos", icon: FileText, href: "#" },
 ];

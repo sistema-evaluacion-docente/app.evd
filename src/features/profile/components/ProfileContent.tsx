@@ -7,19 +7,17 @@ import { useState, type ReactNode } from "react";
 
 import formatDate from "@/lib/formatDate";
 import useAuth from "@/shared/hooks/useAuth";
-import { AppFooter, PageHeader } from "@/shared/ui";
+import { PageHeader } from "@/shared/ui";
 import useGetProfile from "../hooks/useGetProfile";
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
-      <div className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-ink-500">
+      <div className="text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">
         {label}
       </div>
 
-      <div className="mt-1.5 text-[15px] font-semibold leading-snug text-ink-900">
-        {children}
-      </div>
+      <div className="mt-1.5 font-semibold leading-snug">{children}</div>
     </div>
   );
 }
@@ -38,8 +36,11 @@ function NotificationRow({
   return (
     <li className="flex items-start justify-between gap-4 py-3.5 sm:items-center">
       <div className="min-w-0">
-        <div className="text-[13.5px] font-semibold text-ink-900">{title}</div>
-        <div className="mt-0.5 text-[12.5px] text-ink-500">{description}</div>
+        <div className="text-sm font-semibold">{title}</div>
+
+        <div className="mt-0.5 text-xs text-muted-foreground">
+          {description}
+        </div>
       </div>
 
       <Switch checked={value} onCheckedChange={onChange} />
@@ -148,7 +149,7 @@ function ProfileContent() {
           </CardHeader>
 
           <CardContent className="p-0">
-            <ul className="px-6 divide-y divide-ink-100">
+            <ul className="px-6 divide-y">
               <NotificationRow
                 title="Nuevos comentarios en mis evaluaciones"
                 description="Recibe un correo cuando existan nuevos comentarios."
@@ -166,10 +167,6 @@ function ProfileContent() {
           </CardContent>
         </Card>
       </div>
-
-      <AppFooter>
-        {displayName} · Sistema de Evaluación Docente · v2.1
-      </AppFooter>
     </div>
   );
 }

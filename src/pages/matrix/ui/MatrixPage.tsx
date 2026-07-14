@@ -1,4 +1,13 @@
-import { BarChart3, ChevronRight, Download, FileSpreadsheet, Search } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  BarChart3,
+  ChevronRight,
+  Download,
+  FileSpreadsheet,
+  Minus,
+  Search,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link, useParams } from "wouter";
 
@@ -7,6 +16,7 @@ import {
   exportTeacherMatrix,
   useGetEvaluations,
   useGetTeacherEvaluationDetail,
+  useGetTeacherVsDepartment,
 } from "@/features/evaluations";
 import { useGetTeacherById } from "@/features/teachers";
 import { usePeriodsStore } from "@/features/periods";
@@ -59,11 +69,18 @@ export function MatrixPage() {
     if (!evaluation?.id) return;
     setIsExporting(true);
     try {
-      const blob = await exportTeacherMatrix(evaluation.id, teacherId, includeComments);
+      const blob = await exportTeacherMatrix(
+        evaluation.id,
+        teacherId,
+        includeComments,
+      );
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = `matriz_${teacherName}_${periodLabel}.xlsx`.replace(/\s+/g, '_');
+      a.download = `matriz_${teacherName}_${periodLabel}.xlsx`.replace(
+        /\s+/g,
+        "_",
+      );
       a.click();
       URL.revokeObjectURL(url);
       setShowExportModal(false);
@@ -90,6 +107,30 @@ export function MatrixPage() {
   const { data: detailRes, isLoading: detailLoading } =
     useGetTeacherEvaluationDetail(evaluation?.id, teacherId);
   const detail = detailRes?.data;
+
+  const { data: comparisonRes } = useGetTeacherVsDepartment(
+    teacherId,
+    evaluation?.academic_period_id,
+  );
+  const comparison = comparisonRes?.data;
+
+  const questionDeptScores = useMemo<Record<string, number>>(() => {
+    if (!comparison) return {};
+    const result: Record<string, number> = {};
+    for (const dim of comparison.dimensions) {
+      for (const q of dim.questions) {
+        result[q.code] = q.department_average;
+      }
+    }
+    return result;
+  }, [comparison]);
+
+  const dimDeptScores = useMemo<Record<string, number>>(() => {
+    if (!comparison) return {};
+    return Object.fromEntries(
+      comparison.dimensions.map((d) => [d.dimension, d.department_average]),
+    );
+  }, [comparison]);
 
   const isLoading = teacherLoading || evaluationsLoading || detailLoading;
 
@@ -194,6 +235,7 @@ export function MatrixPage() {
             code: item.code,
             label: item.label,
             score: questionScores[item.code] ?? null,
+            deptScore: questionDeptScores[item.code] ?? null,
           }))
           .filter((item) => {
             if (!search) return true;
@@ -202,12 +244,20 @@ export function MatrixPage() {
               item.label.toLowerCase().includes(q) || item.code.includes(q)
             );
           });
+        const dimScores = dim.items
+          .map((item) => questionScores[item.code])
+          .filter((s): s is number => s !== undefined);
+        const average =
+          dimScores.length > 0
+            ? dimScores.reduce((a, b) => a + b, 0) / dimScores.length
+            : (apiDim?.average ?? 0);
+
         return {
           id: dim.id,
           label: dim.label,
           color: dim.color,
           number: dimIndex + 1,
-          average: apiDim?.average ?? 0,
+          average,
           items,
         };
       })
@@ -226,19 +276,19 @@ export function MatrixPage() {
           <>
             <Link
               href='/teachers'
-              className='transition-colors hover:text-ink-900'
+              className='transition-colors hover:text-foreground'
             >
               Docentes
             </Link>
-            <ChevronRight size={12} className='text-ink-300' />
+            <ChevronRight size={12} className='text-muted-foreground' />
             <Link
               href={`/teachers/${teacherId}`}
-              className='transition-colors hover:text-ink-900'
+              className='transition-colors hover:text-foreground'
             >
               {teacherName}
             </Link>
-            <ChevronRight size={12} className='text-ink-300' />
-            <span className='font-medium text-ink-900'>
+            <ChevronRight size={12} className='text-muted-foreground' />
+            <span className='font-medium text-foreground'>
               Matriz de Evaluación
             </span>
           </>
@@ -271,28 +321,56 @@ export function MatrixPage() {
             paletteIndex={0}
           />
           <div className='min-w-0 flex-1'>
-            <div className='text-[18px] font-semibold text-ink-900'>
+            <div className='text-[18px] font-semibold text-foreground'>
               {teacherName}
             </div>
-            <div className='mt-0.5 text-[13px] text-ink-500'>
+            <div className='mt-0.5 text-[13px] text-muted-foreground'>
               Cód.{" "}
               {detail?.institutional_code ?? teacher?.institutional_code ?? "—"}{" "}
               · {periodLabel}
             </div>
           </div>
           {detail && (
-            <div className='text-right'>
-              <div className='text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-500'>
-                Promedio Global
+            <div className='flex items-center gap-4 sm:gap-6'>
+              <div className='text-right'>
+                <div className='text-[10.5px] font-semibold uppercase tracking-[0.08em] text-muted-foreground'>
+                  Promedio Individual
+                </div>
+                <div className='mt-1 flex items-baseline justify-end gap-1'>
+                  <span className='num text-[34px] font-semibold leading-none tabular-nums text-foreground'>
+                    {detail.overall_average.toFixed(2)}
+                  </span>
+                  <span className='text-[13px] font-medium text-muted-foreground'>
+                    /5.0
+                  </span>
+                </div>
               </div>
-              <div className='mt-1 flex items-baseline justify-end gap-1'>
-                <span className='num text-[34px] font-semibold leading-none tabular-nums text-ink-900'>
-                  {detail.overall_average.toFixed(2)}
-                </span>
-                <span className='text-[13px] font-medium text-ink-500'>
-                  /5.0
-                </span>
-              </div>
+              {comparison && (
+                <>
+                  <div className='hidden h-12 w-px bg-border sm:block' />
+                  <div className='text-right'>
+                    <div className='text-[10.5px] font-semibold uppercase tracking-[0.08em] text-muted-foreground'>
+                      Promedio Depto.
+                    </div>
+                    <div className='mt-1 flex items-baseline justify-end gap-1'>
+                      <span className='num text-[34px] font-semibold leading-none tabular-nums text-muted-foreground'>
+                        {comparison.department_overall_average.toFixed(2)}
+                      </span>
+                      <span className='text-[13px] font-medium text-muted-foreground'>
+                        /5.0
+                      </span>
+                    </div>
+                  </div>
+                  <div className='hidden h-12 w-px bg-border sm:block' />
+                  <DeltaBadge
+                    delta={
+                      detail.overall_average -
+                      comparison.department_overall_average
+                    }
+                    size='lg'
+                  />
+                </>
+              )}
             </div>
           )}
         </div>
@@ -302,17 +380,26 @@ export function MatrixPage() {
       {noData && (
         <Card className='p-10'>
           <div className='flex flex-col items-center gap-3 text-center'>
-            <div className='flex h-14 w-14 items-center justify-center rounded-xl bg-ink-100'>
-              <BarChart3 size={24} className='text-ink-400' />
+            <div className='flex h-14 w-14 items-center justify-center rounded-xl bg-muted'>
+              <BarChart3 size={24} className='text-muted-foreground' />
             </div>
             <div>
-              <p className='text-[15px] font-semibold text-ink-800'>
+              <p className='text-[15px] font-semibold text-foreground'>
                 Sin evaluación disponible
               </p>
-              <p className='mt-1.5 text-[13px] text-ink-500'>
-                {selectedPeriod
-                  ? <>Este docente no cuenta con evaluación docente en el periodo académico <span className='font-semibold text-ink-700'>{selectedPeriod.name}</span>.</>
-                  : 'Selecciona un periodo académico en la barra superior para ver la matriz.'}
+              <p className='mt-1.5 text-[13px] text-muted-foreground'>
+                {selectedPeriod ? (
+                  <>
+                    Este docente no cuenta con evaluación docente en el periodo
+                    académico{" "}
+                    <span className='font-semibold text-foreground'>
+                      {selectedPeriod.name}
+                    </span>
+                    .
+                  </>
+                ) : (
+                  "Selecciona un periodo académico en la barra superior para ver la matriz."
+                )}
               </p>
             </div>
           </div>
@@ -324,43 +411,59 @@ export function MatrixPage() {
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4'>
           {isLoading
             ? [1, 2, 3, 4].map((i) => (
-                <Card key={i} className='h-32 animate-pulse bg-ink-50' />
+                <Card key={i} className='h-32 animate-pulse bg-muted' />
               ))
-            : dimensionsWithColor.map((dim, i) => (
-                <Card key={dim.dimension} className='p-5'>
-                  <div className='flex items-start justify-between gap-2'>
-                    <div>
-                      <div className='text-[10.5px] font-semibold uppercase leading-snug tracking-[0.08em] text-ink-500'>
-                        {dim.dimension}
+            : dimensionsWithColor.map((dim, i) => {
+                const deptAvg = dimDeptScores[dim.dimension];
+                const delta =
+                  deptAvg !== undefined ? dim.average - deptAvg : null;
+                return (
+                  <Card key={dim.dimension} className='p-5'>
+                    <div className='flex items-start justify-between gap-2'>
+                      <div>
+                        <div className='text-[10.5px] font-semibold uppercase leading-snug tracking-[0.08em] text-muted-foreground'>
+                          {dim.dimension}
+                        </div>
+                        <div className='mt-0.5 text-[11px] text-muted-foreground'>
+                          {EVALUATION_DIMENSIONS[i]?.items.length ?? 0} ítems
+                        </div>
                       </div>
-                      <div className='mt-0.5 text-[11px] text-ink-400'>
-                        {EVALUATION_DIMENSIONS[i]?.items.length ?? 0} ítems
-                      </div>
+                      <span
+                        className='mt-1 h-2 w-2 shrink-0 rounded-full'
+                        style={{ background: dim.color }}
+                      />
                     </div>
-                    <span
-                      className='mt-1 h-2 w-2 shrink-0 rounded-full'
-                      style={{ background: dim.color }}
-                    />
-                  </div>
-                  <div className='mt-4 flex items-baseline gap-1'>
-                    <span className='num text-[32px] font-semibold leading-none tabular-nums text-ink-900'>
-                      {dim.average.toFixed(2)}
-                    </span>
-                    <span className='text-[13px] font-medium text-ink-500'>
-                      /5.0
-                    </span>
-                  </div>
-                  <div className='mt-3 h-1.5 overflow-hidden rounded-full bg-ink-100'>
-                    <div
-                      className='h-full transition-all duration-700'
-                      style={{
-                        width: `${(dim.average / 5) * 100}%`,
-                        background: dim.color,
-                      }}
-                    />
-                  </div>
-                </Card>
-              ))}
+                    <div className='mt-4 flex items-baseline gap-2'>
+                      <span className='num text-[32px] font-semibold leading-none tabular-nums text-foreground'>
+                        {dim.average.toFixed(2)}
+                      </span>
+                      <span className='text-[13px] font-medium text-muted-foreground'>
+                        /5.0
+                      </span>
+                      {delta !== null && (
+                        <span className='ml-auto'>
+                          <DeltaBadge delta={delta} />
+                        </span>
+                      )}
+                    </div>
+                    <div className='mt-3 space-y-1.5'>
+                      <ComparisonBar
+                        label='Individual'
+                        value={dim.average}
+                        color={dim.color}
+                        emphasis
+                      />
+                      {deptAvg !== undefined && (
+                        <ComparisonBar
+                          label='Departamento'
+                          value={deptAvg}
+                          color='#9AA0AB'
+                        />
+                      )}
+                    </div>
+                  </Card>
+                );
+              })}
         </div>
       )}
 
@@ -385,7 +488,7 @@ export function MatrixPage() {
             </div>
             {insightMode === "question" && (
               <>
-                <div className='h-4 w-px bg-ink-200' />
+                <div className='h-4 w-px bg-border' />
                 <div className='flex items-center gap-1.5'>
                   <FilterChip
                     active={insightCount === 3}
@@ -491,15 +594,16 @@ export function MatrixPage() {
 
       {/* Item matrix */}
       {!isLoading && hasQuestions && displayDimensions.length === 0 && (
-        <Card className='p-10 text-center text-[13px] text-ink-500'>
+        <Card className='p-10 text-center text-[13px] text-muted-foreground'>
           Sin resultados para los filtros aplicados.
         </Card>
       )}
 
-      {!isLoading && hasQuestions &&
+      {!isLoading &&
+        hasQuestions &&
         displayDimensions.map((dim, dimIndex) => (
           <Card key={dim.id} className='overflow-hidden'>
-            <div className='flex items-center gap-3 border-b border-ink-100 px-5 py-4 sm:px-6'>
+            <div className='flex items-center gap-3 border-b border-border px-5 py-4 sm:px-6'>
               <span
                 className='inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-[14px] font-semibold text-white'
                 style={{ background: dim.color }}
@@ -507,15 +611,15 @@ export function MatrixPage() {
                 {dimIndex + 1}
               </span>
               <div className='min-w-0 flex-1'>
-                <h2 className='text-[17px] font-semibold text-ink-900'>
+                <h2 className='text-[17px] font-semibold text-foreground'>
                   {dim.label}
                 </h2>
-                <p className='text-[12px] text-ink-500'>
+                <p className='text-[12px] text-muted-foreground'>
                   {dim.items.length} ítems · ítems {dim.items[0]?.code}–
                   {dim.items[dim.items.length - 1]?.code}
                 </p>
               </div>
-              <span className='inline-flex h-7 items-center rounded-full border border-ink-200 bg-ink-50 px-3 text-[11px] font-semibold uppercase tracking-[0.04em] text-ink-700'>
+              <span className='inline-flex h-7 items-center rounded-full border border-border bg-muted px-3 text-[11px] font-semibold uppercase tracking-[0.04em] text-foreground'>
                 {dim.average.toFixed(2)} / 5
               </span>
             </div>
@@ -523,33 +627,51 @@ export function MatrixPage() {
               {dim.items.map((item) => (
                 <div
                   key={item.code}
-                  className='grid grid-cols-[88px_1fr_80px] items-center gap-4 border-b border-ink-100 py-3 last:border-b-0'
+                  className='grid grid-cols-[88px_1fr_80px] items-center gap-4 border-b border-border py-3 last:border-b-0'
                 >
-                  <span className='num inline-flex w-fit rounded bg-ink-100 px-1.5 py-0.5 font-mono text-[12px] font-semibold text-ink-700'>
+                  <span className='num inline-flex w-fit rounded bg-muted px-1.5 py-0.5 font-mono text-[12px] font-semibold text-foreground'>
                     {item.code}
                   </span>
                   <div className='min-w-0'>
                     <div
-                      className='mb-2 pr-2 text-[13.5px] leading-snug text-ink-800'
+                      className='mb-2 pr-2 text-[13.5px] leading-snug text-foreground'
                       style={{ textWrap: "pretty" }}
                     >
                       {item.label}
                     </div>
                     {item.score !== null && (
-                      <ItemBar value={item.score} color={dim.color} />
+                      <div className='space-y-1'>
+                        <ItemBar
+                          value={item.score}
+                          color={dim.color}
+                          label='Individual'
+                          emphasis
+                        />
+                        {item.deptScore !== null && (
+                          <ItemBar
+                            value={item.deptScore}
+                            color='#9AA0AB'
+                            label='Depto.'
+                          />
+                        )}
+                      </div>
                     )}
                   </div>
-                  <div className='text-right'>
-                    {item.score !== null ? (
-                      <span className='num text-[14px] font-semibold tabular-nums text-ink-900'>
-                        {item.score.toFixed(2)}
-                      </span>
+                  <div className='flex flex-col items-end'>
+                    {item.score !== null && item.deptScore !== null ? (
+                      <DeltaBadge delta={item.score - item.deptScore} />
+                    ) : item.score !== null ? (
+                      <>
+                        <span className='num text-[14px] font-semibold tabular-nums text-foreground'>
+                          {item.score.toFixed(2)}
+                        </span>
+                        <div className='mt-0.5 text-[10.5px] font-medium uppercase tracking-[0.06em] text-muted-foreground'>
+                          / 5
+                        </div>
+                      </>
                     ) : (
-                      <span className='text-[12px] text-ink-400'>—</span>
+                      <span className='text-[12px] text-muted-foreground'>—</span>
                     )}
-                    <div className='mt-0.5 text-[10.5px] font-medium uppercase tracking-[0.06em] text-ink-400'>
-                      / 5
-                    </div>
                   </div>
                 </div>
               ))}
@@ -566,19 +688,24 @@ export function MatrixPage() {
       >
         <div className='p-6'>
           <div className='mb-1 flex items-center gap-2.5'>
-            <FileSpreadsheet size={18} className='text-ink-700' />
-            <h2 className='text-[16px] font-semibold text-ink-900'>Exportar matriz</h2>
+            <FileSpreadsheet size={18} className='text-foreground' />
+            <h2 className='text-[16px] font-semibold text-foreground'>
+              Exportar matriz
+            </h2>
           </div>
-          <p className='mb-6 text-[13px] text-ink-500'>
-            Se generará un archivo Excel con la matriz de evaluación de{' '}
-            <span className='font-medium text-ink-700'>{teacherName}</span> en el periodo{' '}
-            <span className='font-medium text-ink-700'>{periodLabel}</span>.
+          <p className='mb-6 text-[13px] text-muted-foreground'>
+            Se generará un archivo Excel con la matriz de evaluación de{" "}
+            <span className='font-medium text-foreground'>{teacherName}</span> en
+            el periodo{" "}
+            <span className='font-medium text-foreground'>{periodLabel}</span>.
           </p>
 
-          <div className='flex items-center justify-between rounded-lg border border-ink-200 bg-ink-50 px-4 py-3'>
+          <div className='flex items-center justify-between rounded-lg border border-border bg-muted px-4 py-3'>
             <div>
-              <p className='text-[13px] font-medium text-ink-800'>Incluir comentarios</p>
-              <p className='mt-0.5 text-[12px] text-ink-500'>
+              <p className='text-[13px] font-medium text-foreground'>
+                Incluir comentarios
+              </p>
+              <p className='mt-0.5 text-[12px] text-muted-foreground'>
                 Agrega una hoja con los comentarios por materia
               </p>
             </div>
@@ -600,7 +727,7 @@ export function MatrixPage() {
             </Button>
             <Button size='sm' onClick={handleExport} disabled={isExporting}>
               {isExporting ? (
-                'Descargando...'
+                "Descargando..."
               ) : (
                 <>
                   <Download size={13} />
@@ -615,13 +742,127 @@ export function MatrixPage() {
   );
 }
 
-function ItemBar({ value, color }: { value: number; color: string }) {
+function ItemBar({
+  value,
+  color,
+  label,
+  emphasis,
+}: {
+  value: number;
+  color: string;
+  label?: string;
+  emphasis?: boolean;
+}) {
   return (
-    <div className='relative h-3 overflow-hidden rounded-full bg-ink-100'>
+    <div className='flex items-center gap-2'>
+      {label && (
+        <span
+          className={cn(
+            "w-20 shrink-0 text-[10px] font-semibold uppercase tracking-[0.04em]",
+            emphasis ? "text-foreground" : "text-muted-foreground",
+          )}
+        >
+          {label}
+        </span>
+      )}
+      <div className='relative h-2.5 flex-1 overflow-hidden rounded-full bg-muted'>
+        <div
+          className='absolute inset-y-0 left-0 rounded-full transition-all duration-700'
+          style={{ width: `${(value / 5) * 100}%`, background: color }}
+        />
+      </div>
+      {label && (
+        <span
+          className={cn(
+            "num w-8 text-right text-[11px] font-semibold tabular-nums",
+            emphasis ? "text-foreground" : "text-muted-foreground",
+          )}
+        >
+          {value.toFixed(2)}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function DeltaBadge({
+  delta,
+  size = "sm",
+}: {
+  delta: number;
+  size?: "sm" | "lg";
+}) {
+  const isAbove = delta > 0.005;
+  const isBelow = delta < -0.005;
+  const Icon = isAbove ? ArrowUp : isBelow ? ArrowDown : Minus;
+  const colorClass = isAbove
+    ? "text-emerald-700"
+    : isBelow
+      ? "text-red-600"
+      : "text-amber-600";
+  const iconSize = size === "lg" ? 16 : 11;
+  const textClass = size === "lg" ? "text-[22px]" : "text-[13px]";
+
+  return (
+    <div
+      className={cn("flex flex-col items-end", size === "lg" && "text-right")}
+    >
+      {size === "lg" && (
+        <div className='text-[10.5px] font-semibold uppercase tracking-[0.08em] text-muted-foreground'>
+          Diferencia
+        </div>
+      )}
       <div
-        className='absolute inset-y-0 left-0 rounded-full transition-all duration-700'
-        style={{ width: `${(value / 5) * 100}%`, background: color }}
-      />
+        className={cn(
+          "num mt-0.5 inline-flex items-center gap-0.5 font-semibold tabular-nums",
+          colorClass,
+          textClass,
+        )}
+      >
+        <Icon size={iconSize} />
+        {Math.abs(delta).toFixed(2)}
+      </div>
+      {size === "sm" && (
+        <div className='text-[10px] font-medium uppercase tracking-[0.06em] text-muted-foreground'>
+          vs. depto.
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ComparisonBar({
+  label,
+  value,
+  color,
+  emphasis,
+}: {
+  label: string;
+  value: number;
+  color: string;
+  emphasis?: boolean;
+}) {
+  return (
+    <div>
+      <div className='flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.06em]'>
+        <span className={emphasis ? "text-foreground" : "text-muted-foreground"}>
+          {label}
+        </span>
+        <span
+          className={cn(
+            "num tabular-nums",
+            emphasis ? "text-foreground" : "text-muted-foreground",
+          )}
+        >
+          {value.toFixed(2)}
+        </span>
+      </div>
+      <div className='mt-1 h-1.5 overflow-hidden rounded-full bg-muted'>
+        <div
+          className='h-full transition-all duration-500'
+          style={{ width: `${(value / 5) * 100}%`, background: color }}
+        />
+      </div>
     </div>
   );
 }
@@ -644,8 +885,8 @@ function FilterChip({
       className={cn(
         "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-[12px] font-medium transition-colors",
         active
-          ? "bg-ink-900 text-white"
-          : "border border-ink-200 bg-white text-ink-700 hover:bg-ink-50",
+          ? "bg-foreground text-background"
+          : "border border-border bg-card text-foreground hover:bg-muted",
       )}
     >
       {dotColor && (
@@ -682,9 +923,9 @@ function InsightCard({
     <Card className='p-5'>
       <div className='mb-1 flex items-center gap-2'>
         <span className={cn("h-2 w-2 rounded-full", dotClass)} />
-        <h3 className='text-[14px] font-semibold text-ink-900'>{title}</h3>
+        <h3 className='text-[14px] font-semibold text-foreground'>{title}</h3>
       </div>
-      <p className='mb-4 text-[12px] text-ink-500'>{subtitle}</p>
+      <p className='mb-4 text-[12px] text-muted-foreground'>{subtitle}</p>
       <ul className='space-y-3'>
         {rows.map((row) => (
           <li key={row.key} className='flex items-center gap-3'>
@@ -693,16 +934,16 @@ function InsightCard({
               style={{ background: row.color }}
             />
             <div className='min-w-0 flex-1'>
-              <div className='text-[13px] leading-snug text-ink-800'>
+              <div className='text-[13px] leading-snug text-foreground'>
                 {row.label}
               </div>
               {row.sublabel && (
-                <div className='mt-0.5 text-[11px] text-ink-400'>
+                <div className='mt-0.5 text-[11px] text-muted-foreground'>
                   {row.sublabel}
                 </div>
               )}
             </div>
-            <span className='num shrink-0 text-[14px] font-semibold tabular-nums text-ink-900'>
+            <span className='num shrink-0 text-[14px] font-semibold tabular-nums text-foreground'>
               {row.score.toFixed(2)}
             </span>
           </li>

@@ -5,7 +5,7 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 import useGetPeriods from "../hooks/useGetPeriods";
 import { usePeriodsStore } from "../store/periodsStore";
@@ -31,32 +31,30 @@ function PeriodsSelector({
 
   const { selectedPeriod, setSelectedPeriod } = usePeriodsStore();
 
-  const hasAutoSelected = useRef(false);
-
-  const periods: Period[] = data?.data ?? [];
+  const periods: Period[] = (data?.data ?? []).filter((p) => p.active);
 
   useEffect(() => {
-    if (periods.length === 0 || hasAutoSelected.current) return;
-
-    const active = periods.find((p) => p.active) ?? periods[0];
-
-    if (active) {
-      setSelectedPeriod(active);
-      hasAutoSelected.current = true;
+    if (periods.length === 0) return;
+    const isSelectedActive = periods.some((p) => p.id === selectedPeriod?.id);
+    if (!isSelectedActive) {
+      setSelectedPeriod(periods[0]);
     }
-  }, [periods, setSelectedPeriod]);
+  }, [periods, selectedPeriod, setSelectedPeriod]);
 
   return (
     <div className={className}>
       {label && (
-        <label className="mb-1 block text-[13px] font-medium text-ink-700">
+        <label className='mb-1 block text-[13px] font-medium text-ink-700'>
           {label}
         </label>
       )}
 
+      {/* Controlled: the store picks a period asynchronously, so a `defaultValue`
+          would be read once (empty) and then change, which Base UI warns about.
+          It also has to be the id — that is what the items carry, not the name. */}
       <Select
         disabled={isLoading || isFetching}
-        defaultValue={selectedPeriod?.name ?? ""}
+        value={selectedPeriod?.id ?? ""}
         onValueChange={(value) => {
           const period = periods.find((p) => p.id === value);
 
@@ -74,7 +72,9 @@ function PeriodsSelector({
         <SelectContent>
           <SelectGroup>
             {periods?.map((p) => (
-              <SelectItem value={p.id}>{p.name}</SelectItem>
+              <SelectItem key={p.id} value={p.id}>
+                {p.name}
+              </SelectItem>
             ))}
           </SelectGroup>
         </SelectContent>

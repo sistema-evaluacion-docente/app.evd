@@ -1,14 +1,3 @@
-import { useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import type { ColumnDef } from "@tanstack/react-table";
-import { Plus } from "lucide-react";
-import { Link, useLocation } from "wouter";
-
-import DataTable from "@/components/common/DataTable";
-import { PageHeader } from "@/shared/ui";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,74 +8,30 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import useGetTeachers from "../hooks/useGetTeachers";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import { PageHeader } from "@/shared/ui";
+import type { ColumnDef } from "@tanstack/react-table";
+import { Plus } from "lucide-react";
+import { useState } from "react";
+import { Link, useLocation } from "wouter";
+
+import DataTable from "@/components/common/DataTable";
+
+import { usePeriodsStore } from "@/features/periods/store/periodsStore";
 import useDeleteTeacher from "../hooks/useDeleteTeacher";
+import useGetTeachers from "../hooks/useGetTeachers";
 import type { Teacher } from "../types/Teacher";
 import CreateTeacherDrawer from "./CreateTeacherDrawer";
 import EditTeacherDrawer from "./EditTeacherDrawer";
-
-const columns: ColumnDef<Teacher>[] = [
-  {
-    header: "Nombre",
-    accessorKey: "name",
-    cell: ({ row }) => (
-      <Link href={`/teachers/${row.original?.id}`}>
-        <div className="flex items-center gap-3">
-          <Avatar>
-            <AvatarFallback>
-              {row.original?.user?.name?.charAt(0).toUpperCase()}
-            </AvatarFallback>
-
-            <AvatarImage
-              alt={row.original?.user?.name}
-              src={row.original?.user?.avatar_url}
-            />
-          </Avatar>
-
-          <span className="font-medium text-ink-900">
-            {row.original?.user?.name}
-          </span>
-        </div>
-      </Link>
-    ),
-  },
-  {
-    header: "Email",
-    accessorKey: "email",
-    cell: ({ row }) => (
-      <span className="text-muted-foreground">{row.original?.user?.email}</span>
-    ),
-  },
-  {
-    header: "Código",
-    accessorKey: "institutional_code",
-    cell: ({ row }) => (
-      <span className="text-muted-foreground">
-        {row.original.institutional_code}
-      </span>
-    ),
-  },
-  {
-    header: "Estado",
-    accessorKey: "active",
-    cell: ({ row }) => {
-      const active = row.original.active;
-      return (
-        <Badge
-          variant={active ? "default" : "secondary"}
-          className={cn(
-            "text-[11px] font-semibold uppercase",
-            active
-              ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-              : "bg-ink-100 text-ink-600",
-          )}
-        >
-          {active ? "Activo" : "Inactivo"}
-        </Badge>
-      );
-    },
-  },
-];
 
 function TeachersContent() {
   const [, navigate] = useLocation();
@@ -95,8 +40,86 @@ function TeachersContent() {
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const [deletingTeacher, setDeletingTeacher] = useState<Teacher | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<string>("all");
 
   const deleteTeacher = useDeleteTeacher();
+
+  const selectedPeriod = usePeriodsStore((state) => state.selectedPeriod);
+
+  const columns: ColumnDef<Teacher>[] = [
+    {
+      header: "Nombre",
+      accessorKey: "name",
+      cell: ({ row }) => (
+        <Link href={`/teachers/${row.original?.id}`}>
+          <div className="flex items-center gap-3">
+            <Avatar>
+              <AvatarFallback>
+                {row.original?.user?.name?.charAt(0).toUpperCase()}
+              </AvatarFallback>
+
+              <AvatarImage
+                alt={row.original?.user?.name}
+                src={row.original?.user?.avatar_url}
+              />
+            </Avatar>
+
+            <span className="font-medium">{row.original?.user?.name}</span>
+          </div>
+        </Link>
+      ),
+    },
+    {
+      header: "Email",
+      accessorKey: "email",
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">
+          {row.original?.user?.email}
+        </span>
+      ),
+    },
+    {
+      header: "Código",
+      accessorKey: "institutional_code",
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">
+          {row.original.institutional_code}
+        </span>
+      ),
+    },
+    {
+      header: selectedPeriod ? `Promedio ${selectedPeriod.name}` : "Promedio",
+      id: "overall_average",
+      cell: ({ row }) => {
+        const avg = row.original.overall_average;
+
+        if (avg == null)
+          return <span className="text-muted-foreground">-</span>;
+
+        return <span className="font-semibold">{avg.toFixed(2)}</span>;
+      },
+    },
+    {
+      header: "Estado",
+      accessorKey: "active",
+      cell: ({ row }) => {
+        const active = row.original.active;
+        return (
+          <Badge
+            variant={active ? "default" : "secondary"}
+            className={cn(
+              "text-[11px] font-semibold uppercase",
+              active
+                ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                : "bg-ink-100 text-ink-600",
+            )}
+          >
+            {active ? "Activo" : "Inactivo"}
+          </Badge>
+        );
+      },
+    },
+  ];
 
   const handleDeleteConfirm = () => {
     if (!deletingTeacher) return;
@@ -113,10 +136,9 @@ function TeachersContent() {
     <div className="space-y-5">
       <PageHeader
         title="Gestión de Docentes"
-        description="Listado de docentes registrados en el sistema."
         actions={
           <div className="flex items-center gap-2">
-            <Link href="/upload-teachers">
+            <Link href="/teachers/upload">
               <Button
                 type="button"
                 variant="outline"
@@ -141,6 +163,34 @@ function TeachersContent() {
         searchPlaceholder="Buscar por nombre, email o usuario..."
         emptyMessage="No se encontraron docentes."
         pageSize={10}
+        filters={
+          <Select
+            value={activeFilter}
+            onValueChange={(value) => setActiveFilter(value ?? "all")}
+          >
+            <SelectTrigger>
+              <span>
+                {activeFilter === "all"
+                  ? "Todos"
+                  : activeFilter === "true"
+                    ? "Activos"
+                    : "Inactivos"}
+              </span>
+            </SelectTrigger>
+
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="true">Activos</SelectItem>
+              <SelectItem value="false">Inactivos</SelectItem>
+            </SelectContent>
+          </Select>
+        }
+        extraFilterParams={{
+          academic_period_id: selectedPeriod?.id
+            ? String(selectedPeriod.id)
+            : undefined,
+          active: activeFilter !== "all" ? activeFilter : undefined,
+        }}
         rowActions={[
           {
             label: "Editar",

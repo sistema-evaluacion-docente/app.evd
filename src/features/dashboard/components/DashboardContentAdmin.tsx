@@ -33,12 +33,12 @@ function DashboardContentAdmin() {
           isFetched={isFetched}
         />
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_0.5fr] items-start">
-          <div className="w-full space-y-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 items-start">
+          <div className="space-y-4">
             <AdminRecentLogs audits={recentAudits} isLoading={isLoading} />
           </div>
 
-          <div className="w-full space-y-4">
+          <div className="space-y-4">
             <AdminUsersSummary
               counts={counts}
               isLoading={isLoading}

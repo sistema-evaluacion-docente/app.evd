@@ -8,6 +8,7 @@ import useAuth from "@/shared/hooks/useAuth";
 import { AppHeader, type AppHeaderProps } from "./AppHeader";
 import { AppSidebar } from "./AppSidebar";
 import { Button } from "@/components/ui/button";
+import { AutoBreadcrumb } from "./AutoBreadcrumb";
 
 export interface AppLayoutProps {
   children: ReactNode;
@@ -42,14 +43,19 @@ export function AppLayout({
   const authorized = isAuthorizedForPage(location, selectedRole);
 
   return (
-    <div className="flex min-h-screen bg-ink-50">
+    <div className="flex min-h-screen bg-background">
       <AppSidebar
         mobileOpen={mobileOpen}
         onClose={() => setMobileOpen(false)}
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <AppHeader onOpenMenu={() => setMobileOpen(true)} {...header} />
+        <AppHeader
+          onOpenMenu={() => setMobileOpen(true)}
+          showBreadcrumb={true}
+          breadcrumb={<AutoBreadcrumb />}
+          {...header}
+        />
 
         <main
           className={cn(
@@ -65,11 +71,11 @@ export function AppLayout({
                 <span className="text-4xl text-red-500">!</span>
               </div>
 
-              <h2 className="text-2xl font-semibold text-ink-700">
+              <h2 className="text-2xl font-semibold">
                 Acceso no autorizado
               </h2>
 
-              <p className="mt-2 text-ink- mb-4">
+              <p className="mt-2 mb-4">
                 No tienes permisos para acceder a esta página.
               </p>
 

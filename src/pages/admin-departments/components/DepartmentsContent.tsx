@@ -1,6 +1,6 @@
+import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
@@ -11,10 +11,9 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
-import { PageHeader } from "@/shared/ui";
 import { getFaculties } from "@/features/faculties";
+import { PageHeader } from "@/shared/ui";
 
 import DataTable, {
   type DataTableAction,
@@ -94,8 +93,10 @@ export function DepartmentsContent() {
           <div className="grid gap-4">
             <div className="space-y-2">
               <Label htmlFor="create-name">Nombre</Label>
+
               <Input
                 id="create-name"
+                required
                 value={createForm.name}
                 onChange={(e) =>
                   setCreateForm((prev) => ({ ...prev, name: e.target.value }))
@@ -106,18 +107,21 @@ export function DepartmentsContent() {
 
             <div className="space-y-2">
               <Label htmlFor="create-code">Código</Label>
+
               <Input
                 id="create-code"
+                required
                 value={createForm.code}
                 onChange={(e) =>
                   setCreateForm((prev) => ({ ...prev, code: e.target.value }))
                 }
-                placeholder="Código opcional"
+                placeholder="Código"
               />
             </div>
 
             <div className="space-y-2">
               <Label>Facultad</Label>
+
               <Select
                 value={createForm.faculty_id}
                 onValueChange={(value) =>
@@ -128,10 +132,15 @@ export function DepartmentsContent() {
                 }
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Seleccionar facultad" />
+                  <span>
+                    {createForm.faculty_id
+                      ? (faculties.find((f) => f.id === Number(createForm.faculty_id))
+                        ?.name ?? "")
+                      : "Sin facultad"}
+                  </span>
                 </SelectTrigger>
+
                 <SelectContent>
-                  <SelectItem value="">Sin facultad</SelectItem>
                   {faculties.map((f) => (
                     <SelectItem key={f.id} value={String(f.id)}>
                       {f.name}
@@ -220,16 +229,18 @@ export function DepartmentsContent() {
         createConfig={createConfig}
       />
 
-      <EditDepartmentDialog
-        open={isEditDialogOpen}
-        department={editingDepartment}
-        isSaving={isSavingDepartment}
-        onOpenChange={(open) => {
-          setIsEditDialogOpen(open);
-          if (!open) setEditingDepartment(null);
-        }}
-        onSave={handleSaveDepartment}
-      />
+      {editingDepartment && (
+        <EditDepartmentDialog
+          open={isEditDialogOpen}
+          department={editingDepartment}
+          isSaving={isSavingDepartment}
+          onOpenChange={(open) => {
+            setIsEditDialogOpen(open);
+            if (!open) setEditingDepartment(null);
+          }}
+          onSave={handleSaveDepartment}
+        />
+      )}
     </>
   );
 }

@@ -248,7 +248,7 @@ export function MyHistoryPage() {
       cell: () => (
         <Link
           href="/me/summary"
-          className="inline-flex h-8 items-center justify-center rounded-md bg-brand-600 px-3 text-[12.5px] font-semibold text-white hover:bg-brand-700"
+          className="inline-flex h-8 items-center justify-center rounded-md bg-primary px-3 text-[12.5px] font-semibold text-primary-foreground hover:bg-primary-hover"
         >
           Ver Detalle
         </Link>
@@ -258,7 +258,6 @@ export function MyHistoryPage() {
 
   return (
     <AppLayout
-      role="teacher"
       header={{ userName: 'Dr. Roberto Jiménez', userRole: 'Facultad de Ingeniería' }}
     >
       <PageHeader
@@ -315,7 +314,7 @@ export function MyHistoryPage() {
                   className={cn(
                     'h-7 rounded px-3 text-[12px] font-medium transition-colors',
                     mode === option
-                      ? 'bg-white text-ink-900 shadow-card'
+                      ? 'bg-card text-ink-900 shadow-card'
                       : 'text-ink-600 hover:text-ink-900',
                   )}
                 >
@@ -373,7 +372,7 @@ export function MyHistoryPage() {
                 return (
                   <span
                     key={id}
-                    className="inline-flex h-7 items-center gap-1.5 rounded-full border border-brand-200/70 bg-white pl-2.5 pr-1.5 text-[12.5px]"
+                    className="inline-flex h-7 items-center gap-1.5 rounded-full border border-brand-200/70 bg-card pl-2.5 pr-1.5 text-[12.5px]"
                   >
                     <span className="font-semibold text-ink-900">
                       {period.period}
@@ -523,7 +522,7 @@ function PeriodDetail({ period }: { period: PeriodRecord }) {
         </ul>
         <Link
           href="/me/summary"
-          className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-brand-600 hover:text-brand-700"
+          className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-brand-700 hover:text-brand-800"
         >
           Abrir expediente completo <ArrowRight size={13} />
         </Link>

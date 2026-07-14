@@ -25,8 +25,6 @@ function useGetAllFaculties() {
   return useQuery({
     queryKey: ["faculties"],
     queryFn: getFaculties,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
   });
 }
 
@@ -71,6 +69,7 @@ export function FacultiesContent() {
           <div className="grid gap-4">
             <div className="space-y-2">
               <Label htmlFor="create-name">Nombre</Label>
+
               <Input
                 id="create-name"
                 value={createForm.name}
@@ -83,13 +82,14 @@ export function FacultiesContent() {
 
             <div className="space-y-2">
               <Label htmlFor="create-code">Código</Label>
+
               <Input
                 id="create-code"
                 value={createForm.code}
                 onChange={(e) =>
                   setCreateForm((prev) => ({ ...prev, code: e.target.value }))
                 }
-                placeholder="Código opcional"
+                placeholder="Código"
               />
             </div>
           </div>
@@ -98,6 +98,7 @@ export function FacultiesContent() {
             <Button type="button" variant="outline" onClick={close}>
               Cancelar
             </Button>
+
             <Button
               type="submit"
               disabled={!createForm.name.trim() || createMutation.isPending}

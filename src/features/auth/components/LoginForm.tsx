@@ -31,14 +31,14 @@ function LoginForm() {
   };
 
   return (
-    <section className="flex items-center justify-center bg-white px-6 py-12">
+    <section className="flex items-center justify-center bg-background px-6 py-12">
       <div className="flex w-full max-w-100 flex-col">
         <header className="mb-7 text-center">
-          <h1 className="text-lg font-semibold tracking-tight text-ink-900">
+          <h1 className="text-lg font-semibold tracking-tight">
             Acceso al Sistema
           </h1>
 
-          <p className="mt-2 text-sm text-ink-500">
+          <p className="mt-2 text-sm text-muted-foreground">
             Inicie sesión con sus credenciales institucionales
           </p>
         </header>
@@ -48,7 +48,10 @@ function LoginForm() {
           variant="outline"
           onClick={handleLoginWithGoogle}
           aria-busy={isLoadingLogin}
+          className="bg-background"
         >
+          <img src="/google.svg" alt="Google" className="h-5 w-5" />
+
           <span className="inline-flex items-center gap-2 whitespace-nowrap">
             {isLoadingLogin
               ? "Verificando cuenta"
@@ -61,7 +64,7 @@ function LoginForm() {
         </Button>
 
         <p
-          className="mt-4 text-center text-[12px] leading-relaxed text-ink-500"
+          className="mt-4 text-center text-sm leading-relaxed text-muted-foreground"
           style={{ textWrap: "pretty" }}
         >
           Para acceder, debe utilizar su cuenta de correo electrónico

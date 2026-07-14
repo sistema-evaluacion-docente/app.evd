@@ -61,10 +61,8 @@ export function HistogramChart({
         <div />
 
         <Popover>
-          <PopoverTrigger>
-            <Button variant="outline" size="icon-xs">
-              <Settings2 className="size-4" />
-            </Button>
+          <PopoverTrigger render={<Button variant="outline" size="icon-xs" />}>
+            <Settings2 className="size-4" />
           </PopoverTrigger>
 
           <PopoverContent align="end" className="w-80">
@@ -88,7 +86,7 @@ export function HistogramChart({
                       onClick={() => toggleLabel(label)}
                       className={`rounded-md border px-2 py-0.5 text-xs transition-colors ${
                         isActive
-                          ? "border-brand-600 bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300"
+                          ? "border-brand-600 bg-brand-50 text-brand-700"
                           : "border-border bg-muted text-muted-foreground"
                       }`}
                     >
@@ -215,7 +213,7 @@ export function HistogramChart({
 
       {hover !== null && filteredData[hover] && (
         <div
-          className="pointer-events-none absolute -translate-x-1/2 -translate-y-full rounded-md bg-ink-900 px-2.5 py-1.5 text-[11.5px] text-white shadow-pop"
+          className="pointer-events-none absolute -translate-x-1/2 -translate-y-full rounded-md bg-ink-900 px-2.5 py-1.5 text-[11.5px] text-ink-50 shadow-pop"
           style={{
             left: `${((pad.l + barGap + hover * (barWidth + barGap) + barWidth / 2) / width) * 100}%`,
             top: `${((pad.t + innerH - (filteredData[hover].value / maxCount) * innerH) / height) * 100}%`,
@@ -223,7 +221,7 @@ export function HistogramChart({
         >
           <div className="font-semibold">{filteredData[hover].label}</div>
 
-          <div className="num text-white/80 tabular-nums">
+          <div className="num text-ink-50/80 tabular-nums">
             {filteredData[hover].value} docente
             {filteredData[hover].value !== 1 ? "s" : ""}
           </div>

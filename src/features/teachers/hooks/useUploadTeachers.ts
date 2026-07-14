@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
-import { uploadTeachersExcel, type TeacherBulkResult } from "../api/teacherService";
+import {
+  uploadTeachersExcel,
+  type TeacherBulkResult,
+} from "../api/teacherService";
 
-export type UploadStatus =
-  | "idle"
-  | "uploading"
-  | "success"
-  | "error";
+export type UploadStatus = "idle" | "uploading" | "success" | "error";
 
-const MAX_SIZE = 50 * 1024 * 1024;
+const MAX_SIZE = 5 * 1024 * 1024;
 
 export function useUploadTeachers() {
   const [status, setStatus] = useState<UploadStatus>("idle");
@@ -45,14 +45,18 @@ export function useUploadTeachers() {
     setProgress(0);
 
     const ext = file.name.toLowerCase().slice(file.name.lastIndexOf("."));
-    if (![".xlsx", ".xls"].includes(ext)) {
-      setError("Solo se aceptan archivos en formato Excel (.xlsx o .xls)");
+    if (![".xlsx", ".xls", ".csv"].includes(ext)) {
+      const errorMsg = "Solo se aceptan archivos en formato Excel (.xlsx, .xls) o CSV (.csv)";
+      setError(errorMsg);
+      toast.error(errorMsg);
       setStatus("error");
       return;
     }
 
     if (file.size > MAX_SIZE) {
-      setError("El archivo excede el tamaño máximo de 50MB.");
+      const errorMsg = "El archivo excede el tamaño máximo de 5MB.";
+      setError(errorMsg);
+      toast.error(errorMsg);
       setStatus("error");
       return;
     }
@@ -69,9 +73,9 @@ export function useUploadTeachers() {
     } catch (err) {
       clearTimers();
       setProgress(0);
-      setError(
-        err instanceof Error ? err.message : "Error al subir el archivo.",
-      );
+      const errorMsg = err instanceof Error ? err.message : "Error al subir el archivo.";
+      setError(errorMsg);
+      toast.error(errorMsg);
       setStatus("error");
     }
   }, []);

@@ -47,7 +47,7 @@ function FormDrawer({
   footerClassName,
 }: FormDrawerProps) {
   return (
-    <Drawer open={open} onOpenChange={onOpenChange} direction="right">
+    <Drawer open={open} onOpenChange={onOpenChange} swipeDirection="right">
       <DrawerContent className={cn("w-full sm:max-w-xl", contentClassName)}>
         <DrawerHeader>
           <DrawerTitle>{title}</DrawerTitle>

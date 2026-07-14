@@ -6,6 +6,21 @@ const securityConfig = {
       roles: ["DOCENTE", "DIRECTOR DE DEPARTAMENTO", "ADMIN"],
     },
     {
+      path: "/summary",
+      name: "Mi Resumen",
+      roles: ["DOCENTE"],
+    },
+    {
+      path: "/my-plans",
+      name: "Mi Plan de Mejora",
+      roles: ["DOCENTE"],
+    },
+    {
+      path: "/evaluations",
+      name: "Evaluaciones",
+      roles: ["DIRECTOR DE DEPARTAMENTO"],
+    },
+    {
       path: "/teachers",
       name: "Docentes",
       roles: ["DIRECTOR DE DEPARTAMENTO"],
@@ -16,13 +31,13 @@ const securityConfig = {
       roles: ["DIRECTOR DE DEPARTAMENTO"],
     },
     {
-      path: "/plans",
-      name: "Planes de Mejoramiento",
+      path: "/subjects",
+      name: "Materias",
       roles: ["DIRECTOR DE DEPARTAMENTO"],
     },
     {
-      path: "/evaluations",
-      name: "Evaluaciones",
+      path: "/plans",
+      name: "Planes de Mejoramiento",
       roles: ["DIRECTOR DE DEPARTAMENTO"],
     },
     {

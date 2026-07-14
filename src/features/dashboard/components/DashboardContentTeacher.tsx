@@ -6,7 +6,9 @@ import { Link } from "wouter";
 import CardTeacherAverage from "./teacher/CardTeacherAverage";
 import CardTeacherComments from "./teacher/CardTeacherComments";
 import TeacherChartsSection from "./teacher/TeacherChartsSection";
+import TeacherCommentsBySubject from "./teacher/TeacherCommentsBySubject";
 import TeacherCoursesChart from "./teacher/TeacherCoursesChart";
+import TeacherDimensionAverages from "./teacher/TeacherDimensionAverages";
 
 function DashboardContentTeacher() {
   return (
@@ -34,10 +36,12 @@ function DashboardContentTeacher() {
         <div className="grid grid-cols-1 md:grid-cols-[1fr_0.5fr] gap-4 items-start">
           <div className="w-full space-y-4">
             <TeacherChartsSection />
+            <TeacherDimensionAverages />
           </div>
 
           <div className="w-full space-y-4">
             <TeacherCoursesChart />
+            <TeacherCommentsBySubject />
           </div>
         </div>
       </section>

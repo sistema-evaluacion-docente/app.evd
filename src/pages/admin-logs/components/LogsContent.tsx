@@ -8,20 +8,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useGetAudits, useLogsColumns, type Audit } from "@/features/audits";
+import {
+  DateRangeFilter,
+  TABLE_NAMES,
+  useGetAudits,
+  useLogsColumns,
+  type Audit,
+} from "@/features/audits";
 import { PageHeader } from "@/shared/ui";
 import { AuditDetailDrawer } from "./AuditDetailDrawer";
-
-const TABLE_NAMES = [
-  { value: "departments", label: "Departamentos" },
-  { value: "users", label: "Usuarios" },
-  { value: "teachers", label: "Docentes" },
-  { value: "periods", label: "Periodos" },
-  { value: "directors", label: "Directores" },
-  { value: "evaluations", label: "Evaluaciones" },
-  { value: "plans", label: "Planes" },
-  { value: "subjects", label: "Materias" },
-] as const;
 
 const OPERATIONS = [
   { value: "CREATE", label: "Crear" },
@@ -32,6 +27,12 @@ const OPERATIONS = [
   { value: "EXPORT", label: "Exportar" },
 ] as const;
 
+function formatDate(date: Date | undefined): string | undefined {
+  if (!date) return undefined;
+
+  return date.toISOString().split("T")[0];
+}
+
 export function LogsContent() {
   const columns = useLogsColumns();
 
@@ -39,6 +40,8 @@ export function LogsContent() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [tableName, setTableName] = useState("");
   const [operation, setOperation] = useState("");
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
 
   const rowActions = useMemo<DataTableAction<Audit>[]>(
     () => [
@@ -98,10 +101,17 @@ export function LogsContent() {
             ))}
           </SelectContent>
         </Select>
+
+        <DateRangeFilter
+          startDate={startDate}
+          endDate={endDate}
+          onStartDateChange={setStartDate}
+          onEndDateChange={setEndDate}
+        />
       </div>
 
       <DataTable
-        key={`${tableName}-${operation}`}
+        key={`${tableName}-${operation}-${formatDate(startDate)}-${formatDate(endDate)}`}
         columns={columns}
         queryFn={useGetAudits}
         enableSearch
@@ -111,6 +121,8 @@ export function LogsContent() {
         extraFilterParams={{
           table_name: tableName || undefined,
           operation: operation || undefined,
+          start_date: formatDate(startDate),
+          end_date: formatDate(endDate),
         }}
       />
 

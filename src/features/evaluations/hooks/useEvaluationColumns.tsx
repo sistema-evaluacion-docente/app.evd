@@ -3,7 +3,8 @@ import { createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
 
 import { API_URL } from "@/config";
-import type { EvaluationRecord } from "../api/evaluationService";
+import { Link } from "wouter";
+import type { EvaluationRecord } from "../types/Evaluation";
 
 const columnHelper = createColumnHelper<EvaluationRecord>();
 
@@ -11,26 +12,30 @@ const STATUS_MAP: Record<
   EvaluationRecord["status"],
   { label: string; className: string }
 > = {
-  PROCESSING: { label: "Procesando", className: "bg-amber-500 text-white" },
-  COMPLETED: { label: "Completado", className: "bg-emerald-500 text-white" },
-  FAILED: { label: "Fallido", className: "bg-red-500 text-white" },
+  PROCESSING: {
+    label: "Procesando",
+    className: "bg-amber-50 text-amber-700",
+  },
+  COMPLETED: {
+    label: "Completado",
+    className: "bg-emerald-50 text-emerald-700",
+  },
+  FAILED: { label: "Fallido", className: "bg-red-50 text-red-700" },
 };
 
 export default function useEvaluationColumns() {
   return useMemo(
     () => [
-      columnHelper.accessor("id", {
-        header: "ID",
-        cell: (info) => (
-          <span className="font-mono text-xs">{info.getValue()}</span>
-        ),
-      }),
-
       columnHelper.accessor("academic_period_name", {
         header: "Periodo",
         cell: (info) => {
           const name = info.getValue();
-          return name ?? <span className="text-muted-foreground">—</span>;
+
+          return (
+            <Link to={`/evaluations/${info.row.original.id}`}>
+              {name ?? <span className="text-muted-foreground">—</span>}
+            </Link>
+          );
         },
       }),
 
@@ -49,8 +54,8 @@ export default function useEvaluationColumns() {
           <Badge
             className={
               info.getValue()
-                ? "bg-emerald-500 text-white"
-                : "bg-amber-500 text-white"
+                ? "bg-emerald-50 text-emerald-700"
+                : "bg-amber-50 text-amber-700"
             }
           >
             {info.getValue() ? "Sí" : "No"}
@@ -58,11 +63,27 @@ export default function useEvaluationColumns() {
         ),
       }),
 
+      columnHelper.accessor("overall_average", {
+        header: "Promedio",
+        cell: (info) => {
+          const avg = info.getValue();
+          return (
+            <span className="font-semibold">
+              {avg != null ? avg.toFixed(2) : "—"}
+            </span>
+          );
+        },
+      }),
+
       columnHelper.accessor("count", {
         header: "Docentes",
         cell: (info) => {
           const count = info.getValue();
-          return count != null ? count : "—";
+          return (
+            <Link to={`/evaluations/${info.row.original.id}`}>
+              {count != null ? count : "—"}
+            </Link>
+          );
         },
       }),
 
@@ -78,7 +99,7 @@ export default function useEvaluationColumns() {
               href={`${API_URL}/${url}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-brand-600 hover:text-brand-700 underline underline-offset-2 text-xs"
+              className="text-brand-700 hover:text-brand-800 underline underline-offset-2 text-xs"
             >
               Ver PDF
             </a>

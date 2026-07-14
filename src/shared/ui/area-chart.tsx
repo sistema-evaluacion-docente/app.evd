@@ -170,14 +170,14 @@ export function AreaChart({
 
       {hover !== null && (
         <div
-          className="pointer-events-none absolute -translate-x-1/2 -translate-y-full rounded-md bg-ink-900 px-2.5 py-1.5 text-[11.5px] text-white shadow-pop"
+          className="pointer-events-none absolute -translate-x-1/2 -translate-y-full rounded-md bg-ink-900 px-2.5 py-1.5 text-[11.5px] text-ink-50 shadow-pop"
           style={{
             left: `${(xs[hover] / width) * 100}%`,
             top: `${(ys[hover] / height) * 100}%`,
           }}
         >
           <div className="font-semibold">{data[hover].label}</div>
-          <div className="num text-white/80 tabular-nums">
+          <div className="num text-ink-50/80 tabular-nums">
             {format(data[hover].value)}
           </div>
         </div>

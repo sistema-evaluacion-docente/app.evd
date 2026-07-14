@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getComments } from "../api/evaluationService";
 
+//Este hook, obtiene los comentarios sin filtro, son todos los comentarios crudos.
 export default function useGetComments(evaluationId: number | undefined) {
   return useQuery({
     queryKey: ["comments", evaluationId],

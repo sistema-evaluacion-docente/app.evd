@@ -8,14 +8,16 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-ink-900 text-white hover:bg-ink-800',
-        brand: 'bg-brand-600 text-white hover:bg-brand-700',
+        default: 'bg-foreground text-background hover:bg-foreground/90',
+        brand: 'bg-primary text-primary-foreground hover:bg-primary-hover',
         outline:
-          'border border-ink-200 bg-white text-ink-800 hover:bg-ink-50 hover:border-ink-300',
-        ghost: 'text-ink-700 hover:bg-ink-100',
-        soft: 'bg-ink-100 text-ink-800 hover:bg-ink-200',
-        link: 'text-brand-600 hover:underline underline-offset-4 px-0 h-auto',
-        'brand-ghost': 'text-brand-600 hover:bg-brand-50',
+          'border border-border bg-card text-foreground hover:bg-muted hover:border-border',
+        ghost: 'text-foreground hover:bg-muted',
+        soft: 'bg-muted text-foreground hover:bg-muted/80',
+        // Red *text* uses brand-700, not the pinned brand-600: the dark ramp
+        // lightens 700 (and darkens the 50 tint) on its own, so no dark: here.
+        link: 'text-brand-700 hover:underline underline-offset-4 px-0 h-auto',
+        'brand-ghost': 'text-brand-700 hover:bg-brand-50',
       },
       size: {
         sm: 'h-8 px-3 text-[13px]',
