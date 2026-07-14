@@ -3,12 +3,12 @@ import {
   CourseAveragesCard,
   DimensionAveragesCard,
   HistoricalEvolutionCard,
-  ImprovementPlanCard,
   NoEvaluationState,
   TeacherCommentsCard,
   TeacherProfileHeader,
   useCurrentTeacherEvaluation,
 } from "@/features/evaluations";
+import { MyPlanCard } from "@/features/plans";
 import { useGetTeacherById } from "@/features/teachers";
 import useAuth from "@/shared/hooks/useAuth";
 
@@ -55,7 +55,7 @@ function SummaryContent() {
             evaluation={evaluation}
           />
 
-          <ImprovementPlanCard />
+          <MyPlanCard />
         </>
       )}
     </>

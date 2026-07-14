@@ -119,7 +119,7 @@ export function CsvAccountUpload({ config, onImport }: CsvAccountUploadProps) {
               : 'border-ink-200 bg-ink-50/40',
           )}
         >
-          <div className="inline-flex h-14 w-14 items-center justify-center rounded-xl border border-ink-200 bg-white text-ink-700 shadow-card">
+          <div className="inline-flex h-14 w-14 items-center justify-center rounded-xl border border-ink-200 bg-card text-ink-700 shadow-card">
             <FileUp size={24} strokeWidth={1.6} />
           </div>
           <div className="mt-4 text-[15px] font-semibold text-ink-900">
@@ -327,7 +327,7 @@ function FieldSpec({
   example: string
 }) {
   return (
-    <div className="rounded-lg border border-ink-200 bg-white p-3">
+    <div className="rounded-lg border border-ink-200 bg-card p-3">
       <div className="mb-1.5 flex items-center justify-between gap-2">
         <code className="rounded bg-ink-100 px-1.5 py-0.5 font-mono text-[12px] font-semibold text-ink-900">
           {name}

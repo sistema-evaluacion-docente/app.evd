@@ -75,8 +75,8 @@ export default function TeacherCommentsCard({
               className={cn(
                 "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-sm font-medium transition-colors",
                 activeCommentCourse === "todas"
-                  ? "bg-ink-900 text-white"
-                  : "border border-ink-200 bg-white text-ink-600 hover:bg-ink-50",
+                  ? "bg-ink-900 text-ink-50"
+                  : "border border-ink-200 bg-card text-ink-600 hover:bg-ink-50",
               )}
             >
               Todas las materias
@@ -94,8 +94,8 @@ export default function TeacherCommentsCard({
                   className={cn(
                     "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-sm font-medium transition-colors",
                     isActive
-                      ? "bg-ink-900 text-white"
-                      : "border border-ink-200 bg-white text-ink-600 hover:bg-ink-50",
+                      ? "bg-ink-900 text-ink-50"
+                      : "border border-ink-200 bg-card text-ink-600 hover:bg-ink-50",
                   )}
                 >
                   {course.course_name}
@@ -104,7 +104,7 @@ export default function TeacherCommentsCard({
                     className={cn(
                       "inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-xs font-semibold",
                       isActive
-                        ? "bg-white/20 text-white"
+                        ? "bg-ink-50/20 text-ink-50"
                         : "bg-ink-100 text-ink-500",
                     )}
                   >

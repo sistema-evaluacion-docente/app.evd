@@ -1,4 +1,6 @@
 export interface User {
+  /** DB id; absent only on the transient pre-fetch Firebase placeholder. */
+  id?: number;
   uid: string;
   name: string;
   username: string;

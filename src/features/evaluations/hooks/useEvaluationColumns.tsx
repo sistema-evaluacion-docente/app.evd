@@ -12,9 +12,15 @@ const STATUS_MAP: Record<
   EvaluationRecord["status"],
   { label: string; className: string }
 > = {
-  PROCESSING: { label: "Procesando", className: "bg-amber-500 text-white" },
-  COMPLETED: { label: "Completado", className: "bg-emerald-500 text-white" },
-  FAILED: { label: "Fallido", className: "bg-red-500 text-white" },
+  PROCESSING: {
+    label: "Procesando",
+    className: "bg-amber-50 text-amber-700",
+  },
+  COMPLETED: {
+    label: "Completado",
+    className: "bg-emerald-50 text-emerald-700",
+  },
+  FAILED: { label: "Fallido", className: "bg-red-50 text-red-700" },
 };
 
 export default function useEvaluationColumns() {
@@ -48,8 +54,8 @@ export default function useEvaluationColumns() {
           <Badge
             className={
               info.getValue()
-                ? "bg-emerald-500 text-white"
-                : "bg-amber-500 text-white"
+                ? "bg-emerald-50 text-emerald-700"
+                : "bg-amber-50 text-amber-700"
             }
           >
             {info.getValue() ? "Sí" : "No"}
@@ -93,7 +99,7 @@ export default function useEvaluationColumns() {
               href={`${API_URL}/${url}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-brand-600 hover:text-brand-700 underline underline-offset-2 text-xs"
+              className="text-brand-700 hover:text-brand-800 underline underline-offset-2 text-xs"
             >
               Ver PDF
             </a>

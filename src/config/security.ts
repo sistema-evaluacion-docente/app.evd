@@ -11,6 +11,11 @@ const securityConfig = {
       roles: ["DOCENTE"],
     },
     {
+      path: "/my-plans",
+      name: "Mi Plan de Mejora",
+      roles: ["DOCENTE"],
+    },
+    {
       path: "/evaluations",
       name: "Evaluaciones",
       roles: ["DIRECTOR DE DEPARTAMENTO"],

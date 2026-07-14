@@ -31,6 +31,7 @@ const MENU_ICON_BY_PATH: Record<string, typeof DEFAULT_ICON> = {
   "/teachers": Users,
   "/matrix": BarChart3,
   "/plans": TrendingUp,
+  "/my-plans": TrendingUp,
   "/subjects": BookOpenText,
   "/users": Users,
   "/roles": UserSearch,
@@ -133,7 +134,7 @@ export function AppSidebar({ mobileOpen, onClose }: AppSidebarProps) {
         <div className='border-t p-2'>
           <div
             onClick={handleLogout}
-            className='border-ink-100 p-3 text-xs cursor-pointer flex h-9 w-full items-center gap-3 rounded-md px-2.5 font-medium text-brand-600 transition-colors hover:bg-brand-50'
+            className='border-ink-100 p-3 text-xs cursor-pointer flex h-9 w-full items-center gap-3 rounded-md px-2.5 font-medium text-brand-700 transition-colors hover:bg-brand-50'
           >
             <LogOut size={16} />
             <span>Cerrar Sesión</span>

@@ -333,7 +333,7 @@ export function MatrixPageMock() {
                 {[1, 2, 3, 4].map((tick) => (
                   <span
                     key={tick}
-                    className="absolute inset-y-0 w-px bg-white/70"
+                    className="absolute inset-y-0 w-px bg-ink-50/70"
                     style={{ left: `${tick * 20}%` }}
                   />
                 ))}
@@ -540,8 +540,8 @@ function DimChip({
       className={cn(
         'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-[12px] font-medium transition-colors',
         active
-          ? 'bg-ink-900 text-white'
-          : 'border border-ink-200 bg-white text-ink-700 hover:bg-ink-50',
+          ? 'bg-ink-900 text-ink-50'
+          : 'border border-ink-200 bg-card text-ink-700 hover:bg-ink-50',
       )}
     >
       {dotColor && (

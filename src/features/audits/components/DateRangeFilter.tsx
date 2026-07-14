@@ -36,14 +36,12 @@ function DateRangeFilter({
 
   return (
     <Popover>
-      <PopoverTrigger>
-        <Button variant="outline">
-          <CalendarIcon className="size-4" />
+      <PopoverTrigger render={<Button variant="outline" />}>
+        <CalendarIcon className="size-4" />
 
-          <span className={startDate || endDate ? "" : "text-muted-foreground"}>
-            {dateRangeLabel}
-          </span>
-        </Button>
+        <span className={startDate || endDate ? "" : "text-muted-foreground"}>
+          {dateRangeLabel}
+        </span>
       </PopoverTrigger>
 
       <PopoverContent align="start" className="w-auto p-0">

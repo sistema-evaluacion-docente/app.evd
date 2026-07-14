@@ -13,7 +13,7 @@ const badgeVariants = cva(
         warning: 'bg-amber-50 text-amber-700 border-amber-200/70',
         danger: 'bg-brand-50 text-brand-700 border-brand-100',
         info: 'bg-sky-50 text-sky-700 border-sky-200/70',
-        outline: 'bg-white text-ink-700 border-ink-200',
+        outline: 'bg-card text-ink-700 border-ink-200',
       },
     },
     defaultVariants: { variant: 'neutral' },

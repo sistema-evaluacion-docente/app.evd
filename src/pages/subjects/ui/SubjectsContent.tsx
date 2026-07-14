@@ -69,18 +69,18 @@ function TrendCell({
 function DiagnosisBadge({ avg }: { avg: number }) {
   if (avg < 3.5)
     return (
-      <span className='inline-flex rounded px-2 py-0.5 text-[11px] font-medium bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400'>
+      <span className='inline-flex rounded px-2 py-0.5 text-[11px] font-medium bg-red-50 text-red-700'>
         Materia en riesgo
       </span>
     );
   if (avg < 4.0)
     return (
-      <span className='inline-flex rounded px-2 py-0.5 text-[11px] font-medium bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'>
+      <span className='inline-flex rounded px-2 py-0.5 text-[11px] font-medium bg-amber-50 text-amber-700'>
         En seguimiento
       </span>
     );
   return (
-    <span className='inline-flex rounded px-2 py-0.5 text-[11px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'>
+    <span className='inline-flex rounded px-2 py-0.5 text-[11px] font-medium bg-emerald-50 text-emerald-700'>
       Buen desempeño
     </span>
   );

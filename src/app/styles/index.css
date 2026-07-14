@@ -24,18 +24,6 @@
   --color-brand-800: #75101d;
   --color-brand-900: #5f121c;
 
-  /* Ink — neutral grayscale */
-  --color-ink-50: #f7f8f9;
-  --color-ink-100: #f1f2f4;
-  --color-ink-200: #e4e6ea;
-  --color-ink-300: #c4c8d0;
-  --color-ink-400: #9aa0ab;
-  --color-ink-500: #6a707d;
-  --color-ink-600: #454b57;
-  --color-ink-700: #2a2f3a;
-  --color-ink-800: #161b25;
-  --color-ink-900: #0b0f17;
-
   --shadow-card:
     0 1px 2px 0 rgba(15, 18, 28, 0.04), 0 1px 1px 0 rgba(15, 18, 28, 0.03);
   --shadow-pop:
@@ -107,6 +95,21 @@ body {
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: "Geist Variable", sans-serif;
+
+  /* Ink — neutral grayscale. Resolved through :root / .dark so the ramp flips
+     with the theme: ink-50 is always the lowest-contrast surface and ink-900
+     the highest-contrast text, in both light and dark. */
+  --color-ink-50: var(--ink-50);
+  --color-ink-100: var(--ink-100);
+  --color-ink-200: var(--ink-200);
+  --color-ink-300: var(--ink-300);
+  --color-ink-400: var(--ink-400);
+  --color-ink-500: var(--ink-500);
+  --color-ink-600: var(--ink-600);
+  --color-ink-700: var(--ink-700);
+  --color-ink-800: var(--ink-800);
+  --color-ink-900: var(--ink-900);
+
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -131,6 +134,7 @@ body {
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
   --color-primary: var(--primary);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
@@ -148,14 +152,32 @@ body {
 }
 
 :root {
+  --ink-50: #f7f8f9;
+  --ink-100: #f1f2f4;
+  --ink-200: #e4e6ea;
+  --ink-300: #c4c8d0;
+  --ink-400: #9aa0ab;
+  --ink-500: #6a707d;
+  --ink-600: #454b57;
+  --ink-700: #2a2f3a;
+  --ink-800: #161b25;
+  --ink-900: #0b0f17;
+
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.505 0.213 27.518);
-  --primary-foreground: oklch(0.971 0.013 17.38);
+  /* Primary IS the institutional red. Pinned to the brand ramp (not a separate
+     oklch value) so `bg-primary` and `bg-brand-600` are the same color and the
+     two button kits can't drift apart. Held identical in .dark on purpose. */
+  --primary: var(--color-brand-600);
+  --primary-foreground: #fff;
+  /* Hover fill for primary/brand buttons. It needs its own token because
+     brand-600 is pinned as --primary while brand-700 gets lightened by the
+     dark ramp flip below — so the raw `hover:bg-brand-700` would go pink. */
+  --primary-hover: var(--color-brand-700);
   --secondary: oklch(0.967 0.001 286.375);
   --secondary-foreground: oklch(0.21 0.006 285.885);
   --muted: oklch(0.97 0 0);
@@ -183,14 +205,32 @@ body {
 }
 
 .dark {
+  /* Mirror of the light ramp. The 50/100/200 steps sit above --card
+     (oklch 0.22) so surfaces and borders stay visible against it. */
+  --ink-50: #1b1f27;
+  --ink-100: #232833;
+  --ink-200: #2f3542;
+  --ink-300: #454b57;
+  --ink-400: #6a707d;
+  --ink-500: #9aa0ab;
+  --ink-600: #c4c8d0;
+  --ink-700: #dfe2e7;
+  --ink-800: #eef0f2;
+  --ink-900: #f7f8f9;
+
   --background: oklch(0.18 0.004 285.82);
   --foreground: oklch(0.93 0.004 285.82);
   --card: oklch(0.22 0.005 285.82);
   --card-foreground: oklch(0.93 0.004 285.82);
   --popover: oklch(0.22 0.005 285.82);
   --popover-foreground: oklch(0.93 0.004 285.82);
-  --primary: oklch(0.637 0.237 25.331);
-  --primary-foreground: oklch(0.971 0.013 17.38);
+  /* Same red as light mode — see :root. The old value here was a brighter,
+     more saturated red that read as neon against the dark surfaces. */
+  --primary: var(--color-brand-600);
+  --primary-foreground: #fff;
+  /* Dark surfaces expect hover to lighten, not darken: brand-500 is a brighter
+     red. (brand-700 is remapped to a light pink here, so it can't be used.) */
+  --primary-hover: var(--color-brand-500);
   --secondary: oklch(0.26 0.006 285.82);
   --secondary-foreground: oklch(0.93 0.004 285.82);
   --muted: oklch(0.25 0.005 285.82);
@@ -214,6 +254,170 @@ body {
   --sidebar-accent-foreground: oklch(0.93 0.004 285.82);
   --sidebar-border: oklch(1 0 0 / 8%);
   --sidebar-ring: oklch(0.48 0 0);
+}
+
+/* ---------------------------------------------------------------------------
+   Accent ramps — dark mode
+   ---------------------------------------------------------------------------
+   Tailwind compiles every color utility to a var reference
+   (`.bg-emerald-50 { background-color: var(--color-emerald-50) }`), so
+   redefining the variables here re-tints every existing utility at once. This
+   is the same trick as the --color-ink-* ramp above: the ramp flips with the
+   theme, and no component has to spell out its own `dark:` classes.
+
+   The steps split into three roles, and only the first and third are flipped:
+
+     50/100/200  tint + border  -> translucent wash of the dark end of the ramp
+     300/400/500 solid accents  -> untouched (dots, bars, `bg-*-500` pills)
+     600/700/800 text on tint   -> the light end of the ramp
+
+   So `bg-emerald-50 text-emerald-700` reads as a light-green pill on white and
+   a desaturated green wash with mint text on dark, which is the contrast the
+   Tailwind docs get from `dark:bg-emerald-900/30 dark:text-emerald-300`.
+
+   Consequences worth knowing:
+   - `bg-*-600` would come out light in dark mode. Nothing uses it (600 is only
+     ever a text color here), but reach for 500 if you need a solid fill.
+   - 900/950 are left alone, so `dark:bg-*-950/40` still means what it says.
+   - Neutrals (gray/zinc/slate-as-surface) are not in scope: use ink-*.
+--------------------------------------------------------------------------- */
+.dark {
+  --color-red-50: color-mix(in oklab, var(--color-red-900) 22%, transparent);
+  --color-red-100: color-mix(in oklab, var(--color-red-900) 32%, transparent);
+  --color-red-200: color-mix(in oklab, var(--color-red-500) 28%, transparent);
+  --color-red-600: var(--color-red-400);
+  --color-red-700: var(--color-red-300);
+  --color-red-800: var(--color-red-300);
+
+  --color-orange-50: color-mix(in oklab, var(--color-orange-900) 22%, transparent);
+  --color-orange-100: color-mix(in oklab, var(--color-orange-900) 32%, transparent);
+  --color-orange-200: color-mix(in oklab, var(--color-orange-500) 28%, transparent);
+  --color-orange-600: var(--color-orange-400);
+  --color-orange-700: var(--color-orange-300);
+  --color-orange-800: var(--color-orange-300);
+
+  --color-amber-50: color-mix(in oklab, var(--color-amber-900) 22%, transparent);
+  --color-amber-100: color-mix(in oklab, var(--color-amber-900) 32%, transparent);
+  --color-amber-200: color-mix(in oklab, var(--color-amber-500) 28%, transparent);
+  --color-amber-600: var(--color-amber-400);
+  --color-amber-700: var(--color-amber-300);
+  --color-amber-800: var(--color-amber-300);
+
+  --color-yellow-50: color-mix(in oklab, var(--color-yellow-900) 22%, transparent);
+  --color-yellow-100: color-mix(in oklab, var(--color-yellow-900) 32%, transparent);
+  --color-yellow-200: color-mix(in oklab, var(--color-yellow-500) 28%, transparent);
+  --color-yellow-600: var(--color-yellow-400);
+  --color-yellow-700: var(--color-yellow-300);
+  --color-yellow-800: var(--color-yellow-300);
+
+  --color-lime-50: color-mix(in oklab, var(--color-lime-900) 22%, transparent);
+  --color-lime-100: color-mix(in oklab, var(--color-lime-900) 32%, transparent);
+  --color-lime-200: color-mix(in oklab, var(--color-lime-500) 28%, transparent);
+  --color-lime-600: var(--color-lime-400);
+  --color-lime-700: var(--color-lime-300);
+  --color-lime-800: var(--color-lime-300);
+
+  --color-green-50: color-mix(in oklab, var(--color-green-900) 22%, transparent);
+  --color-green-100: color-mix(in oklab, var(--color-green-900) 32%, transparent);
+  --color-green-200: color-mix(in oklab, var(--color-green-500) 28%, transparent);
+  --color-green-600: var(--color-green-400);
+  --color-green-700: var(--color-green-300);
+  --color-green-800: var(--color-green-300);
+
+  --color-emerald-50: color-mix(in oklab, var(--color-emerald-900) 22%, transparent);
+  --color-emerald-100: color-mix(in oklab, var(--color-emerald-900) 32%, transparent);
+  --color-emerald-200: color-mix(in oklab, var(--color-emerald-500) 28%, transparent);
+  --color-emerald-600: var(--color-emerald-400);
+  --color-emerald-700: var(--color-emerald-300);
+  --color-emerald-800: var(--color-emerald-300);
+
+  --color-teal-50: color-mix(in oklab, var(--color-teal-900) 22%, transparent);
+  --color-teal-100: color-mix(in oklab, var(--color-teal-900) 32%, transparent);
+  --color-teal-200: color-mix(in oklab, var(--color-teal-500) 28%, transparent);
+  --color-teal-600: var(--color-teal-400);
+  --color-teal-700: var(--color-teal-300);
+  --color-teal-800: var(--color-teal-300);
+
+  --color-cyan-50: color-mix(in oklab, var(--color-cyan-900) 22%, transparent);
+  --color-cyan-100: color-mix(in oklab, var(--color-cyan-900) 32%, transparent);
+  --color-cyan-200: color-mix(in oklab, var(--color-cyan-500) 28%, transparent);
+  --color-cyan-600: var(--color-cyan-400);
+  --color-cyan-700: var(--color-cyan-300);
+  --color-cyan-800: var(--color-cyan-300);
+
+  --color-sky-50: color-mix(in oklab, var(--color-sky-900) 22%, transparent);
+  --color-sky-100: color-mix(in oklab, var(--color-sky-900) 32%, transparent);
+  --color-sky-200: color-mix(in oklab, var(--color-sky-500) 28%, transparent);
+  --color-sky-600: var(--color-sky-400);
+  --color-sky-700: var(--color-sky-300);
+  --color-sky-800: var(--color-sky-300);
+
+  --color-blue-50: color-mix(in oklab, var(--color-blue-900) 22%, transparent);
+  --color-blue-100: color-mix(in oklab, var(--color-blue-900) 32%, transparent);
+  --color-blue-200: color-mix(in oklab, var(--color-blue-500) 28%, transparent);
+  --color-blue-600: var(--color-blue-400);
+  --color-blue-700: var(--color-blue-300);
+  --color-blue-800: var(--color-blue-300);
+
+  --color-indigo-50: color-mix(in oklab, var(--color-indigo-900) 22%, transparent);
+  --color-indigo-100: color-mix(in oklab, var(--color-indigo-900) 32%, transparent);
+  --color-indigo-200: color-mix(in oklab, var(--color-indigo-500) 28%, transparent);
+  --color-indigo-600: var(--color-indigo-400);
+  --color-indigo-700: var(--color-indigo-300);
+  --color-indigo-800: var(--color-indigo-300);
+
+  --color-violet-50: color-mix(in oklab, var(--color-violet-900) 22%, transparent);
+  --color-violet-100: color-mix(in oklab, var(--color-violet-900) 32%, transparent);
+  --color-violet-200: color-mix(in oklab, var(--color-violet-500) 28%, transparent);
+  --color-violet-600: var(--color-violet-400);
+  --color-violet-700: var(--color-violet-300);
+  --color-violet-800: var(--color-violet-300);
+
+  --color-purple-50: color-mix(in oklab, var(--color-purple-900) 22%, transparent);
+  --color-purple-100: color-mix(in oklab, var(--color-purple-900) 32%, transparent);
+  --color-purple-200: color-mix(in oklab, var(--color-purple-500) 28%, transparent);
+  --color-purple-600: var(--color-purple-400);
+  --color-purple-700: var(--color-purple-300);
+  --color-purple-800: var(--color-purple-300);
+
+  --color-fuchsia-50: color-mix(in oklab, var(--color-fuchsia-900) 22%, transparent);
+  --color-fuchsia-100: color-mix(in oklab, var(--color-fuchsia-900) 32%, transparent);
+  --color-fuchsia-200: color-mix(in oklab, var(--color-fuchsia-500) 28%, transparent);
+  --color-fuchsia-600: var(--color-fuchsia-400);
+  --color-fuchsia-700: var(--color-fuchsia-300);
+  --color-fuchsia-800: var(--color-fuchsia-300);
+
+  --color-pink-50: color-mix(in oklab, var(--color-pink-900) 22%, transparent);
+  --color-pink-100: color-mix(in oklab, var(--color-pink-900) 32%, transparent);
+  --color-pink-200: color-mix(in oklab, var(--color-pink-500) 28%, transparent);
+  --color-pink-600: var(--color-pink-400);
+  --color-pink-700: var(--color-pink-300);
+  --color-pink-800: var(--color-pink-300);
+
+  --color-rose-50: color-mix(in oklab, var(--color-rose-900) 22%, transparent);
+  --color-rose-100: color-mix(in oklab, var(--color-rose-900) 32%, transparent);
+  --color-rose-200: color-mix(in oklab, var(--color-rose-500) 28%, transparent);
+  --color-rose-600: var(--color-rose-400);
+  --color-rose-700: var(--color-rose-300);
+  --color-rose-800: var(--color-rose-300);
+
+  --color-slate-50: color-mix(in oklab, var(--color-slate-900) 22%, transparent);
+  --color-slate-100: color-mix(in oklab, var(--color-slate-900) 32%, transparent);
+  --color-slate-200: color-mix(in oklab, var(--color-slate-500) 28%, transparent);
+  --color-slate-600: var(--color-slate-400);
+  --color-slate-700: var(--color-slate-300);
+  --color-slate-800: var(--color-slate-300);
+}
+
+/* The brand ramp is our own (see @theme), so it gets the same treatment — with
+   two carve-outs: 600 is pinned as --primary and must not move, and 900 is the
+   source the tints are mixed from, so flipping it would be a circular ref. */
+.dark {
+  --color-brand-50: color-mix(in oklab, var(--color-brand-900) 25%, transparent);
+  --color-brand-100: color-mix(in oklab, var(--color-brand-900) 35%, transparent);
+  --color-brand-200: color-mix(in oklab, var(--color-brand-500) 30%, transparent);
+  --color-brand-700: var(--color-brand-300);
+  --color-brand-800: var(--color-brand-300);
 }
 
 @layer base {
