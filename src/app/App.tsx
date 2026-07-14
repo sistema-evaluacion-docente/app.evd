@@ -10,6 +10,7 @@ import { DashboardPage } from "@/pages/dashboard";
 import { EvaluationsPage } from "@/pages/evaluations";
 import { EvaluationDetailPage } from "@/pages/evaluations/detail";
 import { EvaluationDimensionsPage } from "@/pages/evaluations/dimensions";
+import { EvaluationTeachersPage } from "@/pages/evaluations/teachers";
 import { UploadEvaluationsPage } from "@/pages/evaluations/upload";
 import { MatrixIndexPage, MatrixPage, MatrixPageMock } from "@/pages/matrix";
 import { MyHistoryPage } from "@/pages/my-history";
@@ -46,6 +47,10 @@ function App() {
       <Route
         path="/evaluations/:id/dimensions"
         component={EvaluationDimensionsPage}
+      />
+      <Route
+        path="/evaluations/:id/teachers"
+        component={EvaluationTeachersPage}
       />
       <Route path="/evaluations/upload" component={UploadEvaluationsPage} />
       <Route path="/evaluations/:id" component={EvaluationDetailPage} />
