@@ -10,6 +10,8 @@ export { default as useUpdatePlan } from "./hooks/useUpdatePlan";
 export { default as useClosePlan } from "./hooks/useClosePlan";
 export { default as useEvaluatePlan } from "./hooks/useEvaluatePlan";
 export { default as useAtRiskTeachers } from "./hooks/useAtRiskTeachers";
+export { default as usePlanCandidates } from "./hooks/usePlanCandidates";
+export { default as usePlanIndicators } from "./hooks/usePlanIndicators";
 
 export * from "./types/Plan";
 export {
