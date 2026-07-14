@@ -10,7 +10,7 @@ export function Toast({ toast }: { toast: ToastState | null }) {
     <div
       className={cn(
         'animate-fade-in fixed bottom-6 left-1/2 z-70 inline-flex -translate-x-1/2 items-center gap-2.5 rounded-lg px-4 py-3 text-[13px] font-medium shadow-pop',
-        toast.kind === 'success' && 'bg-ink-900 text-white',
+        toast.kind === 'success' && 'bg-ink-900 text-ink-50',
         toast.kind === 'warning' &&
           'border border-amber-200 bg-amber-50 text-amber-800',
         toast.kind === 'info' && 'border border-sky-200 bg-sky-50 text-sky-800',

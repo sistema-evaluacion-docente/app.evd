@@ -30,13 +30,13 @@ export function MatrixIndexPage() {
       mainClassName='p-0 lg:p-0 flex overflow-hidden'
     >
       {/* ── Left panel: teacher list ─────────────────────── */}
-      <aside className='flex w-72 shrink-0 flex-col border-r border-ink-200 bg-white'>
+      <aside className='flex w-72 shrink-0 flex-col border-r border-border bg-background'>
         {/* Panel header */}
-        <div className='border-b border-ink-100 px-4 pb-4 pt-5'>
-          <p className='text-[10.5px] font-semibold uppercase tracking-[0.1em] text-ink-400'>
+        <div className='border-b border-border px-4 pb-4 pt-5'>
+          <p className='text-[10.5px] font-semibold uppercase tracking-widest text-muted-foreground'>
             Matrices de evaluación
           </p>
-          <h2 className='mt-0.5 text-[15px] font-semibold text-ink-900'>
+          <h2 className='mt-0.5 text-[15px] font-semibold text-foreground'>
             Docentes
           </h2>
           {selectedPeriod && (
@@ -47,7 +47,7 @@ export function MatrixIndexPage() {
         </div>
 
         {/* Search */}
-        <div className='border-b border-ink-100 px-3 py-2.5'>
+        <div className='border-b border-border px-3 py-2.5'>
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -63,13 +63,13 @@ export function MatrixIndexPage() {
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div
                   key={i}
-                  className='h-14 animate-pulse rounded-lg bg-ink-100'
+                  className='h-14 animate-pulse rounded-lg bg-muted'
                 />
               ))}
             </div>
           ) : teachers.length === 0 ? (
             <div className='px-4 py-8 text-center'>
-              <p className='text-[12px] text-ink-400'>
+              <p className='text-[12px] text-muted-foreground'>
                 {search ? 'Sin resultados para la búsqueda.' : 'No hay docentes activos.'}
               </p>
             </div>
@@ -88,8 +88,8 @@ export function MatrixIndexPage() {
                       className={cn(
                         'flex items-center gap-3 rounded-lg px-2.5 py-2 text-[13px] transition-colors',
                         active
-                          ? 'bg-brand-50 text-brand-900'
-                          : 'text-ink-700 hover:bg-ink-50 hover:text-ink-900',
+                          ? 'bg-brand-50 text-brand-700'
+                          : 'text-foreground hover:bg-muted hover:text-foreground',
                       )}
                     >
                       <Avatar
@@ -102,12 +102,12 @@ export function MatrixIndexPage() {
                         <div
                           className={cn(
                             'truncate text-[13px] font-medium leading-tight',
-                            active ? 'text-brand-900' : 'text-ink-800',
+                            active ? 'text-brand-900' : 'text-foreground',
                           )}
                         >
                           {name}
                         </div>
-                        <div className='mt-0.5 text-[11px] text-ink-400'>
+                        <div className='mt-0.5 text-[11px] text-muted-foreground'>
                           {teacher.institutional_code}
                         </div>
                       </div>
@@ -124,7 +124,7 @@ export function MatrixIndexPage() {
 
         {/* Footer count */}
         {!isLoading && (
-          <div className='border-t border-ink-100 px-4 py-3 text-[11px] text-ink-400'>
+          <div className='border-t border-border px-4 py-3 text-[11px] text-muted-foreground'>
             {teachers.length} docente{teachers.length !== 1 ? 's' : ''} activo
             {teachers.length !== 1 ? 's' : ''}
           </div>
@@ -132,16 +132,16 @@ export function MatrixIndexPage() {
       </aside>
 
       {/* ── Right panel: empty state ──────────────────────── */}
-      <div className='flex flex-1 flex-col items-center justify-center gap-5 bg-ink-50 p-12 text-center'>
-        <div className='flex h-20 w-20 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-ink-100'>
-          <BarChart3 size={36} className='text-ink-300' />
+      <div className='flex flex-1 flex-col items-center justify-center gap-5 bg-muted p-12 text-center'>
+        <div className='flex h-20 w-20 items-center justify-center rounded-2xl bg-card shadow-sm ring-1 ring-border'>
+          <BarChart3 size={36} className='text-muted-foreground' />
         </div>
 
         <div className='max-w-xs'>
-          <h3 className='text-[17px] font-semibold text-ink-900'>
+          <h3 className='text-[17px] font-semibold text-foreground'>
             Selecciona un docente
           </h3>
-          <p className='mt-2 text-[13px] leading-relaxed text-ink-500'>
+          <p className='mt-2 text-[13px] leading-relaxed text-muted-foreground'>
             Elige un docente de la lista para ver el reporte detallado de su
             evaluación docente
             {selectedPeriod ? ` en el periodo ${selectedPeriod.name}` : ''}.

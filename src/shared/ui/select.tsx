@@ -28,7 +28,7 @@ export function Select({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         aria-label={ariaLabel}
-        className="h-9 w-full cursor-pointer appearance-none rounded-md border border-ink-200 bg-white pl-3 pr-9 text-[13px] text-ink-900 transition-colors focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/15"
+        className="h-9 w-full cursor-pointer appearance-none rounded-md border border-ink-200 bg-card pl-3 pr-9 text-[13px] text-ink-900 transition-colors focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/15"
       >
         {placeholder && <option value="">{placeholder}</option>}
         {options.map((option) => {

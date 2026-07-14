@@ -6,6 +6,7 @@ import { Link } from "wouter";
 import { useGetEvaluationByPeriod } from "@/features/evaluations";
 import TeacherPeriodTable from "@/features/evaluations/components/TeacherPeriodTable";
 import { usePeriodsStore } from "@/features/periods";
+import { CriticalCasesCard } from "@/features/plans";
 import CardComments from "./director/CardComments";
 import CardDepartmentAverage from "./director/CardDepartmentAverage";
 import ChartsSection from "./director/ChartsSection";
@@ -42,6 +43,7 @@ function DashboardContentDirector() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           <CardDepartmentAverage evaluation={evaluation} initialLoading={isLoading} />
           <CardComments evaluation={evaluation} initialLoading={isLoading} />
+          <CriticalCasesCard periodId={selectedPeriodId} initialLoading={isLoading} />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-[1fr_0.5fr] gap-4 items-start">

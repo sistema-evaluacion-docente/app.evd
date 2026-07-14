@@ -25,7 +25,9 @@ export interface DataTableProps<T> {
 const HEADER_VARIANTS = {
   default: 'border-b border-ink-200 text-ink-500',
   muted: 'border-b border-ink-200 bg-ink-50/60 text-ink-500',
-  dark: 'bg-ink-900 text-white',
+  // Stays dark in both themes: ink-* flips with the theme, so an ink-900 bar
+  // would turn white here and read as a glaring band across the page.
+  dark: 'bg-neutral-900 text-neutral-50',
 }
 
 /**

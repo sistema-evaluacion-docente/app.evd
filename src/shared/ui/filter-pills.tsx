@@ -41,8 +41,8 @@ export function FilterPills({
               'inline-flex shrink-0 items-center gap-2 rounded-full text-[12px] font-medium transition-colors',
               SIZES[size],
               active
-                ? 'bg-ink-900 text-white'
-                : 'border border-ink-200 bg-white text-ink-700 hover:bg-ink-50 hover:border-ink-300',
+                ? 'bg-ink-900 text-ink-50'
+                : 'border border-ink-200 bg-card text-ink-700 hover:bg-ink-50 hover:border-ink-300',
             )}
           >
             {option.dotColor && (
@@ -56,7 +56,7 @@ export function FilterPills({
               <span
                 className={cn(
                   'num inline-flex h-[18px] items-center justify-center rounded-full px-1.5 text-[11px] tabular-nums',
-                  active ? 'bg-white/15 text-white/95' : 'bg-ink-100 text-ink-600',
+                  active ? 'bg-ink-50/15 text-ink-50/95' : 'bg-ink-100 text-ink-600',
                 )}
               >
                 {option.count}

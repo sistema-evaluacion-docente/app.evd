@@ -16,13 +16,13 @@ const QUESTION_CODES = Array.from({ length: 22 }, (_, i) =>
 );
 
 function scoreColor(score: number): string {
-  if (score >= 4.5) return "text-emerald-600 dark:text-emerald-400";
-  if (score >= 4.0) return "text-green-600 dark:text-green-400";
-  if (score >= 3.5) return "text-lime-600 dark:text-lime-400";
-  if (score >= 3.0) return "text-yellow-600 dark:text-yellow-400";
-  if (score >= 2.5) return "text-orange-600 dark:text-orange-400";
+  if (score >= 4.5) return "text-emerald-600";
+  if (score >= 4.0) return "text-green-600";
+  if (score >= 3.5) return "text-lime-600";
+  if (score >= 3.0) return "text-yellow-600";
+  if (score >= 2.5) return "text-orange-600";
 
-  return "text-red-600 dark:text-red-400";
+  return "text-red-600";
 }
 
 export default function MatrizCard({ teacherId, evaluation }: MatrizCardProps) {

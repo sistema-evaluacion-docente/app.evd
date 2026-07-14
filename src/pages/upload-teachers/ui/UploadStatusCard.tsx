@@ -87,7 +87,7 @@ export function UploadStatusCard({
           <button
             type="button"
             onClick={onReset}
-            className="shrink-0 font-medium text-brand-500 hover:text-brand-600"
+            className="shrink-0 font-medium text-brand-700 hover:text-brand-800"
           >
             Subir otro archivo
           </button>

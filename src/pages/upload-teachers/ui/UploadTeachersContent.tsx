@@ -35,10 +35,11 @@ function UploadTeachersContent() {
         title="Carga de Docentes"
         description="Suba un archivo Excel (.xlsx, .xls) o CSV (.csv) con la lista de docentes para crear masivamente en su departamento."
         actions={
-          <Link href="/teachers">
-            <Button>
-              <ChevronLeft size={14} /> Volver a Docentes
-            </Button>
+          <Link
+            href="/teachers"
+            className="inline-flex h-10 items-center gap-2 rounded-md border border-ink-200 bg-card px-4 text-[13px] font-semibold text-ink-800 hover:bg-ink-50"
+          >
+            <ChevronLeft size={14} /> Volver a Docentes
           </Link>
         }
       />
