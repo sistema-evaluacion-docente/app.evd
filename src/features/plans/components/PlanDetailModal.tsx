@@ -1,4 +1,5 @@
 import { RefreshCw } from "lucide-react";
+import { useMemo } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,7 @@ import { Avatar } from "@/shared/ui";
 import useClosePlan from "../hooks/useClosePlan";
 import useEvaluatePlan from "../hooks/useEvaluatePlan";
 import useGetPlan from "../hooks/useGetPlan";
+import usePlanIndicators from "../hooks/usePlanIndicators";
 import { isClosed, statusMeta, TARGET_TYPE_LABEL } from "../lib/planStatus";
 import type { CloseResult, PlanItem } from "../types/Plan";
 
@@ -43,10 +45,23 @@ interface PlanDetailModalProps {
 
 export function PlanDetailModal({ planId, onClose }: PlanDetailModalProps) {
   const { data, isLoading } = useGetPlan(planId);
+  const { data: indicatorsData } = usePlanIndicators();
   const evaluatePlan = useEvaluatePlan();
   const closePlan = useClosePlan();
 
   const plan = data?.data;
+
+  // Item-level commitments are stored as a question code ("011"): resolve the
+  // text so the compromiso is readable without opening the form.
+  const questionText = useMemo(() => {
+    const texts = new Map<string, string>();
+    indicatorsData?.data?.dimensions.forEach((dimension) =>
+      dimension.questions.forEach((question) =>
+        texts.set(question.code, question.text),
+      ),
+    );
+    return texts;
+  }, [indicatorsData]);
 
   // The three close buttons share one mutation, so `isPending` alone would spin
   // all of them. The in-flight variables tell us which one was actually clicked.
@@ -160,7 +175,11 @@ export function PlanDetailModal({ planId, onClose }: PlanDetailModalProps) {
 
                 <div className="space-y-2">
                   {plan.items.map((item) => (
-                    <ItemRow key={item.id} item={item} />
+                    <ItemRow
+                      key={item.id}
+                      item={item}
+                      questionText={questionText}
+                    />
                   ))}
                 </div>
               </section>
@@ -261,7 +280,18 @@ function StatusBadge({ status }: { status: PlanItem["status"] | string }) {
   );
 }
 
-function ItemRow({ item }: { item: PlanItem }) {
+function ItemRow({
+  item,
+  questionText,
+}: {
+  item: PlanItem;
+  questionText: Map<string, string>;
+}) {
+  const target =
+    item.target_type === "QUESTION" && item.target_ref
+      ? `${item.target_ref} · ${questionText.get(item.target_ref) ?? ""}`
+      : item.target_ref;
+
   return (
     <div className="rounded-lg border p-3">
       <div className="flex items-start justify-between gap-3">
@@ -280,7 +310,7 @@ function ItemRow({ item }: { item: PlanItem }) {
       <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px] text-muted-foreground">
         <span className="rounded bg-muted px-1.5 py-0.5 font-medium">
           {TARGET_TYPE_LABEL[item.target_type] ?? item.target_type}
-          {item.target_ref ? ` · ${item.target_ref}` : ""}
+          {target ? ` · ${target}` : ""}
         </span>
 
         {item.baseline_value != null && (
