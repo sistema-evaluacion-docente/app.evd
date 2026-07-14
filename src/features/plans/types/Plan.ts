@@ -34,6 +34,18 @@ export interface PlanItem {
   order: number;
 }
 
+/** A PDF attached to the plan as proof of compliance (by the teacher or the director). */
+export interface PlanEvidence {
+  id: number;
+  plan_id: number;
+  item_id: number | null;
+  uploaded_by: number | null;
+  uploader_name: string | null;
+  description: string | null;
+  file_url: string;
+  created_at: string | null;
+}
+
 export interface PlanCheckpoint {
   id: number;
   plan_id: number;
@@ -62,10 +74,16 @@ export interface Plan {
   end_date: string | null;
   created_by: number | null;
   closed_at: string | null;
+  acta_pdf_url: string | null;
+  acta_description: string | null;
+  acta_uploaded_at: string | null;
+  has_acta: boolean;
   progress: number;
   suggested_result: string | null;
   items: PlanItem[];
   checkpoints: PlanCheckpoint[];
+  evidences: PlanEvidence[];
+  evidence_count: number;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -155,6 +173,41 @@ export interface PlanCandidates {
 
 /** Same payload, narrowed to teachers below the threshold without a plan. */
 export type AtRiskTeacher = PlanCandidate;
+
+/** A period whose grades are already loaded: candidate origin period for a plan. */
+export interface PlanPeriod {
+  id: number;
+  code: string;
+  name: string | null;
+}
+
+/** One evaluated period in the teacher's history, with per-dimension averages. */
+export interface TeacherHistoryPeriod {
+  period_code: string;
+  period_name: string | null;
+  overall_average: number | null;
+  dimensions: Record<string, number | null>;
+}
+
+/** An indicator targeted by plans of two or more different periods. */
+export interface PlanRecurrence {
+  target_type: TargetType;
+  target_ref: string | null;
+  label: string;
+  plan_ids: number[];
+  period_codes: string[];
+}
+
+/** Cross-period follow-up history of a teacher. */
+export interface TeacherPlanHistory {
+  teacher_id: number;
+  teacher_name: string | null;
+  teacher_avatar_url: string | null;
+  department_id: number | null;
+  periods: TeacherHistoryPeriod[];
+  plans: Plan[];
+  recurrences: PlanRecurrence[];
+}
 
 /** Catalogue of indicators a commitment can be attached to. */
 export interface PlanIndicators {
