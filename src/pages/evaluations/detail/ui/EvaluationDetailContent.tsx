@@ -8,8 +8,9 @@ import {
   SummaryStats,
   TeacherRankingTable,
 } from "@/features/evaluations";
+import { CirclePile, MessageSquare, Users } from "lucide-react";
+
 import { useEvaluationDetail } from "../model/useEvaluationDetail";
-import { Separator } from "@/components/ui/separator";
 import EvaluationSection from "./EvaluationSection";
 
 type Props = {
@@ -56,10 +57,9 @@ function EvaluationDetailContent({ evaluationId }: Props) {
             evaluationId={evaluationId}
           />
 
-          <Separator />
-
           <EvaluationSection
             title="Docentes"
+            icon={<Users size={18} />}
             url={`/evaluations/${evaluationId}/teachers`}
           />
 
@@ -70,6 +70,7 @@ function EvaluationDetailContent({ evaluationId }: Props) {
 
           <EvaluationSection
             title="Grupos"
+            icon={<CirclePile size={18} />}
             url={`/evaluations/${evaluationId}/groups`}
           />
 
@@ -77,6 +78,7 @@ function EvaluationDetailContent({ evaluationId }: Props) {
 
           <EvaluationSection
             title="Comentarios"
+            icon={<MessageSquare size={18} />}
             url={`/evaluations/${evaluationId}/comments`}
           />
 

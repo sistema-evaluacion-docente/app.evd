@@ -8,6 +8,7 @@ import useAuth from "@/shared/hooks/useAuth";
 import { AppHeader, type AppHeaderProps } from "./AppHeader";
 import { AppSidebar } from "./AppSidebar";
 import { Button } from "@/components/ui/button";
+import { AutoBreadcrumb } from "./AutoBreadcrumb";
 
 export interface AppLayoutProps {
   children: ReactNode;
@@ -49,7 +50,12 @@ export function AppLayout({
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <AppHeader onOpenMenu={() => setMobileOpen(true)} {...header} />
+        <AppHeader
+          onOpenMenu={() => setMobileOpen(true)}
+          showBreadcrumb={true}
+          breadcrumb={<AutoBreadcrumb />}
+          {...header}
+        />
 
         <main
           className={cn(

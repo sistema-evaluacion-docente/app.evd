@@ -27,7 +27,7 @@ export function SummaryStats({ summary }: SummaryStatsProps) {
       <StatTile
         label="Total Docentes"
         value={summary.teacher_count}
-        icon={<Users size={16} className="text-ink-400" />}
+        icon={<Users size={16} className="text-muted-foreground" />}
       />
 
       <Link
@@ -38,7 +38,7 @@ export function SummaryStats({ summary }: SummaryStatsProps) {
           label="Mejor Docente"
           value={
             summary.best_teacher ? (
-              <span className="text-[16px]">
+              <span className="text-3xl">
                 {summary.best_teacher.overall_average?.toFixed(2) ?? "—"}
               </span>
             ) : (
@@ -58,7 +58,7 @@ export function SummaryStats({ summary }: SummaryStatsProps) {
           label="Menor Promedio"
           value={
             summary.worst_teacher ? (
-              <span className="text-[16px]">
+              <span className="text-3xl">
                 {summary.worst_teacher.overall_average?.toFixed(2) ?? "—"}
               </span>
             ) : (

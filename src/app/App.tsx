@@ -9,7 +9,10 @@ import { AdminPeriodsPage } from "@/pages/admin-periods";
 import { DashboardPage } from "@/pages/dashboard";
 import { EvaluationsPage } from "@/pages/evaluations";
 import { EvaluationDetailPage } from "@/pages/evaluations/detail";
+import { EvaluationCommentsPage } from "@/pages/evaluations/comments";
 import { EvaluationDimensionsPage } from "@/pages/evaluations/dimensions";
+import { EvaluationGroupsPage } from "@/pages/evaluations/groups";
+import { EvaluationTeachersPage } from "@/pages/evaluations/teachers";
 import { UploadEvaluationsPage } from "@/pages/evaluations/upload";
 import { MatrixIndexPage, MatrixPage, MatrixPageMock } from "@/pages/matrix";
 import { MyHistoryPage } from "@/pages/my-history";
@@ -54,6 +57,18 @@ function App() {
       <Route
         path="/evaluations/:id/dimensions"
         component={EvaluationDimensionsPage}
+      />
+      <Route
+        path="/evaluations/:id/teachers"
+        component={EvaluationTeachersPage}
+      />
+      <Route
+        path="/evaluations/:id/groups"
+        component={EvaluationGroupsPage}
+      />
+      <Route
+        path="/evaluations/:id/comments"
+        component={EvaluationCommentsPage}
       />
       <Route path="/evaluations/upload" component={UploadEvaluationsPage} />
       <Route path="/evaluations/:id" component={EvaluationDetailPage} />
