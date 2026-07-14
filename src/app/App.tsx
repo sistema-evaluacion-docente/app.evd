@@ -9,6 +9,7 @@ import { AdminPeriodsPage } from "@/pages/admin-periods";
 import { DashboardPage } from "@/pages/dashboard";
 import { EvaluationsPage } from "@/pages/evaluations";
 import { EvaluationDetailPage } from "@/pages/evaluations/detail";
+import { EvaluationCommentsPage } from "@/pages/evaluations/comments";
 import { EvaluationDimensionsPage } from "@/pages/evaluations/dimensions";
 import { EvaluationGroupsPage } from "@/pages/evaluations/groups";
 import { EvaluationTeachersPage } from "@/pages/evaluations/teachers";
@@ -56,6 +57,10 @@ function App() {
       <Route
         path="/evaluations/:id/groups"
         component={EvaluationGroupsPage}
+      />
+      <Route
+        path="/evaluations/:id/comments"
+        component={EvaluationCommentsPage}
       />
       <Route path="/evaluations/upload" component={UploadEvaluationsPage} />
       <Route path="/evaluations/:id" component={EvaluationDetailPage} />
