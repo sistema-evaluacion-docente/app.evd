@@ -61,10 +61,8 @@ export function HistogramChart({
         <div />
 
         <Popover>
-          <PopoverTrigger>
-            <Button variant="outline" size="icon-xs">
-              <Settings2 className="size-4" />
-            </Button>
+          <PopoverTrigger render={<Button variant="outline" size="icon-xs" />}>
+            <Settings2 className="size-4" />
           </PopoverTrigger>
 
           <PopoverContent align="end" className="w-80">
