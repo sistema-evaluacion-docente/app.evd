@@ -1,5 +1,6 @@
 export type TargetType =
   | "DIMENSION"
+  | "QUESTION"
   | "PEDAGOGICAL_CATEGORY"
   | "OVERALL_AVERAGE"
   | "QUALITATIVE";
@@ -104,18 +105,78 @@ export interface ClosePlanInput {
   reason?: string;
 }
 
-export interface WeakDimension {
-  dimension: string;
-  average: number;
+/** One question of the evaluation form (e.g. "011 · Asiste puntualmente a clase"). */
+export interface IndicatorQuestion {
+  target_type: "QUESTION";
+  target_ref: string;
+  code: string;
+  text: string;
+  average: number | null;
+  below_threshold: boolean;
   suggestions: string[];
 }
 
-export interface AtRiskTeacher {
+/** A dimension: its own overall score plus every question inside it. */
+export interface IndicatorDimension {
+  dimension: string;
+  target_type: "DIMENSION";
+  target_ref: string;
+  average: number | null;
+  below_threshold: boolean;
+  suggestions: string[];
+  questions: IndicatorQuestion[];
+}
+
+export type WeakQuestion = IndicatorQuestion & { dimension: string };
+
+/**
+ * A teacher that can receive a plan. The whole department is returned, not only
+ * the ones under the threshold: a teacher can average 4.0 overall and still be
+ * at 2.0 in punctuality.
+ */
+export interface PlanCandidate {
   teacher_id: number;
   name: string | null;
   avatar_url: string | null;
   institutional_code: string | null;
   overall_average: number;
-  weak_dimensions: WeakDimension[];
+  below_threshold: boolean;
+  has_plan: boolean;
+  dimensions: IndicatorDimension[];
+  weak_dimensions: IndicatorDimension[];
+  weak_questions: WeakQuestion[];
   overall_suggestions: string[];
+}
+
+export interface PlanCandidates {
+  threshold: number;
+  teachers: PlanCandidate[];
+}
+
+/** Same payload, narrowed to teachers below the threshold without a plan. */
+export type AtRiskTeacher = PlanCandidate;
+
+/** Catalogue of indicators a commitment can be attached to. */
+export interface PlanIndicators {
+  threshold: number;
+  overall: {
+    target_type: "OVERALL_AVERAGE";
+    target_ref: null;
+    label: string;
+    suggestions: string[];
+  };
+  dimensions: {
+    dimension: string;
+    target_type: "DIMENSION";
+    target_ref: string;
+    label: string;
+    suggestions: string[];
+    questions: {
+      target_type: "QUESTION";
+      target_ref: string;
+      code: string;
+      text: string;
+      suggestions: string[];
+    }[];
+  }[];
 }

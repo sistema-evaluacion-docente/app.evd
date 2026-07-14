@@ -67,6 +67,7 @@ export const PLAN_STATUS_FILTERS: { value: string; label: string }[] = [
 
 export const TARGET_TYPE_LABEL: Record<string, string> = {
   DIMENSION: "Dimensión",
+  QUESTION: "Ítem",
   PEDAGOGICAL_CATEGORY: "Categoría",
   OVERALL_AVERAGE: "Promedio general",
   QUALITATIVE: "Cualitativo",
