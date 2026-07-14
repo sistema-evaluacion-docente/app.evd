@@ -12,7 +12,7 @@ import { PageHeader } from "@/shared/ui";
 
 function UploadEvaluationsContent() {
   const [dropzoneKey, setDropzoneKey] = useState(0);
-  const { status, progress, fileName, fileSize, error, stats, upload, reset } =
+  const { status, progress, fileName, fileSize, error, stats, upload, reset, evaluationId } =
     useUploadEvaluation();
 
   const handleFile = (file: File | undefined) => {
@@ -60,7 +60,7 @@ function UploadEvaluationsContent() {
         comments={stats.comments}
       />
 
-      <UploadFooter status={status} ready={ready} />
+      <UploadFooter status={status} ready={ready} evaluationId={evaluationId} />
     </>
   );
 }

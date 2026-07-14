@@ -15,7 +15,7 @@ function AdminPeriodsCard({ periods, isLoading }: AdminPeriodsCardProps) {
     <Card className="pt-0">
       <CardHeader className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <CalendarDays size={16} className="text-ink-500" />
+          <CalendarDays size={16} className="text-muted-foreground" />
           <CardTitle>Periodos Academicos</CardTitle>
         </div>
 
@@ -54,12 +54,10 @@ function AdminPeriodsCard({ periods, isLoading }: AdminPeriodsCardProps) {
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold text-ink-800">
-                      {period.name}
-                    </p>
+                    <p className="text-sm font-semibold">{period.name}</p>
 
                     {period.active && (
-                      <span className="inline-flex h-5 w-fit shrink-0 items-center rounded-4xl bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
+                      <span className="inline-flex h-5 w-fit shrink-0 items-center rounded-4xl bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
                         Activo
                       </span>
                     )}

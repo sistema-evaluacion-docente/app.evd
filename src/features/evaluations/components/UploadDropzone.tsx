@@ -53,13 +53,13 @@ export function UploadDropzone({ busy, onFile, onError }: UploadDropzoneProps) {
           <FileUp size={28} strokeWidth={1.75} />
         </div>
 
-        <h3 className="mt-5 text-[18px] font-semibold tracking-tight text-ink-900">
+        <h3 className="mt-5 text-lg font-semibold tracking-tight">
           Arrastre su archivo aquí
         </h3>
 
-        <p className="mt-1.5 text-[13px] text-ink-500">
+        <p className="mt-1.5 text-sm text-mute-foreground">
           Formato aceptado:{" "}
-          <span className="font-medium text-brand-600">PDF Institucional</span>
+          <span className="font-medium text-brand-400">PDF Institucional</span>
         </p>
 
         <Button
@@ -72,7 +72,7 @@ export function UploadDropzone({ busy, onFile, onError }: UploadDropzoneProps) {
           Seleccionar Archivo PDF
         </Button>
 
-        <p className="mt-5 text-[11.5px] text-ink-400">
+        <p className="mt-5 text-xs text-mute-foreground">
           Tamaño máximo de archivo: 10MB
         </p>
 

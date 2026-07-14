@@ -60,8 +60,7 @@ interface DataTableCreateConfigDefault extends DataTableCreateConfigBase {
 }
 
 export type DataTableCreateConfig =
-  | DataTableCreateConfigCustomForm
-  | DataTableCreateConfigDefault;
+  DataTableCreateConfigCustomForm | DataTableCreateConfigDefault;
 
 interface DataTableProps<TData> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -76,6 +75,7 @@ interface DataTableProps<TData> {
   cellClassName?: string;
   enableSorting?: boolean;
   enableSearch?: boolean;
+  enableFilters?: boolean;
   searchPlaceholder?: string;
   pageSize?: number;
   pageSizeOptions?: number[];
@@ -89,6 +89,7 @@ interface DataTableProps<TData> {
   extraFilterParams?: Record<string, string | number | undefined>;
   createConfig?: DataTableCreateConfig;
   filters?: React.ReactNode;
+  disabledPagination?: boolean;
 }
 
 /**
@@ -107,6 +108,7 @@ function DataTable<TData>({
   cellClassName,
   enableSorting = true,
   enableSearch = true,
+  enableFilters = true,
   searchPlaceholder = "Buscar...",
   pageSize = 10,
   pageSizeOptions = [5, 10, 20, 50],
@@ -116,6 +118,7 @@ function DataTable<TData>({
   extraFilterParams,
   createConfig,
   filters,
+  disabledPagination,
 }: DataTableProps<TData>) {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -123,7 +126,7 @@ function DataTable<TData>({
   const limitValue = searchParams.get("limit") ?? pageSize;
   const searchValue = searchParams.get("search") ?? "";
 
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(searchValue);
   const [page, setPage] = useState(Number(pageValue ?? 1));
   const [limit, setLimit] = useState(Number(limitValue ?? pageSize));
 
@@ -164,81 +167,77 @@ function DataTable<TData>({
   });
 
   useEffect(() => {
+    const currentSearch = searchParams.get("search") ?? "";
+    const currentPage = Number(searchParams.get("page") ?? 1);
+    const currentLimit = Number(searchParams.get("limit") ?? pageSize);
+
     if (
-      searchValue === undefined &&
-      pageValue === undefined &&
-      limitValue === undefined
-    )
+      currentSearch === value &&
+      currentPage === page &&
+      currentLimit === limit
+    ) {
       return;
+    }
 
     setSearchParams((prev) => {
       return {
         ...prev,
-        search: "",
-        page: 1,
-        limit: pageSize,
+        page: String(page),
+        limit: String(limit),
+        search: value,
       };
     });
-  }, []);
-
-  useEffect(() => {
-    if (page !== 1 || limit !== pageSize) {
-      setSearchParams((prev) => {
-        return {
-          ...prev,
-          page: page,
-          limit: limit,
-          search: value,
-        };
-      });
-    }
-  }, [page, limit, pageSize, value, setSearchParams]);
+  }, [page, limit, value, searchParams, setSearchParams, pageSize]);
 
   return (
     <>
-      <div className="flex gap-2 items-center">
-        {enableSearch ? (
-          <Input
-            type="text"
-            value={search ?? ""}
-            onChange={(event) => {
-              setSearch(event.target.value);
-            }}
-            placeholder={searchPlaceholder}
-            className="bg-background"
-          />
-        ) : null}
+      {enableFilters && (
+        <div className="flex gap-2 items-center">
+          {enableSearch ? (
+            <Input
+              type="text"
+              value={search ?? ""}
+              onChange={(event) => {
+                setSearch(event.target.value);
+              }}
+              placeholder={searchPlaceholder}
+              className="bg-background"
+            />
+          ) : null}
 
-        {filters}
+          {filters}
 
-        <div className="flex gap-2 items-center ml-auto">
-          {createConfig ? (
+          <div className="flex gap-2 items-center ml-auto">
+            {createConfig ? (
+              <Button
+                size="sm"
+                type="button"
+                onClick={() => {
+                  setNewItemName("");
+                  setIsCreateDialogOpen(true);
+                }}
+              >
+                <Plus className="size-4" />
+                {createConfig.label ?? "Nuevo"}
+              </Button>
+            ) : null}
+
             <Button
               size="sm"
               type="button"
-              onClick={() => {
-                setNewItemName("");
-                setIsCreateDialogOpen(true);
-              }}
+              variant="outline"
+              onClick={() => refetch()}
+              disabled={isFetching}
+              className="shrink-0"
             >
-              <Plus className="size-4" />
-              {createConfig.label ?? "Nuevo"}
+              <RotateCcw
+                className={cn("size-4", isFetching && "animate-spin")}
+              />
+              Recargar
             </Button>
-          ) : null}
-
-          <Button
-            size="sm"
-            type="button"
-            variant="outline"
-            onClick={() => refetch()}
-            disabled={isFetching}
-            className="shrink-0"
-          >
-            <RotateCcw className={cn("size-4", isFetching && "animate-spin")} />
-            Recargar
-          </Button>
+          </div>
         </div>
-      </div>
+      )}
 
       <div
         className={cn(
@@ -408,57 +407,64 @@ function DataTable<TData>({
         </table>
       </div>
 
-      {!isLoading && table.getRowModel().rows.length > 0 ? (
-        <div className="mt-3 flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2">
-            <span>Filas por página</span>
+      {!disabledPagination && (
+        <>
+          {!isLoading && table.getRowModel().rows.length > 0 ? (
+            <div className="mt-3 flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2">
+                <span>Filas por página</span>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={<Button variant="outline" size="sm" />}
-              >
-                {limit}
-              </DropdownMenuTrigger>
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={<Button variant="outline" size="sm" />}
+                  >
+                    {limit}
+                  </DropdownMenuTrigger>
 
-              <DropdownMenuContent align="start" className="w-24">
-                {pageSizeOptions.map((size) => (
-                  <DropdownMenuItem key={size} onClick={() => setLimit(size)}>
-                    {size}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+                  <DropdownMenuContent align="start" className="w-24">
+                    {pageSizeOptions.map((size) => (
+                      <DropdownMenuItem
+                        key={size}
+                        onClick={() => setLimit(size)}
+                      >
+                        {size}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
 
-          <div className="flex items-center gap-3">
-            <span>
-              Página {page} de {paginationData?.pages ?? 1}
-            </span>
+              <div className="flex items-center gap-3">
+                <span>
+                  Página {page} de {paginationData?.pages ?? 1}
+                </span>
 
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setPage(page - 1)}
-                disabled={page === 1}
-              >
-                Anterior
-              </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(page - 1)}
+                    disabled={page === 1}
+                  >
+                    Anterior
+                  </Button>
 
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setPage(page + 1)}
-                disabled={page >= (paginationData?.pages ?? 0)}
-              >
-                Siguiente
-              </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(page + 1)}
+                    disabled={page >= (paginationData?.pages ?? 0)}
+                  >
+                    Siguiente
+                  </Button>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      ) : null}
+          ) : null}
+        </>
+      )}
 
       {createConfig ? (
         <Dialog

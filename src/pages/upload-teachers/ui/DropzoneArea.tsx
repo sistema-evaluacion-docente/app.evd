@@ -37,7 +37,7 @@ export function DropzoneArea({
           "flex flex-col items-center rounded-lg border-2 border-dashed px-6 py-10 text-center transition-colors sm:py-14",
           dragOver
             ? "border-brand-600 bg-brand-50/60"
-            : "border-brand-200 bg-brand-50/20",
+            : "border-brand-200 bg-brand-50/10",
           busy && "pointer-events-none opacity-60",
         )}
       >
@@ -45,15 +45,15 @@ export function DropzoneArea({
           <FileUp size={28} strokeWidth={1.75} />
         </div>
 
-        <h3 className="mt-5 text-[18px] font-semibold tracking-tight text-ink-900">
+        <h3 className="mt-5 text-[18px] font-semibold tracking-tight">
           Arrastre su archivo aquí
         </h3>
 
-        <p className="mt-1.5 text-[13px] text-ink-500">
+        <p className="mt-1.5 text text-muted-foreground">
           Formatos aceptados:{" "}
-          <span className="font-medium text-brand-600">.xlsx · .xls · .csv</span>
+          <span className="font-medium text-brand-500">.xlsx · .xls · .csv</span>
           {" · "}
-          <span className="font-medium text-brand-600">Máx. 5MB</span>
+          <span className="font-medium text-brand-500">Máx. 5MB</span>
         </p>
 
         <Button
@@ -66,7 +66,7 @@ export function DropzoneArea({
           Seleccionar Archivo Excel
         </Button>
 
-        <p className="mt-5 text-[11.5px] text-ink-400">
+        <p className="mt-5 text-xs text-muted-foreground">
           Columnas requeridas: nombre, email, codigo institucional, tipo de
           contrato
         </p>

@@ -36,63 +36,69 @@ export function UploadStatusCard({
               <Check size={13} strokeWidth={2.5} />
             </span>
           ) : status === "error" ? (
-            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-brand-100 text-brand-600">
+            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-brand-100 text-muted-foreground">
               <AlertTriangle size={13} />
             </span>
           ) : (
-            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-ink-100">
-              <span className="h-2.5 w-2.5 animate-spin rounded-full border-2 border-ink-300 border-t-brand-600" />
+            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-muted">
+              <span className="h-2.5 w-2.5 animate-spin rounded-full border-2" />
             </span>
           )}
 
-          <span className="truncate text-[14px] font-semibold text-ink-900">
+          <span className="truncate font-semibold">
             {STATUS_HEADING[status]}
           </span>
         </div>
 
-        <span className="num text-[13px] font-semibold text-ink-700">
+        <span className="num text-[13px] font-semibold text-mute-foreground">
           {Math.round(progress)}%
         </span>
       </div>
 
-      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-ink-100">
+      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
         <div
           className="h-full bg-brand-600 transition-all duration-200"
           style={{ width: `${progress}%` }}
         />
       </div>
 
-      <div className="mt-3 flex items-center justify-between gap-3 text-[12.5px] text-ink-500">
+      <div className="mt-3 flex items-center justify-between gap-3 text-sm text-mute-foreground">
         <span className="inline-flex min-w-0 items-center gap-1.5">
           <Info size={14} />
 
           {status === "success" && (
             <span className="truncate">
-              Archivo "
-              <span className="font-medium text-ink-700">{fileName}</span>"
-              {fileSize && <span className="text-ink-400"> · {fileSize}</span>}{" "}
+              Archivo "<span className="font-medium">{fileName}</span>"
+              {fileSize && (
+                <span className="text-muted-foreground"> · {fileSize}</span>
+              )}{" "}
               procesado exitosamente.
             </span>
           )}
 
           {status === "uploading" && (
             <span className="truncate">
-              Subiendo "
-              <span className="font-medium text-ink-700">{fileName}</span>"
-              {fileSize && <span className="text-ink-400"> · {fileSize}</span>}…
+              Subiendo "<span className="font-medium">{fileName}</span>"
+              {fileSize && (
+                <span className="text-muted-foreground"> · {fileSize}</span>
+              )}
+              …
             </span>
           )}
 
           {status === "processing" && (
             <span className="truncate">
               Extrayendo evaluaciones de "
-              <span className="font-medium text-ink-700">{fileName}</span>"
-              {fileSize && <span className="text-ink-400"> · {fileSize}</span>}…
+              <span className="font-medium">{fileName}</span>"
+              {fileSize && (
+                <span className="text-muted-foreground"> · {fileSize}</span>
+              )}
+              …
             </span>
           )}
 
           {status === "error" && (
-            <span className="text-brand-700">{error}</span>
+            <span className="text-brand-500">{error}</span>
           )}
         </span>
 
@@ -100,7 +106,7 @@ export function UploadStatusCard({
           <button
             type="button"
             onClick={onChangeFile}
-            className="shrink-0 text-[12.5px] font-medium text-brand-700 hover:text-brand-800"
+            className="shrink-0 text-sm font-medium text-brand-500 hover:text-brand-600 cursor-pointer"
           >
             Cambiar archivo
           </button>

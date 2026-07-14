@@ -16,6 +16,7 @@ export interface AdminAuditItem {
   id: number;
   user_id: number | null;
   user_name: string | null;
+  user_avatar: string | null;
   table_name: string | null;
   operation: string | null;
   element: string | null;

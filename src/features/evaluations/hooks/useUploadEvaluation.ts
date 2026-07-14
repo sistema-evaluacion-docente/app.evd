@@ -34,6 +34,7 @@ export function useUploadEvaluation() {
   const [error, setError] = useState("");
   const [stats, setStats] = useState<UploadStats>({ teachers: 0, comments: 0 });
   const [fileSize, setFileSize] = useState("");
+  const [evaluationId, setEvaluationId] = useState<number | null>(null);
 
   const pollId = useRef<number>(0);
   const tickId = useRef<number>(0);
@@ -88,6 +89,8 @@ export function useUploadEvaluation() {
     try {
       const uploadResult = await uploadEvaluation(file);
       const evaluationId: number = uploadResult.data.id;
+
+      setEvaluationId(evaluationId);
 
       // Upload accepted (202), switch to polling phase
       window.clearInterval(tickId.current);
@@ -146,11 +149,13 @@ export function useUploadEvaluation() {
   const reset = useCallback(() => {
     clearTimers();
     progressVal.current = 0;
+
     setStatus("idle");
     setProgress(0);
     setFileName("");
     setFileSize("");
     setError("");
+    setEvaluationId(null);
     setStats({ teachers: 0, comments: 0 });
   }, []);
 
@@ -172,5 +177,6 @@ export function useUploadEvaluation() {
     upload,
     reset,
     loadSample,
+    evaluationId
   };
 }

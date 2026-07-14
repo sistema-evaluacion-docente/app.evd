@@ -109,6 +109,9 @@ export function CommentsTable({ evaluationId }: CommentsTableProps) {
       searchPlaceholder="Buscar por docente, curso..."
       pageSize={10}
       minWidthClassName="min-w-150"
+      disabledPagination={true}
+      enableSearch={false}
+      enableFilters={false}
     />
   );
 }

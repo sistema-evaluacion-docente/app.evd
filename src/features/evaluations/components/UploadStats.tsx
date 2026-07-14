@@ -16,7 +16,7 @@ export function UploadStats({ ready, teachers, comments }: UploadStatsProps) {
         <StatTile
           label="Total docentes detectados"
           value={teachers.toLocaleString("es-CO")}
-          valueClassName="text-ink-900 text-[40px]"
+          valueClassName="text-4xl"
           icon={
             <span className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-brand-50 text-brand-600">
               <Users size={18} />
@@ -28,7 +28,7 @@ export function UploadStats({ ready, teachers, comments }: UploadStatsProps) {
         <StatTile
           label="Total comentarios"
           value={comments.toLocaleString("es-CO")}
-          valueClassName="text-ink-900 text-[40px]"
+          valueClassName="text-4xl"
           icon={
             <span className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-brand-50 text-brand-600">
               <FileText size={18} />
@@ -45,16 +45,16 @@ export function UploadStats({ ready, teachers, comments }: UploadStatsProps) {
       {["Total docentes detectados", "Total comentarios"].map((label) => (
         <Card key={label} className="border-dashed p-5 sm:p-6">
           <div className="flex items-start justify-between gap-3">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-400">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
               {label}
             </div>
 
-            <div className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-ink-50 text-ink-300">
+            <div className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-ink-50 text-muted-foreground">
               <Users size={18} />
             </div>
           </div>
 
-          <div className="num mt-5 text-[40px] font-semibold leading-none tracking-tight text-ink-300">
+          <div className="num mt-5 text-[40px] font-semibold leading-none tracking-tight text-muted-foreground">
             —
           </div>
         </Card>

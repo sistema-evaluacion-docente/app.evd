@@ -56,7 +56,7 @@ function UploadTeachersContent() {
         <a
           download
           href="/DocentesEjemplo.csv"
-          className="inline-flex items-center gap-1.5 text-[13px] font-medium text-ink-500 hover:text-ink-800"
+          className="inline-flex items-center gap-1.5  text-sm font-medium text-muted-foreground hover:text-foreground"
         >
           <Button variant="outline" size="sm" className="gap-1.5">
             <Download size={14} /> Descargar CSV de ejemplo
@@ -91,16 +91,16 @@ function UploadTeachersContent() {
           {["Creados", "Omitidos", "Errores"].map((label) => (
             <Card key={label} className="border-dashed p-5 sm:p-6">
               <div className="flex items-start justify-between gap-3">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-400">
+                <div className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                   {label}
                 </div>
 
-                <div className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-ink-50 text-ink-300">
+                <div className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-muted text-muted-foreground">
                   <Users size={18} />
                 </div>
               </div>
 
-              <div className="num mt-5 text-[40px] font-semibold leading-none tracking-tight text-ink-300">
+              <div className="num mt-5 text-[40px] font-semibold leading-none tracking-tight text-muted-foreground">
                 —
               </div>
             </Card>
@@ -109,7 +109,7 @@ function UploadTeachersContent() {
       )}
 
       <div className="flex flex-col justify-between gap-3 pt-2 sm:flex-row sm:items-center animate-fade-in">
-        <div className="text-[12.5px] text-ink-500">
+        <div className="text-sm text-muted-foreground">
           {status === "idle" &&
             "Esperando archivo. Use el área superior para subir un Excel con los docentes."}
 
