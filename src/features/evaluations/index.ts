@@ -75,7 +75,6 @@ export { default as useGetTeacherVsDepartment } from "./hooks/useGetTeacherVsDep
 export { default as CourseAveragesCard } from "./components/CourseAveragesCard";
 export { default as DimensionAveragesCard } from "./components/DimensionAveragesCard";
 export { default as HistoricalEvolutionCard } from "./components/HistoricalEvolutionCard";
-export { default as ImprovementPlanCard } from "./components/ImprovementPlanCard";
 export { default as MatrizCard } from "./components/MatrizCard";
 export { default as NoEvaluationState } from "./components/NoEvaluationState";
 export { default as TeacherCommentsCard } from "./components/TeacherCommentsCard";

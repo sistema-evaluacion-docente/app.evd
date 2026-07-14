@@ -3,13 +3,13 @@ import {
   CourseAveragesCard,
   DimensionAveragesCard,
   HistoricalEvolutionCard,
-  ImprovementPlanCard,
   MatrizCard,
   NoEvaluationState,
   TeacherCommentsCard,
   TeacherProfileHeader,
   useCurrentTeacherEvaluation,
 } from "@/features/evaluations";
+import { TeacherPlanHistorySection } from "@/features/plans";
 import { useGetTeacherById } from "@/features/teachers";
 
 type Props = {
@@ -53,7 +53,7 @@ function TeacherDetailContent({ teacherId }: Props) {
             evaluation={evaluation}
           />
 
-          <ImprovementPlanCard />
+          <TeacherPlanHistorySection teacherId={teacherId} />
         </>
       )}
     </>
