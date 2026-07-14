@@ -28,7 +28,7 @@ export function AppHeader({
         <button
           type="button"
           onClick={onOpenMenu}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-md hover:bg-ink-100 lg:hidden"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-md hover:bg-muted cursor-pointer lg:hidden"
           aria-label="Abrir menú"
         >
           <Menu size={18} />

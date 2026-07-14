@@ -77,7 +77,7 @@ export function AppSidebar({ mobileOpen, onClose }: AppSidebarProps) {
 
           <button
             type="button"
-            className="ml-auto text-ink-500 lg:hidden"
+            className="ml-auto text-muted-foreground lg:hidden cursor-pointer"
             onClick={onClose}
             aria-label="Cerrar menú"
           >
@@ -87,7 +87,7 @@ export function AppSidebar({ mobileOpen, onClose }: AppSidebarProps) {
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto px-3 py-5">
-          <div className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-400">
+          <div className="mb-2 px-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
             Menú principal
           </div>
 
@@ -133,7 +133,7 @@ export function AppSidebar({ mobileOpen, onClose }: AppSidebarProps) {
         <div className="border-t p-2">
           <div
             onClick={handleLogout}
-            className="border-ink-100 p-3 text-xs cursor-pointer flex h-9 w-full items-center gap-3 rounded-md px-2.5 font-medium text-brand-600 transition-colors hover:bg-brand-50"
+            className="p-3 text-xs cursor-pointer flex h-9 w-full items-center gap-3 rounded-md px-2.5 font-medium text-brand-600 transition-colors hover:bg-brand-50"
           >
             <LogOut size={16} />
             <span>Cerrar Sesión</span>
