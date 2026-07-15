@@ -131,7 +131,7 @@ export default function TeacherCommentsCard({
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-175 text-sm">
             <thead>
               <tr className="border-b bg-muted/40">
                 <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:px-6">
@@ -162,13 +162,13 @@ export default function TeacherCommentsCard({
                     {item.risk_level ? (
                       <div className="flex flex-col items-center gap-1">
                         <span
-                          className="inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-white"
+                          className="inline-flex w-full justify-center items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-white whitespace-nowrap"
                           style={{ backgroundColor: item.risk_level.color_hex }}
                         >
                           {item.risk_level.name}
                         </span>
                         {item.risk_score != null && (
-                          <span className="text-xs font-medium text-muted-foreground">
+                          <span className="text-xs font-medium text-muted-foreground justify-center">
                             {(item.risk_score! * 100).toFixed(1)}% confianza
                           </span>
                         )}
@@ -181,7 +181,7 @@ export default function TeacherCommentsCard({
                     {item.pedagogical_category ? (
                       <div className="flex flex-col items-center gap-1">
                         <span
-                          className="inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-white"
+                          className="inline-flex w-full justify-center items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-white whitespace-nowrap"
                           style={{ backgroundColor: item.pedagogical_category.color_hex }}
                         >
                           {item.pedagogical_category.name}

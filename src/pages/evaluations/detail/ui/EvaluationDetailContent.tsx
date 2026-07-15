@@ -13,6 +13,7 @@ import type { AiStatus } from "@/features/evaluations";
 import { useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, BrainCircuit, CirclePile, Loader2, MessageSquare, Users } from "lucide-react";
 import { useEffect } from "react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 import { useEvaluationDetail } from "../model/useEvaluationDetail";
@@ -55,19 +56,24 @@ function EvaluationDetailContent({ evaluationId }: Props) {
     error: analyzeError,
   } = useAnalyzeEvaluation();
 
-  // ai_status efectivo: prioriza el estado del hook (sesión activa), si no el del servidor
   const effectiveAiStatus: AiStatus | null =
     analyzeStatus ?? evaluation?.ai_status ?? null;
 
-  // Al completarse el análisis, refresca la evaluación para obtener el ai_status actualizado
+  const periodLabel = evaluation?.academic_period_name ?? `Evaluación #${evaluationId}`;
+
   useEffect(() => {
-    if (analyzeStatus === "ANALYZED" || analyzeStatus === "FAILED") {
+    if (analyzeStatus === "ANALYZED") {
       queryClient.invalidateQueries({ queryKey: ["evaluation", evaluationId] });
+      toast.success(`El análisis de la evaluación docente "${periodLabel}" ha terminado.`);
+    } else if (analyzeStatus === "FAILED") {
+      queryClient.invalidateQueries({ queryKey: ["evaluation", evaluationId] });
+      toast.error(`El análisis de la evaluación docente "${periodLabel}" ha fallado.`);
     }
-  }, [analyzeStatus, evaluationId, queryClient]);
+  }, [analyzeStatus, evaluationId, queryClient, periodLabel]);
 
   const handleAnalyze = () => {
     analyze(evaluationId, effectiveAiStatus);
+    toast.success(`La evaluación del periodo "${periodLabel}" está en proceso de análisis.`);
   };
 
   return (
@@ -108,20 +114,12 @@ function EvaluationDetailContent({ evaluationId }: Props) {
                 {/* Analyze button */}
                 {evaluation.status === "COMPLETED" && (
                   <>
-                    {effectiveAiStatus === "ANALYZING" ? (
-                      <button
-                        type="button"
-                        disabled
-                        className="inline-flex h-8 items-center gap-1.5 rounded-md bg-brand-600/50 px-3 text-xs font-semibold text-white"
-                      >
-                        <Loader2 size={12} className="animate-spin" />
-                        Analizando…
-                      </button>
-                    ) : effectiveAiStatus === "ANALYZED" ? (
+                    {effectiveAiStatus === "ANALYZED" ? (
                       <button
                         type="button"
                         onClick={handleAnalyze}
-                        className="inline-flex h-8 items-center gap-1.5 rounded-md bg-red-600 px-3 text-xs font-semibold text-white hover:bg-red-700 transition-colors"
+                        disabled={analyzeStatus === "ANALYZING"}
+                        className="inline-flex h-8 items-center gap-1.5 rounded-md bg-red-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <BrainCircuit size={12} />
                         Re-analizar
@@ -130,8 +128,9 @@ function EvaluationDetailContent({ evaluationId }: Props) {
                       <button
                         type="button"
                         onClick={handleAnalyze}
+                        disabled={effectiveAiStatus === "ANALYZING"}
                         className={cn(
-                          "inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-xs font-semibold text-white transition-colors",
+                          "inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-xs font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50",
                           effectiveAiStatus === "FAILED"
                             ? "bg-red-600 hover:bg-red-700"
                             : "bg-brand-600 hover:bg-brand-700",

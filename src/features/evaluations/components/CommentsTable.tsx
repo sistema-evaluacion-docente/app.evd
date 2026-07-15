@@ -79,7 +79,7 @@ const columns: ColumnDef<EvaluationComment>[] = [
       return (
         <div className="flex flex-col items-center gap-1">
           <span
-            className="inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-white"
+            className="inline-flex w-full justify-center items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-white whitespace-nowrap"
             style={{ backgroundColor: rl.color_hex }}
           >
             {rl.name}
@@ -103,7 +103,7 @@ const columns: ColumnDef<EvaluationComment>[] = [
       return (
         <div className="flex flex-col items-center gap-1">
           <span
-            className="inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-white"
+            className="inline-flex w-full justify-center items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-white whitespace-nowrap"
             style={{ backgroundColor: pc.color_hex }}
           >
             {pc.name}
@@ -132,7 +132,7 @@ export function CommentsTable({ evaluationId }: CommentsTableProps) {
       emptyMessage="No hay comentarios registrados en esta evaluación."
       searchPlaceholder="Buscar por docente, curso..."
       pageSize={10}
-      minWidthClassName="min-w-150"
+      minWidthClassName="min-w-230"
       disabledPagination={true}
       enableSearch={false}
       enableFilters={false}
