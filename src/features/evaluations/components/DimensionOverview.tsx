@@ -6,24 +6,54 @@ import {
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { ChevronDown, Info } from "lucide-react";
-
+import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
+
 import type { EvaluationDimensionAverage } from "../types/TeacherEvaluation";
 import { ScoreBarInline } from "./ScoreBarInline";
 
 interface DimensionOverviewProps {
   dimensions: EvaluationDimensionAverage[];
   evaluationId: number;
+  isLoading: boolean;
 }
 
 export function DimensionOverview({
   dimensions,
   evaluationId,
+  isLoading
 }: DimensionOverviewProps) {
-  if (dimensions.length === 0) return null;
+  if (isLoading) {
+    return (
+      <Card className="bg-background p-0 gap-0 animate-fade-in">
+        <CardHeader className="mb-0 flex items-start justify-between">
+          <Skeleton className="h-6 w-52" />
+          <Skeleton className="h-4 w-16" />
+        </CardHeader>
+
+        <CardContent className="p-6">
+          <ul className="divide-y">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <li key={i} className="flex items-center justify-between gap-4 py-3.5">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <Skeleton className="h-4 w-36" />
+                  <Skeleton className="h-3 w-20" />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-3 w-24 rounded-full" />
+                  <Skeleton className="h-4 w-4" />
+                </div>
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <Card className="bg-background p-0 gap-0">
+    <Card className="bg-background p-0 gap-0 animate-fade-in">
       <CardHeader className="mb-0 flex items-start justify-between">
         <CardTitle>
           Dimensiones de Evaluación
