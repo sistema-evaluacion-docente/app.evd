@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import type { AiStatus } from "../types/Evaluation";
 import {
   getComments,
   getEvaluation,
@@ -35,6 +36,7 @@ export function useUploadEvaluation() {
   const [stats, setStats] = useState<UploadStats>({ teachers: 0, comments: 0 });
   const [fileSize, setFileSize] = useState("");
   const [evaluationId, setEvaluationId] = useState<number | null>(null);
+  const [aiStatus, setAiStatus] = useState<AiStatus | null>(null);
 
   const pollId = useRef<number>(0);
   const tickId = useRef<number>(0);
@@ -121,6 +123,7 @@ export function useUploadEvaluation() {
               teachers: pollResult.data.count ?? 0,
               comments: commentsResult.data.length,
             });
+            setAiStatus(pollResult.data.ai_status);
             setProgress(100);
             setStatus("success");
           } else if (evaluationStatus === "FAILED") {
@@ -156,6 +159,7 @@ export function useUploadEvaluation() {
     setFileSize("");
     setError("");
     setEvaluationId(null);
+    setAiStatus(null);
     setStats({ teachers: 0, comments: 0 });
   }, []);
 
@@ -177,6 +181,7 @@ export function useUploadEvaluation() {
     upload,
     reset,
     loadSample,
-    evaluationId
+    evaluationId,
+    aiStatus,
   };
 }

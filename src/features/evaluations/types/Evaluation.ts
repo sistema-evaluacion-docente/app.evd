@@ -1,3 +1,5 @@
+export type AiStatus = "PENDING" | "ANALYZING" | "ANALYZED" | "FAILED";
+
 export interface EvaluationRecord {
   id: number;
   user_id: string;
@@ -5,6 +7,7 @@ export interface EvaluationRecord {
   department_id: number;
   pdf_url: string;
   status: "PROCESSING" | "COMPLETED" | "FAILED";
+  ai_status: AiStatus | null;
   count: number | null;
   academic_period_name?: string;
   active: boolean;
@@ -20,6 +23,8 @@ export interface EvaluationScore {
   evaluation_id: number;
   academic_group_id: number;
   group_name: string | null;
+  course_name: string | null;
+  course_code: string | null;
   respondent_count: number;
   overall_average: string;
 }

@@ -14,6 +14,8 @@ import type {
   TeacherEvaluationDetail,
 } from "../types/TeacherEvaluation";
 
+export type { AiStatus } from "../types/Evaluation";
+
 export function uploadEvaluation(
   file: File,
 ): Promise<ResponseAPI<EvaluationRecord>> {
@@ -163,6 +165,12 @@ export function exportTeacherMatrix(
     `/evaluations/${evaluationId}/teachers/${teacherId}/export${params}`,
     { responseType: "blob" },
   ) as unknown as Promise<Blob>;
+}
+
+export function analyzeEvaluation(
+  id: number,
+): Promise<ResponseAPI<{ message: string }>> {
+  return api.post(`/evaluations/${id}/analyze`);
 }
 
 export function updateEvaluationStatus(

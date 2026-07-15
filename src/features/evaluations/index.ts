@@ -1,4 +1,5 @@
 export type {
+  AiStatus,
   EvaluationRecord,
   EvaluationScore,
   EvaluationStatusUpdate,
@@ -10,7 +11,12 @@ export type {
   QuestionScore,
 } from "./types/Question";
 
-export type { EvaluationComment } from "./types/Comment";
+export type {
+  CommentItem,
+  EvaluationComment,
+  PedagogicalCategory,
+  RiskLevel,
+} from "./types/Comment";
 
 export type {
   EvaluationDimensionAverage,
@@ -24,6 +30,7 @@ export type {
 } from "./types/TeacherEvaluation";
 
 export {
+  analyzeEvaluation,
   exportTeacherMatrix,
   getComments,
   getCommentsPaginated,
@@ -71,6 +78,7 @@ export {
   useUploadEvaluation,
   type UploadStatus,
 } from "./hooks/useUploadEvaluation";
+export { default as useAnalyzeEvaluation } from "./hooks/useAnalyzeEvaluation";
 export { default as useGetTeacherVsDepartment } from "./hooks/useGetTeacherVsDepartment";
 export { default as CourseAveragesCard } from "./components/CourseAveragesCard";
 export { default as DimensionAveragesCard } from "./components/DimensionAveragesCard";

@@ -1,3 +1,4 @@
+import type { CommentItem } from "./Comment";
 import type { QuestionDetail } from "./Question";
 
 export interface TeacherRankItem {
@@ -47,7 +48,7 @@ export interface TeacherCommentCourse {
   course_code: string;
   course_name: string;
   group_name: string;
-  comments: string[];
+  comments: CommentItem[];
 }
 
 export interface TeacherCommentsData {

@@ -15,6 +15,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   upload: "Cargar",
   matrix: "Matriz",
   plans: "Planes",
+  subjects: "Materias",
   evaluations: "Evaluaciones",
   dimensions: "Dimensiones",
   groups: "Grupos",
