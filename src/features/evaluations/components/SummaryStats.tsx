@@ -1,14 +1,35 @@
 import { Award, TrendingDown, TrendingUp, Users } from "lucide-react";
 import { Link } from "wouter";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card } from "@/components/ui/card";
 
 import type { EvaluationSummary } from "../types/TeacherEvaluation";
 import { StatTile } from "@/shared/ui";
 
 interface SummaryStatsProps {
   summary: EvaluationSummary | undefined;
+  isLoading: boolean;
 }
 
-export function SummaryStats({ summary }: SummaryStatsProps) {
+export function SummaryStats({ summary, isLoading }: SummaryStatsProps) {
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Card key={i} className="p-5">
+            <div className="flex items-start justify-between gap-3">
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-4 w-4" />
+            </div>
+            <Skeleton className="mt-2.5 h-7 w-16" />
+            <Skeleton className="mt-2 h-3 w-24" />
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
   if (!summary) return null;
 
   return (

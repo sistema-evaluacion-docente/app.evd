@@ -50,11 +50,12 @@ function EvaluationDetailContent({ evaluationId }: Props) {
             isLoading={isLoading}
           />
 
-          <SummaryStats summary={summary} />
+          <SummaryStats summary={summary} isLoading={isLoading} />
 
           <DimensionOverview
             dimensions={dimensions}
             evaluationId={evaluationId}
+            isLoading={isLoading}
           />
 
           <EvaluationSection
