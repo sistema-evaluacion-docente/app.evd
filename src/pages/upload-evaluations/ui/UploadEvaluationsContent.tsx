@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -6,14 +6,41 @@ import {
   UploadFooter,
   UploadStats,
   UploadStatusCard,
+  useAnalyzeEvaluation,
   useUploadEvaluation,
 } from "@/features/evaluations";
 import { PageHeader } from "@/shared/ui";
 
 function UploadEvaluationsContent() {
   const [dropzoneKey, setDropzoneKey] = useState(0);
-  const { status, progress, fileName, fileSize, error, stats, upload, reset, evaluationId } =
-    useUploadEvaluation();
+
+  const {
+    status,
+    progress,
+    fileName,
+    fileSize,
+    error,
+    stats,
+    upload,
+    reset,
+    evaluationId,
+    aiStatus: uploadAiStatus,
+  } = useUploadEvaluation();
+
+  const {
+    analyze,
+    aiStatus,
+    setAiStatus,
+    error: analyzeError,
+    reset: resetAnalyze,
+  } = useAnalyzeEvaluation();
+
+  // Sync ai_status from upload polling into the analyze hook
+  useEffect(() => {
+    if (uploadAiStatus !== null) {
+      setAiStatus(uploadAiStatus);
+    }
+  }, [uploadAiStatus, setAiStatus]);
 
   const handleFile = (file: File | undefined) => {
     if (!file) return;
@@ -26,11 +53,16 @@ function UploadEvaluationsContent() {
 
   const handleReset = useCallback(() => {
     reset();
+    resetAnalyze();
     setDropzoneKey((k) => k + 1);
-  }, [reset]);
+  }, [reset, resetAnalyze]);
+
+  const handleAnalyze = () => {
+    if (!evaluationId) return;
+    analyze(evaluationId, aiStatus);
+  };
 
   const busy = status === "uploading" || status === "processing";
-  const ready = status === "success";
 
   return (
     <>
@@ -55,12 +87,18 @@ function UploadEvaluationsContent() {
       )}
 
       <UploadStats
-        ready={ready}
+        ready={status === "success"}
         teachers={stats.teachers}
         comments={stats.comments}
       />
 
-      <UploadFooter status={status} ready={ready} evaluationId={evaluationId} />
+      <UploadFooter
+        status={status}
+        evaluationId={evaluationId}
+        aiStatus={aiStatus}
+        onAnalyze={handleAnalyze}
+        analyzeError={analyzeError}
+      />
     </>
   );
 }

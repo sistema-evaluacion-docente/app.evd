@@ -75,8 +75,8 @@ export default function TeacherCommentsCard({
               className={cn(
                 "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-sm font-medium transition-colors",
                 activeCommentCourse === "todas"
-                  ? "bg-ink-900 text-ink-50"
-                  : "border border-ink-200 bg-card text-ink-600 hover:bg-ink-50",
+                  ? "bg-foreground text-background"
+                  : "border border-border bg-card text-foreground hover:bg-muted",
               )}
             >
               Todas las materias
@@ -94,8 +94,8 @@ export default function TeacherCommentsCard({
                   className={cn(
                     "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-sm font-medium transition-colors",
                     isActive
-                      ? "bg-ink-900 text-ink-50"
-                      : "border border-ink-200 bg-card text-ink-600 hover:bg-ink-50",
+                      ? "bg-foreground text-background"
+                      : "border border-border bg-card text-foreground hover:bg-muted",
                   )}
                 >
                   {course.course_name}
@@ -104,8 +104,8 @@ export default function TeacherCommentsCard({
                     className={cn(
                       "inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-xs font-semibold",
                       isActive
-                        ? "bg-ink-50/20 text-ink-50"
-                        : "bg-ink-100 text-ink-500",
+                        ? "bg-background/20 text-background"
+                        : "bg-muted text-muted-foreground",
                     )}
                   >
                     {course.comments.length}
@@ -130,22 +130,77 @@ export default function TeacherCommentsCard({
           </p>
         </div>
       ) : (
-        <ul className="divide-y">
-          {displayComments.map((text, i) => (
-            <li key={i} className="px-5 py-4 sm:px-6">
-              <p
-                className="max-w-180 leading-relaxed"
-                style={{ textWrap: "pretty" }}
-              >
-                <span className="text-muted-foreground">"</span>
-
-                {text}
-
-                <span className="text-muted-foreground">"</span>
-              </p>
-            </li>
-          ))}
-        </ul>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b bg-muted/40">
+                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:px-6">
+                  Comentario
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap">
+                  Nivel de riesgo
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap">
+                  Categoría pedagógica
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {displayComments.map((item, i) => (
+                <tr key={i} className="hover:bg-muted/30 transition-colors">
+                  <td className="px-5 py-4 sm:px-6">
+                    <p
+                      className="max-w-xl leading-relaxed text-foreground"
+                      style={{ textWrap: "pretty" } as React.CSSProperties}
+                    >
+                      <span className="text-muted-foreground">&ldquo;</span>
+                      {item.original_text}
+                      <span className="text-muted-foreground">&rdquo;</span>
+                    </p>
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    {item.risk_level ? (
+                      <div className="flex flex-col items-center gap-1">
+                        <span
+                          className="inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-white"
+                          style={{ backgroundColor: item.risk_level.color_hex }}
+                        >
+                          {item.risk_level.name}
+                        </span>
+                        {item.risk_score != null && (
+                          <span className="text-xs font-medium text-muted-foreground">
+                            {(item.risk_score! * 100).toFixed(1)}% confianza
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    {item.pedagogical_category ? (
+                      <div className="flex flex-col items-center gap-1">
+                        <span
+                          className="inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-white"
+                          style={{ backgroundColor: item.pedagogical_category.color_hex }}
+                        >
+                          {item.pedagogical_category.name}
+                        </span>
+                        {item.category_score != null && (
+                          <span className="text-[11px] text-muted-foreground">
+                            {(item.category_score * 100).toFixed(1)}% confianza
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </Card>
   );

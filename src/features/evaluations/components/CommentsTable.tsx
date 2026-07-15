@@ -42,21 +42,11 @@ const columns: ColumnDef<EvaluationComment>[] = [
               <div className=" font-medium truncate">{name}</div>
             </Link>
 
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              {comment.course_name && (
-                <>
-                  <span className="truncate max-w-32">
-                    {comment.course_name}
-                  </span>
-
-                  <span>·</span>
-                </>
-              )}
-
-              <span>
-                Grupo: {comment.group_name ?? `#${comment.academic_groups_id}`}
-              </span>
-            </div>
+            {comment.course_name && (
+              <div className="truncate text-xs text-muted-foreground">
+                {comment.course_name}
+              </div>
+            )}
           </div>
         </div>
       );
@@ -80,17 +70,51 @@ const columns: ColumnDef<EvaluationComment>[] = [
     },
   },
   {
-    accessorKey: "Nivel de riesgo",
+    accessorKey: "risk_level",
     header: "Nivel de riesgo",
-    cell: () => {
-      return <span>{"—"}</span>;
+    cell: ({ row }) => {
+      const rl = row.original.risk_level;
+      const score = row.original.risk_score;
+      if (!rl) return <span className="text-muted-foreground">—</span>;
+      return (
+        <div className="flex flex-col items-center gap-1">
+          <span
+            className="inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-white"
+            style={{ backgroundColor: rl.color_hex }}
+          >
+            {rl.name}
+          </span>
+          {score != null && (
+            <span className="text-xs font-medium text-muted-foreground">
+              {(score * 100).toFixed(1)}% confianza
+            </span>
+          )}
+        </div>
+      );
     },
   },
   {
-    accessorKey: "Categorías pedagógicas",
-    header: "Categorías pedagógicas",
-    cell: () => {
-      return <span>{"—"}</span>;
+    accessorKey: "pedagogical_category",
+    header: "Categoría pedagógica",
+    cell: ({ row }) => {
+      const pc = row.original.pedagogical_category;
+      const score = row.original.category_score;
+      if (!pc) return <span className="text-muted-foreground">—</span>;
+      return (
+        <div className="flex flex-col items-center gap-1">
+          <span
+            className="inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-white"
+            style={{ backgroundColor: pc.color_hex }}
+          >
+            {pc.name}
+          </span>
+          {score != null && (
+            <span className="text-xs font-medium text-muted-foreground">
+              {(score * 100).toFixed(1)}% confianza
+            </span>
+          )}
+        </div>
+      );
     },
   },
 ];
