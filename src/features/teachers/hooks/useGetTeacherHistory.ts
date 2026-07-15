@@ -6,6 +6,5 @@ export default function useGetTeacherHistory(id: number) {
     queryKey: ["teacher-history", id],
     queryFn: () => getTeacherHistory(id),
     enabled: !!id && id > 0,
-    staleTime: 5 * 60 * 1000,
   });
 }

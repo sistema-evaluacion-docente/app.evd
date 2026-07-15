@@ -23,6 +23,7 @@ import { PlansPage } from "@/pages/plans";
 import { PlanDetailPage } from "@/pages/plans/detail";
 import { CreatePlanPage } from "@/pages/plans/new";
 import { TeacherDetailPage } from "@/pages/teacher-detail";
+import { TeacherComparisonPage } from "@/pages/teacher-comparison";
 import { TeachersPage } from "@/pages/teachers";
 import { UploadTeachersPage } from "@/pages/upload-teachers";
 
@@ -42,6 +43,7 @@ function App() {
 
       <Route path="/teachers" component={TeachersPage} />
       <Route path="/teachers/upload" component={UploadTeachersPage} />
+      <Route path="/teachers/:id/comparison" component={TeacherComparisonPage} />
       <Route path="/teachers/:id" component={TeacherDetailPage} />
 
       <Route path="/matrix" component={MatrixIndexPage} />

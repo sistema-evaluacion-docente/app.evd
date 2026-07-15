@@ -10,6 +10,7 @@ import {
   Clock,
   FileText,
   Mail,
+  Scale,
 } from "lucide-react";
 import { useMemo } from "react";
 import { Link } from "wouter";
@@ -201,6 +202,12 @@ export default function TeacherProfileHeader({
         <Link href={`/matrix/${teacherId}`}>
           <Button>
             <FileText size={15} /> Ver Reporte Detallado
+          </Button>
+        </Link>
+
+        <Link href={`/teachers/${teacherId}/comparison`}>
+          <Button variant="outline">
+            <Scale size={15} /> Comparar semestres
           </Button>
         </Link>
 
