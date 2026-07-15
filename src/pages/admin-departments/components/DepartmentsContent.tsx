@@ -28,12 +28,18 @@ import {
 } from "@/features/departments";
 import EditDepartmentDialog from "./EditDepartmentDialog";
 
-function useGetAllDepartments() {
+function useGetAllDepartments({
+  page,
+  limit,
+  search
+}: {
+  page: number,
+  limit: number,
+  search: string
+}) {
   return useQuery({
-    queryKey: ["departments"],
-    queryFn: getDepartments,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    queryKey: ["departments", page, limit, search],
+    queryFn: () => getDepartments({ page, limit, search }),
   });
 }
 
