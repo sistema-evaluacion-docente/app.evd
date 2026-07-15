@@ -21,10 +21,14 @@ import {
 } from "@/features/faculties";
 import EditFacultyDialog from "./EditFacultyDialog";
 
-function useGetAllFaculties() {
+function useGetAllFaculties({ page, limit, search }: {
+  page: number,
+  limit: number,
+  search: string
+}) {
   return useQuery({
-    queryKey: ["faculties"],
-    queryFn: getFaculties,
+    queryKey: ["faculties", page, limit, search],
+    queryFn: () => getFaculties({ page, limit, search }),
   });
 }
 
