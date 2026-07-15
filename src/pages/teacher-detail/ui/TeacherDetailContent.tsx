@@ -25,7 +25,7 @@ function TeacherDetailContent({ teacherId }: Props) {
     return <TeacherDetailSkeleton />;
   }
 
-  const noData = !isLoading && !isFetching && !isFetched && !evaluation;
+  const noData = !isLoading && !isFetching && !evaluation;
 
   return (
     <>
