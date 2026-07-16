@@ -29,6 +29,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [loggedIn, setLoggedIn] = useState<boolean>(false);
   const [selectedRole, setSelectedRoleState] = useState<string | null>(() => {
     if (typeof window === "undefined") return null;
 
@@ -142,6 +143,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
         const valueBack = localStorage.getItem("selectedRole");
         setSelectedRole(valueBack ?? userProfile.roles[0] ?? null);
+
+        if (requestUserProfile.status !== 401) {
+          setLoggedIn(true);
+        } else {
+          setLoggedIn(false);
+        }
       } catch (error) {
         console.error("Failed to fetch user profile:", error);
         setUser(userInitialData);
@@ -206,9 +213,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
       confirmPasswordReset,
       handleLogout,
       refreshProfile,
+      loggedIn,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, token, selectedRole, setSelectedRole, isLoading]);
+  }, [user, token, selectedRole, setSelectedRole, isLoading, loggedIn]);
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 }
