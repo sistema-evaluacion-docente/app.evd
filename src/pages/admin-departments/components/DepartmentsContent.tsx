@@ -51,7 +51,7 @@ export function DepartmentsContent() {
 
   const { data: facultiesData } = useQuery({
     queryKey: ["faculties"],
-    queryFn: getFaculties,
+    queryFn: () => getFaculties({ page: 1, limit: 50 }), // Assuming we want to fetch all faculties
   });
   const faculties = facultiesData?.data ?? [];
 
