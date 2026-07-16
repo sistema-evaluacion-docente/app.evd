@@ -1,28 +1,18 @@
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from "@/components/ui/select";
-import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select'
+import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 
-import FormDrawer from "@/components/common/FormDrawer";
-import type { Department } from "@/features/departments";
-import { getFaculties } from "@/features/faculties";
+import FormDrawer from '@/components/common/FormDrawer'
+import type { Department } from '@/features/departments'
+import { getFaculties } from '@/features/faculties'
 interface EditDepartmentDialogProps {
-  open: boolean;
-  department: Department | null;
-  isSaving: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSave: (data: {
-    id: number;
-    name: string;
-    code?: string;
-    faculty_id?: number;
-  }) => void;
+  open: boolean
+  department: Department | null
+  isSaving: boolean
+  onOpenChange: (open: boolean) => void
+  onSave: (data: { id: number; name: string; code?: string; faculty_id?: number }) => void
 }
 
 function EditDepartmentDialog({
@@ -33,35 +23,35 @@ function EditDepartmentDialog({
   onSave,
 }: EditDepartmentDialogProps) {
   const [facultyId, setFacultyId] = useState<string>(
-    department?.faculty_id ? String(department.faculty_id) : "",
-  );
+    department?.faculty_id ? String(department.faculty_id) : '',
+  )
 
   const { data: facultiesData } = useQuery({
-    queryKey: ["faculties"],
-    queryFn: getFaculties,
-  });
+    queryKey: ['faculties'],
+    queryFn: () => getFaculties({ page: 1, limit: 100 }),
+  })
 
-  const faculties = facultiesData?.data ?? [];
+  const faculties = facultiesData?.data ?? []
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+    event.preventDefault()
 
-    if (!department) return;
+    if (!department) return
 
-    const formData = new FormData(event.currentTarget);
-    const code = String(formData.get("code") ?? "");
+    const formData = new FormData(event.currentTarget)
+    const code = String(formData.get('code') ?? '')
 
     onSave({
       id: department.id,
-      name: String(formData.get("name") ?? ""),
+      name: String(formData.get('name') ?? ''),
       code: code || undefined,
       faculty_id: facultyId ? Number(facultyId) : undefined,
-    });
-  };
+    })
+  }
 
   return (
     <FormDrawer
-      key={department?.id ?? "department"}
+      key={department?.id ?? 'department'}
       open={open}
       onOpenChange={onOpenChange}
       title="Editar departamento"
@@ -73,12 +63,7 @@ function EditDepartmentDialog({
         <div className="space-y-2">
           <Label htmlFor="name">Nombre</Label>
 
-          <Input
-            id="name"
-            name="name"
-            required
-            defaultValue={department?.name ?? ""}
-          />
+          <Input id="name" name="name" required defaultValue={department?.name ?? ''} />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -89,7 +74,7 @@ function EditDepartmentDialog({
               id="code"
               name="code"
               required
-              defaultValue={department?.code ?? ""}
+              defaultValue={department?.code ?? ''}
               placeholder="Código"
             />
           </div>
@@ -104,9 +89,8 @@ function EditDepartmentDialog({
               <SelectTrigger className="w-full cursor-pointer">
                 <span className="text-muted-foreground">
                   {facultyId
-                    ? (faculties.find((f) => f.id === Number(facultyId))
-                        ?.name ?? "")
-                    : "Sin facultad"}
+                    ? (faculties.find((f) => f.id === Number(facultyId))?.name ?? '')
+                    : 'Sin facultad'}
                 </span>
               </SelectTrigger>
 
@@ -124,7 +108,7 @@ function EditDepartmentDialog({
         </div>
       </div>
     </FormDrawer>
-  );
+  )
 }
 
-export default EditDepartmentDialog;
+export default EditDepartmentDialog
