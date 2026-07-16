@@ -61,6 +61,11 @@ const securityConfig = {
       roles: ["ADMIN"],
     },
     {
+      path: "/directors",
+      name: "Directores",
+      roles: ["ADMIN"],
+    },
+    {
       path: "/documents",
       name: "Documentos",
       roles: ["ADMIN"],
