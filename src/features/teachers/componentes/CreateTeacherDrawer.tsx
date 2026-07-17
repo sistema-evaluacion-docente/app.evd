@@ -1,6 +1,3 @@
-import { useState } from 'react'
-import { toast } from 'sonner'
-
 import { Button } from '@/components/ui/button'
 import {
   Drawer,
@@ -19,8 +16,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useGetDepartments } from '@/features/departments'
 import { Save } from 'lucide-react'
+import { useState } from 'react'
+import { toast } from 'sonner'
+
+import useAuth from '@/shared/hooks/useAuth'
 import useCreateTeacher from '../hooks/useCreateTeacher'
 
 const CONTRACT_TYPES = ['Tiempo completo', 'Medio tiempo', 'Por horas'] as const
@@ -30,33 +30,38 @@ interface CreateTeacherDrawerProps {
   onOpenChange: (open: boolean) => void
 }
 
+/**
+ * Component for creating a new teacher using a drawer interface.
+ * @param {Object} props - The component props.
+ * @param {boolean} props.open - Indicates whether the drawer is open.
+ * @param {function} props.onOpenChange - Callback function to handle drawer open state changes.
+ *
+ * @returns {JSX.Element} The rendered CreateTeacherDrawer component.
+ */
 function CreateTeacherDrawer({ open, onOpenChange }: CreateTeacherDrawerProps) {
   const createMutation = useCreateTeacher()
-
-  const { data: departmentsData } = useGetDepartments({ page: 1, limit: 100 })
-
-  const departments = departmentsData?.data ?? []
+  const { user } = useAuth()
 
   const [form, setForm] = useState({
     name: '',
     email: '',
-    username: '',
     institutional_code: '',
-    department_id: '',
     contract_type: '',
   })
 
   const isSubmitting = createMutation.isPending
+  const isEmailValid = form.email.trim().endsWith('@ufps.edu.co')
   const isValid =
-    form.name.trim() && form.email.trim() && form.username.trim() && form.institutional_code.trim()
+    form.name.trim() &&
+    form.email.trim() &&
+    form.email.trim().endsWith('@ufps.edu.co') &&
+    form.institutional_code.trim()
 
   function resetForm() {
     setForm({
       name: '',
       email: '',
-      username: '',
       institutional_code: '',
-      department_id: '',
       contract_type: '',
     })
   }
@@ -69,9 +74,8 @@ function CreateTeacherDrawer({ open, onOpenChange }: CreateTeacherDrawerProps) {
       {
         name: form.name.trim(),
         email: form.email.trim(),
-        username: form.username.trim(),
         institutional_code: form.institutional_code.trim(),
-        department_id: form.department_id ? Number(form.department_id) : undefined,
+        department_id: user?.department_id ?? undefined,
         contract_type: form.contract_type || undefined,
       },
       {
@@ -100,6 +104,7 @@ function CreateTeacherDrawer({ open, onOpenChange }: CreateTeacherDrawerProps) {
           <div className="grid gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">Nombre completo</Label>
+
               <Input
                 id="name"
                 value={form.name}
@@ -109,34 +114,27 @@ function CreateTeacherDrawer({ open, onOpenChange }: CreateTeacherDrawerProps) {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
-                  placeholder="correo@institucion.edu"
-                  required
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
 
-              <div className="space-y-2">
-                <Label htmlFor="username">Usuario</Label>
-                <Input
-                  id="username"
-                  value={form.username}
-                  onChange={(e) => setForm((prev) => ({ ...prev, username: e.target.value }))}
-                  placeholder="Nombre de usuario"
-                  required
-                />
-              </div>
+              <Input
+                id="email"
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
+                placeholder="correo@ufps.edu.co"
+                required
+              />
+
+              {form.email && !isEmailValid && (
+                <p className="text-destructive text-sm">El email debe terminar en @ufps.edu.co</p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="institutional_code">Código institucional</Label>
+
                 <Input
                   id="institutional_code"
                   value={form.institutional_code}
@@ -175,29 +173,6 @@ function CreateTeacherDrawer({ open, onOpenChange }: CreateTeacherDrawerProps) {
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Departamento</Label>
-
-              <Select
-                value={form.department_id}
-                onValueChange={(value) =>
-                  setForm((prev) => ({ ...prev, department_id: value ?? '' }))
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Seleccionar departamento" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Sin departamento</SelectItem>
-                  {departments.map((d) => (
-                    <SelectItem key={d.id} value={String(d.id)}>
-                      {d.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
           </div>
 
