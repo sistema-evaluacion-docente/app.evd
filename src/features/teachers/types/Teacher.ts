@@ -16,7 +16,6 @@ export interface Teacher {
 export interface TeacherCreatePayload {
   name: string;
   email: string;
-  username: string;
   institutional_code: string;
   department_id?: number;
   contract_type?: string;
