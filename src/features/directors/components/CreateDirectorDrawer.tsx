@@ -132,6 +132,7 @@ function CreateDirectorDrawer({ open, onOpenChange }: CreateDirectorDrawerProps)
                 placeholder="correo@ufps.edu.co"
                 required
               />
+
               {form.email && !isEmailValid && (
                 <p className="text-destructive text-sm">El email debe terminar en @ufps.edu.co</p>
               )}
