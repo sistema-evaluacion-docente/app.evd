@@ -7,12 +7,14 @@ export default function getTeachers({
   limit = 10,
   search = "",
   academic_period_id,
+  department_id,
   active,
 }: {
   page: number;
   limit: number;
   search: string;
   academic_period_id?: number;
+  department_id?: number;
   active?: boolean;
 }): Promise<ResponseAPI<Teacher[]>> {
   const params: Record<string, string | number | boolean> = {};
@@ -27,6 +29,10 @@ export default function getTeachers({
 
   if (active !== undefined) {
     params.active = active;
+  }
+
+  if (department_id !== undefined) {
+    params.department_id = department_id;
   }
 
   return api.get("/teachers", {
