@@ -1,10 +1,9 @@
 import { ThemeSwitcher } from '@/components/common/ThemeSwitcher'
 import { Input } from '@/shared/ui'
-import { Calendar, Menu, Search } from 'lucide-react'
+import { Menu, Search } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 import Avatar from '@/features/auth/components/Avatar'
-import { PeriodsSelector } from '@/features/periods'
 
 export interface AppHeaderProps {
   onOpenMenu: () => void
@@ -16,6 +15,12 @@ export interface AppHeaderProps {
   rightMode?: 'periodo' | 'search'
 }
 
+/**
+ * AppHeader component.
+ *
+ * @param {AppHeaderProps} props - The properties for the AppHeader component.
+ * @returns {JSX.Element} The rendered AppHeader component.
+ */
 export function AppHeader({
   onOpenMenu,
   showBreadcrumb = false,
@@ -41,19 +46,20 @@ export function AppHeader({
         )}
 
         <div className="ml-auto flex items-center gap-2 sm:gap-3">
-          {rightMode === 'search' ? (
-            <div className="hidden w-65 md:block">
-              <Input placeholder="Buscar docente..." icon={<Search size={14} />} />
-            </div>
-          ) : (
-            <div className="hidden items-center gap-2 md:flex">
-              <Calendar size={14} className="text-muted-foreground" />
+          {
+            rightMode === 'search' ? (
+              <div className="hidden w-65 md:block">
+                <Input placeholder="Buscar docente..." icon={<Search size={14} />} />
+              </div>
+            ) : null
+            // <div className="hidden items-center gap-2 md:flex">
+            //   <Calendar size={14} className="text-muted-foreground" />
 
-              <span className="text-[13px] whitespace-nowrap">Periodo Académico:</span>
+            //   <span className="text-[13px] whitespace-nowrap">Periodo Académico:</span>
 
-              <PeriodsSelector />
-            </div>
-          )}
+            //   <PeriodsSelector />
+            // </div>
+          }
 
           <ThemeSwitcher />
 
