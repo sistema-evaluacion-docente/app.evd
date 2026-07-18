@@ -26,6 +26,6 @@ export default function getFaculties({
   }
 
   return api.get('/faculties', {
-    params: { page, limit, search },
+    params: { page, limit, ...params },
   })
 }
