@@ -41,7 +41,7 @@ function Avatar() {
   }
 
   return (
-    <div className="ml-1 flex items-center gap-2.5 border-l pl-2 sm:pl-3">
+    <div className="ml-1 flex items-center gap-2.5">
       <div className="hidden text-right leading-tight sm:block">
         <div className="text-[13px] font-semibold">{userName}</div>
         <div className="text-[11px] text-muted-foreground">{visibleRole}</div>

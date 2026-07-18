@@ -61,8 +61,6 @@ export function AppHeader({
             // </div>
           }
 
-          <ThemeSwitcher />
-
           {/* <button
             type="button"
             className="cursor-pointer relative inline-flex h-9 w-9 items-center justify-center rounded-md border hover:bg-card"
@@ -71,6 +69,7 @@ export function AppHeader({
             <Bell size={16} />
             <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-brand-600 ring-2" />
           </button> */}
+          <ThemeSwitcher />
 
           <Avatar />
         </div>
