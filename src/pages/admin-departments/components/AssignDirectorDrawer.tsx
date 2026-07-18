@@ -15,7 +15,6 @@ import { cn } from '@/lib/utils'
 import { useQuery } from '@tanstack/react-query'
 import { Save, Undo2, UserRoundSearch } from 'lucide-react'
 import { useCallback, useState } from 'react'
-import { toast } from 'sonner'
 import { useDebounce } from 'use-debounce'
 
 import type { User } from '@/features/auth/types/User'
@@ -56,13 +55,9 @@ function AssignDirectorDrawer({
   const handleSubmit = async () => {
     if (!department || !selectedUser) return
 
-    try {
-      await onAssign({ departmentId: department.id, userId: selectedUser.id! })
-      toast.success('Director asignado exitosamente')
-      handleClose()
-    } catch {
-      toast.error('Error al asignar el director')
-    }
+    await onAssign({ departmentId: department.id, userId: selectedUser.id! })
+
+    handleClose()
   }
 
   const handleClose = () => {
