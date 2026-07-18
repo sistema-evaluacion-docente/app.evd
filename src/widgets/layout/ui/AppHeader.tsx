@@ -1,26 +1,26 @@
-import { ThemeSwitcher } from "@/components/common/ThemeSwitcher";
-import { Input } from "@/shared/ui";
-import { Bell, Calendar, Menu, Search } from "lucide-react";
-import type { ReactNode } from "react";
+import { ThemeSwitcher } from '@/components/common/ThemeSwitcher'
+import { Input } from '@/shared/ui'
+import { Calendar, Menu, Search } from 'lucide-react'
+import type { ReactNode } from 'react'
 
-import Avatar from "@/features/auth/components/Avatar";
-import { PeriodsSelector } from "@/features/periods";
+import Avatar from '@/features/auth/components/Avatar'
+import { PeriodsSelector } from '@/features/periods'
 
 export interface AppHeaderProps {
-  onOpenMenu: () => void;
-  showBreadcrumb?: boolean;
-  breadcrumb?: ReactNode;
-  userName?: string;
-  userRole?: string;
+  onOpenMenu: () => void
+  showBreadcrumb?: boolean
+  breadcrumb?: ReactNode
+  userName?: string
+  userRole?: string
   /** Right-side control: academic-period selector or a teacher search box. */
-  rightMode?: "periodo" | "search";
+  rightMode?: 'periodo' | 'search'
 }
 
 export function AppHeader({
   onOpenMenu,
   showBreadcrumb = false,
   breadcrumb,
-  rightMode = "periodo",
+  rightMode = 'periodo',
 }: AppHeaderProps) {
   return (
     <header className="sticky top-0 z-30 border-b backdrop-blur-md">
@@ -28,33 +28,28 @@ export function AppHeader({
         <button
           type="button"
           onClick={onOpenMenu}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-md hover:bg-muted cursor-pointer lg:hidden"
+          className="hover:bg-muted inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md lg:hidden"
           aria-label="Abrir menú"
         >
           <Menu size={18} />
         </button>
 
         {showBreadcrumb && breadcrumb && (
-          <nav className="hidden min-w-0 items-center gap-1.5 text-[13px] text-muted-foreground sm:flex">
+          <nav className="text-muted-foreground hidden min-w-0 items-center gap-1.5 text-[13px] sm:flex">
             {breadcrumb}
           </nav>
         )}
 
         <div className="ml-auto flex items-center gap-2 sm:gap-3">
-          {rightMode === "search" ? (
+          {rightMode === 'search' ? (
             <div className="hidden w-65 md:block">
-              <Input
-                placeholder="Buscar docente..."
-                icon={<Search size={14} />}
-              />
+              <Input placeholder="Buscar docente..." icon={<Search size={14} />} />
             </div>
           ) : (
             <div className="hidden items-center gap-2 md:flex">
               <Calendar size={14} className="text-muted-foreground" />
 
-              <span className="whitespace-nowrap text-[13px]">
-                Periodo Académico:
-              </span>
+              <span className="text-[13px] whitespace-nowrap">Periodo Académico:</span>
 
               <PeriodsSelector />
             </div>
@@ -62,18 +57,18 @@ export function AppHeader({
 
           <ThemeSwitcher />
 
-          <button
+          {/* <button
             type="button"
             className="cursor-pointer relative inline-flex h-9 w-9 items-center justify-center rounded-md border hover:bg-card"
             aria-label="Notificaciones"
           >
             <Bell size={16} />
             <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-brand-600 ring-2" />
-          </button>
+          </button> */}
 
           <Avatar />
         </div>
       </div>
     </header>
-  );
+  )
 }

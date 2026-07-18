@@ -5,41 +5,41 @@ const securityConfig = {
       name: "Dashboard",
       roles: ["DOCENTE", "DIRECTOR DE DEPARTAMENTO", "ADMIN"],
     },
-    {
-      path: "/summary",
-      name: "Mi Resumen",
-      roles: ["DOCENTE"],
-    },
-    {
-      path: "/my-plans",
-      name: "Mi Plan de Mejora",
-      roles: ["DOCENTE"],
-    },
+    // {
+    //   path: "/summary",
+    //   name: "Mi Resumen",
+    //   roles: ["DOCENTE"],
+    // },
+    // {
+    //   path: "/my-plans",
+    //   name: "Mi Plan de Mejora",
+    //   roles: ["DOCENTE"],
+    // },
     {
       path: "/evaluations",
       name: "Evaluaciones",
       roles: ["DIRECTOR DE DEPARTAMENTO"],
     },
-    {
-      path: "/teachers",
-      name: "Docentes",
-      roles: ["DIRECTOR DE DEPARTAMENTO"],
-    },
-    {
-      path: "/matrix",
-      name: "Matriz Evaluativa",
-      roles: ["DIRECTOR DE DEPARTAMENTO"],
-    },
-    {
-      path: "/subjects",
-      name: "Materias",
-      roles: ["DIRECTOR DE DEPARTAMENTO"],
-    },
-    {
-      path: "/plans",
-      name: "Planes de Mejoramiento",
-      roles: ["DIRECTOR DE DEPARTAMENTO"],
-    },
+    // {
+    //   path: "/teachers",
+    //   name: "Docentes",
+    //   roles: ["DIRECTOR DE DEPARTAMENTO"],
+    // },
+    // {
+    //   path: "/matrix",
+    //   name: "Matriz Evaluativa",
+    //   roles: ["DIRECTOR DE DEPARTAMENTO"],
+    // },
+    // {
+    //   path: "/subjects",
+    //   name: "Materias",
+    //   roles: ["DIRECTOR DE DEPARTAMENTO"],
+    // },
+    // {
+    //   path: "/plans",
+    //   name: "Planes de Mejoramiento",
+    //   roles: ["DIRECTOR DE DEPARTAMENTO"],
+    // },
     {
       path: "/faculties",
       name: "Facultades",

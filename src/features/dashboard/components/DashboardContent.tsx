@@ -1,24 +1,21 @@
-import useAuth from "@/shared/hooks/useAuth";
-import DashboardContentAdmin from "./DashboardContentAdmin";
-import DashboardContentDirector from "./DashboardContentDirector";
-import DashboardContentTeacher from "./DashboardContentTeacher";
+import useAuth from '@/shared/hooks/useAuth'
 
 function DashboardContent() {
-  const { selectedRole } = useAuth();
+  const { selectedRole } = useAuth()
 
-  if (selectedRole === "ADMIN") {
-    return <DashboardContentAdmin />;
-  }
+  // if (selectedRole === "ADMIN") {
+  //   return <DashboardContentAdmin />;
+  // }
 
-  if (selectedRole === "DIRECTOR DE DEPARTAMENTO") {
-    return <DashboardContentDirector />;
-  }
+  // if (selectedRole === "DIRECTOR DE DEPARTAMENTO") {
+  //   return <DashboardContentDirector />;
+  // }
 
-  if (selectedRole === "DOCENTE") {
-    return <DashboardContentTeacher />;
-  }
+  // if (selectedRole === "DOCENTE") {
+  //   return <DashboardContentTeacher />;
+  // }
 
-  return <span>Selecciona un rol</span>;
+  return <span>Dashboard</span>
 }
 
-export default DashboardContent;
+export default DashboardContent
