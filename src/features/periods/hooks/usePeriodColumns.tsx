@@ -20,11 +20,11 @@ export default function usePeriodColumns() {
       }),
       columnHelper.accessor('start_date', {
         header: 'Inicio',
-        cell: (info) => <span>{info.getValue() ?? '-'}</span>,
+        cell: (info) => <span className="text-muted-foreground">{info.getValue() ?? '-'}</span>,
       }),
       columnHelper.accessor('end_date', {
         header: 'Cierre',
-        cell: (info) => <span>{info.getValue() ?? '-'}</span>,
+        cell: (info) => <span className="text-muted-foreground">{info.getValue() ?? '-'}</span>,
       }),
 
       columnHelper.accessor('active', {
