@@ -1,3 +1,13 @@
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -11,6 +21,7 @@ import DataTable, {
   type DataTableCreateConfig,
 } from '@/components/common/DataTable'
 import useCreatePeriod from '../hooks/useCreatePeriod'
+import useDeletePeriod from '../hooks/useDeletePeriod'
 import useGetPeriods from '../hooks/useGetPeriods'
 import usePeriodColumns from '../hooks/usePeriodColumns'
 import usePeriodStatusActions from '../hooks/usePeriodStatusActions'
@@ -33,6 +44,10 @@ function DataPeriods() {
   const { mutateAsync: updatePeriod, isPending: isSavingPeriod } = useUpdatePeriod()
 
   const createPeriodMutation = useCreatePeriod()
+  const deletePeriodMutation = useDeletePeriod()
+
+  const [deletingPeriod, setDeletingPeriod] = useState<Period | null>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
   const [createForm, setCreateForm] = useState({
     name: '',
@@ -146,6 +161,14 @@ function DataPeriods() {
         onClick: (period) => handleDeactivatePeriod(period),
         disabled: () => isTogglingStatus,
       },
+      {
+        label: 'Eliminar',
+        variant: 'destructive',
+        onClick: (period) => {
+          setDeletingPeriod(period)
+          setIsDeleteDialogOpen(true)
+        },
+      },
     ],
     [handleActivatePeriod, handleDeactivatePeriod, isTogglingStatus],
   )
@@ -175,6 +198,19 @@ function DataPeriods() {
     }
   }
 
+  const handleDeleteConfirm = () => {
+    if (!deletingPeriod) return
+
+    deletePeriodMutation.mutate(deletingPeriod.id, {
+      onSuccess: (data) => {
+        if (data?.status === 200) {
+          setDeletingPeriod(null)
+          setIsDeleteDialogOpen(false)
+        }
+      },
+    })
+  }
+
   return (
     <>
       <DataTable
@@ -197,6 +233,39 @@ function DataPeriods() {
         }}
         onSave={handleSavePeriod}
       />
+
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={(open) => {
+          setIsDeleteDialogOpen(open)
+          if (!open) setDeletingPeriod(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar periodo</AlertDialogTitle>
+
+            <AlertDialogDescription>
+              ¿Estás seguro de que deseas eliminar el periodo{' '}
+              <strong>{deletingPeriod?.name}</strong>? Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletePeriodMutation.isPending}>
+              Cancelar
+            </AlertDialogCancel>
+
+            <AlertDialogAction
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={deletePeriodMutation.isPending}
+            >
+              {deletePeriodMutation.isPending ? 'Eliminando...' : 'Eliminar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }
