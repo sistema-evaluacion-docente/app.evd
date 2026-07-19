@@ -44,8 +44,8 @@ export default function getAudits({
       limit,
       entity_name: table_name,
       operation,
-      start_date,
-      end_date,
+      date_from: start_date,
+      date_to: end_date,
       ...params,
     },
   })
