@@ -13,7 +13,7 @@ export interface Audit {
 }
 
 export interface AuditResponse {
-  status: number;
+  status: "success" | "error";
   message: string;
   data: Audit[];
   pagination: {
