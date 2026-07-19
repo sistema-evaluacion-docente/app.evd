@@ -9,22 +9,13 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
-import { Eye, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import React from 'react'
 
 import { useGetAudit } from '@/features/audits'
 import { getOperation } from '@/features/audits/lib/LogOperations'
 import formatDate from '@/lib/formatDate'
-
-// const OPERATION_LABELS: Record<string, { label: string; bg: string; text: string }> = {
-//   CREATE: { label: 'Crear', bg: 'bg-emerald-50', text: 'text-emerald-700' },
-//   UPDATE: { label: 'Actualizar', bg: 'bg-sky-50', text: 'text-sky-700' },
-//   DELETE: { label: 'Eliminar', bg: 'bg-brand-50', text: 'text-brand-700' },
-//   IMPORT: { label: 'Importar', bg: 'bg-violet-50', text: 'text-violet-700' },
-//   EXPORT: { label: 'Exportar', bg: 'bg-amber-50', text: 'text-amber-700' },
-// }
 
 interface AuditDetailDrawerProps {
   open: boolean
@@ -83,7 +74,7 @@ function DetailContent({
 
       <DetailRow label="Tabla afectada" value={audit.table_name} />
 
-      <Popover>
+      {/* <Popover>
         <PopoverTrigger className="bg-muted/50 hover:bg-muted/70 flex w-full cursor-pointer items-center justify-between gap-4 rounded-lg px-4 py-3">
           <span className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
             Elemento
@@ -117,7 +108,7 @@ function DetailContent({
             })()}
           </div>
         </PopoverContent>
-      </Popover>
+      </Popover> */}
 
       <div className="bg-muted/50 flex items-baseline justify-between gap-4 rounded-lg px-4 py-3">
         <span className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
