@@ -5,6 +5,11 @@ const securityConfig = {
       name: "Dashboard",
       roles: ["DOCENTE", "DIRECTOR DE DEPARTAMENTO", "ADMIN"],
     },
+    {
+      path: "/professor/summary",
+      name: "Mi Resumen",
+      roles: ["DOCENTE"],
+    },
     // {
     //   path: "/summary",
     //   name: "Mi Resumen",
