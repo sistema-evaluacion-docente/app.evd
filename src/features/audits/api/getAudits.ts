@@ -42,7 +42,7 @@ export default function getAudits({
     params: {
       page,
       limit,
-      table_name,
+      entity_name: table_name,
       operation,
       start_date,
       end_date,
