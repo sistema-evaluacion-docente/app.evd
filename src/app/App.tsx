@@ -15,6 +15,7 @@ import { EvaluationTeachersPage } from '@/pages/evaluations/teachers'
 import { UploadEvaluationsPage } from '@/pages/evaluations/upload'
 import { MyProfilePage } from '@/pages/my-profile'
 import { NotFoundPage } from '@/pages/not-found'
+import { ProfessorSummaryPage } from '@/pages/professor-summary'
 import { TeacherComparisonPage } from '@/pages/teacher-comparison'
 import { TeacherDetailPage } from '@/pages/teacher-detail'
 import { TeachersPage } from '@/pages/teachers'
@@ -69,6 +70,7 @@ function App() {
       <Route path="/my-plans" component={MyPlansPage} />
       <Route path="/me/history" component={MyHistoryPage} /> */}
       <Route path="/me/profile" component={MyProfilePage} />
+      <Route path="/professor/summary" component={ProfessorSummaryPage} />
 
       {/* Default: 404 */}
       <Route component={NotFoundPage} />
