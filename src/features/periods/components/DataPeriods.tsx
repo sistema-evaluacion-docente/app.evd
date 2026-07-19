@@ -150,13 +150,11 @@ function DataPeriods() {
       {
         label: 'Activar',
         visible: (period) => !period.active,
-        className: 'text-emerald-600 focus:text-emerald-700',
         onClick: (period) => handleActivatePeriod(period),
         disabled: () => isTogglingStatus,
       },
       {
         label: 'Desactivar',
-        variant: 'destructive',
         visible: (period) => period.active,
         onClick: (period) => handleDeactivatePeriod(period),
         disabled: () => isTogglingStatus,
