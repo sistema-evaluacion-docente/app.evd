@@ -144,7 +144,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         const valueBack = localStorage.getItem("selectedRole");
         setSelectedRole(valueBack ?? userProfile.roles[0] ?? null);
 
-        if (requestUserProfile.status !== 401) {
+        if (requestUserProfile.status === "success") {
           setLoggedIn(true);
         } else {
           setLoggedIn(false);
