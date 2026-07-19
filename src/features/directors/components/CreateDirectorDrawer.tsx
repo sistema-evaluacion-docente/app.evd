@@ -81,7 +81,7 @@ function CreateDirectorDrawer({ open, onOpenChange }: CreateDirectorDrawerProps)
       },
       {
         onSuccess: (data) => {
-          if (data.status === 201) {
+          if (data.status === "success") {
             toast.success('Director creado exitosamente')
             resetForm()
             onOpenChange(false)
@@ -89,8 +89,8 @@ function CreateDirectorDrawer({ open, onOpenChange }: CreateDirectorDrawerProps)
             toast.error(data?.message)
           }
         },
-        onError: () => {
-          toast.error('Error al crear el director')
+        onError: (err) => {
+          toast.error(err.message || 'Error al crear el director')
         },
       },
     )

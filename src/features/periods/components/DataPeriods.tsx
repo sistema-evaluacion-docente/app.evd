@@ -203,7 +203,7 @@ function DataPeriods() {
 
     deletePeriodMutation.mutate(deletingPeriod.id, {
       onSuccess: (data) => {
-        if (data?.status === 200) {
+        if (data?.status === "success") {
           setDeletingPeriod(null)
           setIsDeleteDialogOpen(false)
         }

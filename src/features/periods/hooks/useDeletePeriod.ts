@@ -13,9 +13,9 @@ export default function useDeletePeriod() {
   return useMutation({
     mutationFn: deletePeriod,
     onSuccess: (data) => {
-      if (data?.status !== 200) {
+      if (data?.status !== "success") {
         toast.error(`${data?.message}`)
-        return
+        return;
       }
 
       queryClient.invalidateQueries({ queryKey: ['periods'] })

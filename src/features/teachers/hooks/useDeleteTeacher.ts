@@ -9,7 +9,7 @@ export default function useDeleteTeacher() {
   return useMutation({
     mutationFn: deleteTeacher,
     onSuccess: (data) => {
-      if (data?.status !== 200) {
+      if (data?.status !== "success") {
         toast.error(`Error: ${data?.message}`);
         return;
       }

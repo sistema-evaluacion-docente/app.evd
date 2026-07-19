@@ -7,7 +7,7 @@ export interface ResponseFirebase {
 }
 
 export interface ResponseAPI<T = unknown> {
-  status: number;
+  status: "success" | "error";
   message: string;
   data: T;
   pagination?: {
@@ -21,7 +21,7 @@ export interface ResponseAPI<T = unknown> {
 }
 
 export interface ResponsePagination<T = unknown> {
-  status: number;
+  status: "success" | "error";
   message: string;
   data: Pagination<T>;
   error: string | null;
