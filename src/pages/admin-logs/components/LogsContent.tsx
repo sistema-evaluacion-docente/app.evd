@@ -1,60 +1,52 @@
-import { useMemo, useState } from "react";
-
-import DataTable, { type DataTableAction } from "@/components/common/DataTable";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select'
+import { useMemo, useState } from 'react'
+
+import DataTable, { type DataTableAction } from '@/components/common/DataTable'
 import {
   DateRangeFilter,
+  OPERATIONS,
   TABLE_NAMES,
   useGetAudits,
   useLogsColumns,
   type Audit,
-} from "@/features/audits";
-import { PageHeader } from "@/shared/ui";
-import { AuditDetailDrawer } from "./AuditDetailDrawer";
-
-const OPERATIONS = [
-  { value: "CREATE", label: "Crear" },
-  { value: "UPDATE", label: "Actualizar" },
-  { value: "DELETE", label: "Eliminar" },
-  { value: "LOGIN", label: "Inicio sesión" },
-  { value: "IMPORT", label: "Importar" },
-  { value: "EXPORT", label: "Exportar" },
-] as const;
+} from '@/features/audits'
+import { PageHeader } from '@/shared/ui'
+import { AuditDetailDrawer } from './AuditDetailDrawer'
 
 function formatDate(date: Date | undefined): string | undefined {
-  if (!date) return undefined;
+  if (!date) return undefined
 
-  return date.toISOString().split("T")[0];
+  return date.toISOString().split('T')[0]
 }
 
 export function LogsContent() {
-  const columns = useLogsColumns();
+  const columns = useLogsColumns()
 
-  const [selectedAuditId, setSelectedAuditId] = useState<number | null>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [tableName, setTableName] = useState("");
-  const [operation, setOperation] = useState("");
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [selectedAuditId, setSelectedAuditId] = useState<number | null>(null)
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  const [tableName, setTableName] = useState('')
+  const [operation, setOperation] = useState('')
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined)
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined)
 
   const rowActions = useMemo<DataTableAction<Audit>[]>(
     () => [
       {
-        label: "Ver detalle",
+        label: 'Ver detalle',
         onClick: (audit) => {
-          setSelectedAuditId(audit.id);
-          setIsDrawerOpen(true);
+          setSelectedAuditId(audit.id)
+          setIsDrawerOpen(true)
         },
       },
     ],
     [],
-  );
+  )
 
   return (
     <>
@@ -64,10 +56,7 @@ export function LogsContent() {
       />
 
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <Select
-          value={tableName}
-          onValueChange={(value) => setTableName(value ?? "")}
-        >
+        <Select value={tableName} onValueChange={(value) => setTableName(value ?? '')}>
           <SelectTrigger className="w-44">
             <SelectValue placeholder="Todas las tablas" />
           </SelectTrigger>
@@ -83,10 +72,7 @@ export function LogsContent() {
           </SelectContent>
         </Select>
 
-        <Select
-          value={operation}
-          onValueChange={(value) => setOperation(value ?? "")}
-        >
+        <Select value={operation} onValueChange={(value) => setOperation(value ?? '')}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Todas las acciones" />
           </SelectTrigger>
@@ -130,10 +116,10 @@ export function LogsContent() {
         open={isDrawerOpen}
         auditId={selectedAuditId}
         onOpenChange={(open) => {
-          setIsDrawerOpen(open);
-          if (!open) setSelectedAuditId(null);
+          setIsDrawerOpen(open)
+          if (!open) setSelectedAuditId(null)
         }}
       />
     </>
-  );
+  )
 }
