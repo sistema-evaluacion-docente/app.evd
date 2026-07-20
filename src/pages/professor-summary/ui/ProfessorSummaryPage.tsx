@@ -8,35 +8,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Spinner } from '@/components/ui/spinner'
-import { AppFooter, Card, PageHeader } from '@/shared/ui'
+import { AppFooter, Badge, Card, PageHeader } from '@/shared/ui'
 import { AppLayout } from '@/widgets/layout'
 
 import { useProfessorSummary } from '../model/useProfessorSummary'
 import { ProfessorCategoryChart } from './ProfessorCategoryChart'
 import { ProfessorCategoryDetail } from './ProfessorCategoryDetail'
+import { ProfessorCategoryDetailSkeleton } from './ProfessorCategoryDetailSkeleton'
 import { ProfessorCommentsTable } from './ProfessorCommentsTable'
 import { ProfessorResultCard } from './ProfessorResultCard'
+import { ProfessorSummarySkeleton } from './ProfessorSummarySkeleton'
 
 function StateCard({ children }: { children: React.ReactNode }) {
   return (
     <Card className="flex min-h-56 items-center justify-center p-8 text-center">
-      <div className="text-[14px] text-ink-500">{children}</div>
+      <div className="text-ink-500 text-[14px]">{children}</div>
     </Card>
   )
 }
 
 export function ProfessorSummaryPage() {
-  const {
-    user,
-    hasTeacherId,
-    periods,
-    period,
-    setPeriodValue,
-    summary,
-    isLoading,
-    isError,
-  } = useProfessorSummary()
+  const { user, hasTeacherId, periods, period, setPeriodValue, summary, isLoading, isError } =
+    useProfessorSummary()
 
   const [categoryId, setCategoryId] = useState<string | null>(null)
 
@@ -51,46 +44,33 @@ export function ProfessorSummaryPage() {
   if (!hasTeacherId) {
     content = (
       <StateCard>
-        Su usuario no está vinculado a un registro de docente, por lo que no es
-        posible consultar sus evaluaciones. Contacte al administrador del sistema.
+        Su usuario no está vinculado a un registro de docente, por lo que no es posible consultar
+        sus evaluaciones. Contacte al administrador del sistema.
       </StateCard>
     )
   } else if (isLoading) {
-    content = (
-      <Card className="flex min-h-56 items-center justify-center p-8">
-        <Spinner className="size-6 text-ink-400" />
-      </Card>
-    )
+    content = <ProfessorSummarySkeleton />
   } else if (isError) {
     content = (
-      <StateCard>
-        Ocurrió un error al cargar sus resultados. Intente de nuevo más tarde.
-      </StateCard>
+      <StateCard>Ocurrió un error al cargar sus resultados. Intente de nuevo más tarde.</StateCard>
     )
   } else if (!period) {
     content = (
       <StateCard>
-        Aún no tiene evaluaciones registradas. Cuando se cargue una evaluación de un
-        periodo académico, sus resultados aparecerán aquí.
+        Aún no tiene evaluaciones registradas. Cuando se cargue una evaluación de un periodo
+        académico, sus resultados aparecerán aquí.
       </StateCard>
     )
   } else if (summary) {
     content = (
       <>
         <ProfessorResultCard summary={summary} periodValue={periodCode} />
-        <ProfessorCategoryChart
-          categories={summary.categories}
-          onSelect={setCategoryId}
-        />
+        <ProfessorCategoryChart categories={summary.categories} onSelect={setCategoryId} />
         <ProfessorCommentsTable comments={summary.comments} />
       </>
     )
   } else {
-    content = (
-      <StateCard>
-        No hay resultados disponibles para el periodo seleccionado.
-      </StateCard>
-    )
+    content = <StateCard>No hay resultados disponibles para el periodo seleccionado.</StateCard>
   }
 
   return (
@@ -99,14 +79,29 @@ export function ProfessorSummaryPage() {
         <ProfessorCategoryDetail
           category={selectedCategory}
           categories={summary.categories}
+          comments={summary.comments}
           periodValue={periodCode}
           onBack={() => setCategoryId(null)}
           onSelect={setCategoryId}
         />
+      ) : categoryId && isLoading ? (
+        <ProfessorCategoryDetailSkeleton />
       ) : (
         <>
           <PageHeader
-            title="Mi Resumen de Evaluación"
+            title={
+              <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-2">
+                Mi Resumen de Evaluación
+                {periodCode && (
+                  <Badge
+                    variant="info"
+                    className="h-[26px] px-3 text-[12px] normal-case tracking-normal"
+                  >
+                    Semestre {periodCode}
+                  </Badge>
+                )}
+              </span>
+            }
             description="Resultados de la evaluación de estudiantes a docente en el periodo seleccionado."
             actions={
               periods.length > 0 ? (
@@ -144,7 +139,7 @@ export function ProfessorSummaryPage() {
 
       <AppFooter>
         {periodCode ? `Periodo Académico ${periodCode} · ` : ''}
-        {user?.name ?? ''} · v2.1
+        v2.1
       </AppFooter>
     </AppLayout>
   )

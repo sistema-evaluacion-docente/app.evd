@@ -16,10 +16,20 @@ import { professorRiskBadge, type ProfessorComment } from '../model/data'
 
 export interface ProfessorCommentsTableProps {
   comments: ProfessorComment[]
+  /**
+   * Categories to always offer in the filter, even those with no comments.
+   * When omitted, the options are derived from the comments themselves.
+   */
+  categories?: readonly { name: string }[]
+  /** Preselects the category filter by name (e.g. from a category detail). */
+  defaultCategory?: string
 }
 
 const ALL = 'all'
 const UNCLASSIFIED = 'sin-clasificar'
+
+/** Categories are matched to comments by name, so compare them normalized. */
+const norm = (value: string) => value.trim().toLowerCase()
 
 const RISK_ITEMS = [
   { value: ALL, label: 'Todos los niveles' },
@@ -30,10 +40,18 @@ const RISK_ITEMS = [
 ]
 
 /** All the period's student comments, tagged by category and risk level. */
-export function ProfessorCommentsTable({ comments }: ProfessorCommentsTableProps) {
+export function ProfessorCommentsTable({
+  comments,
+  categories,
+  defaultCategory,
+}: ProfessorCommentsTableProps) {
   const [search, setSearch] = useState('')
   const [subject, setSubject] = useState(ALL)
-  const [categoryId, setCategoryId] = useState(ALL)
+  // The category filter is keyed by normalized name so a preselected category
+  // matches its comments regardless of casing.
+  const [category, setCategory] = useState(
+    defaultCategory ? norm(defaultCategory) : ALL,
+  )
   const [risk, setRisk] = useState(ALL)
 
   const subjectItems = useMemo(
@@ -46,15 +64,21 @@ export function ProfessorCommentsTable({ comments }: ProfessorCommentsTableProps
     [comments],
   )
 
-  const categoryItems = useMemo(
-    () => [
+  const categoryItems = useMemo(() => {
+    // Normalized name -> display name. Seed with the always-shown categories,
+    // then let the comments' own labels win when they exist.
+    const byKey = new Map<string, string>()
+    for (const item of categories ?? []) byKey.set(norm(item.name), item.name)
+    for (const comment of comments) {
+      byKey.set(norm(comment.categoryName), comment.categoryName)
+    }
+    return [
       { value: ALL, label: 'Todas las categorías' },
-      ...[...new Map(
-        comments.map((comment) => [comment.categoryId, comment.categoryName]),
-      ).entries()].map(([value, label]) => ({ value, label })),
-    ],
-    [comments],
-  )
+      ...[...byKey.entries()]
+        .sort((a, b) => a[1].localeCompare(b[1], 'es'))
+        .map(([value, label]) => ({ value, label })),
+    ]
+  }, [comments, categories])
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -62,11 +86,11 @@ export function ProfessorCommentsTable({ comments }: ProfessorCommentsTableProps
       (comment) =>
         (!query || comment.text.toLowerCase().includes(query)) &&
         (subject === ALL || comment.subject === subject) &&
-        (categoryId === ALL || comment.categoryId === categoryId) &&
+        (category === ALL || norm(comment.categoryName) === category) &&
         (risk === ALL ||
           (risk === UNCLASSIFIED ? comment.risk === null : comment.risk === risk)),
     )
-  }, [comments, search, subject, categoryId, risk])
+  }, [comments, search, subject, category, risk])
 
   const isFiltered = filtered.length !== comments.length
 
@@ -87,9 +111,14 @@ export function ProfessorCommentsTable({ comments }: ProfessorCommentsTableProps
     },
     {
       header: 'Asignatura',
-      cellClassName: 'align-top py-4 whitespace-nowrap',
+      cellClassName: 'align-top py-4',
       cell: (comment) => (
-        <span className="text-[13px] text-ink-700">{comment.subject}</span>
+        <span
+          className="block max-w-45 text-[13px] leading-snug break-words text-ink-700"
+          style={{ textWrap: 'pretty' }}
+        >
+          {comment.subject}
+        </span>
       ),
     },
     {
@@ -161,7 +190,7 @@ export function ProfessorCommentsTable({ comments }: ProfessorCommentsTableProps
             <SelectTrigger aria-label="Filtrar por asignatura" className="w-full lg:w-52">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent alignItemWithTrigger={false}>
+            <SelectContent alignItemWithTrigger={false} className="w-auto">
               {subjectItems.map((item) => (
                 <SelectItem key={item.value} value={item.value}>
                   {item.label}
@@ -169,11 +198,11 @@ export function ProfessorCommentsTable({ comments }: ProfessorCommentsTableProps
               ))}
             </SelectContent>
           </Select>
-          <Select items={categoryItems} value={categoryId} onValueChange={(value) => value && setCategoryId(value)}>
+          <Select items={categoryItems} value={category} onValueChange={(value) => value && setCategory(value)}>
             <SelectTrigger aria-label="Filtrar por categoría" className="w-full lg:w-52">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent alignItemWithTrigger={false}>
+            <SelectContent alignItemWithTrigger={false} className="w-auto">
               {categoryItems.map((item) => (
                 <SelectItem key={item.value} value={item.value}>
                   {item.label}
@@ -203,9 +232,11 @@ export function ProfessorCommentsTable({ comments }: ProfessorCommentsTableProps
         headerVariant="muted"
         minWidth={760}
         emptyMessage={
-          comments.length > 0
-            ? 'No hay comentarios que coincidan con la búsqueda o los filtros.'
-            : 'No hay comentarios en el periodo seleccionado.'
+          comments.length === 0
+            ? 'No hay comentarios en el periodo seleccionado.'
+            : category !== ALL && !search.trim() && subject === ALL && risk === ALL
+              ? 'Esta categoría no tiene comentarios en el periodo seleccionado.'
+              : 'No hay comentarios que coincidan con la búsqueda o los filtros.'
         }
       />
     </Card>
