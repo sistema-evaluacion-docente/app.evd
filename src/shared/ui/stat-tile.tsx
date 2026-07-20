@@ -21,12 +21,7 @@ export function StatTile({ label, value, sub, icon, valueClassName, className }:
         {icon}
       </div>
 
-      <div
-        className={cn(
-          'text-5xl font-semibold',
-          valueClassName ?? 'text-foreground',
-        )}
-      >
+      <div className={cn('text-5xl font-semibold', valueClassName ?? 'text-foreground')}>
         {value}
       </div>
 

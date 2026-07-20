@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/shared/lib/utils";
 
 export interface PageHeaderProps {
-  title: string;
+  title: ReactNode;
   description?: ReactNode;
   /** Right-aligned action buttons. */
   actions?: ReactNode;
