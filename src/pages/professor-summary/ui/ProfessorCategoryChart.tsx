@@ -1,5 +1,10 @@
 import { ChevronRight } from 'lucide-react'
 
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from '@/components/ui/hover-card'
 import { Card } from '@/shared/ui'
 
 import { professorScoreTone, type ProfessorCategory } from '../model/data'
@@ -47,11 +52,39 @@ export function ProfessorCategoryChart({ categories, onSelect }: ProfessorCatego
                 className="absolute inset-y-0 left-0 rounded-md bg-blue-300"
                 style={{ width: `${(category.score / 5) * 100}%` }}
               />
-              <span
-                title="Promedio del departamento"
-                className="absolute -inset-y-1 w-0.5 rounded-full bg-ink-600"
-                style={{ left: `${(category.deptScore / 5) * 100}%` }}
-              />
+              <HoverCard delay={150} closeDelay={80}>
+                <HoverCardTrigger
+                  render={
+                    <span
+                      className="absolute -inset-y-1 -ml-[5px] flex w-[11px] justify-center"
+                      style={{ left: `${(category.deptScore / 5) * 100}%` }}
+                    />
+                  }
+                >
+                  <span className="h-full w-0.5 rounded-full bg-ink-600" />
+                </HoverCardTrigger>
+                <HoverCardContent side="top" sideOffset={8} className="w-auto min-w-52 p-3.5">
+                  <p className="text-[12.5px] font-medium text-ink-500">
+                    Promedio del departamento
+                  </p>
+                  <p className="num mt-1 text-[20px] font-semibold tabular-nums text-ink-900">
+                    {category.deptScore.toFixed(1)}
+                    <span className="text-[13px] font-normal text-ink-400"> / 5.0</span>
+                  </p>
+                  <p className="mt-1.5 border-t border-ink-100 pt-1.5 text-[12.5px] text-ink-600">
+                    Su calificación:{' '}
+                    <span
+                      className={`num font-semibold tabular-nums ${professorScoreTone(category.score)}`}
+                    >
+                      {category.score.toFixed(1)}
+                    </span>{' '}
+                    <span className="num tabular-nums text-ink-500">
+                      ({category.score >= category.deptScore ? '+' : ''}
+                      {(category.score - category.deptScore).toFixed(1)})
+                    </span>
+                  </p>
+                </HoverCardContent>
+              </HoverCard>
             </span>
             <span
               className={`num text-right text-[16px] font-semibold tabular-nums ${professorScoreTone(category.score)}`}
