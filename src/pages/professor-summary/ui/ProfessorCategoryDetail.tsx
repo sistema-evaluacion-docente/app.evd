@@ -93,11 +93,16 @@ export function ProfessorCategoryDetail({
       headerClassName: 'text-right',
       cellClassName: 'align-top py-4 text-right whitespace-nowrap',
       cell: (question) => (
-        <div
-          className={`num text-[14px] font-semibold tabular-nums ${professorScoreTone(question.mine)}`}
-        >
-          {question.mine.toFixed(2)}
-        </div>
+        <>
+          <div
+            className={`num text-[14px] font-semibold tabular-nums ${professorScoreTone(question.mine)}`}
+          >
+            {question.mine.toFixed(2)}
+          </div>
+          <div className="num mt-1 text-[12px] tabular-nums text-ink-400">
+            {question.dept.toFixed(2)}
+          </div>
+        </>
       ),
     },
   ]

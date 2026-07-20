@@ -52,8 +52,10 @@ export function ProfessorCategoryChart({ categories, onSelect }: ProfessorCatego
                 className="absolute inset-y-0 left-0 rounded-md bg-blue-300"
                 style={{ width: `${(category.score / 5) * 100}%` }}
               />
-              <HoverCard delay={150} closeDelay={80}>
+              <HoverCard>
                 <HoverCardTrigger
+                  delay={150}
+                  closeDelay={80}
                   render={
                     <span
                       className="absolute -inset-y-1 -ml-[5px] flex w-[11px] justify-center"

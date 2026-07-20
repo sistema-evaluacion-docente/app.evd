@@ -16,6 +16,7 @@ import { ProfessorCategoryChart } from './ProfessorCategoryChart'
 import { ProfessorCategoryDetail } from './ProfessorCategoryDetail'
 import { ProfessorCategoryDetailSkeleton } from './ProfessorCategoryDetailSkeleton'
 import { ProfessorCommentsTable } from './ProfessorCommentsTable'
+import { ProfessorHistoryChart } from './ProfessorHistoryChart'
 import { ProfessorResultCard } from './ProfessorResultCard'
 import { ProfessorSummarySkeleton } from './ProfessorSummarySkeleton'
 
@@ -28,8 +29,17 @@ function StateCard({ children }: { children: React.ReactNode }) {
 }
 
 export function ProfessorSummaryPage() {
-  const { user, hasTeacherId, periods, period, setPeriodValue, summary, isLoading, isError } =
-    useProfessorSummary()
+  const {
+    user,
+    hasTeacherId,
+    periods,
+    history,
+    period,
+    setPeriodValue,
+    summary,
+    isLoading,
+    isError,
+  } = useProfessorSummary()
 
   const [categoryId, setCategoryId] = useState<string | null>(null)
 
@@ -66,6 +76,7 @@ export function ProfessorSummaryPage() {
       <>
         <ProfessorResultCard summary={summary} periodValue={periodCode} />
         <ProfessorCategoryChart categories={summary.categories} onSelect={setCategoryId} />
+        <ProfessorHistoryChart data={history} />
         <ProfessorCommentsTable comments={summary.comments} />
       </>
     )
@@ -95,7 +106,7 @@ export function ProfessorSummaryPage() {
                 {periodCode && (
                   <Badge
                     variant="info"
-                    className="h-[26px] px-3 text-[12px] normal-case tracking-normal"
+                    className="h-6.5 px-3 text-[12px] normal-case tracking-normal"
                   >
                     Semestre {periodCode}
                   </Badge>
