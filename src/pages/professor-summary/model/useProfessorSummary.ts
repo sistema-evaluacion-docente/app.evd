@@ -7,6 +7,7 @@ import useAuth from '@/shared/hooks/useAuth'
 import {
   buildProfessorSummary,
   mapProfessorComments,
+  mapProfessorHistory,
   mapProfessorPeriods,
   type ProfessorSummary,
 } from './data'
@@ -24,6 +25,11 @@ export function useProfessorSummary() {
 
   const periods = useMemo(
     () => mapProfessorPeriods(historyQuery.data?.data.history ?? []),
+    [historyQuery.data],
+  )
+
+  const history = useMemo(
+    () => mapProfessorHistory(historyQuery.data?.data.history ?? []),
     [historyQuery.data],
   )
 
@@ -51,6 +57,7 @@ export function useProfessorSummary() {
     user,
     hasTeacherId: teacherId > 0,
     periods,
+    history,
     period,
     setPeriodValue: setSelectedValue,
     summary,
