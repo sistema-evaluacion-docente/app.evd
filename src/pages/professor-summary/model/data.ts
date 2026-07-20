@@ -54,6 +54,13 @@ export interface ProfessorPeriod {
   evaluationId: number
 }
 
+export interface ProfessorHistoryPoint {
+  periodId: number
+  code: string
+  name: string
+  value: number
+}
+
 export const PROFESSOR_RISK_BADGE: Record<
   ProfessorRiskLevel,
   { label: string; variant: 'danger' | 'warning' | 'success' }
@@ -90,6 +97,19 @@ export function mapProfessorPeriods(history: TeacherHistoryEntry[]): ProfessorPe
       code: entry.period_code,
       periodId: entry.period_id,
       evaluationId: entry.evaluation_id,
+    }))
+}
+
+export function mapProfessorHistory(
+  history: TeacherHistoryEntry[],
+): ProfessorHistoryPoint[] {
+  return [...history]
+    .sort((a, b) => a.period_code.localeCompare(b.period_code))
+    .map((entry) => ({
+      periodId: entry.period_id,
+      code: entry.period_code,
+      name: entry.period_name || `Periodo ${entry.period_code}`,
+      value: entry.overall_average,
     }))
 }
 
