@@ -70,7 +70,7 @@ function App() {
       <Route path="/my-plans" component={MyPlansPage} />
       <Route path="/me/history" component={MyHistoryPage} /> */}
       <Route path="/me/profile" component={MyProfilePage} />
-      <Route path="/professor/summary" component={ProfessorSummaryPage} />
+      <Route path="/summary" component={ProfessorSummaryPage} />
 
       {/* Default: 404 */}
       <Route component={NotFoundPage} />
