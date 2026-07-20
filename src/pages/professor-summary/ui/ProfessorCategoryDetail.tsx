@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Badge, Card, DataTable, StatTile, type DataTableColumn } from '@/shared/ui'
 
 import {
-  PROFESSOR_RISK_BADGE,
+  professorRiskBadge,
   professorScoreTone,
   type ProfessorCategory,
   type ProfessorQuestion,
@@ -186,7 +186,7 @@ export function ProfessorCategoryDetail({
         </div>
         <div className="mt-2 flex flex-col">
           {category.comments.map((comment) => {
-            const badge = PROFESSOR_RISK_BADGE[comment.risk]
+            const badge = professorRiskBadge(comment.risk)
             return (
               <div
                 key={comment.id}
@@ -207,9 +207,11 @@ export function ProfessorCategoryDetail({
                   <Badge variant={badge.variant} className="min-w-16 justify-center">
                     {badge.label}
                   </Badge>
-                  <span className="num text-[11.5px] tabular-nums text-ink-500">
-                    {comment.confidence}% confianza
-                  </span>
+                  {comment.confidence != null && (
+                    <span className="num text-[11.5px] tabular-nums text-ink-500">
+                      {comment.confidence}% confianza
+                    </span>
+                  )}
                 </div>
               </div>
             )

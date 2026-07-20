@@ -12,19 +12,21 @@ import {
 } from '@/components/ui/select'
 import { Badge, Card, DataTable, type DataTableColumn } from '@/shared/ui'
 
-import { PROFESSOR_RISK_BADGE, type ProfessorComment } from '../model/data'
+import { professorRiskBadge, type ProfessorComment } from '../model/data'
 
 export interface ProfessorCommentsTableProps {
   comments: ProfessorComment[]
 }
 
 const ALL = 'all'
+const UNCLASSIFIED = 'sin-clasificar'
 
 const RISK_ITEMS = [
   { value: ALL, label: 'Todos los niveles' },
   { value: 'alto', label: 'Alto' },
   { value: 'medio', label: 'Medio' },
   { value: 'bajo', label: 'Bajo' },
+  { value: UNCLASSIFIED, label: 'Sin clasificar' },
 ]
 
 /** All the period's student comments, tagged by category and risk level. */
@@ -61,7 +63,8 @@ export function ProfessorCommentsTable({ comments }: ProfessorCommentsTableProps
         (!query || comment.text.toLowerCase().includes(query)) &&
         (subject === ALL || comment.subject === subject) &&
         (categoryId === ALL || comment.categoryId === categoryId) &&
-        (risk === ALL || comment.risk === risk),
+        (risk === ALL ||
+          (risk === UNCLASSIFIED ? comment.risk === null : comment.risk === risk)),
     )
   }, [comments, search, subject, categoryId, risk])
 
@@ -102,15 +105,17 @@ export function ProfessorCommentsTable({ comments }: ProfessorCommentsTableProps
       header: 'Nivel de riesgo',
       cellClassName: 'align-top py-4',
       cell: (comment) => {
-        const badge = PROFESSOR_RISK_BADGE[comment.risk]
+        const badge = professorRiskBadge(comment.risk)
         return (
           <div className="flex flex-col items-start gap-1">
             <Badge variant={badge.variant} className="min-w-16 justify-center">
               {badge.label}
             </Badge>
-            <span className="num text-[11.5px] tabular-nums text-ink-500">
-              {comment.confidence}% confianza
-            </span>
+            {comment.confidence != null && (
+              <span className="num text-[11.5px] tabular-nums text-ink-500">
+                {comment.confidence}% confianza
+              </span>
+            )}
           </div>
         )
       },
