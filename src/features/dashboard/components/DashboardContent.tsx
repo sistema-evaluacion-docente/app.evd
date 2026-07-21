@@ -1,7 +1,5 @@
-import useAuth from '@/shared/hooks/useAuth'
-
 function DashboardContent() {
-  const { selectedRole } = useAuth()
+  // const { selectedRole } = useAuth()
 
   // if (selectedRole === "ADMIN") {
   //   return <DashboardContentAdmin />;

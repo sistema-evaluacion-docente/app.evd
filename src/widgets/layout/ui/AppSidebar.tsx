@@ -45,6 +45,7 @@ const MENU_ICON_BY_PATH: Record<string, typeof DEFAULT_ICON> = {
   '/periods': Clock,
   '/admin/logs': FileText,
   '/me/summary': Users,
+  '/professor/summary': Users,
   '/me/history': TrendingUp,
   '/me/profile': FileText,
   '/logs': Logs,
