@@ -49,7 +49,12 @@ export function DevLogFloat() {
     <div className="fixed right-4 bottom-4 z-50 flex flex-col items-end gap-2">
       {isOpen && (
         <div className="border-border bg-card flex h-[calc(100dvh-6rem)] w-[calc(100dvw-2rem)] flex-col overflow-hidden rounded-lg border shadow-lg md:h-[calc(50dvh)] md:w-130 md:max-w-xl">
-          <LogHeader status={status} onClear={clearLogs} onClose={() => setIsOpen(false)} />
+          <LogHeader
+            status={status}
+            onClear={clearLogs}
+            onClose={() => setIsOpen(false)}
+            logsCount={logs?.length ?? 0}
+          />
 
           <LogFilters
             search={search}

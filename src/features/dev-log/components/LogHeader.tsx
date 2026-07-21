@@ -8,15 +8,16 @@ interface LogHeaderProps {
   status: ConnectionStatus
   onClear: () => void
   onClose: () => void
+  logsCount: number
 }
 
-export function LogHeader({ status, onClear, onClose }: LogHeaderProps) {
+export function LogHeader({ status, onClear, onClose, logsCount }: LogHeaderProps) {
   return (
     <div className="border-border flex items-center justify-between border-b px-3 py-2">
       <div className="flex items-center gap-2">
         <Terminal className="text-muted-foreground size-4" />
 
-        <span className="text-sm font-medium">Logs de Desarrollo</span>
+        <span className="text-sm font-medium">Logs de Desarrollo ({logsCount})</span>
 
         <Circle
           className={cn(
