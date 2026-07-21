@@ -8,19 +8,18 @@ export const MAX_LOGS = 500
 const RECONNECT_BASE_DELAY = 1000
 const RECONNECT_MAX_DELAY = 30000
 
+const STORAGE_KEY = 'dev-log-entries'
+
 export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error'
 
 export interface LogEntry {
   id: number
   timestamp: number
   message: string
+  duration_ms?: number
+  path?: string
 }
 
-/**
- * Get the WebSocket URL for the dev logs.
- *
- * @returns The WebSocket URL as a string.
- */
 function getWsUrl(): string {
   const url = new URL(API_URL)
   const protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
@@ -32,15 +31,25 @@ interface UseDevLogWebSocketOptions {
   enabled: boolean
 }
 
-/**
- * Custom hook to manage a WebSocket connection for receiving dev logs.
- *
- * @param options - Options for the WebSocket connection.
- * @returns An object containing the logs, connection status, a function to clear logs,
- *          and a ref to the log container element.
- */
+function loadLogs(): LogEntry[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    return raw ? (JSON.parse(raw) as LogEntry[]) : []
+  } catch {
+    return []
+  }
+}
+
+function saveLogs(logs: LogEntry[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(logs))
+  } catch {
+    /* quota exceeded, ignore */
+  }
+}
+
 export function useDevLogWebSocket({ enabled }: UseDevLogWebSocketOptions) {
-  const [logs, setLogs] = useState<LogEntry[]>([])
+  const [logs, setLogs] = useState<LogEntry[]>(loadLogs)
   const [status, setStatus] = useState<ConnectionStatus>('disconnected')
   const logContainerRef = useRef<HTMLDivElement>(null)
   const logIdRef = useRef(0)
@@ -135,6 +144,10 @@ export function useDevLogWebSocket({ enabled }: UseDevLogWebSocketOptions) {
     if (logContainerRef.current) {
       logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight
     }
+  }, [logs])
+
+  useEffect(() => {
+    saveLogs(logs)
   }, [logs])
 
   const clearLogs = useCallback(() => setLogs([]), [])

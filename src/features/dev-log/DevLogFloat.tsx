@@ -1,12 +1,13 @@
 import { cn } from '@/lib/utils'
 import { Terminal } from 'lucide-react'
 import { useTheme } from 'next-themes'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import vsLight from 'react-syntax-highlighter/dist/esm/styles/prism/vs'
 import vsDark from 'react-syntax-highlighter/dist/esm/styles/prism/vsc-dark-plus'
 
 import { IS_DEVELOPMENT } from '@/config'
 import useAuth from '@/shared/hooks/useAuth'
+import { useLocalStorage } from '@/shared/hooks/useLocalStorage'
 import { LogDetailDialog } from './components/LogDetailDialog'
 import { LogEntry } from './components/LogEntry'
 import { LogFilters } from './components/LogFilters'
@@ -18,7 +19,9 @@ export function DevLogFloat() {
   const { user } = useAuth()
   const { theme, systemTheme } = useTheme()
 
-  const [isOpen, setIsOpen] = useState(false)
+  const id = useId()
+
+  const [isOpen, setIsOpen] = useLocalStorage('dev-log-float-open', false)
   const [selectedDetail, setSelectedDetail] = useState<string | null>(null)
 
   const isAdmin = user?.roles?.includes('ADMIN') ?? false
@@ -70,9 +73,9 @@ export function DevLogFloat() {
                   : 'Ningún log coincide con los filtros.'}
               </p>
             ) : (
-              filteredLogs.map((log) => (
+              filteredLogs.map((log, index) => (
                 <LogEntry
-                  key={log.id}
+                  key={log.timestamp + index + id}
                   log={log}
                   syntaxStyle={syntaxStyle}
                   onDetailClick={setSelectedDetail}
