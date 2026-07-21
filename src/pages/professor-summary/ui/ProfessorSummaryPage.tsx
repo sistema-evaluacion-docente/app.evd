@@ -31,6 +31,7 @@ function StateCard({ children }: { children: React.ReactNode }) {
 export function ProfessorSummaryPage() {
   const {
     user,
+    teacherId,
     hasTeacherId,
     periods,
     history,
@@ -92,6 +93,8 @@ export function ProfessorSummaryPage() {
           categories={summary.categories}
           comments={summary.comments}
           periodValue={periodCode}
+          teacherId={teacherId}
+          periods={periods}
           onBack={() => setCategoryId(null)}
           onSelect={setCategoryId}
         />
