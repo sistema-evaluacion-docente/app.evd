@@ -1,13 +1,9 @@
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { Badge, DataTable, StatTile, type DataTableColumn } from '@/shared/ui'
 import { ArrowLeft, ChevronDown, ChevronUp, TrendingUp } from 'lucide-react'
 import { useState } from 'react'
-
-import { Button } from '@/components/ui/button'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
-import { Badge, Card, DataTable, StatTile, type DataTableColumn } from '@/shared/ui'
 
 import {
   professorScoreTone,
@@ -15,19 +11,16 @@ import {
   type ProfessorComment,
   type ProfessorPeriod,
   type ProfessorQuestion,
-} from '../model/data'
+} from '../../model/professorSummary'
 import { ProfessorCategoryComparison } from './ProfessorCategoryComparison'
 import { ProfessorCommentsTable } from './ProfessorCommentsTable'
 
 export interface ProfessorCategoryDetailProps {
   category: ProfessorCategory
   categories: ProfessorCategory[]
-  /** Every period comment, so the reused table can filter across categories. */
   comments: ProfessorComment[]
   periodValue: string
-  /** Logged-in teacher, used to fan-out the per-category history. */
   teacherId: number
-  /** Every evaluated period, for the history comparison chart/table. */
   periods: ProfessorPeriod[]
   onBack: () => void
   onSelect: (categoryId: string) => void
@@ -35,21 +28,23 @@ export interface ProfessorCategoryDetailProps {
 
 function ComparisonBars({ question }: { question: ProfessorQuestion }) {
   const rows = [
-    { label: 'Usted', value: question.mine, fill: 'bg-blue-300' },
-    { label: 'Docentes', value: question.dept, fill: 'bg-ink-300' },
+    { label: 'Usted', value: question.mine, fill: 'bg-primary/40' },
+    { label: 'Docentes', value: question.dept, fill: 'bg-muted-foreground/30' },
   ]
   return (
     <div className="flex w-full min-w-44 flex-col gap-1.5">
       {rows.map((row) => (
         <div key={row.label} className="flex items-center gap-2">
-          <span className="w-16 shrink-0 text-[11.5px] text-ink-500">{row.label}</span>
+          <span className="text-muted-foreground w-16 shrink-0 text-xs">{row.label}</span>
+
           <Tooltip>
-            <TooltipTrigger className="block h-2.5 flex-1 cursor-default overflow-hidden rounded-full bg-ink-100">
+            <TooltipTrigger className="bg-muted block h-2.5 flex-1 cursor-default overflow-hidden rounded-full">
               <span
                 className={`block h-full rounded-full ${row.fill}`}
                 style={{ width: `${(row.value / 5) * 100}%` }}
               />
             </TooltipTrigger>
+
             <TooltipContent>
               {row.label}: {row.value.toFixed(2)} / 5.00
             </TooltipContent>
@@ -60,7 +55,6 @@ function ComparisonBars({ question }: { question: ProfessorQuestion }) {
   )
 }
 
-/** Per-category breakdown: stats, question comparison and category comments. */
 export function ProfessorCategoryDetail({
   category,
   categories,
@@ -74,26 +68,23 @@ export function ProfessorCategoryDetail({
   const [showComparison, setShowComparison] = useState(false)
   const questionColumns: DataTableColumn<ProfessorQuestion>[] = [
     {
-      header: 'Código',
+      header: 'Codigo',
       cellClassName: 'align-top py-4',
       cell: (question) => (
-        <span className="font-mono text-[12px] text-ink-500">{question.code}</span>
+        <span className="text-muted-foreground font-mono text-xs">{question.code}</span>
       ),
     },
     {
       header: 'Pregunta',
       cellClassName: 'align-top py-4',
       cell: (question) => (
-        <p
-          className="text-[13.5px] leading-normal text-ink-700"
-          style={{ textWrap: 'pretty' }}
-        >
+        <p className="text-foreground/80 text-sm leading-normal" style={{ textWrap: 'pretty' }}>
           {question.text}
         </p>
       ),
     },
     {
-      header: 'Comparación',
+      header: 'Comparacion',
       headerClassName: 'w-70',
       cellClassName: 'align-top py-4',
       cell: (question) => <ComparisonBars question={question} />,
@@ -105,11 +96,11 @@ export function ProfessorCategoryDetail({
       cell: (question) => (
         <>
           <div
-            className={`num text-[14px] font-semibold tabular-nums ${professorScoreTone(question.mine)}`}
+            className={`num text-sm font-semibold tabular-nums ${professorScoreTone(question.mine)}`}
           >
             {question.mine.toFixed(2)}
           </div>
-          <div className="num mt-1 text-[12px] tabular-nums text-ink-400">
+          <div className="num text-muted-foreground mt-1 text-xs tabular-nums">
             {question.dept.toFixed(2)}
           </div>
         </>
@@ -124,7 +115,7 @@ export function ProfessorCategoryDetail({
       <div>
         <Button
           variant="ghost"
-          className="-ml-3 text-brand-600 hover:bg-brand-50 hover:text-brand-700"
+          className="text-primary hover:bg-muted hover:text-primary -ml-3"
           onClick={onBack}
         >
           <ArrowLeft size={16} />
@@ -134,20 +125,20 @@ export function ProfessorCategoryDetail({
         <div className="mt-3 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-              <h1 className="text-2xl font-semibold leading-tight tracking-tight">
+              <h1 className="text-2xl leading-tight font-semibold tracking-tight">
                 {category.name}
               </h1>
-              <Badge
-                variant="info"
-                className="h-[26px] px-3 text-[12px] normal-case tracking-normal"
-              >
+
+              <Badge variant="info" className="h-7 px-3 text-xs tracking-normal normal-case">
                 Semestre {periodValue}
               </Badge>
             </div>
-            <p className="mt-1.5 text-[14px] text-muted-foreground">
-              Desglose de preguntas y comentarios de esta categoría.
+
+            <p className="text-muted-foreground mt-1.5 text-sm">
+              Desglose de preguntas y comentarios de esta categoria.
             </p>
           </div>
+
           <div className="flex flex-wrap gap-2 sm:justify-end">
             {otherCategories.map((item) => (
               <Button
@@ -169,10 +160,11 @@ export function ProfessorCategoryDetail({
           label="Su promedio"
           value={category.score.toFixed(1)}
           valueClassName={professorScoreTone(category.score)}
-          sub="/5.0 en esta categoría"
+          sub="/5.0 en esta categoria"
         />
+
         <StatTile
-          label="Demás docentes"
+          label="Demas docentes"
           value={category.deptScore.toFixed(1)}
           sub="promedio del departamento"
         />
@@ -192,23 +184,18 @@ export function ProfessorCategoryDetail({
       </div>
 
       {showComparison && (
-        <ProfessorCategoryComparison
-          category={category}
-          teacherId={teacherId}
-          periods={periods}
-        />
+        <ProfessorCategoryComparison category={category} teacherId={teacherId} periods={periods} />
       )}
 
       <Card className="overflow-hidden">
         <div className="p-6 pb-4 sm:p-7 sm:pb-4">
-          <h2 className="text-[18px] font-semibold text-ink-900">
-            Desglose de preguntas
-          </h2>
-          <p className="mt-1 text-[13.5px] text-ink-500">
-            Su calificación en cada pregunta, comparada con el promedio de los demás
-            docentes.
+          <h2 className="text-foreground text-lg font-semibold">Desglose de preguntas</h2>
+
+          <p className="text-muted-foreground mt-1 text-sm">
+            Su calificacion en cada pregunta, comparada con el promedio de los demas docentes.
           </p>
         </div>
+
         <DataTable
           columns={questionColumns}
           rows={category.questions}

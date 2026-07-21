@@ -2,13 +2,26 @@ import { useQueries } from '@tanstack/react-query'
 
 import { getTeacherVsDepartment } from '@/features/evaluations'
 
-import { buildCategoryHistory, type CategoryHistory, type ProfessorPeriod } from './data'
+import {
+  buildCategoryHistory,
+  type CategoryHistory,
+  type ProfessorPeriod,
+} from '../model/professorSummary'
 
 export interface UseCategoryHistoryResult extends CategoryHistory {
   isLoading: boolean
   isError: boolean
 }
 
+/**
+ * Hook to fetch the history of a teacher's category across multiple periods.
+ *
+ * @param teacherId - The ID of the teacher for whom to fetch the category history.
+ * @param periods - An array of ProfessorPeriod objects representing the periods to fetch data for.
+ * @param categoryId - The ID of the category to fetch history for.
+ * @param enabled - A boolean indicating whether the query should be enabled. Defaults to true.
+ * @returns An object containing the points, items, isLoading, and isError properties.
+ */
 export function useCategoryHistory(
   teacherId: number,
   periods: ProfessorPeriod[],
@@ -20,7 +33,6 @@ export function useCategoryHistory(
       queryKey: ['teacher-vs-department', teacherId, period.periodId],
       queryFn: () => getTeacherVsDepartment(teacherId, period.periodId),
       enabled: enabled && teacherId > 0 && period.periodId > 0,
-      staleTime: 5 * 60 * 1000,
     })),
   })
 

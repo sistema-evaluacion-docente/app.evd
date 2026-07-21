@@ -3,7 +3,7 @@ import type {
   TeacherVsDeptData,
   TeacherVsDeptDimension,
 } from '@/features/evaluations'
-import type { TeacherHistoryEntry } from '@/features/teachers'
+import type { TeacherHistoryEntry } from '@/features/teachers/types/Teacher'
 
 export type ProfessorRiskLevel = 'alto' | 'medio' | 'bajo'
 
@@ -20,7 +20,6 @@ export interface ProfessorComment {
   subject: string
   categoryId: string
   categoryName: string
-  /** Null when the AI has not classified the comment yet. */
   risk: ProfessorRiskLevel | null
   confidence: number | null
 }
@@ -62,7 +61,6 @@ export interface ProfessorHistoryPoint {
   value: number
 }
 
-/** One semester's teacher-vs-department score for a single category. */
 export interface CategoryHistoryPoint {
   periodId: number
   code: string
@@ -71,7 +69,6 @@ export interface CategoryHistoryPoint {
   dept: number
 }
 
-/** One item's (question's) score in a single semester. */
 export interface CategoryItemPeriodScore {
   periodId: number
   code: string
@@ -79,7 +76,6 @@ export interface CategoryItemPeriodScore {
   dept: number
 }
 
-/** A category question tracked across every semester it appears in. */
 export interface CategoryItemHistory {
   code: string
   text: string
@@ -110,6 +106,8 @@ export function professorRiskBadge(risk: ProfessorRiskLevel | null): {
 export const professorScoreTone = (score: number) =>
   score >= 4.0 ? 'text-emerald-600' : score >= 3.5 ? 'text-amber-600' : 'text-red-600'
 
+export const normalize = (value: string) => value.trim().toLowerCase()
+
 function levelFor(overall: number): ProfessorLevel {
   if (overall >= 4.3) return { label: 'Sobresaliente', variant: 'success' }
   if (overall >= 3.8) return { label: 'Destacado', variant: 'success' }
@@ -117,7 +115,6 @@ function levelFor(overall: number): ProfessorLevel {
   return { label: 'Requiere mejora', variant: 'danger' }
 }
 
-/** Latest period first, so the select defaults to the most recent evaluation. */
 export function mapProfessorPeriods(history: TeacherHistoryEntry[]): ProfessorPeriod[] {
   return [...history]
     .sort((a, b) => b.period_code.localeCompare(a.period_code))
@@ -130,9 +127,7 @@ export function mapProfessorPeriods(history: TeacherHistoryEntry[]): ProfessorPe
     }))
 }
 
-export function mapProfessorHistory(
-  history: TeacherHistoryEntry[],
-): ProfessorHistoryPoint[] {
+export function mapProfessorHistory(history: TeacherHistoryEntry[]): ProfessorHistoryPoint[] {
   return [...history]
     .sort((a, b) => a.period_code.localeCompare(b.period_code))
     .map((entry) => ({
@@ -143,12 +138,6 @@ export function mapProfessorHistory(
     }))
 }
 
-/**
- * Rebuilds a per-category history from one teacher-vs-department response per
- * period. Only periods that actually contain the category are kept, sorted
- * oldest → newest. Produces both the two-line chart series (`points`) and the
- * item-by-item series (`items`), from the same source.
- */
 export function buildCategoryHistory(
   entries: { period: ProfessorPeriod; data: TeacherVsDeptData | undefined }[],
   categoryId: string,
@@ -158,14 +147,10 @@ export function buildCategoryHistory(
   const matched = entries
     .map((entry) => ({
       period: entry.period,
-      dimension: entry.data?.dimensions.find(
-        (dim) => normalize(dim.dimension) === target,
-      ),
+      dimension: entry.data?.dimensions.find((dim) => normalize(dim.dimension) === target),
     }))
     .filter(
-      (
-        entry,
-      ): entry is { period: ProfessorPeriod; dimension: TeacherVsDeptDimension } =>
+      (entry): entry is { period: ProfessorPeriod; dimension: TeacherVsDeptDimension } =>
         entry.dimension != null,
     )
     .sort((a, b) => a.period.code.localeCompare(b.period.code))
@@ -178,8 +163,6 @@ export function buildCategoryHistory(
     dept: dimension.department_average,
   }))
 
-  // Item order follows the most recent semester; items seen only in older
-  // semesters are appended so nothing disappears from the comparison.
   const order: string[] = []
   const texts = new Map<string, string>()
   for (let i = matched.length - 1; i >= 0; i--) {
@@ -212,15 +195,12 @@ export function buildCategoryHistory(
   return { points, items }
 }
 
-const normalize = (value: string) => value.trim().toLowerCase()
-
 function mapRisk(name: string | undefined | null): ProfessorRiskLevel | null {
   if (!name) return null
   const key = normalize(name)
   return key === 'alto' || key === 'medio' || key === 'bajo' ? key : null
 }
 
-/** Scores may come as 0–1 ratios or 0–100 percentages; display always as %. */
 function toPercent(value: number | null): number | null {
   if (value == null) return null
   return Math.round(value <= 1 ? value * 100 : value)
@@ -235,7 +215,7 @@ export function mapProfessorComments(data: TeacherCommentsData): ProfessorCommen
       categoryId: comment.pedagogical_category
         ? String(comment.pedagogical_category.id)
         : 'sin-categoria',
-      categoryName: comment.pedagogical_category?.name ?? 'Sin categoría',
+      categoryName: comment.pedagogical_category?.name ?? 'Sin categoria',
       risk: mapRisk(comment.risk_level?.name),
       confidence: toPercent(comment.risk_score ?? comment.category_score),
     })),
@@ -258,8 +238,6 @@ export function buildProfessorSummary(
       mine: question.teacher_average,
       dept: question.department_average,
     })),
-    // The AI's pedagogical categories are matched to dimensions by name; a
-    // comment whose category has no matching dimension only shows in the table.
     comments: comments.filter(
       (comment) => normalize(comment.categoryName) === normalize(dimension.dimension),
     ),

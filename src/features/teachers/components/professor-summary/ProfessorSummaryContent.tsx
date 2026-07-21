@@ -1,5 +1,3 @@
-import { useState } from 'react'
-
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -8,10 +6,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { AppFooter, Badge, Card, PageHeader } from '@/shared/ui'
-import { AppLayout } from '@/widgets/layout'
+import { Badge, PageHeader } from '@/shared/ui'
+import { useState } from 'react'
 
-import { useProfessorSummary } from '../model/useProfessorSummary'
+import { useProfessorSummary } from '../../hooks/useProfessorSummary'
 import { ProfessorCategoryChart } from './ProfessorCategoryChart'
 import { ProfessorCategoryDetail } from './ProfessorCategoryDetail'
 import { ProfessorCategoryDetailSkeleton } from './ProfessorCategoryDetailSkeleton'
@@ -19,18 +17,10 @@ import { ProfessorCommentsTable } from './ProfessorCommentsTable'
 import { ProfessorHistoryChart } from './ProfessorHistoryChart'
 import { ProfessorResultCard } from './ProfessorResultCard'
 import { ProfessorSummarySkeleton } from './ProfessorSummarySkeleton'
+import { StateCard } from './StateCard'
 
-function StateCard({ children }: { children: React.ReactNode }) {
-  return (
-    <Card className="flex min-h-56 items-center justify-center p-8 text-center">
-      <div className="text-ink-500 text-[14px]">{children}</div>
-    </Card>
-  )
-}
-
-export function ProfessorSummaryPage() {
+export function ProfessorSummaryContent() {
   const {
-    user,
     teacherId,
     hasTeacherId,
     periods,
@@ -55,7 +45,7 @@ export function ProfessorSummaryPage() {
   if (!hasTeacherId) {
     content = (
       <StateCard>
-        Su usuario no está vinculado a un registro de docente, por lo que no es posible consultar
+        Su usuario no esta vinculado a un registro de docente, por lo que no es posible consultar
         sus evaluaciones. Contacte al administrador del sistema.
       </StateCard>
     )
@@ -63,13 +53,13 @@ export function ProfessorSummaryPage() {
     content = <ProfessorSummarySkeleton />
   } else if (isError) {
     content = (
-      <StateCard>Ocurrió un error al cargar sus resultados. Intente de nuevo más tarde.</StateCard>
+      <StateCard>Ocurrio un error al cargar sus resultados. Intente de nuevo mas tarde.</StateCard>
     )
   } else if (!period) {
     content = (
       <StateCard>
-        Aún no tiene evaluaciones registradas. Cuando se cargue una evaluación de un periodo
-        académico, sus resultados aparecerán aquí.
+        Aun no tiene evaluaciones registradas. Cuando se cargue una evaluacion de un periodo
+        academico, sus resultados apareceran aqui.
       </StateCard>
     )
   } else if (summary) {
@@ -86,7 +76,7 @@ export function ProfessorSummaryPage() {
   }
 
   return (
-    <AppLayout header={{ userName: user?.name ?? '', userRole: 'Docente' }}>
+    <>
       {selectedCategory && summary ? (
         <ProfessorCategoryDetail
           category={selectedCategory}
@@ -105,22 +95,19 @@ export function ProfessorSummaryPage() {
           <PageHeader
             title={
               <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-2">
-                Mi Resumen de Evaluación
+                Mi Resumen de Evaluacion
                 {periodCode && (
-                  <Badge
-                    variant="info"
-                    className="h-6.5 px-3 text-[12px] tracking-normal normal-case"
-                  >
+                  <Badge variant="info" className="h-7 px-3 text-xs tracking-normal normal-case">
                     Semestre {periodCode}
                   </Badge>
                 )}
               </span>
             }
-            description="Resultados de la evaluación de estudiantes a docente en el periodo seleccionado."
+            description="Resultados de la evaluacion de estudiantes a docente en el periodo seleccionado."
             actions={
               periods.length > 0 ? (
                 <div className="w-full sm:w-70">
-                  <Label htmlFor="professor-period">Periodo académico</Label>
+                  <Label htmlFor="professor-period">Periodo academico</Label>
                   <Select
                     items={periods}
                     value={period?.value ?? null}
@@ -150,11 +137,6 @@ export function ProfessorSummaryPage() {
           {content}
         </>
       )}
-
-      <AppFooter>
-        {periodCode ? `Periodo Académico ${periodCode} · ` : ''}
-        v2.1
-      </AppFooter>
-    </AppLayout>
+    </>
   )
 }
