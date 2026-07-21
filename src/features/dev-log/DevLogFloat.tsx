@@ -27,7 +27,7 @@ export function DevLogFloat() {
   const isAdmin = user?.roles?.includes('ADMIN') ?? false
 
   const { logs, status, clearLogs, logContainerRef } = useDevLogWebSocket({
-    enabled: isOpen && isAdmin,
+    enabled: isAdmin,
   })
 
   const {
