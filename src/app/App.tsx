@@ -1,5 +1,6 @@
 import { Route, Switch } from 'wouter'
 
+import { DevLogFloat } from '@/features/dev-log'
 import { SettingsPage } from '@/features/settings'
 import { AdminDepartmentsPage } from '@/pages/admin-departments'
 import { AdminFacultiesPage } from '@/pages/admin-faculties'
@@ -27,54 +28,57 @@ import UsersPage from '@/pages/users'
 
 function App() {
   return (
-    <Switch>
-      <Route path="/login" component={LoginPage} />
-      <Route path="/dashboard" component={DashboardPage} />
+    <>
+      <Switch>
+        <Route path="/login" component={LoginPage} />
+        <Route path="/dashboard" component={DashboardPage} />
 
-      {/* Director */}
-      <Route path="/teachers" component={TeachersPage} />
-      <Route path="/teachers/upload" component={UploadTeachersPage} />
-      <Route path="/teachers/:id/comparison" component={TeacherComparisonPage} />
-      <Route path="/teachers/:id" component={TeacherDetailPage} />
+        {/* Director */}
+        <Route path="/teachers" component={TeachersPage} />
+        <Route path="/teachers/upload" component={UploadTeachersPage} />
+        <Route path="/teachers/:id/comparison" component={TeacherComparisonPage} />
+        <Route path="/teachers/:id" component={TeacherDetailPage} />
 
-      {/* <Route path="/matrix" component={MatrixIndexPage} />
-      <Route path="/matrix/:id" component={MatrixPage} />
-      <Route path="/matrix-mock" component={MatrixPageMock} />
-      <Route path="/plans" component={PlansPage} />
-      <Route path="/plans/new" component={CreatePlanPage} />
-      <Route path="/plans/:id" component={PlanDetailPage} />
-      <Route path="/subjects" component={SubjectsPage} />
-      <Route path="/subjects/:id" component={SubjectDetailPage} /> */}
+        {/* <Route path="/matrix" component={MatrixIndexPage} />
+        <Route path="/matrix/:id" component={MatrixPage} />
+        <Route path="/matrix-mock" component={MatrixPageMock} />
+        <Route path="/plans" component={PlansPage} />
+        <Route path="/plans/new" component={CreatePlanPage} />
+        <Route path="/plans/:id" component={PlanDetailPage} />
+        <Route path="/subjects" component={SubjectsPage} />
+        <Route path="/subjects/:id" component={SubjectDetailPage} /> */}
 
-      <Route path="/evaluations" component={EvaluationsPage} />
-      <Route path="/evaluations/:id/dimensions" component={EvaluationDimensionsPage} />
-      <Route path="/evaluations/:id/teachers" component={EvaluationTeachersPage} />
-      <Route path="/evaluations/:id/groups" component={EvaluationGroupsPage} />
-      <Route path="/evaluations/:id/comments" component={EvaluationCommentsPage} />
-      <Route path="/evaluations/upload" component={UploadEvaluationsPage} />
-      <Route path="/evaluations/:id" component={EvaluationDetailPage} />
+        <Route path="/evaluations" component={EvaluationsPage} />
+        <Route path="/evaluations/:id/dimensions" component={EvaluationDimensionsPage} />
+        <Route path="/evaluations/:id/teachers" component={EvaluationTeachersPage} />
+        <Route path="/evaluations/:id/groups" component={EvaluationGroupsPage} />
+        <Route path="/evaluations/:id/comments" component={EvaluationCommentsPage} />
+        <Route path="/evaluations/upload" component={UploadEvaluationsPage} />
+        <Route path="/evaluations/:id" component={EvaluationDetailPage} />
 
-      {/* <Route path="/upload-evaluations" component={UploadEvaluationsPage} /> */}
+        {/* <Route path="/upload-evaluations" component={UploadEvaluationsPage} /> */}
 
-      {/* Super Admin */}
-      <Route path="/users" component={UsersPage} />
-      <Route path="/directors" component={DirectorsPage} />
-      <Route path="/periods" component={PeriodsPage} />
-      <Route path="/settings" component={SettingsPage} />
-      <Route path="/faculties" component={AdminFacultiesPage} />
-      <Route path="/departments" component={AdminDepartmentsPage} />
-      <Route path="/logs" component={AdminLogsPage} />
+        {/* Super Admin */}
+        <Route path="/users" component={UsersPage} />
+        <Route path="/directors" component={DirectorsPage} />
+        <Route path="/periods" component={PeriodsPage} />
+        <Route path="/settings" component={SettingsPage} />
+        <Route path="/faculties" component={AdminFacultiesPage} />
+        <Route path="/departments" component={AdminDepartmentsPage} />
+        <Route path="/logs" component={AdminLogsPage} />
 
-      {/* Docente */}
-      {/* <Route path="/summary" component={SummaryPage} />
-      <Route path="/my-plans" component={MyPlansPage} />
-      <Route path="/me/history" component={MyHistoryPage} /> */}
-      <Route path="/me/profile" component={MyProfilePage} />
-      <Route path="/summary" component={ProfessorSummaryPage} />
+        {/* Docente */}
+        {/* <Route path="/summary" component={SummaryPage} />
+        <Route path="/my-plans" component={MyPlansPage} />
+        <Route path="/me/history" component={MyHistoryPage} /> */}
+        <Route path="/me/profile" component={MyProfilePage} />
+        <Route path="/summary" component={ProfessorSummaryPage} />
 
-      {/* Default: 404 */}
-      <Route component={NotFoundPage} />
-    </Switch>
+        {/* Default: 404 */}
+        <Route component={NotFoundPage} />
+      </Switch>
+      <DevLogFloat />
+    </>
   )
 }
 
