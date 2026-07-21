@@ -68,7 +68,7 @@ export function getQuestionScores(
 export function getComments(
   evaluationId: number,
 ): Promise<ResponseAPI<EvaluationComment[]>> {
-  return api.get(`/comments/by-evaluation/${evaluationId}`);
+  return api.get(`/comments?evaluation_id=${evaluationId}`);
 }
 
 export function getCommentsPaginated(
@@ -82,7 +82,7 @@ export function getCommentsPaginated(
   params.set("limit", String(limit));
   if (search) params.set("search", search);
   return api.get(
-    `/comments/by-evaluation/${evaluationId}/paginated?${params.toString()}`,
+    `/comments?evaluation_id=${evaluationId}&${params.toString()}`,
   );
 }
 
