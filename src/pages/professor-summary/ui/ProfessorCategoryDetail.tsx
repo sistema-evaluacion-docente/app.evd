@@ -1,4 +1,5 @@
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, ChevronDown, ChevronUp, TrendingUp } from 'lucide-react'
+import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -12,8 +13,10 @@ import {
   professorScoreTone,
   type ProfessorCategory,
   type ProfessorComment,
+  type ProfessorPeriod,
   type ProfessorQuestion,
 } from '../model/data'
+import { ProfessorCategoryComparison } from './ProfessorCategoryComparison'
 import { ProfessorCommentsTable } from './ProfessorCommentsTable'
 
 export interface ProfessorCategoryDetailProps {
@@ -22,6 +25,10 @@ export interface ProfessorCategoryDetailProps {
   /** Every period comment, so the reused table can filter across categories. */
   comments: ProfessorComment[]
   periodValue: string
+  /** Logged-in teacher, used to fan-out the per-category history. */
+  teacherId: number
+  /** Every evaluated period, for the history comparison chart/table. */
+  periods: ProfessorPeriod[]
   onBack: () => void
   onSelect: (categoryId: string) => void
 }
@@ -59,9 +66,12 @@ export function ProfessorCategoryDetail({
   categories,
   comments,
   periodValue,
+  teacherId,
+  periods,
   onBack,
   onSelect,
 }: ProfessorCategoryDetailProps) {
+  const [showComparison, setShowComparison] = useState(false)
   const questionColumns: DataTableColumn<ProfessorQuestion>[] = [
     {
       header: 'Código',
@@ -167,6 +177,27 @@ export function ProfessorCategoryDetail({
           sub="promedio del departamento"
         />
       </div>
+
+      <div>
+        <Button
+          variant="outline"
+          className="w-full justify-center sm:w-auto"
+          aria-expanded={showComparison}
+          onClick={() => setShowComparison((open) => !open)}
+        >
+          <TrendingUp size={16} />
+          Comparar con semestres anteriores
+          {showComparison ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        </Button>
+      </div>
+
+      {showComparison && (
+        <ProfessorCategoryComparison
+          category={category}
+          teacherId={teacherId}
+          periods={periods}
+        />
+      )}
 
       <Card className="overflow-hidden">
         <div className="p-6 pb-4 sm:p-7 sm:pb-4">
