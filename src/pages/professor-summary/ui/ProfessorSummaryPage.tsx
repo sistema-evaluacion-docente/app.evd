@@ -109,7 +109,7 @@ export function ProfessorSummaryPage() {
                 {periodCode && (
                   <Badge
                     variant="info"
-                    className="h-6.5 px-3 text-[12px] normal-case tracking-normal"
+                    className="h-6.5 px-3 text-[12px] tracking-normal normal-case"
                   >
                     Semestre {periodCode}
                   </Badge>
