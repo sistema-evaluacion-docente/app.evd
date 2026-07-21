@@ -1,6 +1,7 @@
 import type {
   TeacherCommentsData,
   TeacherVsDeptData,
+  TeacherVsDeptDimension,
 } from '@/features/evaluations'
 import type { TeacherHistoryEntry } from '@/features/teachers'
 
@@ -61,6 +62,35 @@ export interface ProfessorHistoryPoint {
   value: number
 }
 
+/** One semester's teacher-vs-department score for a single category. */
+export interface CategoryHistoryPoint {
+  periodId: number
+  code: string
+  name: string
+  mine: number
+  dept: number
+}
+
+/** One item's (question's) score in a single semester. */
+export interface CategoryItemPeriodScore {
+  periodId: number
+  code: string
+  mine: number
+  dept: number
+}
+
+/** A category question tracked across every semester it appears in. */
+export interface CategoryItemHistory {
+  code: string
+  text: string
+  byPeriod: CategoryItemPeriodScore[]
+}
+
+export interface CategoryHistory {
+  points: CategoryHistoryPoint[]
+  items: CategoryItemHistory[]
+}
+
 export const PROFESSOR_RISK_BADGE: Record<
   ProfessorRiskLevel,
   { label: string; variant: 'danger' | 'warning' | 'success' }
@@ -111,6 +141,75 @@ export function mapProfessorHistory(
       name: entry.period_name || `Periodo ${entry.period_code}`,
       value: entry.overall_average,
     }))
+}
+
+/**
+ * Rebuilds a per-category history from one teacher-vs-department response per
+ * period. Only periods that actually contain the category are kept, sorted
+ * oldest → newest. Produces both the two-line chart series (`points`) and the
+ * item-by-item series (`items`), from the same source.
+ */
+export function buildCategoryHistory(
+  entries: { period: ProfessorPeriod; data: TeacherVsDeptData | undefined }[],
+  categoryId: string,
+): CategoryHistory {
+  const target = normalize(categoryId)
+
+  const matched = entries
+    .map((entry) => ({
+      period: entry.period,
+      dimension: entry.data?.dimensions.find(
+        (dim) => normalize(dim.dimension) === target,
+      ),
+    }))
+    .filter(
+      (
+        entry,
+      ): entry is { period: ProfessorPeriod; dimension: TeacherVsDeptDimension } =>
+        entry.dimension != null,
+    )
+    .sort((a, b) => a.period.code.localeCompare(b.period.code))
+
+  const points: CategoryHistoryPoint[] = matched.map(({ period, dimension }) => ({
+    periodId: period.periodId,
+    code: period.code,
+    name: period.label,
+    mine: dimension.teacher_average,
+    dept: dimension.department_average,
+  }))
+
+  // Item order follows the most recent semester; items seen only in older
+  // semesters are appended so nothing disappears from the comparison.
+  const order: string[] = []
+  const texts = new Map<string, string>()
+  for (let i = matched.length - 1; i >= 0; i--) {
+    for (const question of matched[i].dimension.questions) {
+      if (!texts.has(question.code)) {
+        texts.set(question.code, question.text)
+        order.push(question.code)
+      }
+    }
+  }
+
+  const items: CategoryItemHistory[] = order.map((code) => ({
+    code,
+    text: texts.get(code) ?? code,
+    byPeriod: matched
+      .map(({ period, dimension }) => {
+        const question = dimension.questions.find((item) => item.code === code)
+        return question
+          ? {
+              periodId: period.periodId,
+              code: period.code,
+              mine: question.teacher_average,
+              dept: question.department_average,
+            }
+          : null
+      })
+      .filter((score): score is CategoryItemPeriodScore => score != null),
+  }))
+
+  return { points, items }
 }
 
 const normalize = (value: string) => value.trim().toLowerCase()
