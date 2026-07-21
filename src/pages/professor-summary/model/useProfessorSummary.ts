@@ -12,11 +12,6 @@ import {
   type ProfessorSummary,
 } from './data'
 
-/**
- * Loads the logged-in professor's evaluation summary. The period select is
- * built from the teacher's history, so it only offers periods that actually
- * have an evaluation.
- */
 export function useProfessorSummary() {
   const { user } = useAuth()
   const teacherId = user?.teacher_id ?? 0
@@ -55,6 +50,7 @@ export function useProfessorSummary() {
 
   return {
     user,
+    teacherId,
     hasTeacherId: teacherId > 0,
     periods,
     history,
