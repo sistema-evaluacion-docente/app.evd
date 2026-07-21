@@ -26,10 +26,6 @@ export default function useUserColumns() {
           </div>
         ),
       }),
-      columnHelper.accessor("username", {
-        header: "Usuario",
-        cell: (info) => <span>@{info.getValue()}</span>,
-      }),
       columnHelper.accessor("email", {
         header: "Correo",
         cell: (info) => <span>{info.getValue()}</span>,
