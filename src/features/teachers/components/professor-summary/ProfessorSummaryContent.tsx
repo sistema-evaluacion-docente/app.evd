@@ -6,6 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useInView } from '@/shared/hooks/useInView'
 import { Badge, PageHeader } from '@/shared/ui'
 import { useState } from 'react'
 
@@ -14,12 +15,16 @@ import { ProfessorCategoryChart } from './ProfessorCategoryChart'
 import { ProfessorCategoryDetail } from './ProfessorCategoryDetail'
 import { ProfessorCategoryDetailSkeleton } from './ProfessorCategoryDetailSkeleton'
 import { ProfessorCommentsTable } from './ProfessorCommentsTable'
+import { ProfessorCommentsTableSkeleton } from './ProfessorCommentsTableSkeleton'
 import { ProfessorHistoryChart } from './ProfessorHistoryChart'
 import { ProfessorResultCard } from './ProfessorResultCard'
 import { ProfessorSummarySkeleton } from './ProfessorSummarySkeleton'
 import { StateCard } from './StateCard'
 
 export function ProfessorSummaryContent() {
+  const { ref: commentsRef, isInView: commentsVisible } = useInView({ rootMargin: '500px' })
+  const [categoryId, setCategoryId] = useState<string | null>(null)
+
   const {
     teacherId,
     hasTeacherId,
@@ -29,10 +34,9 @@ export function ProfessorSummaryContent() {
     setPeriodValue,
     summary,
     isLoading,
+    isCommentsLoading,
     isError,
-  } = useProfessorSummary()
-
-  const [categoryId, setCategoryId] = useState<string | null>(null)
+  } = useProfessorSummary({ commentsEnabled: commentsVisible || categoryId !== null })
 
   const selectedCategory =
     categoryId && summary
@@ -68,7 +72,11 @@ export function ProfessorSummaryContent() {
         <ProfessorResultCard summary={summary} periodValue={periodCode} />
         <ProfessorCategoryChart categories={summary.categories} onSelect={setCategoryId} />
         <ProfessorHistoryChart data={history} />
-        <ProfessorCommentsTable comments={summary.comments} />
+        {isCommentsLoading && summary.comments.length === 0 ? (
+          <ProfessorCommentsTableSkeleton />
+        ) : (
+          <ProfessorCommentsTable comments={summary.comments} />
+        )}
       </>
     )
   } else {
@@ -139,6 +147,8 @@ export function ProfessorSummaryContent() {
           {content}
         </>
       )}
+
+      <div ref={commentsRef} />
     </>
   )
 }

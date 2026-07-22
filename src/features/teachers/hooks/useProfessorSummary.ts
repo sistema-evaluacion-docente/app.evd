@@ -11,12 +11,17 @@ import {
 } from '../model/professorSummary'
 import useGetTeacherHistory from './useGetTeacherHistory'
 
+export interface UseProfessorSummaryOptions {
+  commentsEnabled?: boolean
+}
+
 /**
- * Hook to fetch and manage the summary of a professor, including their history, comments, and overall performance.
+ * Custom hook to fetch and manage the professor summary data.
  *
- * @returns An object containing the user, teacherId, periods, history, selected period, summary, and loading/error states.
+ * @param options - Optional configuration for the hook, including whether comments fetching is enabled.
+ * @returns An object containing the professor summary data, loading states, and utility functions.
  */
-export function useProfessorSummary() {
+export function useProfessorSummary(options?: UseProfessorSummaryOptions) {
   const { user } = useAuth()
   const teacherId = user?.teacher_id ?? 0
 
@@ -36,7 +41,9 @@ export function useProfessorSummary() {
   const period = periods.find((item) => item.value === selectedValue) ?? periods[0] ?? null
 
   const vsDeptQuery = useGetTeacherVsDepartment(teacherId, period?.periodId)
-  const commentsQuery = useGetTeacherComments(period?.evaluationId, teacherId)
+  const commentsQuery = useGetTeacherComments(period?.evaluationId, teacherId, {
+    enabled: options?.commentsEnabled,
+  })
 
   const summary: ProfessorSummary | null = useMemo(() => {
     const vsDept = vsDeptQuery.data?.data
@@ -58,7 +65,8 @@ export function useProfessorSummary() {
     period,
     setPeriodValue: setSelectedValue,
     summary,
-    isLoading: historyQuery.isLoading || vsDeptQuery.isLoading || commentsQuery.isLoading,
+    isCommentsLoading: commentsQuery.isLoading,
+    isLoading: historyQuery.isLoading || vsDeptQuery.isLoading,
     isError: historyQuery.isError || vsDeptQuery.isError || commentsQuery.isError,
   }
 }
