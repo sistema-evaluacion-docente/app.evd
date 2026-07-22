@@ -8,6 +8,7 @@ import type { EvaluationLogEvent } from '../hooks/useEvaluationWebSocket'
 interface FloatingLogsProps {
   logs: EvaluationLogEvent[]
   onClear: () => void
+  isFinished?: boolean
 }
 
 const levelConfig = {
@@ -44,7 +45,7 @@ const levelConfig = {
  * @param {FloatingLogsProps} props - The properties for the FloatingLogs component.
  * @returns {JSX.Element | null} The rendered FloatingLogs component or null if there are no logs.
  */
-export function FloatingLogs({ logs, onClear }: FloatingLogsProps) {
+export function FloatingLogs({ logs, onClear, isFinished }: FloatingLogsProps) {
   const [isExpanded, setIsExpanded] = useState(true)
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -62,7 +63,7 @@ export function FloatingLogs({ logs, onClear }: FloatingLogsProps) {
         <div className="flex items-center justify-between border-b px-4 py-2">
           <div className="flex items-center gap-2">
             <h3 className="flex items-center gap-1 text-sm font-medium">
-              <Spinner />
+              {!isFinished && <Spinner />}
               Procesamiento
             </h3>
 
