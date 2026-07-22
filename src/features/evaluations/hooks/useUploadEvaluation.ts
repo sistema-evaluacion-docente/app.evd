@@ -94,6 +94,7 @@ export function useUploadEvaluation() {
       toast.error(err instanceof Error ? err.message : 'Error al subir el archivo.')
       setError(err instanceof Error ? err.message : 'Error al subir el archivo.')
       setStatus('error')
+      setEvaluationId(null)
     }
   }, [])
 
