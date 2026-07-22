@@ -27,6 +27,7 @@ export type {
 
 export {
   analyzeEvaluation,
+  deleteEvaluation,
   exportTeacherMatrix,
   getComments,
   getCommentsPaginated,
@@ -63,6 +64,7 @@ export { default as TeacherCommentsCard } from './components/TeacherCommentsCard
 export { default as TeacherProfileHeader } from './components/TeacherProfileHeader'
 export { default as useAnalyzeEvaluation } from './hooks/useAnalyzeEvaluation'
 export { default as useCurrentTeacherEvaluation } from './hooks/useCurrentTeacherEvaluation'
+export { default as useDeleteEvaluation } from './hooks/useDeleteEvaluation'
 export { default as useEvaluationColumns } from './hooks/useEvaluationColumns'
 export { useEvaluationWebSocket } from './hooks/useEvaluationWebSocket'
 export type {
@@ -90,6 +92,7 @@ export { useUploadEvaluation, type UploadStatus } from './hooks/useUploadEvaluat
 
 export { ActiveBadge } from './components/ActiveBadge'
 export { CommentsTable } from './components/CommentsTable'
+export { DeleteEvaluationDialog } from './components/DeleteEvaluationDialog'
 export { DimensionOverview } from './components/DimensionOverview'
 export { FloatingLogs } from './components/FloatingLogs'
 export { GeneralInfoCard } from './components/GeneralInfoCard'

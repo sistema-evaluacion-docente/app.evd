@@ -12,6 +12,12 @@ import type {
 
 export type { AiStatus } from '../types/Evaluation'
 
+/**
+ * Uploads an evaluation file to the server.
+ *
+ * @param {File} file - The evaluation file to be uploaded.
+ * @returns {Promise<ResponseAPI<EvaluationRecord>>} A promise that resolves to the server response containing the uploaded evaluation record.
+ */
 export function uploadEvaluation(file: File): Promise<ResponseAPI<EvaluationRecord>> {
   const form = new FormData()
   form.append('file', file)
@@ -20,14 +26,29 @@ export function uploadEvaluation(file: File): Promise<ResponseAPI<EvaluationReco
   })
 }
 
+/**
+ * Fetches the list of evaluations from the server.
+ *
+ * @returns {Promise<ResponseAPI<EvaluationRecord[]>>} A promise that resolves to the server response containing an array of evaluation records.
+ */
 export function getEvaluation(id: number): Promise<ResponseAPI<EvaluationRecord>> {
   return api.get(`/evaluations/${id}`)
 }
 
+/**
+ * Fetches the list of evaluations from the server.
+ *
+ * @returns {Promise<ResponseAPI<EvaluationRecord[]>>} A promise that resolves to the server response containing an array of evaluation records.
+ */
 export function getEvaluationByPeriod(periodId: number): Promise<ResponseAPI<EvaluationRecord>> {
   return api.get(`/evaluations/by-period/${periodId}`)
 }
 
+/**
+ * Fetches the list of evaluations from the server.
+ *
+ * @returns {Promise<ResponseAPI<EvaluationRecord[]>>} A promise that resolves to the server response containing an array of evaluation records.
+ */
 export function getEvaluationScores(evaluationId: number): Promise<ResponseAPI<EvaluationScore[]>> {
   return api.get(`/evaluation-scores/by-evaluation/${evaluationId}`)
 }
@@ -166,6 +187,10 @@ export function exportTeacherMatrix(
   return api.get(`/evaluations/${evaluationId}/teachers/${teacherId}/export${params}`, {
     responseType: 'blob',
   }) as unknown as Promise<Blob>
+}
+
+export function deleteEvaluation(id: number): Promise<ResponseAPI<null>> {
+  return api.delete(`/evaluations/${id}`)
 }
 
 export function analyzeEvaluation(id: number): Promise<ResponseAPI<{ message: string }>> {
