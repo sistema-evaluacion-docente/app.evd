@@ -108,6 +108,7 @@ export function ProfessorSummaryContent() {
               periods.length > 0 ? (
                 <div className="w-full sm:w-70">
                   <Label htmlFor="professor-period">Periodo academico</Label>
+
                   <Select
                     items={periods}
                     value={period?.value ?? null}
@@ -121,6 +122,7 @@ export function ProfessorSummaryContent() {
                     <SelectTrigger id="professor-period" className="mt-1.5 h-10 w-full">
                       <SelectValue />
                     </SelectTrigger>
+
                     <SelectContent alignItemWithTrigger={false}>
                       {periods.map((item) => (
                         <SelectItem key={item.value} value={item.value}>
