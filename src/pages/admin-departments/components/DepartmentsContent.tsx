@@ -19,6 +19,7 @@ import {
   useAssignDepartmentDirector,
   useCreateDepartment,
   useDepartmentColumns,
+  useUnassignDepartmentDirector,
   useUpdateDepartment,
 } from '@/features/departments'
 import AssignDirectorDrawer from './AssignDirectorDrawer'
@@ -42,9 +43,12 @@ function useGetAllDepartments({
 export function DepartmentsContent() {
   const columns = useDepartmentColumns()
   const createMutation = useCreateDepartment()
+
   const { mutateAsync: updateDepartment, isPending: isSavingDepartment } = useUpdateDepartment()
   const { mutateAsync: assignDirector, isPending: isAssigningDirector } =
     useAssignDepartmentDirector()
+  const { mutateAsync: unassignDirector, isPending: isUnassigningDirector } =
+    useUnassignDepartmentDirector()
 
   const { data: facultiesData } = useQuery({
     queryKey: ['faculties'],
@@ -152,6 +156,7 @@ export function DepartmentsContent() {
             <Button type="button" variant="outline" onClick={close}>
               Cancelar
             </Button>
+
             <Button type="submit" disabled={!createForm.name.trim() || createMutation.isPending}>
               {createMutation.isPending ? 'Creando...' : 'Crear'}
             </Button>
@@ -179,6 +184,14 @@ export function DepartmentsContent() {
         },
       },
       {
+        label: 'Desasignar director',
+        visible: (department) => !!department.director,
+        disabled: () => isUnassigningDirector,
+        onClick: (department) => {
+          unassignDirector({ departmentId: department.id })
+        },
+      },
+      {
         label: 'Activar',
         visible: (department) => !department.active,
         className: 'text-emerald-600 focus:text-emerald-700',
@@ -193,7 +206,7 @@ export function DepartmentsContent() {
         disabled: () => isSavingDepartment,
       },
     ],
-    [updateDepartment, isSavingDepartment],
+    [updateDepartment, isSavingDepartment, unassignDirector, isUnassigningDirector],
   )
 
   const handleSaveDepartment = async (data: {
