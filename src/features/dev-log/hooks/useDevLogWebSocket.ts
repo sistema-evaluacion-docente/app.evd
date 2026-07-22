@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { API_URL } from '@/config'
 import { getToken } from '@/features/auth/api/AuthService'
 
-export const MAX_LOGS = 500
+export const MAX_LOGS = 200
 
 const RECONNECT_BASE_DELAY = 1000
 const RECONNECT_MAX_DELAY = 30000
@@ -98,7 +98,7 @@ export function useDevLogWebSocket({ enabled }: UseDevLogWebSocketOptions) {
               },
             ]
 
-            return next.length > MAX_LOGS ? next.slice(-MAX_LOGS) : next
+            return next.length >= MAX_LOGS ? [] : next
           })
         }
 
