@@ -1,6 +1,7 @@
 import { Route, Switch } from 'wouter'
 
 import { DevLogFloat } from '@/features/dev-log'
+import { EvaluationLogsProvider } from '@/features/evaluations'
 import { SettingsPage } from '@/features/settings'
 import { AdminDepartmentsPage } from '@/pages/admin-departments'
 import { AdminFacultiesPage } from '@/pages/admin-faculties'
@@ -28,7 +29,7 @@ import UsersPage from '@/pages/users'
 
 function App() {
   return (
-    <>
+    <EvaluationLogsProvider>
       <Switch>
         <Route path="/login" component={LoginPage} />
         <Route path="/dashboard" component={DashboardPage} />
@@ -77,8 +78,9 @@ function App() {
         {/* Default: 404 */}
         <Route component={NotFoundPage} />
       </Switch>
+
       <DevLogFloat />
-    </>
+    </EvaluationLogsProvider>
   )
 }
 
