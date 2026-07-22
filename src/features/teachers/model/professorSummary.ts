@@ -89,18 +89,18 @@ export interface CategoryHistory {
 
 export const PROFESSOR_RISK_BADGE: Record<
   ProfessorRiskLevel,
-  { label: string; variant: 'danger' | 'warning' | 'success' }
+  { label: string; variant: 'destructive' | 'outline' | 'secondary' | 'ghost' }
 > = {
-  alto: { label: 'Alto', variant: 'danger' },
-  medio: { label: 'Medio', variant: 'warning' },
-  bajo: { label: 'Bajo', variant: 'success' },
+  alto: { label: 'Alto', variant: 'destructive' },
+  medio: { label: 'Medio', variant: 'outline' },
+  bajo: { label: 'Bajo', variant: 'secondary' },
 }
 
 export function professorRiskBadge(risk: ProfessorRiskLevel | null): {
   label: string
-  variant: 'danger' | 'warning' | 'success' | 'neutral'
+  variant: 'destructive' | 'outline' | 'secondary' | 'ghost'
 } {
-  return risk ? PROFESSOR_RISK_BADGE[risk] : { label: 'Sin clasificar', variant: 'neutral' }
+  return risk ? PROFESSOR_RISK_BADGE[risk] : { label: 'Sin clasificar', variant: 'ghost' }
 }
 
 export const professorScoreTone = (score: number) =>

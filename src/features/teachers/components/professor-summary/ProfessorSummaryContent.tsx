@@ -111,10 +111,9 @@ export function ProfessorSummaryContent() {
                 )}
               </span>
             }
-            description="Resultados de la evaluacion de estudiantes a docente en el periodo seleccionado."
             actions={
               periods.length > 0 ? (
-                <div className="w-full sm:w-70">
+                <div className="w-full sm:w-70 flex">
                   <Label htmlFor="professor-period">Periodo academico</Label>
 
                   <Select
