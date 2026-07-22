@@ -62,7 +62,7 @@ export function EvaluationLogsProvider({ children }: { children: ReactNode }) {
       <FloatingLogs
         logs={logs}
         onClear={clearLogs}
-        isFinished={lastEvent?.status === 'COMPLETED'}
+        isFinished={lastEvent?.status === 'COMPLETED' || lastEvent?.status === 'FAILED'}
       />
     </EvaluationLogsContext.Provider>
   )
