@@ -113,8 +113,8 @@ export function ProfessorSummaryContent() {
             }
             actions={
               periods.length > 0 ? (
-                <div className="w-full sm:w-70 flex">
-                  <Label htmlFor="professor-period">Periodo academico</Label>
+                <div className="w-full sm:w-70 flex gap-2 items-center">
+                  <Label htmlFor="professor-period">Periodo</Label>
 
                   <Select
                     items={periods}
@@ -126,7 +126,7 @@ export function ProfessorSummaryContent() {
                       }
                     }}
                   >
-                    <SelectTrigger id="professor-period" className="mt-1.5 h-10 w-full">
+                    <SelectTrigger id="professor-period" className="h-10 w-full">
                       <SelectValue />
                     </SelectTrigger>
 
