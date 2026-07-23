@@ -15,10 +15,10 @@ Este repositorio contiene la **interfaz web** del sistema, desarrollada con Reac
 
 ## Autores
 
-| Autor              | Correo                                                                  |
-| ------------------ | ----------------------------------------------------------------------- |
-| Andrés Parra       | [andresalfonsopg@ufps.edu.co](mailto:andresalfonsopg@ufps.edu.co)       |
-| Orlando Beltrán    | [orlandojosebv@ufps.edu.co](mailto:orlandojosebv@ufps.edu.co)           |
+| Autor              | Correo                                                                   |
+| ------------------ | ------------------------------------------------------------------------ |
+| Andrés Parra       | [andresalfonsopg@ufps.edu.co](mailto:andresalfonsopg@ufps.edu.co)        |
+| Orlando Beltrán    | [orlandojosebv@ufps.edu.co](mailto:orlandojosebv@ufps.edu.co)            |
 | Alessandro Daniele | [alessandroumbertods@ufps.edu.co](mailto:alessandroumbertds@ufps.edu.co) |
 
 ---
@@ -157,6 +157,7 @@ src/
 - pnpm >= 9
 - Proyecto Firebase habilitado (Authentication con email/contraseña y Google)
 - Backend API en ejecución (ver repositorio [`api.evd`](https://github.com/sistema-evaluacion-docente/api.evd))
+- Docker y Docker Compose (para despliegue en producción)
 
 ### Variables de entorno
 
@@ -195,6 +196,45 @@ pnpm preview
 # Linter
 pnpm lint
 ```
+
+---
+
+## Despliegue con Docker
+
+### Variables de entorno para Docker
+
+Las variables de entorno se inyectan como **build args** durante la imagen Docker. Definelas en un archivo `.env` en la raíz del proyecto:
+
+```env
+VITE_API_URL=https://api.tudominio.com
+VITE_FIREBASE_API_KEY=tu-api-key
+VITE_FIREBASE_AUTH_DOMAIN=tu-proyecto.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=tu-proyecto
+VITE_FIREBASE_STORAGE_BUCKET=tu-proyecto.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
+VITE_FIREBASE_APP_ID=1:123456789:web:abcdef
+```
+
+### Build y ejecución
+
+```bash
+# Levantar el servicio
+docker compose up -d --build
+
+# Ver logs
+docker compose logs -f
+
+# Detener
+docker compose down
+```
+
+La app queda disponible en `http://localhost:80`.
+
+### Cómo funciona
+
+- **Dockerfile** — Build multi-stage: Node 20 + pnpm para compilar, nginx alpine para servir los archivos estáticos.
+- **nginx.conf** — SPA routing (`try_files`), compresión gzip, caché de assets estáticos (1 año), sin caché para `index.html`.
+- **docker-compose.yml** — Servicio único, expone el puerto 80, reinicia automáticamente si falla.
 
 ---
 
