@@ -12,5 +12,5 @@ services:
         VITE_FIREBASE_APP_ID: ${VITE_FIREBASE_APP_ID}
     container_name: evd-app
     ports:
-      - "80:80"
+      - "${PORT_0}:80"
     restart: unless-stopped
