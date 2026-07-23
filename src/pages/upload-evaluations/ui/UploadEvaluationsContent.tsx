@@ -24,7 +24,8 @@ function UploadEvaluationsContent() {
 
   useEffect(() => {
     if (evaluationId !== null) {
-      connect(evaluationId)
+      connect(evaluationId, [['evaluations'], ['evaluation', String(evaluationId)]]
+      , `/evaluations/${evaluationId}`)
     }
   }, [evaluationId, connect])
 

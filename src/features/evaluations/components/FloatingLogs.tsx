@@ -1,14 +1,26 @@
 import { cn } from '@/lib/utils'
-import { AlertTriangle, CheckCircle, ChevronDown, ChevronUp, Info, X, XCircle } from 'lucide-react'
+import {
+  AlertTriangle,
+  CheckCircle,
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
+  Info,
+  X,
+  XCircle,
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
+import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
+import { Link } from 'wouter'
 import type { EvaluationLogEvent } from '../hooks/useEvaluationWebSocket'
 
 interface FloatingLogsProps {
   logs: EvaluationLogEvent[]
   onClear: () => void
   isFinished?: boolean
+  detailsUrl?: string
 }
 
 const levelConfig = {
@@ -45,7 +57,7 @@ const levelConfig = {
  * @param {FloatingLogsProps} props - The properties for the FloatingLogs component.
  * @returns {JSX.Element | null} The rendered FloatingLogs component or null if there are no logs.
  */
-export function FloatingLogs({ logs, onClear, isFinished }: FloatingLogsProps) {
+export function FloatingLogs({ logs, onClear, isFinished, detailsUrl }: FloatingLogsProps) {
   const [isExpanded, setIsExpanded] = useState(true)
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -117,6 +129,17 @@ export function FloatingLogs({ logs, onClear, isFinished }: FloatingLogsProps) {
                 </div>
               )
             })}
+          </div>
+        )}
+
+        {isFinished && detailsUrl && (
+          <div className="border-t px-4 py-2 flex items-center justify-center gap-2">
+            <Link href={detailsUrl} className="w-full" target="_blank">
+              <Button size="sm" variant="outline" className="w-full justify-center gap-2">
+                <ExternalLink className="h-3.5 w-3.5" />
+                Ir a ver detalles
+              </Button>
+            </Link>
           </div>
         )}
       </div>

@@ -6,7 +6,7 @@ import { FloatingLogs } from '../components/FloatingLogs'
 import { useEvaluationWebSocket } from '../hooks/useEvaluationWebSocket'
 
 interface EvaluationLogsContextValue {
-  connect: (evaluationId: number, queryKeysToInvalidate?: string[][]) => void
+  connect: (evaluationId: number, queryKeysToInvalidate?: string[][], detailsUrl?: string) => void
   disconnect: () => void
   clearLogs: () => void
 }
@@ -24,6 +24,7 @@ export function EvaluationLogsProvider({ children }: { children: ReactNode }) {
   const [evaluationId, setEvaluationId] = useState<number | null>(null)
   const [enabled, setEnabled] = useState(false)
   const [queryKeysToInvalidate, setQueryKeysToInvalidate] = useState<string[][]>([])
+  const [detailsUrl, setDetailsUrl] = useState<string | undefined>(undefined)
 
   const queryClient = useQueryClient()
 
@@ -32,9 +33,10 @@ export function EvaluationLogsProvider({ children }: { children: ReactNode }) {
     enabled,
   })
 
-  const connect = useCallback((id: number, queryKeys?: string[][]) => {
+  const connect = useCallback((id: number, queryKeys?: string[][], url?: string) => {
     setEvaluationId(id)
     setQueryKeysToInvalidate(queryKeys ?? [])
+    setDetailsUrl(url)
     setEnabled(true)
   }, [])
 
@@ -77,6 +79,7 @@ export function EvaluationLogsProvider({ children }: { children: ReactNode }) {
         logs={logs}
         onClear={clearLogs}
         isFinished={lastEvent?.status === 'COMPLETED' || lastEvent?.status === 'FAILED'}
+        detailsUrl={detailsUrl}
       />
     </EvaluationLogsContext.Provider>
   )
