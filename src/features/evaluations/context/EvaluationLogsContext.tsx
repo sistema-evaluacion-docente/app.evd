@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 
@@ -5,7 +6,7 @@ import { FloatingLogs } from '../components/FloatingLogs'
 import { useEvaluationWebSocket } from '../hooks/useEvaluationWebSocket'
 
 interface EvaluationLogsContextValue {
-  connect: (evaluationId: number) => void
+  connect: (evaluationId: number, queryKeysToInvalidate?: string[][]) => void
   disconnect: () => void
   clearLogs: () => void
 }
@@ -22,14 +23,18 @@ export function useEvaluationLogsContext() {
 export function EvaluationLogsProvider({ children }: { children: ReactNode }) {
   const [evaluationId, setEvaluationId] = useState<number | null>(null)
   const [enabled, setEnabled] = useState(false)
+  const [queryKeysToInvalidate, setQueryKeysToInvalidate] = useState<string[][]>([])
+
+  const queryClient = useQueryClient()
 
   const { lastEvent, logs, clearLogs } = useEvaluationWebSocket({
     evaluationId,
     enabled,
   })
 
-  const connect = useCallback((id: number) => {
+  const connect = useCallback((id: number, queryKeys?: string[][]) => {
     setEvaluationId(id)
+    setQueryKeysToInvalidate(queryKeys ?? [])
     setEnabled(true)
   }, [])
 
@@ -54,7 +59,16 @@ export function EvaluationLogsProvider({ children }: { children: ReactNode }) {
         toast.error('Error al analizar los comentarios')
       }
     }
-  }, [lastEvent])
+
+    if (
+      (lastEvent.status === 'COMPLETED' || lastEvent.status === 'FAILED') &&
+      queryKeysToInvalidate.length > 0
+    ) {
+      for (const key of queryKeysToInvalidate) {
+        queryClient.invalidateQueries({ queryKey: key })
+      }
+    }
+  }, [lastEvent, queryKeysToInvalidate, queryClient])
 
   return (
     <EvaluationLogsContext.Provider value={{ connect, disconnect, clearLogs }}>

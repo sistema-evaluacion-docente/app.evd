@@ -1,3 +1,4 @@
+import type { AiStatus } from '@/features/evaluations'
 import {
   CommentsTable,
   DimensionOverview,
@@ -8,73 +9,50 @@ import {
   SummaryStats,
   TeacherRankingTable,
   useAnalyzeEvaluation,
-} from "@/features/evaluations";
-import type { AiStatus } from "@/features/evaluations";
-import { useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, BrainCircuit, CirclePile, Loader2, MessageSquare, Users } from "lucide-react";
-import { useEffect } from "react";
-import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+  useEvaluationLogsContext,
+} from '@/features/evaluations'
+import { cn } from '@/lib/utils'
+import { BrainCircuit, CirclePile, Loader2, MessageSquare, Users } from 'lucide-react'
 
-import { useEvaluationDetail } from "../model/useEvaluationDetail";
-import EvaluationSection from "./EvaluationSection";
+import { useEvaluationDetail } from '../model/useEvaluationDetail'
+import EvaluationSection from './EvaluationSection'
 
 type Props = {
-  evaluationId: number;
-};
+  evaluationId: number
+}
 
-const AI_STATUS_BADGE: Record<
-  AiStatus,
-  { label: string; className: string }
-> = {
+const AI_STATUS_BADGE: Record<AiStatus, { label: string; className: string }> = {
   PENDING: {
-    label: "Pendiente de análisis",
-    className: "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400",
+    label: 'Pendiente de análisis',
+    className: 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400',
   },
   ANALYZING: {
-    label: "Analizando…",
-    className: "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400",
+    label: 'Analizando…',
+    className: 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400',
   },
   ANALYZED: {
-    label: "Analizado",
-    className: "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400",
+    label: 'Analizado',
+    className: 'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400',
   },
   FAILED: {
-    label: "Análisis fallido",
-    className: "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400",
+    label: 'Análisis fallido',
+    className: 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400',
   },
-};
+}
 
 function EvaluationDetailContent({ evaluationId }: Props) {
   const { evaluation, summary, department, dimensions, isLoading, noData } =
-    useEvaluationDetail(evaluationId);
+    useEvaluationDetail(evaluationId)
 
-  const queryClient = useQueryClient();
-  const {
-    analyze,
-    aiStatus: analyzeStatus,
-    error: analyzeError,
-  } = useAnalyzeEvaluation();
+  const { mutate: analyze, isPending: isAnalyzing } = useAnalyzeEvaluation()
+  const { connect } = useEvaluationLogsContext()
 
-  const effectiveAiStatus: AiStatus | null =
-    analyzeStatus ?? evaluation?.ai_status ?? null;
-
-  const periodLabel = evaluation?.academic_period_name ?? `Evaluación #${evaluationId}`;
-
-  useEffect(() => {
-    if (analyzeStatus === "ANALYZED") {
-      queryClient.invalidateQueries({ queryKey: ["evaluation", evaluationId] });
-      toast.success(`El análisis de la evaluación docente "${periodLabel}" ha terminado.`);
-    } else if (analyzeStatus === "FAILED") {
-      queryClient.invalidateQueries({ queryKey: ["evaluation", evaluationId] });
-      toast.error(`El análisis de la evaluación docente "${periodLabel}" ha fallado.`);
-    }
-  }, [analyzeStatus, evaluationId, queryClient, periodLabel]);
+  const aiStatus: AiStatus | null = evaluation?.ai_status ?? null
 
   const handleAnalyze = () => {
-    analyze(evaluationId, effectiveAiStatus);
-    toast.success(`La evaluación del periodo "${periodLabel}" está en proceso de análisis.`);
-  };
+    analyze(evaluationId)
+    connect(evaluationId, [['evaluations'], ['evaluation', String(evaluationId)]])
+  }
 
   return (
     <>
@@ -84,11 +62,9 @@ function EvaluationDetailContent({ evaluationId }: Props) {
         <>
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start md:items-center">
             <div>
-              <h1 className="text-2xl font-semibold leading-tight tracking-tight">
+              <h1 className="text-2xl leading-tight font-semibold tracking-tight">
                 Detalle de Evaluación
-                <span className="ml-2 text-muted-foreground">
-                  #{evaluationId}
-                </span>
+                <span className="text-muted-foreground ml-2">#{evaluationId}</span>
               </h1>
             </div>
 
@@ -97,28 +73,26 @@ function EvaluationDetailContent({ evaluationId }: Props) {
                 <StatusBadge status={evaluation.status} />
 
                 {/* AI status badge */}
-                {effectiveAiStatus && (
+                {aiStatus && (
                   <span
                     className={cn(
-                      "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
-                      AI_STATUS_BADGE[effectiveAiStatus].className,
+                      'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium',
+                      AI_STATUS_BADGE[aiStatus].className,
                     )}
                   >
-                    {effectiveAiStatus === "ANALYZING" && (
-                      <Loader2 size={11} className="animate-spin" />
-                    )}
-                    {AI_STATUS_BADGE[effectiveAiStatus].label}
+                    {aiStatus === 'ANALYZING' && <Loader2 size={11} className="animate-spin" />}
+                    {AI_STATUS_BADGE[aiStatus].label}
                   </span>
                 )}
 
                 {/* Analyze button */}
-                {evaluation.status === "COMPLETED" && (
+                {evaluation.status === 'COMPLETED' && (
                   <>
-                    {effectiveAiStatus === "ANALYZED" ? (
+                    {aiStatus === 'ANALYZED' ? (
                       <button
                         type="button"
                         onClick={handleAnalyze}
-                        disabled={analyzeStatus === "ANALYZING"}
+                        disabled={isAnalyzing}
                         className="inline-flex h-8 items-center gap-1.5 rounded-md bg-red-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <BrainCircuit size={12} />
@@ -128,26 +102,17 @@ function EvaluationDetailContent({ evaluationId }: Props) {
                       <button
                         type="button"
                         onClick={handleAnalyze}
-                        disabled={effectiveAiStatus === "ANALYZING"}
+                        disabled={isAnalyzing || aiStatus === 'ANALYZING'}
                         className={cn(
-                          "inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-xs font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50",
-                          effectiveAiStatus === "FAILED"
-                            ? "bg-red-600 hover:bg-red-700"
-                            : "bg-brand-600 hover:bg-brand-700",
+                          'inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-xs font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+                          aiStatus === 'FAILED'
+                            ? 'bg-red-600 hover:bg-red-700'
+                            : 'bg-brand-600 hover:bg-brand-700',
                         )}
                       >
                         <BrainCircuit size={12} />
-                        {effectiveAiStatus === "FAILED"
-                          ? "Reintentar análisis"
-                          : "Analizar con IA"}
+                        {aiStatus === 'FAILED' ? 'Reintentar análisis' : 'Analizar con IA'}
                       </button>
-                    )}
-
-                    {effectiveAiStatus === "FAILED" && analyzeError && (
-                      <span className="flex items-center gap-1 text-xs text-red-600">
-                        <AlertTriangle size={12} />
-                        {analyzeError}
-                      </span>
                     )}
                   </>
                 )}
@@ -155,11 +120,7 @@ function EvaluationDetailContent({ evaluationId }: Props) {
             )}
           </div>
 
-          <GeneralInfoCard
-            evaluation={evaluation}
-            department={department}
-            isLoading={isLoading}
-          />
+          <GeneralInfoCard evaluation={evaluation} department={department} isLoading={isLoading} />
 
           <SummaryStats summary={summary} isLoading={isLoading} />
 
@@ -198,7 +159,7 @@ function EvaluationDetailContent({ evaluationId }: Props) {
         </>
       )}
     </>
-  );
+  )
 }
 
-export default EvaluationDetailContent;
+export default EvaluationDetailContent

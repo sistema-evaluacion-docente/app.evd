@@ -10,6 +10,11 @@ const securityConfig = {
       name: "Mi Resumen",
       roles: ["DOCENTE"],
     },
+    {
+      path: "/periods",
+      name: "Mis periodos",
+      roles: ["DOCENTE"],
+    },
     // {
     //   path: "/summary",
     //   name: "Mi Resumen",
@@ -46,42 +51,42 @@ const securityConfig = {
     //   roles: ["DIRECTOR DE DEPARTAMENTO"],
     // },
     {
-      path: "/faculties",
+      path: "/admin/faculties",
       name: "Facultades",
       roles: ["ADMIN"],
     },
     {
-      path: "/departments",
+      path: "/admin/departments",
       name: "Departamentos",
       roles: ["ADMIN"],
     },
     {
-      path: "/periods",
+      path: "/admin/periods",
       name: "Períodos",
       roles: ["ADMIN"],
     },
     {
-      path: "/users",
+      path: "/admin/users",
       name: "Usuarios",
       roles: ["ADMIN"],
     },
     {
-      path: "/directors",
+      path: "/admin/directors",
       name: "Directores",
       roles: ["ADMIN"],
     },
     {
-      path: "/documents",
+      path: "/admin/documents",
       name: "Documentos",
       roles: ["ADMIN"],
     },
     {
-      path: "/settings",
+      path: "/admin/settings",
       name: "Configuración",
       roles: ["ADMIN"],
     },
     {
-      path: "/logs",
+      path: "/admin/logs",
       name: "Logs",
       roles: ["ADMIN"],
     },
