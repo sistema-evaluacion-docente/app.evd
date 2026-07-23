@@ -1,9 +1,10 @@
 import { Badge } from '@/components/ui/badge'
+import { Spinner } from '@/components/ui/spinner'
 import { createColumnHelper } from '@tanstack/react-table'
 import { useMemo } from 'react'
+import { Link } from 'wouter'
 
 import { API_URL } from '@/config'
-import { Link } from 'wouter'
 import type { AiStatus, EvaluationRecord } from '../types/Evaluation'
 
 const columnHelper = createColumnHelper<EvaluationRecord>()
@@ -94,7 +95,12 @@ export default function useEvaluationColumns() {
 
           const config = AI_STATUS_MAP[status]
 
-          return <Badge className={config.className}>{config.label}</Badge>
+          return (
+            <Badge className={config.className}>
+              {status === 'ANALYZING' ? <Spinner className="size-3" /> : ''}
+              {config.label}
+            </Badge>
+          )
         },
       }),
 

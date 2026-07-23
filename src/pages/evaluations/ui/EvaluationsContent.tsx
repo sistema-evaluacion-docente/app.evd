@@ -44,7 +44,7 @@ export function EvaluationsContent() {
       visible: (row) => row.ai_status !== 'ANALYZING',
       onClick: (row) => {
         analyze(row.id)
-        connect(row.id)
+        connect(row.id, [['evaluations'], ['evaluation', String(row.id)]])
       },
     },
     {
