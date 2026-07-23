@@ -1,6 +1,6 @@
 import { Card } from '@/components/ui/card'
-import { Badge } from '@/shared/ui'
-import { MessageSquare } from 'lucide-react'
+import { Separator } from '@/components/ui/separator'
+import { Building2, User } from 'lucide-react'
 
 import type { ProfessorSummary } from '../../model/professorSummary'
 
@@ -11,43 +11,54 @@ export interface ProfessorResultCardProps {
 
 export function ProfessorResultCard({ summary, periodValue }: ProfessorResultCardProps) {
   return (
-    <Card className="flex flex-col gap-6 p-6 sm:p-7 lg:flex-row lg:items-center lg:gap-12">
+    <Card className="flex flex-col gap-6 p-6 sm:p-7 lg:flex-row lg:items-start lg:gap-12">
       <div>
-        <div className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
-          Calificacion general · {periodValue}
+        <div className="text-muted-foreground mb-4 text-xs font-semibold tracking-wider uppercase">
+          Promedio de Heteroevaluación - {periodValue}
         </div>
 
-        <div className="mt-2.5 flex items-baseline gap-1.5">
-          <span className="num text-foreground text-5xl leading-none font-semibold tabular-nums">
-            {summary.overall.toFixed(1)}
-          </span>
-          <span className="text-muted-foreground text-base font-medium">/5.0</span>
+        <div className="flex items-center gap-3">
+          <div className="bg-muted flex h-15 w-15 items-center justify-center rounded">
+            <User className="text-muted-foreground h-8 w-8" />
+          </div>
+
+          <div className="flex items-baseline gap-1.5">
+            <span className="num text-foreground text-4xl leading-none font-semibold tabular-nums">
+              {summary.overall.toFixed(1)}
+            </span>
+
+            <span className="text-muted-foreground text-base font-medium">/5.0</span>
+          </div>
         </div>
 
-        <Badge variant={summary.level.variant} className="mt-3 h-7 px-3 text-xs">
+        {/* <Badge variant={summary.level.variant} className="mt-3 h-7 px-3 text-xs">
           {summary.level.label}
-        </Badge>
+        </Badge> */}
       </div>
 
-      <div className="bg-border hidden w-px self-stretch lg:block" />
+      <Separator orientation="vertical" />
 
-      <div className="flex items-center gap-3.5">
-        <span className="bg-muted text-muted-foreground inline-flex size-11 shrink-0 items-center justify-center rounded-md">
-          <MessageSquare size={20} />
-        </span>
+      <div>
+        <div className="text-muted-foreground mb-4 text-xs font-semibold tracking-wider uppercase">
+          Promedio del departamento - {periodValue}
+        </div>
 
-        <div>
-          <div className="num text-foreground text-2xl leading-tight font-semibold tabular-nums">
-            {summary.comments.length} comentarios
+        <div className="flex items-center gap-3">
+          <div className="bg-muted flex h-15 w-15 items-center justify-center rounded">
+            <Building2 className="text-muted-foreground h-8 w-8" />
           </div>
 
-          <div className="text-muted-foreground text-sm">
-            escritos por sus estudiantes este periodo
+          <div className="flex items-baseline gap-1.5">
+            <span className="num text-foreground text-4xl leading-none font-semibold tabular-nums">
+              {summary.deptOverall.toFixed(1)}
+            </span>
+
+            <span className="text-muted-foreground text-base font-medium">/5.0</span>
           </div>
         </div>
       </div>
 
-      <div className="lg:ml-auto lg:text-right">
+      {/* <div className="lg:ml-auto lg:text-right">
         <div className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
           Promedio del departamento
         </div>
@@ -56,7 +67,7 @@ export function ProfessorResultCard({ summary, periodValue }: ProfessorResultCar
           {summary.deptOverall.toFixed(1)}{' '}
           <span className="text-muted-foreground text-sm font-medium">/5.0</span>
         </div>
-      </div>
+      </div> */}
     </Card>
   )
 }
