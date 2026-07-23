@@ -8,12 +8,10 @@ import {
   SummaryStats,
   TeacherRankingTable,
   useAnalyzeEvaluation,
+  useEvaluationLogsContext,
 } from "@/features/evaluations";
 import type { AiStatus } from "@/features/evaluations";
-import { useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, BrainCircuit, CirclePile, Loader2, MessageSquare, Users } from "lucide-react";
-import { useEffect } from "react";
-import { toast } from "sonner";
+import { BrainCircuit, CirclePile, Loader2, MessageSquare, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { useEvaluationDetail } from "../model/useEvaluationDetail";
@@ -49,31 +47,14 @@ function EvaluationDetailContent({ evaluationId }: Props) {
   const { evaluation, summary, department, dimensions, isLoading, noData } =
     useEvaluationDetail(evaluationId);
 
-  const queryClient = useQueryClient();
-  const {
-    analyze,
-    aiStatus: analyzeStatus,
-    error: analyzeError,
-  } = useAnalyzeEvaluation();
+  const { mutate: analyze, isPending: isAnalyzing } = useAnalyzeEvaluation();
+  const { connect } = useEvaluationLogsContext();
 
-  const effectiveAiStatus: AiStatus | null =
-    analyzeStatus ?? evaluation?.ai_status ?? null;
-
-  const periodLabel = evaluation?.academic_period_name ?? `Evaluación #${evaluationId}`;
-
-  useEffect(() => {
-    if (analyzeStatus === "ANALYZED") {
-      queryClient.invalidateQueries({ queryKey: ["evaluation", evaluationId] });
-      toast.success(`El análisis de la evaluación docente "${periodLabel}" ha terminado.`);
-    } else if (analyzeStatus === "FAILED") {
-      queryClient.invalidateQueries({ queryKey: ["evaluation", evaluationId] });
-      toast.error(`El análisis de la evaluación docente "${periodLabel}" ha fallado.`);
-    }
-  }, [analyzeStatus, evaluationId, queryClient, periodLabel]);
+  const aiStatus: AiStatus | null = evaluation?.ai_status ?? null;
 
   const handleAnalyze = () => {
-    analyze(evaluationId, effectiveAiStatus);
-    toast.success(`La evaluación del periodo "${periodLabel}" está en proceso de análisis.`);
+    analyze(evaluationId);
+    connect(evaluationId);
   };
 
   return (
@@ -97,28 +78,28 @@ function EvaluationDetailContent({ evaluationId }: Props) {
                 <StatusBadge status={evaluation.status} />
 
                 {/* AI status badge */}
-                {effectiveAiStatus && (
+                {aiStatus && (
                   <span
                     className={cn(
                       "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
-                      AI_STATUS_BADGE[effectiveAiStatus].className,
+                      AI_STATUS_BADGE[aiStatus].className,
                     )}
                   >
-                    {effectiveAiStatus === "ANALYZING" && (
+                    {aiStatus === "ANALYZING" && (
                       <Loader2 size={11} className="animate-spin" />
                     )}
-                    {AI_STATUS_BADGE[effectiveAiStatus].label}
+                    {AI_STATUS_BADGE[aiStatus].label}
                   </span>
                 )}
 
                 {/* Analyze button */}
                 {evaluation.status === "COMPLETED" && (
                   <>
-                    {effectiveAiStatus === "ANALYZED" ? (
+                    {aiStatus === "ANALYZED" ? (
                       <button
                         type="button"
                         onClick={handleAnalyze}
-                        disabled={analyzeStatus === "ANALYZING"}
+                        disabled={isAnalyzing}
                         className="inline-flex h-8 items-center gap-1.5 rounded-md bg-red-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <BrainCircuit size={12} />
@@ -128,26 +109,19 @@ function EvaluationDetailContent({ evaluationId }: Props) {
                       <button
                         type="button"
                         onClick={handleAnalyze}
-                        disabled={effectiveAiStatus === "ANALYZING"}
+                        disabled={isAnalyzing || aiStatus === "ANALYZING"}
                         className={cn(
                           "inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-xs font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50",
-                          effectiveAiStatus === "FAILED"
+                          aiStatus === "FAILED"
                             ? "bg-red-600 hover:bg-red-700"
                             : "bg-brand-600 hover:bg-brand-700",
                         )}
                       >
                         <BrainCircuit size={12} />
-                        {effectiveAiStatus === "FAILED"
+                        {aiStatus === "FAILED"
                           ? "Reintentar análisis"
                           : "Analizar con IA"}
                       </button>
-                    )}
-
-                    {effectiveAiStatus === "FAILED" && analyzeError && (
-                      <span className="flex items-center gap-1 text-xs text-red-600">
-                        <AlertTriangle size={12} />
-                        {analyzeError}
-                      </span>
                     )}
                   </>
                 )}

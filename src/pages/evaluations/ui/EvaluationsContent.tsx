@@ -9,8 +9,10 @@ import DataTable, { type DataTableAction } from '@/components/common/DataTable'
 import type { EvaluationRecord } from '@/features/evaluations'
 import {
   DeleteEvaluationDialog,
+  useAnalyzeEvaluation,
   useDeleteEvaluation,
   useEvaluationColumns,
+  useEvaluationLogsContext,
   useGetEvaluations,
   useUpdateEvaluationStatus,
 } from '@/features/evaluations'
@@ -27,11 +29,22 @@ export function EvaluationsContent() {
     onSettled: () => setDeleteTarget(null),
   })
 
+  const { mutate: analyze } = useAnalyzeEvaluation()
+  const { connect } = useEvaluationLogsContext()
+
   const rowActions: DataTableAction<EvaluationRecord>[] = [
     {
       label: 'Ver Detalle',
       onClick(row) {
         setLocation(`/evaluations/${row.id}`)
+      },
+    },
+    {
+      label: 'Analizar con IA',
+      visible: (row) => row.ai_status !== 'ANALYZING',
+      onClick: (row) => {
+        analyze(row.id)
+        connect(row.id)
       },
     },
     {
