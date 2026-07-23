@@ -6,7 +6,9 @@ WORKDIR /app
 
 COPY pnpm-lock.yaml package.json ./
 
-RUN pnpm install --frozen-lockfile
+# RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
 
 COPY . .
 

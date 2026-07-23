@@ -5,11 +5,15 @@ import tailwindcss from '@tailwindcss/vite'
 import path from 'node:path'
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [react(), babel({ presets: [reactCompilerPreset()] }), tailwindcss()],
+export default defineConfig(({ mode }) => ({
+  plugins: [
+    react(),
+    ...(mode !== 'production' ? [babel({ presets: [reactCompilerPreset()] })] : []),
+    tailwindcss(),
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
   },
-})
+}))
