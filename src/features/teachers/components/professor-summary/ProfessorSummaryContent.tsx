@@ -103,9 +103,9 @@ export function ProfessorSummaryContent() {
           <PageHeader
             title={
               <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-2">
-                Mi Resumen de Evaluacion
+                Resultados de Evaluacion
                 {periodCode && (
-                  <Badge variant="info" className="h-7 px-3 text-xs tracking-normal normal-case">
+                  <Badge variant="outline" className="h-7 px-3 text-xs tracking-normal normal-case">
                     Semestre {periodCode}
                   </Badge>
                 )}
@@ -113,7 +113,7 @@ export function ProfessorSummaryContent() {
             }
             actions={
               periods.length > 0 ? (
-                <div className="w-full sm:w-70 flex gap-2 items-center">
+                <div className="flex w-full items-center gap-2 sm:w-70">
                   <Label htmlFor="professor-period">Periodo</Label>
 
                   <Select
