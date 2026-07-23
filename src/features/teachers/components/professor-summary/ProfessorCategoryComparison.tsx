@@ -1,12 +1,12 @@
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useMemo } from 'react'
-import { Card } from '@/components/ui/card'
 
-import type { ProfessorCategory, ProfessorPeriod } from '../../model/professorSummary'
 import { useCategoryHistory } from '../../hooks/useCategoryHistory'
-import { RangeSelect } from './RangeSelect'
-import { useRangeFilter } from './useRangeFilter'
+import type { ProfessorCategory, ProfessorPeriod } from '../../model/professorSummary'
 import { ProfessorCategoryHistoryChart } from './ProfessorCategoryHistoryChart'
 import { ProfessorCategoryItemsTable } from './ProfessorCategoryItemsTable'
+import { RangeSelect } from './RangeSelect'
+import { useRangeFilter } from './useRangeFilter'
 
 export interface ProfessorCategoryComparisonProps {
   category: ProfessorCategory
@@ -41,17 +41,13 @@ export function ProfessorCategoryComparison({
   }, [items, visiblePoints])
 
   return (
-    <Card className="p-6 sm:p-7">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h2 className="text-foreground text-lg font-semibold">
-            Comparacion con semestres anteriores
-          </h2>
+    <Card>
+      <CardHeader>
+        <CardTitle>Comparacion con semestres anteriores</CardTitle>
 
-          <p className="text-muted-foreground mt-1 text-sm">
-            Su nota en «{category.name}» frente al promedio de los docentes, semestre a semestre.
-          </p>
-        </div>
+        <p className="text-muted-foreground mt-1 text-sm">
+          Su nota en «{category.name}» frente al promedio de los docentes, semestre a semestre.
+        </p>
 
         <RangeSelect
           totalItems={points.length}
@@ -59,33 +55,39 @@ export function ProfessorCategoryComparison({
           onChange={setRange}
           className="w-full sm:w-56"
         />
-      </div>
+      </CardHeader>
 
-      {isLoading ? (
-        <div className="bg-muted mt-5 h-60 w-full animate-pulse rounded-lg" />
-      ) : isError ? (
-        <div className="text-muted-foreground mt-5 flex h-60 items-center justify-center text-sm">
-          No se pudo cargar el historial de esta categoria.
-        </div>
-      ) : points.length === 0 ? (
-        <div className="text-muted-foreground mt-5 flex h-60 items-center justify-center text-sm">
-          Sin historial disponible
-        </div>
-      ) : (
-        <>
-          <div className="mt-5">
-            <ProfessorCategoryHistoryChart data={visiblePoints} />
+      <CardContent>
+        {isLoading ? (
+          <div className="bg-muted mt-5 h-60 w-full animate-pulse rounded-lg" />
+        ) : isError ? (
+          <div className="text-muted-foreground mt-5 flex h-60 items-center justify-center text-sm">
+            No se pudo cargar el historial de esta categoría.
           </div>
+        ) : points.length === 0 ? (
+          <div className="text-muted-foreground mt-5 flex h-60 items-center justify-center text-sm">
+            Sin historial disponible
+          </div>
+        ) : (
+          <div className="animate-fade-in">
+            <div className="mt-5">
+              <ProfessorCategoryHistoryChart data={visiblePoints} />
+            </div>
 
-          <div className="mt-7">
-            <h3 className="text-foreground text-base font-semibold">Detalle por pregunta</h3>
-            <p className="text-muted-foreground mt-1 mb-3 text-sm">
-              Su nota en cada pregunta por semestre y la tendencia respecto al semestre previo.
-            </p>
-            <ProfessorCategoryItemsTable items={visibleItems} periods={visiblePeriods} />
+            <div className="mt-7 border-t pt-4">
+              <h3 className="text-foreground text-base font-semibold">Detalle por pregunta</h3>
+
+              <p className="text-muted-foreground mt-1 mb-3 text-sm">
+                Su nota en cada pregunta por semestre y la tendencia respecto al semestre previo.
+              </p>
+
+              <div className="bg-muted rounded">
+                <ProfessorCategoryItemsTable items={visibleItems} periods={visiblePeriods} />
+              </div>
+            </div>
           </div>
-        </>
-      )}
+        )}
+      </CardContent>
     </Card>
   )
 }

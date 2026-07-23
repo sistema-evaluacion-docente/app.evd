@@ -1,4 +1,4 @@
-import { Card } from '@/components/ui/card'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   ChartContainer,
   ChartTooltip,
@@ -9,7 +9,6 @@ import { useMemo } from 'react'
 import { Brush, CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
 
 import type { ProfessorHistoryPoint } from '../../model/professorSummary'
-import { RangeSelect } from './RangeSelect'
 import { useRangeFilter } from './useRangeFilter'
 
 const chartConfig = {
@@ -26,7 +25,7 @@ export interface ProfessorHistoryChartProps {
 }
 
 export function ProfessorHistoryChart({ data }: ProfessorHistoryChartProps) {
-  const { range, setRange, visible } = useRangeFilter(data)
+  const { range, visible } = useRangeFilter(data)
   const showBrush = visible.length > BRUSH_MIN_POINTS
 
   const semesterLabel = useMemo(
@@ -35,26 +34,26 @@ export function ProfessorHistoryChart({ data }: ProfessorHistoryChartProps) {
   )
 
   return (
-    <Card className="p-6 sm:p-7">
+    <Card>
+      <CardHeader>
+        <CardTitle>Evolucion historica</CardTitle>
+
+        <p className="text-muted-foreground mt-1 text-sm">
+          Promedio global por semestre en la escala 1-5.
+          {showBrush ? ' Arrastre la barra inferior para acercar o desplazarse.' : ''}
+        </p>
+      </CardHeader>
+      {/*
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h2 className="text-foreground text-lg font-semibold">Evolucion historica</h2>
-
-          <p className="text-muted-foreground mt-1 text-sm">
-            Promedio global por semestre en la escala 1-5.
-            {showBrush ? ' Arrastre la barra inferior para acercar o desplazarse.' : ''}
-          </p>
-        </div>
-
         <RangeSelect
           totalItems={data.length}
           value={range}
           onChange={setRange}
           className="w-full sm:w-56"
         />
-      </div>
+      </div> */}
 
-      <div className="mt-5">
+      <CardContent>
         {visible.length > 0 ? (
           <ChartContainer config={chartConfig} className="h-60 w-full">
             <LineChart data={visible} margin={{ top: 8, right: 16, left: 8, bottom: 4 }}>
@@ -125,12 +124,14 @@ export function ProfessorHistoryChart({ data }: ProfessorHistoryChartProps) {
             Sin historial disponible
           </div>
         )}
-      </div>
+      </CardContent>
 
-      <div className="border-border text-foreground/80 mt-4 flex items-center gap-2 border-t pt-3.5 text-sm">
-        <span className="bg-primary h-2.5 w-2.5 rounded-full" />
-        Promedio global · {visible.length} {semesterLabel}
-      </div>
+      <CardFooter>
+        <div className="border-border text-foreground/80 mt-4 flex items-center gap-2 text-sm">
+          <span className="bg-primary h-2.5 w-2.5 rounded-full" />
+          Promedio global · {visible.length} {semesterLabel}
+        </div>
+      </CardFooter>
     </Card>
   )
 }

@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Badge, DataTable, StatTile, type DataTableColumn } from '@/shared/ui'
 import { ArrowLeft, ChevronDown, ChevronUp, TrendingUp } from 'lucide-react'
@@ -28,7 +28,7 @@ export interface ProfessorCategoryDetailProps {
 
 function ComparisonBars({ question }: { question: ProfessorQuestion }) {
   const rows = [
-    { label: 'Usted', value: question.mine, fill: 'bg-primary/40' },
+    { label: 'Usted', value: question.mine, fill: 'bg-primary/80' },
     { label: 'Docentes', value: question.dept, fill: 'bg-muted-foreground/30' },
   ]
   return (
@@ -113,11 +113,7 @@ export function ProfessorCategoryDetail({
   return (
     <>
       <div>
-        <Button
-          variant="ghost"
-          className="text-primary hover:bg-muted hover:text-primary -ml-3"
-          onClick={onBack}
-        >
+        <Button variant="ghost" onClick={onBack}>
           <ArrowLeft size={16} />
           Volver al resumen
         </Button>
@@ -187,22 +183,24 @@ export function ProfessorCategoryDetail({
         <ProfessorCategoryComparison category={category} teacherId={teacherId} periods={periods} />
       )}
 
-      <Card className="overflow-hidden">
-        <div className="p-6 pb-4 sm:p-7 sm:pb-4">
-          <h2 className="text-foreground text-lg font-semibold">Desglose de preguntas</h2>
+      <Card className="overflow-hidden gap-0 pb-0">
+        <CardHeader>
+          <CardTitle>Desglose de preguntas</CardTitle>
 
           <p className="text-muted-foreground mt-1 text-sm">
             Su calificacion en cada pregunta, comparada con el promedio de los demas docentes.
           </p>
-        </div>
+        </CardHeader>
 
-        <DataTable
-          columns={questionColumns}
-          rows={category.questions}
-          rowKey={(question) => question.code}
-          headerVariant="muted"
-          minWidth={760}
-        />
+        <CardContent className="p-0">
+          <DataTable
+            columns={questionColumns}
+            rows={category.questions}
+            rowKey={(question) => question.code}
+            headerVariant="muted"
+            minWidth={760}
+          />
+        </CardContent>
       </Card>
 
       <ProfessorCommentsTable

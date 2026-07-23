@@ -10,7 +10,7 @@ export interface ProfessorCategoryItemsTableProps {
 
 function TrendCell({ item }: { item: CategoryItemHistory }) {
   const scores = item.byPeriod
-  
+
   if (scores.length < 2) {
     return <span className="text-muted-foreground text-sm">--</span>
   }
@@ -46,6 +46,7 @@ export function ProfessorCategoryItemsTable({ items, periods }: ProfessorCategor
           <p className="text-foreground/80 text-sm leading-normal" style={{ textWrap: 'pretty' }}>
             {item.text}
           </p>
+
           <span className="text-muted-foreground mt-1 block font-mono text-xs">{item.code}</span>
         </div>
       ),
@@ -56,9 +57,11 @@ export function ProfessorCategoryItemsTable({ items, periods }: ProfessorCategor
       cellClassName: 'align-top py-4 text-right whitespace-nowrap',
       cell: (item) => {
         const score = item.byPeriod.find((entry) => entry.code === period.code)
+
         if (!score) {
           return <span className="text-muted-foreground text-sm">--</span>
         }
+
         return (
           <span
             className={`num text-sm font-semibold tabular-nums ${professorScoreTone(score.mine)}`}
