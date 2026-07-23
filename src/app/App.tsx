@@ -26,6 +26,7 @@ import { UploadTeachersPage } from '@/pages/upload-teachers'
 import LoginPage from '@/features/auth/pages/LoginPage'
 import { PeriodsPage } from '@/features/periods'
 import UsersPage from '@/pages/users'
+import MyPeriodsPage from '@/pages/my-periods'
 
 function App() {
   return (
@@ -60,13 +61,13 @@ function App() {
         {/* <Route path="/upload-evaluations" component={UploadEvaluationsPage} /> */}
 
         {/* Super Admin */}
-        <Route path="/users" component={UsersPage} />
-        <Route path="/directors" component={DirectorsPage} />
-        <Route path="/periods" component={PeriodsPage} />
-        <Route path="/settings" component={SettingsPage} />
-        <Route path="/faculties" component={AdminFacultiesPage} />
-        <Route path="/departments" component={AdminDepartmentsPage} />
-        <Route path="/logs" component={AdminLogsPage} />
+        <Route path="/admin/users" component={UsersPage} />
+        <Route path="/admin/directors" component={DirectorsPage} />
+        <Route path="/admin/periods" component={PeriodsPage} />
+        <Route path="/admin/settings" component={SettingsPage} />
+        <Route path="/admin/faculties" component={AdminFacultiesPage} />
+        <Route path="/admin/departments" component={AdminDepartmentsPage} />
+        <Route path="/admin/logs" component={AdminLogsPage} />
 
         {/* Docente */}
         {/* <Route path="/summary" component={SummaryPage} />
@@ -74,6 +75,7 @@ function App() {
         <Route path="/me/history" component={MyHistoryPage} /> */}
         <Route path="/me/profile" component={MyProfilePage} />
         <Route path="/summary" component={ProfessorSummaryPage} />
+        <Route path="/periods" component={MyPeriodsPage} />
 
         {/* Default: 404 */}
         <Route component={NotFoundPage} />
