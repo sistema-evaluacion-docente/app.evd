@@ -41,6 +41,7 @@ export function EvaluationsContent() {
     },
     {
       label: 'Analizar con IA',
+      icon: <FileUp />,
       visible: (row) => row.ai_status !== 'ANALYZING',
       onClick: (row) => {
         analyze(row.id)
