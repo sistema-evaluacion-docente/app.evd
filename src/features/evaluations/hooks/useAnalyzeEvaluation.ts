@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { analyzeEvaluation } from '../api/evaluationService'
 
@@ -8,13 +8,9 @@ import { analyzeEvaluation } from '../api/evaluationService'
  * @returns {object} - The result of the mutation, including the analysis function and related state.
  */
 export default function useAnalyzeEvaluation() {
-  const queryClient = useQueryClient()
-
   return useMutation({
     mutationFn: (evaluationId: number) => analyzeEvaluation(evaluationId),
-    onSuccess: (_data, evaluationId) => {
-      queryClient.invalidateQueries({ queryKey: ['evaluation', evaluationId] })
-      queryClient.invalidateQueries({ queryKey: ['evaluations'] })
+    onSuccess: () => {
       toast.success('Análisis de IA iniciado correctamente')
     },
     onError: (error: Error) => {
