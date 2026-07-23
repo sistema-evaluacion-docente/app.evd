@@ -125,14 +125,14 @@ export function ProfessorCategoryDetail({
                 {category.name}
               </h1>
 
-              <Badge variant="info" className="h-7 px-3 text-xs tracking-normal normal-case">
+              <Badge variant="outline" className="h-7 px-3 text-xs tracking-normal normal-case">
                 Semestre {periodValue}
               </Badge>
             </div>
 
-            <p className="text-muted-foreground mt-1.5 text-sm">
+            {/* <p className="text-muted-foreground mt-1.5 text-sm">
               Desglose de preguntas y comentarios de esta categoria.
-            </p>
+            </p> */}
           </div>
 
           <div className="flex flex-wrap gap-2 sm:justify-end">
@@ -153,14 +153,14 @@ export function ProfessorCategoryDetail({
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <StatTile
-          label="Su promedio"
+          label={`Promedio en ${category.name}`}
           value={category.score.toFixed(1)}
           valueClassName={professorScoreTone(category.score)}
           sub="/5.0 en esta categoria"
         />
 
         <StatTile
-          label="Demas docentes"
+          label="Promedio del departamento"
           value={category.deptScore.toFixed(1)}
           sub="promedio del departamento"
         />
@@ -183,7 +183,7 @@ export function ProfessorCategoryDetail({
         <ProfessorCategoryComparison category={category} teacherId={teacherId} periods={periods} />
       )}
 
-      <Card className="overflow-hidden gap-0 pb-0">
+      <Card className="gap-0 overflow-hidden pb-0">
         <CardHeader>
           <CardTitle>Desglose de preguntas</CardTitle>
 
