@@ -57,8 +57,6 @@ export function FloatingLogs({ logs, onClear, isFinished }: FloatingLogsProps) {
 
   if (logs.length === 0) return null
 
-  console.log(isFinished)
-
   return (
     <div className="animate-fade-in fixed right-4 bottom-4 z-50 w-96 max-w-[calc(100vw-2rem)]">
       <div className="bg-card rounded-lg border shadow-lg">
