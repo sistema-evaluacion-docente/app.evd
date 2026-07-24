@@ -22,7 +22,7 @@ export default function TeacherSemesterComparisonCard({
   teacherId,
 }: TeacherSemesterComparisonCardProps) {
   const { data: historyRes } = useGetTeacherHistory(teacherId)
-  const history = historyRes?.data?.history ?? []
+  const history = historyRes?.data?.items ?? []
 
   const [currentSemester, setCurrentSemester] = useState<string>('')
   const [oldSemester, setOldSemester] = useState<string>('')

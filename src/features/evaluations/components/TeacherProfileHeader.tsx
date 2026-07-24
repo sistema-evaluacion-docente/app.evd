@@ -47,7 +47,7 @@ export default function TeacherProfileHeader({
   const detail = detailRes?.data;
 
   const { data: historyRes } = useGetTeacherHistory(teacherId);
-  const history = useMemo(() => historyRes?.data?.history ?? [], [historyRes]);
+  const history = useMemo(() => historyRes?.data?.items ?? [], [historyRes]);
 
   const recurrentLowPerformance = useMemo(() => {
     const last4 = history.slice(-4);
