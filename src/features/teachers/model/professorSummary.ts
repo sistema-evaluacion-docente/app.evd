@@ -21,7 +21,8 @@ export interface ProfessorComment {
   categoryId: string
   categoryName: string
   risk: ProfessorRiskLevel | null
-  confidence: number | null
+  category_score: number | null
+  risk_score: number | null
 }
 
 export interface ProfessorCategory {
@@ -201,11 +202,6 @@ function mapRisk(name: string | undefined | null): ProfessorRiskLevel | null {
   return key === 'alto' || key === 'medio' || key === 'bajo' ? key : null
 }
 
-function toPercent(value: number | null): number | null {
-  if (value == null) return null
-  return Math.round(value <= 1 ? value * 100 : value)
-}
-
 export function mapProfessorComments(data: TeacherCommentsData): ProfessorComment[] {
   return data.courses.flatMap((course) =>
     course.comments.map((comment) => ({
@@ -217,7 +213,8 @@ export function mapProfessorComments(data: TeacherCommentsData): ProfessorCommen
         : 'sin-categoria',
       categoryName: comment.pedagogical_category?.name ?? 'Sin categoria',
       risk: mapRisk(comment.risk_level?.name),
-      confidence: toPercent(comment.risk_score ?? comment.category_score),
+      category_score: comment.category_score,
+      risk_score: comment.risk_score,
     })),
   )
 }

@@ -109,9 +109,17 @@ export function ProfessorCommentsTable({
       accessorKey: 'categoryName',
       header: 'Categoria',
       cell: ({ row }) => (
-        <span className="border-border bg-muted text-foreground/80 inline-flex h-6 items-center rounded-full border px-2.5 text-xs font-medium whitespace-nowrap">
-          {row.original.categoryName}
-        </span>
+        <div className="flex flex-col items-center gap-1">
+          <Badge variant="outline" className="min-w-16 justify-center">
+            {row.original.categoryName}
+          </Badge>
+
+          {row.original.category_score != null && (
+            <span className="num text-muted-foreground text-xs tabular-nums text-nowrap">
+              {(row.original.category_score * 100)?.toFixed(2)}% confianza
+            </span>
+          )}
+        </div>
       ),
     },
     {
@@ -121,14 +129,14 @@ export function ProfessorCommentsTable({
         const badge = professorRiskBadge(row.original.risk)
 
         return (
-          <div className="flex flex-col items-start gap-1">
+          <div className="flex flex-col items-center gap-1">
             <Badge variant={badge.variant} className="min-w-16 justify-center">
               {badge.label}
             </Badge>
 
-            {row.original.confidence != null && (
-              <span className="num text-muted-foreground text-xs tabular-nums">
-                {row.original.confidence}% confianza
+            {row.original.risk_score != null && (
+              <span className="num text-muted-foreground text-xs tabular-nums text-nowrap">
+                {(row.original.risk_score * 100)?.toFixed(2)}% confianza
               </span>
             )}
           </div>
