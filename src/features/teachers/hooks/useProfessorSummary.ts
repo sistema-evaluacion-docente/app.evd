@@ -28,12 +28,12 @@ export function useProfessorSummary(options?: UseProfessorSummaryOptions) {
   const historyQuery = useGetTeacherHistory(teacherId)
 
   const periods = useMemo(
-    () => mapProfessorPeriods(historyQuery.data?.data.history ?? []),
+    () => mapProfessorPeriods(historyQuery.data?.data.items ?? []),
     [historyQuery.data],
   )
 
   const history = useMemo(
-    () => mapProfessorHistory(historyQuery.data?.data.history ?? []),
+    () => mapProfessorHistory(historyQuery.data?.data.items ?? []),
     [historyQuery.data],
   )
 
@@ -50,7 +50,7 @@ export function useProfessorSummary(options?: UseProfessorSummaryOptions) {
     if (!period || !vsDept) return null
 
     const comments = commentsQuery.data?.data ? mapProfessorComments(commentsQuery.data.data) : []
-    const historyEntry = historyQuery.data?.data.history.find(
+    const historyEntry = historyQuery.data?.data.items.find(
       (entry) => entry.period_id === period.periodId,
     )
     return buildProfessorSummary(vsDept, comments, historyEntry)

@@ -1,3 +1,4 @@
+import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -7,7 +8,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useInView } from '@/shared/hooks/useInView'
-import { Badge, PageHeader } from '@/shared/ui'
+import { PageHeader } from '@/shared/ui'
 import { useState } from 'react'
 
 import { useProfessorSummary } from '../../hooks/useProfessorSummary'

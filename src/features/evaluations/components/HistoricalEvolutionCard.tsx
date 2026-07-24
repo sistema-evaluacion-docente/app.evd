@@ -13,7 +13,7 @@ export default function HistoricalEvolutionCard({
   teacherId,
 }: HistoricalEvolutionCardProps) {
   const { data: historyRes } = useGetTeacherHistory(teacherId);
-  const history = historyRes?.data?.history ?? [];
+  const history = historyRes?.data?.items ?? [];
 
   const chartData = history.map((h) => ({
     label: h.period_code,

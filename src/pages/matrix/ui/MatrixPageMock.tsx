@@ -1,19 +1,13 @@
-import { ArrowDown, ArrowUp, ChevronRight, Download, Search } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { EVALUATION_DIMENSIONS, ITEM_SCORES } from '@/entities/evaluation'
+import { cn } from '@/lib/utils'
+import { AppFooter, PageHeader } from '@/shared/ui'
+import { AppLayout } from '@/widgets/layout'
+import { ArrowDown, ArrowUp, ChevronRight, Download } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link } from 'wouter'
-
-import { EVALUATION_DIMENSIONS, ITEM_SCORES } from '@/entities/evaluation'
-import { cn } from '@/shared/lib/utils'
-import {
-  AppFooter,
-  Avatar,
-  Button,
-  Card,
-  Input,
-  PageHeader,
-  Select,
-} from '@/shared/ui'
-import { AppLayout } from '@/widgets/layout'
 
 const TEACHERS_LIST = [
   { id: 'DOC-2014', name: 'Dr. Roberto Jiménez', faculty: 'Facultad de Ingeniería' },
@@ -37,24 +31,19 @@ function DimensionCard({ dimension }: { dimension: DimensionAverage }) {
     <Card className="p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-ink-500">
+          <div className="text-ink-500 text-[10.5px] font-semibold tracking-[0.1em] uppercase">
             {dimension.label}
           </div>
-          <div className="mt-0.5 text-[11px] text-ink-400">
-            {dimension.itemCount} ítems
-          </div>
+          <div className="text-ink-400 mt-0.5 text-[11px]">{dimension.itemCount} ítems</div>
         </div>
-        <span
-          className="mt-2 h-2 w-2 rounded-full"
-          style={{ background: dimension.color }}
-        />
+        <span className="mt-2 h-2 w-2 rounded-full" style={{ background: dimension.color }} />
       </div>
 
       <div className="mt-4 flex items-baseline gap-2">
-        <span className="num text-[32px] font-semibold leading-none tabular-nums text-ink-900">
+        <span className="num text-ink-900 text-[32px] leading-none font-semibold tabular-nums">
           {dimension.individual.toFixed(1)}
         </span>
-        <span className="text-[13px] font-medium text-ink-500">/5</span>
+        <span className="text-ink-500 text-[13px] font-medium">/5</span>
         <span
           className={cn(
             'ml-auto inline-flex items-center gap-0.5 text-[11.5px] font-semibold',
@@ -73,11 +62,7 @@ function DimensionCard({ dimension }: { dimension: DimensionAverage }) {
           color={dimension.color}
           emphasis
         />
-        <ComparisonBar
-          label="Departamento"
-          value={dimension.department}
-          color="#9AA0AB"
-        />
+        <ComparisonBar label="Departamento" value={dimension.department} color="#9AA0AB" />
       </div>
     </Card>
   )
@@ -96,15 +81,13 @@ function ComparisonBar({
 }) {
   return (
     <div>
-      <div className="flex items-center justify-between text-[10.5px] font-semibold uppercase tracking-[0.06em]">
+      <div className="flex items-center justify-between text-[10.5px] font-semibold tracking-[0.06em] uppercase">
         <span className={emphasis ? 'text-ink-700' : 'text-ink-500'}>{label}</span>
-        <span
-          className={cn('num tabular-nums', emphasis ? 'text-ink-900' : 'text-ink-600')}
-        >
+        <span className={cn('num tabular-nums', emphasis ? 'text-ink-900' : 'text-ink-600')}>
           {value.toFixed(2)}
         </span>
       </div>
-      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-ink-100">
+      <div className="bg-ink-100 mt-1 h-1.5 overflow-hidden rounded-full">
         <div
           className="h-full transition-all duration-500"
           style={{ width: `${(value / 5) * 100}%`, background: color }}
@@ -115,7 +98,7 @@ function ComparisonBar({
 }
 
 export function MatrixPageMock() {
-  const [teacherId, setTeacherId] = useState(TEACHERS_LIST[0].id)
+  const [teacherId] = useState(TEACHERS_LIST[0].id)
   const [search, setSearch] = useState('')
   const [activeDim, setActiveDim] = useState('todas')
 
@@ -129,20 +112,16 @@ export function MatrixPageMock() {
         label: dimension.label,
         color: dimension.color,
         itemCount: dimension.items.length,
-        individual:
-          scores.reduce((sum, score) => sum + score.individual, 0) / scores.length,
-        department:
-          scores.reduce((sum, score) => sum + score.department, 0) / scores.length,
+        individual: scores.reduce((sum, score) => sum + score.individual, 0) / scores.length,
+        department: scores.reduce((sum, score) => sum + score.department, 0) / scores.length,
       }
     })
   }, [])
 
   const globalIndividual =
-    dimensionAverages.reduce((sum, item) => sum + item.individual, 0) /
-    dimensionAverages.length
+    dimensionAverages.reduce((sum, item) => sum + item.individual, 0) / dimensionAverages.length
   const globalDepartment =
-    dimensionAverages.reduce((sum, item) => sum + item.department, 0) /
-    dimensionAverages.length
+    dimensionAverages.reduce((sum, item) => sum + item.department, 0) / dimensionAverages.length
 
   const flatItems = useMemo(
     () =>
@@ -168,9 +147,7 @@ export function MatrixPageMock() {
         items: dimension.items.filter((item) => {
           if (!search) return true
           const query = search.toLowerCase()
-          return (
-            item.label.toLowerCase().includes(query) || item.code.includes(query)
-          )
+          return item.label.toLowerCase().includes(query) || item.code.includes(query)
         }),
       }))
       .filter((dimension) => dimension.items.length > 0)
@@ -182,11 +159,11 @@ export function MatrixPageMock() {
         showBreadcrumb: true,
         breadcrumb: (
           <>
-            <Link href="/teachers" className="transition-colors hover:text-ink-900">
+            <Link href="/teachers" className="hover:text-ink-900 transition-colors">
               Docentes
             </Link>
             <ChevronRight size={12} className="text-ink-300" />
-            <span className="font-medium text-ink-900">Matriz de Evaluación</span>
+            <span className="text-ink-900 font-medium">Matriz de Evaluación</span>
           </>
         ),
       }}
@@ -197,10 +174,10 @@ export function MatrixPageMock() {
         actions={
           <>
             <div>
-              <label className="mb-1.5 block text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-500">
+              <label className="text-ink-500 mb-1.5 block text-[10.5px] font-semibold tracking-[0.08em] uppercase">
                 Docente
               </label>
-              <Select
+              {/* <Select
                 value={teacherId}
                 onChange={setTeacherId}
                 options={TEACHERS_LIST.map((item) => ({
@@ -208,7 +185,7 @@ export function MatrixPageMock() {
                   label: item.name,
                 }))}
                 className="w-[260px]"
-              />
+              /> */}
             </div>
             <Button variant="outline" size="lg" className="self-end">
               <Download size={14} />
@@ -222,46 +199,42 @@ export function MatrixPageMock() {
       <Card className="p-5 sm:p-6">
         <div className="grid grid-cols-1 items-center gap-6 md:grid-cols-[1fr_auto_auto]">
           <div className="flex min-w-0 items-center gap-4">
-            <Avatar name={teacher.name} size={56} paletteIndex={0} />
+            {/* <Avatar name={teacher.name} size={56} paletteIndex={0} /> */}
             <div className="min-w-0">
-              <div className="text-[18px] font-semibold text-ink-900">
-                {teacher.name}
-              </div>
-              <div className="text-[13px] text-ink-500">
-                {teacher.faculty} · Periodo 2024-1
-              </div>
+              <div className="text-ink-900 text-[18px] font-semibold">{teacher.name}</div>
+              <div className="text-ink-500 text-[13px]">{teacher.faculty} · Periodo 2024-1</div>
             </div>
           </div>
           <div className="flex items-center gap-6">
             <div>
-              <div className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-500">
+              <div className="text-ink-500 text-[10.5px] font-semibold tracking-[0.08em] uppercase">
                 Promedio Individual
               </div>
               <div className="mt-1 flex items-baseline gap-1">
-                <span className="num text-[34px] font-semibold leading-none tabular-nums text-ink-900">
+                <span className="num text-ink-900 text-[34px] leading-none font-semibold tabular-nums">
                   {globalIndividual.toFixed(2)}
                 </span>
-                <span className="text-[13px] font-medium text-ink-500">/5</span>
+                <span className="text-ink-500 text-[13px] font-medium">/5</span>
               </div>
             </div>
-            <div className="hidden h-12 w-px bg-ink-200 sm:block" />
+            <div className="bg-ink-200 hidden h-12 w-px sm:block" />
             <div>
-              <div className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-500">
+              <div className="text-ink-500 text-[10.5px] font-semibold tracking-[0.08em] uppercase">
                 Promedio Departamento
               </div>
               <div className="mt-1 flex items-baseline gap-1">
-                <span className="num text-[34px] font-semibold leading-none tabular-nums text-ink-500">
+                <span className="num text-ink-500 text-[34px] leading-none font-semibold tabular-nums">
                   {globalDepartment.toFixed(2)}
                 </span>
-                <span className="text-[13px] font-medium text-ink-400">/5</span>
+                <span className="text-ink-400 text-[13px] font-medium">/5</span>
               </div>
             </div>
           </div>
           <div className="text-right">
-            <div className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-500">
+            <div className="text-ink-500 text-[10.5px] font-semibold tracking-[0.08em] uppercase">
               Diferencia
             </div>
-            <div className="num mt-1 inline-flex items-center gap-1 text-[24px] font-semibold leading-none tabular-nums text-emerald-700">
+            <div className="num mt-1 inline-flex items-center gap-1 text-[24px] leading-none font-semibold text-emerald-700 tabular-nums">
               <ArrowUp size={18} />
               {Math.abs(globalIndividual - globalDepartment).toFixed(2)}
             </div>
@@ -280,19 +253,17 @@ export function MatrixPageMock() {
       <Card className="p-5 sm:p-6">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h3 className="text-[16px] font-semibold text-ink-900">
-              Comparación por dimensión
-            </h3>
-            <p className="mt-0.5 text-[12.5px] text-ink-500">
+            <h3 className="text-ink-900 text-[16px] font-semibold">Comparación por dimensión</h3>
+            <p className="text-ink-500 mt-0.5 text-[12.5px]">
               Promedios consolidados — Individual vs. Departamento
             </p>
           </div>
           <div className="flex items-center gap-3 text-[11.5px]">
             <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-3 rounded-sm bg-ink-900" /> Individual
+              <span className="bg-ink-900 h-2 w-3 rounded-sm" /> Individual
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-3 rounded-sm bg-ink-300" /> Departamento
+              <span className="bg-ink-300 h-2 w-3 rounded-sm" /> Departamento
             </span>
           </div>
         </div>
@@ -305,27 +276,25 @@ export function MatrixPageMock() {
                     className="h-2 w-2 shrink-0 rounded-full"
                     style={{ background: dimension.color }}
                   />
-                  <span className="truncate text-[12.5px] font-medium text-ink-800">
+                  <span className="text-ink-800 truncate text-[12.5px] font-medium">
                     {dimension.label}
                   </span>
                 </div>
                 <div className="num text-[11.5px] tabular-nums">
-                  <span className="font-semibold text-ink-900">
+                  <span className="text-ink-900 font-semibold">
                     {dimension.individual.toFixed(2)}
                   </span>
-                  <span className="mx-1 text-ink-400">/</span>
-                  <span className="text-ink-500">
-                    {dimension.department.toFixed(2)}
-                  </span>
+                  <span className="text-ink-400 mx-1">/</span>
+                  <span className="text-ink-500">{dimension.department.toFixed(2)}</span>
                 </div>
               </div>
-              <div className="relative h-6 overflow-hidden rounded-md bg-ink-50">
+              <div className="bg-ink-50 relative h-6 overflow-hidden rounded-md">
                 <div
-                  className="absolute inset-y-0 left-0 bg-ink-200"
+                  className="bg-ink-200 absolute inset-y-0 left-0"
                   style={{ width: `${(dimension.department / 5) * 100}%` }}
                 />
                 <div
-                  className="absolute inset-y-1 left-1 rounded-sm bg-ink-900"
+                  className="bg-ink-900 absolute inset-y-1 left-1 rounded-sm"
                   style={{
                     width: `calc(${(dimension.individual / 5) * 100}% - 8px)`,
                   }}
@@ -333,7 +302,7 @@ export function MatrixPageMock() {
                 {[1, 2, 3, 4].map((tick) => (
                   <span
                     key={tick}
-                    className="absolute inset-y-0 w-px bg-ink-50/70"
+                    className="bg-ink-50/70 absolute inset-y-0 w-px"
                     style={{ left: `${tick * 20}%` }}
                   />
                 ))}
@@ -367,14 +336,10 @@ export function MatrixPageMock() {
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Buscar por ítem o código (001-022)..."
-              icon={<Search size={14} />}
             />
           </div>
           <div className="-mx-1 flex items-center gap-1.5 overflow-x-auto px-1">
-            <DimChip
-              active={activeDim === 'todas'}
-              onClick={() => setActiveDim('todas')}
-            >
+            <DimChip active={activeDim === 'todas'} onClick={() => setActiveDim('todas')}>
               Todas
             </DimChip>
             {EVALUATION_DIMENSIONS.map((dimension) => (
@@ -393,7 +358,7 @@ export function MatrixPageMock() {
 
       {/* Item matrix */}
       {filteredDimensions.length === 0 ? (
-        <Card className="p-10 text-center text-[13px] text-ink-500">
+        <Card className="text-ink-500 p-10 text-center text-[13px]">
           Sin resultados para los filtros aplicados.
         </Card>
       ) : (
@@ -401,7 +366,7 @@ export function MatrixPageMock() {
           const average = dimensionAverages.find((item) => item.id === dimension.id)!
           return (
             <Card key={dimension.id} className="overflow-hidden">
-              <div className="flex items-center gap-3 border-b border-ink-100 px-5 py-4 sm:px-6">
+              <div className="border-ink-100 flex items-center gap-3 border-b px-5 py-4 sm:px-6">
                 <span
                   className="inline-flex h-9 w-9 items-center justify-center rounded-md text-[14px] font-semibold text-white"
                   style={{ background: dimension.color }}
@@ -409,16 +374,13 @@ export function MatrixPageMock() {
                   {dimensionIndex + 1}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <h2 className="text-[17px] font-semibold text-ink-900">
-                    {dimension.label}
-                  </h2>
-                  <p className="text-[12px] text-ink-500">
-                    {dimension.items.length} ítems · ítems{' '}
-                    {dimension.items[0].code}–
+                  <h2 className="text-ink-900 text-[17px] font-semibold">{dimension.label}</h2>
+                  <p className="text-ink-500 text-[12px]">
+                    {dimension.items.length} ítems · ítems {dimension.items[0].code}–
                     {dimension.items[dimension.items.length - 1].code}
                   </p>
                 </div>
-                <span className="inline-flex h-7 items-center rounded-full border border-ink-200 bg-ink-50 px-3 text-[11px] font-semibold uppercase tracking-[0.04em] text-ink-700">
+                <span className="border-ink-200 bg-ink-50 text-ink-700 inline-flex h-7 items-center rounded-full border px-3 text-[11px] font-semibold tracking-[0.04em] uppercase">
                   {average.individual.toFixed(2)} / 5
                 </span>
               </div>
@@ -429,14 +391,14 @@ export function MatrixPageMock() {
                   return (
                     <div
                       key={item.code}
-                      className="grid grid-cols-[88px_1fr_120px] items-center gap-4 border-b border-ink-100 py-3 last:border-b-0"
+                      className="border-ink-100 grid grid-cols-[88px_1fr_120px] items-center gap-4 border-b py-3 last:border-b-0"
                     >
-                      <span className="num inline-flex w-fit rounded bg-ink-100 px-1.5 py-0.5 font-mono text-[12px] font-semibold text-ink-700">
+                      <span className="num bg-ink-100 text-ink-700 inline-flex w-fit rounded px-1.5 py-0.5 font-mono text-[12px] font-semibold">
                         {item.code}
                       </span>
                       <div className="min-w-0">
                         <div
-                          className="mb-2 pr-2 text-[13.5px] leading-snug text-ink-800"
+                          className="text-ink-800 mb-2 pr-2 text-[13.5px] leading-snug"
                           style={{ textWrap: 'pretty' }}
                         >
                           {item.label}
@@ -448,11 +410,7 @@ export function MatrixPageMock() {
                             color={dimension.color}
                             emphasis
                           />
-                          <ItemBar
-                            label="Departamento"
-                            value={score.department}
-                            color="#9AA0AB"
-                          />
+                          <ItemBar label="Departamento" value={score.department} color="#9AA0AB" />
                         </div>
                       </div>
                       <div className="text-right">
@@ -465,7 +423,7 @@ export function MatrixPageMock() {
                           {delta >= 0 ? '+' : ''}
                           {delta.toFixed(2)}
                         </div>
-                        <div className="mt-0.5 text-[10.5px] font-medium uppercase tracking-[0.06em] text-ink-500">
+                        <div className="text-ink-500 mt-0.5 text-[10.5px] font-medium tracking-[0.06em] uppercase">
                           vs. depto.
                         </div>
                       </div>
@@ -498,13 +456,13 @@ function ItemBar({
     <div className="flex items-center gap-2.5">
       <span
         className={cn(
-          'w-[80px] shrink-0 text-[10px] font-semibold uppercase tracking-[0.04em]',
+          'w-[80px] shrink-0 text-[10px] font-semibold tracking-[0.04em] uppercase',
           emphasis ? 'text-ink-600' : 'text-ink-500',
         )}
       >
         {label}
       </span>
-      <div className="relative h-3 flex-1 overflow-hidden rounded-full bg-ink-100">
+      <div className="bg-ink-100 relative h-3 flex-1 overflow-hidden rounded-full">
         <div
           className="absolute inset-y-0 left-0 rounded-full transition-all duration-700"
           style={{ width: `${(value / 5) * 100}%`, background: color }}
@@ -541,15 +499,10 @@ function DimChip({
         'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-[12px] font-medium transition-colors',
         active
           ? 'bg-ink-900 text-ink-50'
-          : 'border border-ink-200 bg-card text-ink-700 hover:bg-ink-50',
+          : 'border-ink-200 bg-card text-ink-700 hover:bg-ink-50 border',
       )}
     >
-      {dotColor && (
-        <span
-          className="h-1.5 w-1.5 rounded-full"
-          style={{ background: dotColor }}
-        />
-      )}
+      {dotColor && <span className="h-1.5 w-1.5 rounded-full" style={{ background: dotColor }} />}
       {children}
     </button>
   )
@@ -570,24 +523,22 @@ function InsightList({
     <Card className="p-5">
       <div className="mb-1 flex items-center gap-2">
         <span className={cn('h-2 w-2 rounded-full', dotClass)} />
-        <h3 className="text-[14px] font-semibold text-ink-900">{title}</h3>
+        <h3 className="text-ink-900 text-[14px] font-semibold">{title}</h3>
       </div>
-      <p className="mb-3 text-[12px] text-ink-500">{subtitle}</p>
+      <p className="text-ink-500 mb-3 text-[12px]">{subtitle}</p>
       <ul className="space-y-2.5">
         {rows.map((row) => (
           <li key={row.code} className="flex items-start gap-3">
-            <span className="num mt-0.5 shrink-0 rounded bg-ink-100 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-ink-700">
+            <span className="num bg-ink-100 text-ink-700 mt-0.5 shrink-0 rounded px-1.5 py-0.5 font-mono text-[11px] font-semibold">
               {row.code}
             </span>
             <div className="min-w-0 flex-1">
-              <div className="text-[13px] leading-snug text-ink-800">
-                {row.label}
-              </div>
-              <div className="mt-0.5 text-[11px] uppercase tracking-[0.04em] text-ink-500">
+              <div className="text-ink-800 text-[13px] leading-snug">{row.label}</div>
+              <div className="text-ink-500 mt-0.5 text-[11px] tracking-[0.04em] uppercase">
                 {row.dimLabel}
               </div>
             </div>
-            <span className="num mt-0.5 shrink-0 text-[14px] font-semibold tabular-nums text-ink-900">
+            <span className="num text-ink-900 mt-0.5 shrink-0 text-[14px] font-semibold tabular-nums">
               {row.individual.toFixed(1)}
             </span>
           </li>

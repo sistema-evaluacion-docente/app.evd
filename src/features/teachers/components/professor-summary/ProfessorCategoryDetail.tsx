@@ -1,7 +1,8 @@
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { Badge, DataTable, StatTile, type DataTableColumn } from '@/shared/ui'
+import { DataTable, StatTile, type DataTableColumn } from '@/shared/ui'
 import { ArrowLeft, ChevronDown, ChevronUp, TrendingUp } from 'lucide-react'
 import { useState } from 'react'
 

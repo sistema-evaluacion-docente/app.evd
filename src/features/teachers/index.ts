@@ -1,3 +1,4 @@
+export type { HistorySortBy } from './api/getTeacherHistory'
 export type { TeacherBulkError, TeacherBulkResult, TeacherBulkRow } from './api/teacherService'
 
 export { uploadTeachersExcel } from './api/teacherService'

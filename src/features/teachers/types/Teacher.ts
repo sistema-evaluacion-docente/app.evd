@@ -44,7 +44,7 @@ export interface TeacherHistoryData {
   teacher_id: number;
   institutional_code: string;
   name: string;
-  history: TeacherHistoryEntry[];
+  items: TeacherHistoryEntry[];
 }
 
 export interface TeacherSemesterComparisonQuestion {

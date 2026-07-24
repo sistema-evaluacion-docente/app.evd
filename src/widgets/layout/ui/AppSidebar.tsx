@@ -70,12 +70,12 @@ export function AppSidebar({ mobileOpen, onClose }: AppSidebarProps) {
     <>
       <aside
         className={cn(
-          'bg-background fixed top-0 left-0 z-50 flex h-screen w-75 shrink-0 flex-col border-r transition-transform lg:sticky lg:translate-x-0',
+          'bg-muted/30 fixed top-0 left-0 z-50 flex h-screen w-75 shrink-0 flex-col border-r transition-transform lg:sticky lg:translate-x-0',
           mobileOpen ? 'translate-x-0' : '-translate-x-full',
         )}
       >
         {/* Logo */}
-        <div className="flex h-17 items-center gap-2.5 border-b px-5">
+        <div className="flex h-17! items-center gap-2.5 border-b px-5">
           <BrandMark size={36} iconSize={18} />
 
           <div className="leading-tight">

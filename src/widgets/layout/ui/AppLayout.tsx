@@ -1,15 +1,15 @@
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useState, type ReactNode } from 'react'
 import { Link, useLocation } from 'wouter'
 
 import AppLayoutSkeleton from '@/components/skeletons/AppLayoutSkeleton'
 import securityConfig from '@/config/security'
+import UserNotAuth from '@/features/auth/components/UserNotAuth'
 import useAuth from '@/shared/hooks/useAuth'
 import { AppHeader, type AppHeaderProps } from './AppHeader'
 import { AppSidebar } from './AppSidebar'
-import { Button } from '@/components/ui/button'
 import { AutoBreadcrumb } from './AutoBreadcrumb'
-import UserNotAuth from '@/features/auth/components/UserNotAuth'
 
 export interface AppLayoutProps {
   children: ReactNode
@@ -42,9 +42,7 @@ export function AppLayout({
   }
 
   if (!isLoading && !loggedIn) {
-    return (
-      <UserNotAuth />
-    )
+    return <UserNotAuth />
   }
 
   const authorized = isAuthorizedForPage(location, selectedRole)
