@@ -1,12 +1,12 @@
-import { BarChart3, Search } from 'lucide-react'
-import { useState } from 'react'
-import { Link, useLocation } from 'wouter'
-
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Input } from '@/components/ui/input'
 import { usePeriodsStore } from '@/features/periods'
 import { useGetTeachers } from '@/features/teachers'
-import { cn } from '@/shared/lib/utils'
-import { Avatar, Input } from '@/shared/ui'
+import { cn } from '@/lib/utils'
 import { AppLayout } from '@/widgets/layout'
+import { BarChart3 } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useLocation } from 'wouter'
 
 export function MatrixIndexPage() {
   const [search, setSearch] = useState('')
@@ -25,61 +25,51 @@ export function MatrixIndexPage() {
   })
 
   return (
-    <AppLayout
-      header={{ rightMode: 'periodo' }}
-      mainClassName='p-0 lg:p-0 flex overflow-hidden'
-    >
+    <AppLayout header={{ rightMode: 'periodo' }} mainClassName="p-0 lg:p-0 flex overflow-hidden">
       {/* ── Left panel: teacher list ─────────────────────── */}
-      <aside className='flex w-72 shrink-0 flex-col border-r border-border bg-background'>
+      <aside className="border-border bg-background flex w-72 shrink-0 flex-col border-r">
         {/* Panel header */}
-        <div className='border-b border-border px-4 pb-4 pt-5'>
-          <p className='text-[10.5px] font-semibold uppercase tracking-widest text-muted-foreground'>
+        <div className="border-border border-b px-4 pt-5 pb-4">
+          <p className="text-muted-foreground text-[10.5px] font-semibold tracking-widest uppercase">
             Matrices de evaluación
           </p>
-          <h2 className='mt-0.5 text-[15px] font-semibold text-foreground'>
-            Docentes
-          </h2>
+          <h2 className="text-foreground mt-0.5 text-[15px] font-semibold">Docentes</h2>
           {selectedPeriod && (
-            <span className='mt-1.5 inline-flex items-center rounded-full bg-brand-50 px-2 py-0.5 text-[11px] font-medium text-brand-700'>
+            <span className="bg-brand-50 text-brand-700 mt-1.5 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium">
               {selectedPeriod.name}
             </span>
           )}
         </div>
 
         {/* Search */}
-        <div className='border-b border-border px-3 py-2.5'>
+        <div className="border-border border-b px-3 py-2.5">
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder='Buscar docente...'
-            icon={<Search size={14} />}
+            placeholder="Buscar docente..."
           />
         </div>
 
         {/* Teacher list */}
-        <div className='flex-1 overflow-y-auto py-1.5'>
+        <div className="flex-1 overflow-y-auto py-1.5">
           {isLoading ? (
-            <div className='space-y-1 px-2'>
+            <div className="space-y-1 px-2">
               {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div
-                  key={i}
-                  className='h-14 animate-pulse rounded-lg bg-muted'
-                />
+                <div key={i} className="bg-muted h-14 animate-pulse rounded-lg" />
               ))}
             </div>
           ) : teachers.length === 0 ? (
-            <div className='px-4 py-8 text-center'>
-              <p className='text-[12px] text-muted-foreground'>
+            <div className="px-4 py-8 text-center">
+              <p className="text-muted-foreground text-[12px]">
                 {search ? 'Sin resultados para la búsqueda.' : 'No hay docentes activos.'}
               </p>
             </div>
           ) : (
-            <ul className='space-y-0.5 px-2'>
+            <ul className="space-y-0.5 px-2">
               {teachers.map((teacher) => {
                 const name = teacher.user?.name ?? '—'
                 const href = `/matrix/${teacher.id}`
-                const active =
-                  location === href || location.startsWith(`${href}/`)
+                const active = location === href || location.startsWith(`${href}/`)
 
                 return (
                   <li key={teacher.id}>
@@ -92,27 +82,35 @@ export function MatrixIndexPage() {
                           : 'text-foreground hover:bg-muted hover:text-foreground',
                       )}
                     >
-                      <Avatar
-                        name={name}
-                        src={teacher.user?.avatar_url || undefined}
-                        size={32}
-                        paletteIndex={teacher.id % 8}
-                      />
-                      <div className='min-w-0 flex-1'>
+                      <Avatar>
+                        <AvatarFallback>
+                          <span className="text-foreground text-[13px] font-medium">
+                            {name
+                              .split(' ')
+                              .map((n) => n[0])
+                              .join('')
+                              .toUpperCase()}
+                          </span>
+                        </AvatarFallback>
+
+                        <AvatarImage src={teacher.user?.avatar_url || undefined} alt={name} />
+                      </Avatar>
+
+                      <div className="min-w-0 flex-1">
                         <div
                           className={cn(
-                            'truncate text-[13px] font-medium leading-tight',
+                            'truncate text-[13px] leading-tight font-medium',
                             active ? 'text-brand-900' : 'text-foreground',
                           )}
                         >
                           {name}
                         </div>
-                        <div className='mt-0.5 text-[11px] text-muted-foreground'>
+                        <div className="text-muted-foreground mt-0.5 text-[11px]">
                           {teacher.institutional_code}
                         </div>
                       </div>
                       {active && (
-                        <span className='h-1.5 w-1.5 shrink-0 rounded-full bg-brand-600' />
+                        <span className="bg-brand-600 h-1.5 w-1.5 shrink-0 rounded-full" />
                       )}
                     </Link>
                   </li>
@@ -124,7 +122,7 @@ export function MatrixIndexPage() {
 
         {/* Footer count */}
         {!isLoading && (
-          <div className='border-t border-border px-4 py-3 text-[11px] text-muted-foreground'>
+          <div className="border-border text-muted-foreground border-t px-4 py-3 text-[11px]">
             {teachers.length} docente{teachers.length !== 1 ? 's' : ''} activo
             {teachers.length !== 1 ? 's' : ''}
           </div>
@@ -132,24 +130,21 @@ export function MatrixIndexPage() {
       </aside>
 
       {/* ── Right panel: empty state ──────────────────────── */}
-      <div className='flex flex-1 flex-col items-center justify-center gap-5 bg-muted p-12 text-center'>
-        <div className='flex h-20 w-20 items-center justify-center rounded-2xl bg-card shadow-sm ring-1 ring-border'>
-          <BarChart3 size={36} className='text-muted-foreground' />
+      <div className="bg-muted flex flex-1 flex-col items-center justify-center gap-5 p-12 text-center">
+        <div className="bg-card ring-border flex h-20 w-20 items-center justify-center rounded-2xl shadow-sm ring-1">
+          <BarChart3 size={36} className="text-muted-foreground" />
         </div>
 
-        <div className='max-w-xs'>
-          <h3 className='text-[17px] font-semibold text-foreground'>
-            Selecciona un docente
-          </h3>
-          <p className='mt-2 text-[13px] leading-relaxed text-muted-foreground'>
-            Elige un docente de la lista para ver el reporte detallado de su
-            evaluación docente
+        <div className="max-w-xs">
+          <h3 className="text-foreground text-[17px] font-semibold">Selecciona un docente</h3>
+          <p className="text-muted-foreground mt-2 text-[13px] leading-relaxed">
+            Elige un docente de la lista para ver el reporte detallado de su evaluación docente
             {selectedPeriod ? ` en el periodo ${selectedPeriod.name}` : ''}.
           </p>
         </div>
 
         {!selectedPeriod && (
-          <div className='rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-[12px] text-amber-700'>
+          <div className="rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-[12px] text-amber-700">
             Selecciona un periodo académico en la barra superior
           </div>
         )}
