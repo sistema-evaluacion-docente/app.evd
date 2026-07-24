@@ -63,7 +63,7 @@ function TeachersContent() {
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false)
   const [deletingTeacher, setDeletingTeacher] = useState<Teacher | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [sortBy, setSortBy] = useState('name_asc')
+  const [sortBy, setSortBy] = useState('overall_average_desc')
 
   const deleteTeacher = useDeleteTeacher()
 
