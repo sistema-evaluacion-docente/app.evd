@@ -1,8 +1,8 @@
-import { ThemeSwitcher } from '@/components/common/ThemeSwitcher'
-import { Input } from '@/shared/ui'
-import { Menu, Search } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Menu } from 'lucide-react'
 import type { ReactNode } from 'react'
 
+import { ThemeSwitcher } from '@/components/common/ThemeSwitcher'
 import Avatar from '@/features/auth/components/Avatar'
 
 export interface AppHeaderProps {
@@ -49,7 +49,7 @@ export function AppHeader({
           {
             rightMode === 'search' ? (
               <div className="hidden w-65 md:block">
-                <Input placeholder="Buscar docente..." icon={<Search size={14} />} />
+                <Input placeholder="Buscar docente..." />
               </div>
             ) : null
             // <div className="hidden items-center gap-2 md:flex">
