@@ -28,8 +28,8 @@ export function AppHeader({
   rightMode = 'periodo',
 }: AppHeaderProps) {
   return (
-    <header className="sticky top-0 z-30 border-b backdrop-blur-md">
-      <div className="flex h-17 items-center gap-3 px-4 lg:px-8">
+    <header className="sticky top-0 z-30 border-b backdrop-blur-md bg-muted/30 h-17! flex items-center w-full">
+      <div className="flex w-full h-full items-center gap-3 px-4 lg:px-8">
         <button
           type="button"
           onClick={onOpenMenu}
@@ -40,7 +40,7 @@ export function AppHeader({
         </button>
 
         {showBreadcrumb && breadcrumb && (
-          <nav className="text-muted-foreground hidden min-w-0 items-center gap-1.5 text-[13px] sm:flex">
+          <nav className="text-muted-foreground hidden min-w-0 items-center gap-1.5 sm:flex animate-fade-in">
             {breadcrumb}
           </nav>
         )}
@@ -69,9 +69,9 @@ export function AppHeader({
             <Bell size={16} />
             <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-brand-600 ring-2" />
           </button> */}
-          <ThemeSwitcher />
 
           <Avatar />
+          <ThemeSwitcher />
         </div>
       </div>
     </header>
