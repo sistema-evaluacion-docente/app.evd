@@ -35,7 +35,7 @@ export default function getTeachers({
     params.department_id = department_id;
   }
 
-  return api.get("/teachers", {
+  return api.get("/teachers/with-averages", {
     params: { ...params, page, limit },
   });
 }
