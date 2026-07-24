@@ -30,11 +30,11 @@ const securityConfig = {
       name: "Evaluaciones",
       roles: ["DIRECTOR DE DEPARTAMENTO"],
     },
-    // {
-    //   path: "/teachers",
-    //   name: "Docentes",
-    //   roles: ["DIRECTOR DE DEPARTAMENTO"],
-    // },
+    {
+      path: "/teachers",
+      name: "Docentes",
+      roles: ["DIRECTOR DE DEPARTAMENTO"],
+    },
     // {
     //   path: "/matrix",
     //   name: "Matriz Evaluativa",
