@@ -268,7 +268,7 @@ export function ProfessorCommentsTable({
         </p>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 p-0">
         <DataTable<ProfessorComment>
           columns={columns}
           queryFn={queryFn}
@@ -282,6 +282,7 @@ export function ProfessorCommentsTable({
           searchPlaceholder="Buscar por comentario..."
           enableSorting={false}
           cellClassName="align-top py-4"
+          borders={false}
         />
       </CardContent>
     </Card>

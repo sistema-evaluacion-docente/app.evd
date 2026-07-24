@@ -103,6 +103,7 @@ interface DataTableProps<TData> {
   createConfig?: DataTableCreateConfig
   filters?: React.ReactNode
   disabledPagination?: boolean
+  borders?: boolean
 }
 
 /**
@@ -132,6 +133,7 @@ function DataTable<TData>({
   createConfig,
   filters,
   disabledPagination,
+  borders = true,
 }: DataTableProps<TData>) {
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -201,7 +203,7 @@ function DataTable<TData>({
   return (
     <>
       {enableFilters && (
-        <div className="flex items-center gap-2">
+        <div className={cn('flex items-center gap-2', !borders ? 'px-4' : '')}>
           {enableSearch ? (
             <Input
               type="text"
@@ -248,7 +250,8 @@ function DataTable<TData>({
 
       <div
         className={cn(
-          'bg-background animate-fade-in overflow-x-auto rounded-lg border',
+          'bg-background animate-fade-in overflow-x-auto',
+          borders ? 'rounded-lg border' : 'border-none',
           containerClassName,
         )}
       >
@@ -397,7 +400,12 @@ function DataTable<TData>({
       {!disabledPagination && (
         <>
           {!isLoading && table.getRowModel().rows.length > 0 ? (
-            <div className="text-muted-foreground mt-3 flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between">
+            <div
+              className={cn(
+                'text-muted-foreground mt-3 flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between',
+                !borders ? 'px-4' : '',
+              )}
+            >
               <div className="flex items-center gap-2">
                 <span>Filas por página</span>
 
