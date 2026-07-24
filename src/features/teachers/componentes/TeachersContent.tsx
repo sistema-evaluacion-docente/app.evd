@@ -11,7 +11,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import { PageHeader } from '@/shared/ui'
 import type { ColumnDef } from '@tanstack/react-table'
@@ -20,6 +19,8 @@ import { useState } from 'react'
 import { Link, useLocation } from 'wouter'
 
 import DataTable from '@/components/common/DataTable'
+import SortBy from '@/components/common/SortBy'
+import PeriodsSelector from '@/features/periods/components/PeriodsSelector'
 import { usePeriodsStore } from '@/features/periods/store/periodsStore'
 import useAuth from '@/shared/hooks/useAuth'
 import useDeleteTeacher from '../hooks/useDeleteTeacher'
@@ -27,6 +28,25 @@ import useGetTeachers from '../hooks/useGetTeachers'
 import type { Teacher } from '../types/Teacher'
 import CreateTeacherDrawer from './CreateTeacherDrawer'
 import EditTeacherDrawer from './EditTeacherDrawer'
+
+type TeacherSortField = 'name' | 'institutional_code' | 'overall_average'
+
+const TEACHER_SORT_FIELDS: { value: TeacherSortField; label: string }[] = [
+  { value: 'name', label: 'Nombre' },
+  { value: 'institutional_code', label: 'Código' },
+  { value: 'overall_average', label: 'Promedio' },
+]
+
+function parseTeacherSortBy(value: string): { field: string; direction: string } {
+  const parts = value.split('_')
+  const direction = parts.pop() as string
+  const field = parts.join('_')
+  return { field, direction }
+}
+
+function buildTeacherSortBy(field: string, direction: string): string {
+  return `${field}_${direction}`
+}
 
 /**
  * Component to display and manage the list of teachers with options to create, edit, and delete.
@@ -43,7 +63,7 @@ function TeachersContent() {
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false)
   const [deletingTeacher, setDeletingTeacher] = useState<Teacher | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [activeFilter, setActiveFilter] = useState<string>('all')
+  const [sortBy, setSortBy] = useState('name_asc')
 
   const deleteTeacher = useDeleteTeacher()
 
@@ -67,11 +87,11 @@ function TeachersContent() {
         </Link>
       ),
     },
-    {
-      header: 'Email',
-      accessorKey: 'email',
-      cell: ({ row }) => <span className="text-muted-foreground">{row.original?.user?.email}</span>,
-    },
+    // {
+    //   header: 'Email',
+    //   accessorKey: 'email',
+    //   cell: ({ row }) => <span className="text-muted-foreground">{row.original?.user?.email}</span>,
+    // },
     {
       header: 'Código',
       accessorKey: 'institutional_code',
@@ -80,7 +100,7 @@ function TeachersContent() {
       ),
     },
     {
-      header: selectedPeriod ? `Promedio ${selectedPeriod.name}` : 'Promedio',
+      header: 'Promedio',
       id: 'overall_average',
       cell: ({ row }) => {
         const avg = row.original.overall_average
@@ -126,7 +146,8 @@ function TeachersContent() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Gestión de Docentes"
+        title="Docentes"
+        description="Resultados de los docentes por periodo académico."
         actions={
           <div className="flex items-center gap-2">
             <Link href="/teachers/upload">
@@ -144,6 +165,10 @@ function TeachersContent() {
         }
       />
 
+      <div>
+        <PeriodsSelector className="w-48" />
+      </div>
+
       <DataTable
         columns={columns}
         queryFn={useGetTeachers}
@@ -151,28 +176,38 @@ function TeachersContent() {
         emptyMessage="No se encontraron docentes."
         pageSize={10}
         filters={
-          <Select value={activeFilter} onValueChange={(value) => setActiveFilter(value ?? 'all')}>
-            <SelectTrigger>
-              <span>
-                {activeFilter === 'all'
-                  ? 'Todos'
-                  : activeFilter === 'true'
-                    ? 'Activos'
-                    : 'Inactivos'}
-              </span>
-            </SelectTrigger>
+          <div className="flex items-center gap-2">
+            {/* <Select value={activeFilter} onValueChange={(value) => setActiveFilter(value ?? 'all')}>
+              <SelectTrigger>
+                <span>
+                  {activeFilter === 'all'
+                    ? 'Todos'
+                    : activeFilter === 'true'
+                      ? 'Activos'
+                      : 'Inactivos'}
+                </span>
+              </SelectTrigger>
 
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="true">Activos</SelectItem>
-              <SelectItem value="false">Inactivos</SelectItem>
-            </SelectContent>
-          </Select>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="true">Activos</SelectItem>
+                <SelectItem value="false">Inactivos</SelectItem>
+              </SelectContent>
+            </Select> */}
+
+            <SortBy
+              fields={TEACHER_SORT_FIELDS}
+              value={sortBy}
+              onChange={setSortBy}
+              parse={parseTeacherSortBy}
+              build={buildTeacherSortBy}
+            />
+          </div>
         }
         extraFilterParams={{
           academic_period_id: selectedPeriod?.id ? String(selectedPeriod.id) : undefined,
-          active: activeFilter !== 'all' ? activeFilter : undefined,
           department_id: user?.department_id ?? undefined,
+          sort_by: sortBy,
         }}
         rowActions={[
           {
