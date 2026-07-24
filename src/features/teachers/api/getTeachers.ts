@@ -9,6 +9,7 @@ export default function getTeachers({
   academic_period_id,
   department_id,
   active,
+  sort_by,
 }: {
   page: number;
   limit: number;
@@ -16,6 +17,7 @@ export default function getTeachers({
   academic_period_id?: number;
   department_id?: number;
   active?: boolean;
+  sort_by?: string;
 }): Promise<ResponseAPI<Teacher[]>> {
   const params: Record<string, string | number | boolean> = {};
 
@@ -33,6 +35,10 @@ export default function getTeachers({
 
   if (department_id !== undefined) {
     params.department_id = department_id;
+  }
+
+  if (sort_by) {
+    params.sort_by = sort_by;
   }
 
   return api.get("/teachers/with-averages", {
