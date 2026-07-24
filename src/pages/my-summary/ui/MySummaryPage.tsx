@@ -1,17 +1,17 @@
-import { ArrowRight, ArrowUp, Download, Info, MessageSquare } from 'lucide-react'
-import { useMemo, useState, type ReactNode } from 'react'
-
 import {
   AppFooter,
   AreaChart,
-  Badge,
-  Button,
-  Card,
   DataTable,
   FilterPills,
   PageHeader,
   type DataTableColumn,
 } from '@/shared/ui'
+import { ArrowRight, ArrowUp, Download, Info, MessageSquare } from 'lucide-react'
+import { useMemo, useState, type ReactNode } from 'react'
+
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { AppLayout } from '@/widgets/layout'
 
 const ME = {
@@ -39,10 +39,34 @@ const ME = {
     { id: 'integracion', label: 'Integración Interpersonal', value: 88 },
   ],
   comments: [
-    { id: 1, text: 'Las explicaciones son muy claras y siempre está dispuesto a resolver dudas fuera de clase.', risk: 'bajo', tag: 'Desempeño Docente', subject: 'Arquitectura de Software' },
-    { id: 2, text: 'Buen manejo del aula y dominio del tema; podría incluir más ejemplos prácticos del sector.', risk: 'medio', tag: 'Desarrollo del Conocimiento', subject: 'Ingeniería de Requisitos' },
-    { id: 3, text: 'El semestre fue muy denso y faltó organización en las fechas de los entregables.', risk: 'alto', tag: 'Procesos de Evaluación', subject: 'Ética Profesional' },
-    { id: 4, text: 'Excelente acompañamiento durante el desarrollo de los proyectos finales.', risk: 'bajo', tag: 'Integración Interpersonal', subject: 'Arquitectura de Software' },
+    {
+      id: 1,
+      text: 'Las explicaciones son muy claras y siempre está dispuesto a resolver dudas fuera de clase.',
+      risk: 'bajo',
+      tag: 'Desempeño Docente',
+      subject: 'Arquitectura de Software',
+    },
+    {
+      id: 2,
+      text: 'Buen manejo del aula y dominio del tema; podría incluir más ejemplos prácticos del sector.',
+      risk: 'medio',
+      tag: 'Desarrollo del Conocimiento',
+      subject: 'Ingeniería de Requisitos',
+    },
+    {
+      id: 3,
+      text: 'El semestre fue muy denso y faltó organización en las fechas de los entregables.',
+      risk: 'alto',
+      tag: 'Procesos de Evaluación',
+      subject: 'Ética Profesional',
+    },
+    {
+      id: 4,
+      text: 'Excelente acompañamiento durante el desarrollo de los proyectos finales.',
+      risk: 'bajo',
+      tag: 'Integración Interpersonal',
+      subject: 'Arquitectura de Software',
+    },
   ],
 }
 
@@ -56,11 +80,12 @@ interface SummaryComment {
   subject: string
 }
 
-const RISK_BADGE: Record<RiskLevel, { label: string; variant: 'danger' | 'warning' | 'success' }> = {
-  alto: { label: 'ALTO', variant: 'danger' },
-  medio: { label: 'MEDIO', variant: 'warning' },
-  bajo: { label: 'BAJO', variant: 'success' },
-}
+const RISK_BADGE: Record<RiskLevel, { label: string; variant: 'danger' | 'warning' | 'success' }> =
+  {
+    alto: { label: 'ALTO', variant: 'danger' },
+    medio: { label: 'MEDIO', variant: 'warning' },
+    bajo: { label: 'BAJO', variant: 'success' },
+  }
 
 function KpiTile({
   label,
@@ -75,11 +100,14 @@ function KpiTile({
 }) {
   return (
     <Card className="h-full p-5 sm:p-6">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-500">
+      <div className="text-ink-500 text-[11px] font-semibold tracking-[0.08em] uppercase">
         {label}
       </div>
+
       <div className="mt-3 leading-none">{value}</div>
-      {sub && <div className="mt-2 text-[12.5px] text-ink-500">{sub}</div>}
+
+      {sub && <div className="text-ink-500 mt-2 text-[12.5px]">{sub}</div>}
+
       {trend && (
         <div className="mt-2 inline-flex items-center gap-1 text-[12.5px] font-semibold text-emerald-700">
           <ArrowUp size={12} /> {trend}
@@ -107,10 +135,7 @@ export function MySummaryPage() {
       header: 'Comentario del estudiante',
       cellClassName: 'align-top py-4 max-w-[540px]',
       cell: (comment) => (
-        <p
-          className="text-[13.5px] leading-relaxed text-ink-800"
-          style={{ textWrap: 'pretty' }}
-        >
+        <p className="text-ink-800 text-[13.5px] leading-relaxed" style={{ textWrap: 'pretty' }}>
           <span className="text-ink-400">“</span>
           {comment.text}
           <span className="text-ink-400">”</span>
@@ -120,23 +145,21 @@ export function MySummaryPage() {
     {
       header: 'Asignatura',
       cellClassName: 'align-top py-4 whitespace-nowrap',
-      cell: (comment) => (
-        <span className="text-[13px] text-ink-700">{comment.subject}</span>
-      ),
+      cell: (comment) => <span className="text-ink-700 text-[13px]">{comment.subject}</span>,
     },
     {
       header: 'Riesgo',
       cellClassName: 'align-top py-4',
       cell: (comment) => {
         const badge = RISK_BADGE[comment.risk as RiskLevel]
-        return <Badge variant={badge.variant}>{badge.label}</Badge>
+        return <Badge>{badge.label}</Badge>
       },
     },
     {
       header: 'Etiqueta',
       cellClassName: 'align-top py-4',
       cell: (comment) => (
-        <span className="inline-flex h-6 items-center whitespace-nowrap rounded-full border border-ink-200 bg-ink-50/60 px-2.5 text-[11px] font-medium text-ink-700">
+        <span className="border-ink-200 bg-ink-50/60 text-ink-700 inline-flex h-6 items-center rounded-full border px-2.5 text-[11px] font-medium whitespace-nowrap">
           {comment.tag}
         </span>
       ),
@@ -144,9 +167,7 @@ export function MySummaryPage() {
   ]
 
   return (
-    <AppLayout
-      header={{ userName: ME.name, userRole: ME.faculty }}
-    >
+    <AppLayout header={{ userName: ME.name, userRole: ME.faculty }}>
       <PageHeader
         title="Mi Resumen de Evaluación"
         description="Análisis detallado del desempeño académico en el periodo actual."
@@ -162,15 +183,13 @@ export function MySummaryPage() {
         <KpiTile
           label="Periodo Académico"
           value={
-            <span className="num text-[40px] font-semibold tabular-nums text-ink-900">
-              2024-1
-            </span>
+            <span className="num text-ink-900 text-[40px] font-semibold tabular-nums">2024-1</span>
           }
         />
         <KpiTile
           label="Promedio Global"
           value={
-            <span className="num text-[40px] font-semibold tabular-nums text-brand-600">
+            <span className="num text-brand-600 text-[40px] font-semibold tabular-nums">
               {ME.periodAverage.toFixed(1)}
             </span>
           }
@@ -179,7 +198,7 @@ export function MySummaryPage() {
         <KpiTile
           label="Nivel de Desempeño"
           value={
-            <span className="text-[32px] font-semibold leading-tight text-brand-600">
+            <span className="text-brand-600 text-[32px] leading-tight font-semibold">
               Sobresaliente
             </span>
           }
@@ -191,19 +210,19 @@ export function MySummaryPage() {
       <Card className="p-5 sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-[18px] font-semibold text-ink-900">
+            <h2 className="text-ink-900 text-[18px] font-semibold">
               Evolución del promedio global
             </h2>
-            <p className="mt-1 text-[13px] text-ink-500">
+            <p className="text-ink-500 mt-1 text-[13px]">
               Tendencia histórica por periodo académico (2022-1 a 2024-1)
             </p>
           </div>
           <div className="shrink-0 text-right">
             <div className="flex items-baseline justify-end gap-1">
-              <span className="num text-[36px] font-semibold leading-none tabular-nums text-ink-900">
+              <span className="num text-ink-900 text-[36px] leading-none font-semibold tabular-nums">
                 {ME.globalAverage.toFixed(1)}
               </span>
-              <span className="text-[14px] font-medium text-ink-500">/5.0</span>
+              <span className="text-ink-500 text-[14px] font-medium">/5.0</span>
             </div>
             <div className="mt-1.5 inline-flex items-center gap-1 text-[12.5px] font-semibold text-emerald-700">
               <ArrowUp size={12} /> +2.1% este año
@@ -227,45 +246,35 @@ export function MySummaryPage() {
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <Card className="h-full p-5 sm:p-6">
           <div className="mb-1 flex items-center gap-2.5">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-brand-50 text-brand-600">
+            <span className="bg-brand-50 text-brand-600 inline-flex h-8 w-8 items-center justify-center rounded-md">
               <MessageSquare size={16} />
             </span>
-            <h2 className="text-[17px] font-semibold text-ink-900">
-              Comentarios por Asignatura
-            </h2>
+            <h2 className="text-ink-900 text-[17px] font-semibold">Comentarios por Asignatura</h2>
           </div>
-          <p className="mb-4 text-[12.5px] text-ink-500">
+          <p className="text-ink-500 mb-4 text-[12.5px]">
             Total:{' '}
-            <span className="num font-semibold tabular-nums text-ink-700">
-              {totalComments}
-            </span>{' '}
+            <span className="num text-ink-700 font-semibold tabular-nums">{totalComments}</span>{' '}
             comentarios este periodo
           </p>
-          <ul className="divide-y divide-ink-100">
+          <ul className="divide-ink-100 divide-y">
             {ME.subjects.map((subject) => (
-              <li
-                key={subject.name}
-                className="flex items-center justify-between gap-3 py-4"
-              >
+              <li key={subject.name} className="flex items-center justify-between gap-3 py-4">
                 <div className="min-w-0">
-                  <div className="text-[14px] font-semibold text-ink-900">
-                    {subject.name}
-                  </div>
-                  <div className="mt-0.5 text-[11px] font-medium uppercase tracking-[0.06em] text-ink-500">
+                  <div className="text-ink-900 text-[14px] font-semibold">{subject.name}</div>
+                  <div className="text-ink-500 mt-0.5 text-[11px] font-medium tracking-[0.06em] uppercase">
                     {subject.faculty}
                   </div>
                 </div>
-                <span className="inline-flex h-7 items-center gap-1.5 whitespace-nowrap rounded-full bg-brand-50 px-2.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-brand-700">
-                  <span className="num tabular-nums">{subject.comments}</span>{' '}
-                  comentarios
+                <span className="bg-brand-50 text-brand-700 inline-flex h-7 items-center gap-1.5 rounded-full px-2.5 text-[11px] font-semibold tracking-[0.04em] whitespace-nowrap uppercase">
+                  <span className="num tabular-nums">{subject.comments}</span> comentarios
                 </span>
               </li>
             ))}
           </ul>
-          <div className="mt-4 border-t border-ink-100 pt-4">
+          <div className="border-ink-100 mt-4 border-t pt-4">
             <button
               type="button"
-              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md text-[12px] font-semibold uppercase tracking-[0.06em] text-brand-600 transition-colors hover:bg-brand-50"
+              className="text-brand-600 hover:bg-brand-50 inline-flex h-10 w-full items-center justify-center gap-2 rounded-md text-[12px] font-semibold tracking-[0.06em] uppercase transition-colors"
             >
               Ver todos los comentarios <ArrowRight size={14} />
             </button>
@@ -274,23 +283,19 @@ export function MySummaryPage() {
 
         <Card className="h-full p-5 sm:p-6">
           <div className="mb-5 flex items-start justify-between">
-            <h2 className="text-[17px] font-semibold text-ink-900">
-              Promedio por Dimensión
-            </h2>
+            <h2 className="text-ink-900 text-[17px] font-semibold">Promedio por Dimensión</h2>
             <Info size={15} className="text-ink-400" />
           </div>
           <ul className="space-y-5">
             {ME.dimensions.map((dimension) => (
               <li key={dimension.id}>
-                <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-700">
+                <div className="text-ink-700 flex items-center justify-between text-[11px] font-semibold tracking-[0.08em] uppercase">
                   <span>{dimension.label}</span>
-                  <span className="num tabular-nums text-ink-900">
-                    {dimension.value}%
-                  </span>
+                  <span className="num text-ink-900 tabular-nums">{dimension.value}%</span>
                 </div>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-ink-100">
+                <div className="bg-ink-100 mt-2 h-2 overflow-hidden rounded-full">
                   <div
-                    className="h-full bg-ink-800 transition-all duration-700"
+                    className="bg-ink-800 h-full transition-all duration-700"
                     style={{ width: `${dimension.value}%` }}
                   />
                 </div>
@@ -304,12 +309,9 @@ export function MySummaryPage() {
       <Card className="overflow-hidden">
         <div className="flex flex-col justify-between gap-3 p-5 sm:flex-row sm:items-center sm:p-6">
           <div>
-            <h2 className="text-[20px] font-semibold text-ink-900">
-              Comentarios Detallados
-            </h2>
-            <p className="mt-1 text-[13px] text-ink-500">
-              Análisis automático de tus comentarios, clasificados por dimensión y
-              nivel.
+            <h2 className="text-ink-900 text-[20px] font-semibold">Comentarios Detallados</h2>
+            <p className="text-ink-500 mt-1 text-[13px]">
+              Análisis automático de tus comentarios, clasificados por dimensión y nivel.
             </p>
           </div>
           <FilterPills
@@ -333,9 +335,7 @@ export function MySummaryPage() {
         />
       </Card>
 
-      <AppFooter>
-        Periodo Académico 2024-1 · {ME.name} · v2.1
-      </AppFooter>
+      <AppFooter>Periodo Académico 2024-1 · {ME.name} · v2.1</AppFooter>
     </AppLayout>
   )
 }

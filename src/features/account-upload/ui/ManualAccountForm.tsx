@@ -1,13 +1,11 @@
-import { AlertTriangle, Mail, Plus } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { AlertTriangle, Plus } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 
-import { Button, Card, Input, Select } from '@/shared/ui'
 import { validateAccountRow } from '../lib/csv'
-import {
-  ACCOUNT_VINCULACIONES,
-  type AccountFormValues,
-  type AccountUploadConfig,
-} from '../model'
+import { ACCOUNT_VINCULACIONES, type AccountFormValues, type AccountUploadConfig } from '../model'
 
 export interface ManualAccountFormProps {
   config: AccountUploadConfig
@@ -65,11 +63,7 @@ export function ManualAccountForm({
   const submit = (event: React.FormEvent) => {
     event.preventDefault()
     setSubmitted(true)
-    const errors = validateAccountRow(
-      form,
-      config.codeRegex,
-      config.codeFormatHint,
-    )
+    const errors = validateAccountRow(form, config.codeRegex, config.codeFormatHint)
     if (errors.length > 0) return
     onCreate(form)
     setForm(emptyForm)
@@ -81,8 +75,8 @@ export function ManualAccountForm({
     <Card className="p-5 sm:p-6">
       <div className="mb-5 flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-[18px] font-semibold text-ink-900">{title}</h2>
-          <p className="mt-1 text-[13px] text-ink-500">{subtitle}</p>
+          <h2 className="text-ink-900 text-[18px] font-semibold">{title}</h2>
+          <p className="text-ink-500 mt-1 text-[13px]">{subtitle}</p>
         </div>
         {headerRight}
       </div>
@@ -96,9 +90,7 @@ export function ManualAccountForm({
         >
           <Input
             value={form.codigo}
-            onChange={(event) =>
-              setForm({ ...form, codigo: event.target.value.toUpperCase() })
-            }
+            onChange={(event) => setForm({ ...form, codigo: event.target.value.toUpperCase() })}
             onBlur={() => setTouched({ ...touched, codigo: true })}
             placeholder={config.codePlaceholder}
             className={fieldError('codigo') ? 'border-brand-500' : undefined}
@@ -128,29 +120,28 @@ export function ManualAccountForm({
             onChange={(event) => setForm({ ...form, email: event.target.value })}
             onBlur={() => setTouched({ ...touched, email: true })}
             placeholder="e.ramirez@universidad.edu.co"
-            icon={<Mail size={14} />}
             className={fieldError('email') ? 'border-brand-500' : undefined}
           />
         </FormField>
 
-        <FormField label="Tipo de vinculación" required>
+        {/* <FormField label="Tipo de vinculación" required>
           <Select
             value={form.vinculacion}
             onChange={(value) => setForm({ ...form, vinculacion: value })}
             options={ACCOUNT_VINCULACIONES}
           />
-        </FormField>
+        </FormField> */}
 
-        <FormField label={config.extraLabel} required help={config.extraHelp}>
+        {/* <FormField label={config.extraLabel} required help={config.extraHelp}>
           <Select
             value={form.extra}
             onChange={(value) => setForm({ ...form, extra: value })}
             options={config.extraOptions}
           />
-        </FormField>
+        </FormField> */}
 
-        <div className="mt-2 flex flex-col justify-between gap-3 border-t border-ink-100 pt-3 sm:flex-row sm:items-center md:col-span-2">
-          <p className="text-[12px] text-ink-500">{footerNote}</p>
+        <div className="border-ink-100 mt-2 flex flex-col justify-between gap-3 border-t pt-3 sm:flex-row sm:items-center md:col-span-2">
+          <p className="text-ink-500 text-[12px]">{footerNote}</p>
           <div className="flex gap-2">
             <Button
               type="button"
@@ -163,7 +154,8 @@ export function ManualAccountForm({
             >
               Limpiar
             </Button>
-            <Button type="submit" variant="brand">
+
+            <Button type="submit">
               <Plus size={14} strokeWidth={2} />
               Crear {config.entitySingular}
             </Button>
@@ -191,17 +183,17 @@ function FormField({
 }) {
   return (
     <div className={className}>
-      <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-600">
+      <label className="text-ink-600 mb-1.5 block text-[11px] font-semibold tracking-[0.06em] uppercase">
         {label}
-        {required && <span className="ml-0.5 text-brand-600">*</span>}
+        {required && <span className="text-brand-600 ml-0.5">*</span>}
       </label>
       {children}
       {error ? (
-        <div className="mt-1.5 inline-flex items-center gap-1 text-[11.5px] text-brand-600">
+        <div className="text-brand-600 mt-1.5 inline-flex items-center gap-1 text-[11.5px]">
           <AlertTriangle size={11} /> {error}
         </div>
       ) : (
-        help && <div className="mt-1.5 text-[11px] text-ink-400">{help}</div>
+        help && <div className="text-ink-400 mt-1.5 text-[11px]">{help}</div>
       )}
     </div>
   )
