@@ -20,7 +20,8 @@ export interface AppLayoutProps {
 
 function isAuthorizedForPage(path: string, role: string | null): boolean {
   const pageConfig = securityConfig.pages.find(
-    (page) => path === page.path || path.startsWith(page.path + '/'),
+    (page) =>
+      (path === page.path || path.startsWith(page.path + '/')) && page.roles?.includes(role ?? ''),
   )
 
   return !pageConfig || (role !== null && pageConfig.roles.includes(role))
