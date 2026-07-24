@@ -7,6 +7,7 @@ export interface RiskLevel {
 export interface PedagogicalCategory {
   id: number;
   name: string;
+  description: string;
   color_hex: string;
 }
 

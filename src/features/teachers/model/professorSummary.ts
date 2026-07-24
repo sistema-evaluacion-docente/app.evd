@@ -211,7 +211,7 @@ export function mapProfessorComments(data: TeacherCommentsData): ProfessorCommen
       categoryId: comment.pedagogical_category
         ? String(comment.pedagogical_category.id)
         : 'sin-categoria',
-      categoryName: comment.pedagogical_category?.name ?? 'Sin categoria',
+      categoryName: comment.pedagogical_category?.description ?? 'Sin categoria',
       risk: mapRisk(comment.risk_level?.name),
       category_score: comment.category_score,
       risk_score: comment.risk_score,
