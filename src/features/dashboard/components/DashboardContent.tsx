@@ -1,5 +1,11 @@
+import useAuth from '@/shared/hooks/useAuth'
+
+import { ProfessorSummaryContent } from '@/features/teachers'
+
 function DashboardContent() {
-  // const { selectedRole } = useAuth()
+  // const [, setLocation] = useLocation()
+
+  const { selectedRole } = useAuth()
 
   // if (selectedRole === "ADMIN") {
   //   return <DashboardContentAdmin />;
@@ -9,9 +15,10 @@ function DashboardContent() {
   //   return <DashboardContentDirector />;
   // }
 
-  // if (selectedRole === "DOCENTE") {
-  //   return <DashboardContentTeacher />;
-  // }
+  if (selectedRole === 'DOCENTE') {
+    // setLocation('/summary')
+    return <ProfessorSummaryContent />
+  }
 
   return <span>Dashboard</span>
 }

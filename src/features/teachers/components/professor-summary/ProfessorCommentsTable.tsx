@@ -109,9 +109,17 @@ export function ProfessorCommentsTable({
       accessorKey: 'categoryName',
       header: 'Categoria',
       cell: ({ row }) => (
-        <span className="border-border bg-muted text-foreground/80 inline-flex h-6 items-center rounded-full border px-2.5 text-xs font-medium whitespace-nowrap">
-          {row.original.categoryName}
-        </span>
+        <div className="flex flex-col items-start gap-1">
+          <Badge variant="secondary" className="min-w-16 justify-center">
+            {row.original.categoryName}
+          </Badge>
+
+          {row.original.category_score != null && (
+            <span className="num text-muted-foreground text-xs tabular-nums text-nowrap pl-2">
+              {(row.original.category_score * 100)?.toFixed(2)}% confianza
+            </span>
+          )}
+        </div>
       ),
     },
     {
@@ -126,9 +134,9 @@ export function ProfessorCommentsTable({
               {badge.label}
             </Badge>
 
-            {row.original.confidence != null && (
-              <span className="num text-muted-foreground text-xs tabular-nums">
-                {row.original.confidence}% confianza
+            {row.original.risk_score != null && (
+              <span className="num text-muted-foreground text-xs tabular-nums text-nowrap pl-2">
+                {(row.original.risk_score * 100)?.toFixed(2)}% confianza
               </span>
             )}
           </div>
@@ -268,7 +276,7 @@ export function ProfessorCommentsTable({
         </p>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 p-0">
         <DataTable<ProfessorComment>
           columns={columns}
           queryFn={queryFn}
@@ -282,6 +290,7 @@ export function ProfessorCommentsTable({
           searchPlaceholder="Buscar por comentario..."
           enableSorting={false}
           cellClassName="align-top py-4"
+          borders={false}
         />
       </CardContent>
     </Card>

@@ -71,7 +71,7 @@ export function AppSidebar({ mobileOpen, onClose }: AppSidebarProps) {
       <aside
         className={cn(
           'bg-muted/30 fixed top-0 left-0 z-50 flex h-screen w-75 shrink-0 flex-col border-r transition-transform lg:sticky lg:translate-x-0',
-          mobileOpen ? 'translate-x-0' : '-translate-x-full',
+          mobileOpen ? 'translate-x-0 bg-background' : '-translate-x-full',
         )}
       >
         {/* Logo */}

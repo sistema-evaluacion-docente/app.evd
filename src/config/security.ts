@@ -5,11 +5,11 @@ const securityConfig = {
       name: "Dashboard",
       roles: ["DOCENTE", "DIRECTOR DE DEPARTAMENTO", "ADMIN"],
     },
-    {
-      path: "/summary",
-      name: "Mi Resumen",
-      roles: ["DOCENTE"],
-    },
+    // {
+    //   path: "/summary",
+    //   name: "Mi Resumen",
+    //   roles: ["DOCENTE"],
+    // },
     {
       path: "/periods",
       name: "Mis periodos",
@@ -30,11 +30,11 @@ const securityConfig = {
       name: "Evaluaciones",
       roles: ["DIRECTOR DE DEPARTAMENTO"],
     },
-    // {
-    //   path: "/teachers",
-    //   name: "Docentes",
-    //   roles: ["DIRECTOR DE DEPARTAMENTO"],
-    // },
+    {
+      path: "/teachers",
+      name: "Docentes",
+      roles: ["DIRECTOR DE DEPARTAMENTO"],
+    },
     // {
     //   path: "/matrix",
     //   name: "Matriz Evaluativa",

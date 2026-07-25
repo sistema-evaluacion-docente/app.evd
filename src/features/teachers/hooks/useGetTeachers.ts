@@ -22,6 +22,7 @@ export default function useGetTeachers({
   academic_period_id,
   department_id,
   active,
+  sort_by,
 }: {
   page: number
   limit: number
@@ -29,9 +30,10 @@ export default function useGetTeachers({
   academic_period_id?: string
   department_id?: number
   active?: string
+  sort_by?: string
 }) {
   return useQuery({
-    queryKey: ['teachers', page, limit, search, academic_period_id, active],
+    queryKey: ['teachers', page, limit, search, academic_period_id, active, sort_by],
     queryFn: () =>
       getTeachers({
         page,
@@ -40,6 +42,7 @@ export default function useGetTeachers({
         academic_period_id: academic_period_id ? Number(academic_period_id) : undefined,
         active: active !== undefined ? active === 'true' : undefined,
         department_id: department_id ? Number(department_id) : undefined,
+        sort_by: sort_by,
       }),
   })
 }
