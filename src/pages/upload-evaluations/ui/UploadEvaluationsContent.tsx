@@ -1,5 +1,9 @@
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { InfoIcon, Upload } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { Link } from 'wouter'
 
 import {
   UploadDropzone,
@@ -24,8 +28,11 @@ function UploadEvaluationsContent() {
 
   useEffect(() => {
     if (evaluationId !== null) {
-      connect(evaluationId, [['evaluations'], ['evaluation', String(evaluationId)]]
-      , `/evaluations/${evaluationId}`)
+      connect(
+        evaluationId,
+        [['evaluations'], ['evaluation', String(evaluationId)]],
+        `/evaluations/${evaluationId}`,
+      )
     }
   }, [evaluationId, connect])
 
@@ -49,6 +56,34 @@ function UploadEvaluationsContent() {
   return (
     <>
       <PageHeader title="Carga de Evaluaciones Docentes" />
+
+      <Alert className="flex items-center justify-between border bg-amber-50 p-4">
+        <div className="flex items-start gap-4">
+          <InfoIcon />
+
+          <div>
+            <AlertTitle className="text-base font-semibold">Carga de docentes</AlertTitle>
+
+            <AlertDescription className="text-muted-foreground text-sm">
+              Recuerde la creacion de los docentes antes de la carga de evaluaciones. Para ello
+              pueder dar click en Subir docentes y cargar el archivo CSV de ejemplo. Luego de ello,
+              puede proceder a subir las evaluaciones.
+            </AlertDescription>
+          </div>
+        </div>
+
+        <div>
+          <Link href="/teachers/upload">
+            <Button
+              variant="outline"
+              size="sm"
+              className="border border-amber-300 bg-amber-200/50 text-amber-700 hover:bg-amber-300/70 hover:text-amber-700"
+            >
+              <Upload size={14} /> Subir docentes
+            </Button>
+          </Link>
+        </div>
+      </Alert>
 
       <UploadDropzone key={dropzoneKey} busy={busy} onFile={handleFile} onError={handleError} />
 
