@@ -50,8 +50,7 @@ function UploadTeachersContent() {
             <AlertTitle className="text-base font-semibold">Descargar Plantilla</AlertTitle>
 
             <AlertDescription className="text-muted-foreground text-sm">
-              Descargue el archivo de ejemplo para ver la estructura correcta y los campos
-              necesarios para la carga masiva de docentes.
+              Descargue el archivo de ejemplo para conocer la estructura correcta y los campos requeridos en la carga masiva de docentes.
             </AlertDescription>
           </div>
         </div>
