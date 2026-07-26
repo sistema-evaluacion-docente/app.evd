@@ -9,8 +9,10 @@ import {
 } from '@/components/ui/select'
 import { useInView } from '@/shared/hooks/useInView'
 import { PageHeader } from '@/shared/ui'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'wouter'
 
+import { Stagger } from '@/components/common/stagger'
 import { useProfessorSummary } from '../../hooks/useProfessorSummary'
 import { ProfessorCategoryChart } from './ProfessorCategoryChart'
 import { ProfessorCategoryDetail } from './ProfessorCategoryDetail'
@@ -25,6 +27,9 @@ import { StateCard } from './StateCard'
 export function ProfessorSummaryContent() {
   const { ref: commentsRef, isInView: commentsVisible } = useInView({ rootMargin: '500px' })
   const [categoryId, setCategoryId] = useState<string | null>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const urlPeriod = searchParams.get('period')
 
   const {
     teacherId,
@@ -32,12 +37,20 @@ export function ProfessorSummaryContent() {
     periods,
     history,
     period,
-    setPeriodValue,
     summary,
     isLoading,
     isCommentsLoading,
     isError,
-  } = useProfessorSummary({ commentsEnabled: commentsVisible || categoryId !== null })
+  } = useProfessorSummary({
+    commentsEnabled: commentsVisible || categoryId !== null,
+    periodValue: urlPeriod,
+  })
+
+  useEffect(() => {
+    if (period && period.code !== urlPeriod) {
+      setSearchParams((prev) => ({ ...prev, period: period.code }))
+    }
+  }, [period, urlPeriod, setSearchParams])
 
   const selectedCategory =
     categoryId && summary
@@ -70,14 +83,25 @@ export function ProfessorSummaryContent() {
   } else if (summary) {
     content = (
       <>
-        <ProfessorResultCard summary={summary} periodValue={periodCode} />
-        <ProfessorCategoryChart categories={summary.categories} onSelect={setCategoryId} />
-        <ProfessorHistoryChart data={history} />
-        {isCommentsLoading && summary.comments.length === 0 ? (
-          <ProfessorCommentsTableSkeleton />
-        ) : (
-          <ProfessorCommentsTable comments={summary.comments} />
-        )}
+        <Stagger delay={0}>
+          <ProfessorResultCard summary={summary} periodValue={periodCode} />
+        </Stagger>
+
+        <Stagger delay={80}>
+          <ProfessorCategoryChart categories={summary.categories} onSelect={setCategoryId} />
+        </Stagger>
+
+        <Stagger delay={160}>
+          <ProfessorHistoryChart data={history} />
+        </Stagger>
+
+        <Stagger delay={240}>
+          {isCommentsLoading && summary.comments.length === 0 ? (
+            <ProfessorCommentsTableSkeleton />
+          ) : (
+            <ProfessorCommentsTable comments={summary.comments} />
+          )}
+        </Stagger>
       </>
     )
   } else {
@@ -87,16 +111,18 @@ export function ProfessorSummaryContent() {
   return (
     <>
       {selectedCategory && summary ? (
-        <ProfessorCategoryDetail
-          category={selectedCategory}
-          categories={summary.categories}
-          comments={summary.comments}
-          periodValue={periodCode}
-          teacherId={teacherId}
-          periods={periods}
-          onBack={() => setCategoryId(null)}
-          onSelect={setCategoryId}
-        />
+        <Stagger delay={0}>
+          <ProfessorCategoryDetail
+            category={selectedCategory}
+            categories={summary.categories}
+            comments={summary.comments}
+            periodValue={periodCode}
+            teacherId={teacherId}
+            periods={periods}
+            onBack={() => setCategoryId(null)}
+            onSelect={setCategoryId}
+          />
+        </Stagger>
       ) : categoryId && isLoading ? (
         <ProfessorCategoryDetailSkeleton />
       ) : (
@@ -119,10 +145,10 @@ export function ProfessorSummaryContent() {
 
                   <Select
                     items={periods}
-                    value={period?.value ?? null}
+                    value={period?.code ?? null}
                     onValueChange={(value) => {
                       if (value) {
-                        setPeriodValue(value)
+                        setSearchParams((prev) => ({ ...prev, period: value }))
                         setCategoryId(null)
                       }
                     }}
@@ -133,7 +159,7 @@ export function ProfessorSummaryContent() {
 
                     <SelectContent alignItemWithTrigger={false}>
                       {periods.map((item) => (
-                        <SelectItem key={item.value} value={item.value}>
+                        <SelectItem key={item.value} value={item.code}>
                           {item.label}
                         </SelectItem>
                       ))}
