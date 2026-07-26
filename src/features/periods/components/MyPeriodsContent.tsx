@@ -1,5 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { useState } from 'react'
+import { Link, useLocation } from 'wouter'
 
 import DataTable from '@/components/common/DataTable'
 import SortBy from '@/components/common/SortBy'
@@ -7,6 +8,7 @@ import type { HistorySortBy } from '@/features/teachers/api/getTeacherHistory'
 import type { TeacherHistoryEntry } from '@/features/teachers/types/Teacher'
 import { PageHeader } from '@/shared/ui'
 import useTeacherHistoryTable from '../hooks/useTeacherHistoryTable'
+import { cn } from '@/lib/utils'
 
 const col = createColumnHelper<TeacherHistoryEntry>()
 
@@ -16,29 +18,35 @@ const columns = [
     cell: (info) => {
       const entry = info.row.original
       return (
-        <span className="text-foreground text-[15px] font-semibold">
-          {entry.period_name || entry.period_code}
-        </span>
+        <Link
+          className="hover:underline"
+          href={`/dashboard?period=${encodeURIComponent(entry.period_name)}`}
+        >
+          <span className="text-foreground text-[15px] font-semibold">
+            {entry.period_name || entry.period_code}
+          </span>
+        </Link>
       )
     },
-  }),
-  col.accessor('period_code', {
-    header: 'Código',
-    cell: (info) => <span className="text-muted-foreground text-sm">{info.getValue()}</span>,
-  }),
-  col.accessor('overall_average', {
-    header: 'Promedio',
-    cell: (info) => (
-      <span className="num text-foreground text-[15px] font-semibold tabular-nums">
-        {info.getValue().toFixed(1)}
-        <span className="text-muted-foreground text-sm font-medium"> /5.0</span>
-      </span>
-    ),
   }),
   col.accessor('group_count', {
     header: 'Grupos',
     cell: (info) => (
       <span className="num text-muted-foreground text-sm tabular-nums">{info.getValue()}</span>
+    ),
+  }),
+  col.accessor('overall_average', {
+    header: 'Promedio',
+    cell: (info) => (
+      <span
+        className={cn(
+          'num text-foreground text-sm font-semibold tabular-nums',
+          info.getValue() >= 3.5 ? 'text-green-500' : 'text-red-500',
+        )}
+      >
+        {info.getValue().toFixed(1)}
+        <span className="text-muted-foreground text-sm font-medium"> / 5.0</span>
+      </span>
     ),
   }),
 ]
@@ -65,8 +73,18 @@ function buildSortBy(field: SortField, direction: SortDirection): HistorySortBy 
 
 export function MyPeriodsContent() {
   const [sortBy, setSortBy] = useState<HistorySortBy>('period_code_desc')
+  const [, setLocation] = useLocation()
 
   const { queryFn, hasTeacherId } = useTeacherHistoryTable(sortBy)
+
+  const rowActions = [
+    {
+      label: 'Ver detalle',
+      onClick: (row: TeacherHistoryEntry) => {
+        setLocation(`/dashboard?period=${encodeURIComponent(row.period_name)}`)
+      },
+    },
+  ]
 
   if (!hasTeacherId) {
     return (
@@ -113,6 +131,7 @@ export function MyPeriodsContent() {
         searchPlaceholder="Buscar periodo, código o promedio..."
         enableFilters={true}
         minWidthClassName="min-w-0"
+        rowActions={rowActions}
       />
     </div>
   )
