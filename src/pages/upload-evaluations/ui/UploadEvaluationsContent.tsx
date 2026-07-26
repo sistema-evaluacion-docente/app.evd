@@ -65,9 +65,7 @@ function UploadEvaluationsContent() {
             <AlertTitle className="text-base font-semibold">Carga de docentes</AlertTitle>
 
             <AlertDescription className="text-muted-foreground text-sm">
-              Recuerde la creacion de los docentes antes de la carga de evaluaciones. Para ello
-              pueder dar click en Subir docentes y cargar el archivo CSV de ejemplo. Luego de ello,
-              puede proceder a subir las evaluaciones.
+              Recuerde crear los docentes antes de cargar las evaluaciones. Para ello, haga clic en "Subir docentes" y cargue el archivo CSV. Una vez completado este paso, podrá proceder a subir las evaluaciones.
             </AlertDescription>
           </div>
         </div>
