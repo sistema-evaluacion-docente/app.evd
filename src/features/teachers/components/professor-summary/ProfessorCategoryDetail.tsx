@@ -2,10 +2,11 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { DataTable, StatTile, type DataTableColumn } from '@/shared/ui'
 import { ArrowLeft, ChevronDown, ChevronUp, TrendingUp } from 'lucide-react'
 import { useState } from 'react'
 
+import { Stagger } from '@/components/common/stagger'
+import { DataTable, StatTile, type DataTableColumn } from '@/shared/ui'
 import {
   professorScoreTone,
   type ProfessorCategory,
@@ -114,103 +115,113 @@ export function ProfessorCategoryDetail({
 
   return (
     <section className="space-y-6">
-      <div>
-        <Button variant="ghost" onClick={onBack}>
-          <ArrowLeft size={16} />
-          Volver al resumen
-        </Button>
+      <Stagger delay={0}>
+        <div>
+          <Button variant="ghost" onClick={onBack}>
+            <ArrowLeft size={16} />
+            Volver al resumen
+          </Button>
 
-        <div className="mt-3 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-          <div>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-              <h1 className="text-2xl leading-tight font-semibold tracking-tight">
-                {category.name}
-              </h1>
+          <div className="mt-3 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+            <div>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                <h1 className="text-2xl leading-tight font-semibold tracking-tight">
+                  {category.name}
+                </h1>
 
-              <Badge variant="outline" className="h-7 px-3 text-xs tracking-normal normal-case">
-                Semestre {periodValue}
-              </Badge>
+                <Badge variant="outline" className="h-7 px-3 text-xs tracking-normal normal-case">
+                  Semestre {periodValue}
+                </Badge>
+              </div>
+
+              {/* <p className="text-muted-foreground mt-1.5 text-sm">
+                Desglose de preguntas y comentarios de esta categoria.
+              </p> */}
             </div>
 
-            {/* <p className="text-muted-foreground mt-1.5 text-sm">
-              Desglose de preguntas y comentarios de esta categoria.
-            </p> */}
-          </div>
-
-          <div className="flex flex-wrap gap-2 sm:justify-end">
-            {otherCategories.map((item) => (
-              <Button
-                key={item.id}
-                variant="outline"
-                size="sm"
-                className="rounded-full font-medium"
-                onClick={() => onSelect(item.id)}
-              >
-                {item.name}
-              </Button>
-            ))}
+            <div className="flex flex-wrap gap-2 sm:justify-end">
+              {otherCategories.map((item) => (
+                <Button
+                  key={item.id}
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full font-medium"
+                  onClick={() => onSelect(item.id)}
+                >
+                  {item.name}
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      </Stagger>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <StatTile
-          label={`Promedio en ${category.name}`}
-          value={category.score.toFixed(1)}
-          valueClassName={professorScoreTone(category.score)}
-          sub="/5.0 en esta categoria"
-        />
+      <Stagger delay={0}>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <StatTile
+            label={`Promedio en ${category.name}`}
+            value={category.score.toFixed(1)}
+            valueClassName={professorScoreTone(category.score)}
+            sub="/5.0 en esta categoria"
+          />
 
-        <StatTile
-          label="Promedio del departamento"
-          value={category.deptScore.toFixed(1)}
-          sub="promedio del departamento"
-        />
-      </div>
+          <StatTile
+            label="Promedio del departamento"
+            value={category.deptScore.toFixed(1)}
+            sub="promedio del departamento"
+          />
+        </div>
+      </Stagger>
 
-      <div>
-        <Button
-          variant="outline"
-          className="w-full justify-center sm:w-auto"
-          aria-expanded={showComparison}
-          onClick={() => setShowComparison((open) => !open)}
-        >
-          <TrendingUp size={16} />
-          Comparar con semestres anteriores
-          {showComparison ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </Button>
-      </div>
+      <Stagger delay={0}>
+        <div>
+          <Button
+            variant="outline"
+            className="w-full justify-center sm:w-auto"
+            aria-expanded={showComparison}
+            onClick={() => setShowComparison((open) => !open)}
+          >
+            <TrendingUp size={16} />
+            Comparar con semestres anteriores
+            {showComparison ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </Button>
+        </div>
+      </Stagger>
 
       {showComparison && (
         <ProfessorCategoryComparison category={category} teacherId={teacherId} periods={periods} />
       )}
 
-      <Card className="gap-0 overflow-hidden pb-0">
-        <CardHeader>
-          <CardTitle>Desglose de preguntas</CardTitle>
+      <Stagger delay={0}>
+        <Card className="gap-0 overflow-hidden pb-0">
+          <CardHeader>
+            <CardTitle>Desglose de preguntas</CardTitle>
 
-          <p className="text-muted-foreground mt-1 text-sm">
-            Su calificacion en cada pregunta, comparada con el promedio de los demas docentes.
-          </p>
-        </CardHeader>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Su calificacion en cada pregunta, comparada con el promedio de los demas docentes.
+            </p>
+          </CardHeader>
 
-        <CardContent className="p-0">
-          <DataTable
-            columns={questionColumns}
-            rows={category.questions}
-            rowKey={(question) => question.code}
-            headerVariant="muted"
-            minWidth={760}
-          />
-        </CardContent>
-      </Card>
+          <CardContent className="p-0">
+            <DataTable
+              columns={questionColumns}
+              rows={category.questions}
+              rowKey={(question) => question.code}
+              headerVariant="muted"
+              minWidth={760}
+            />
+          </CardContent>
+        </Card>
+      </Stagger>
 
-      <ProfessorCommentsTable
-        key={category.id}
-        comments={comments}
-        categories={categories}
-        defaultCategory={category.name}
-      />
+      <Stagger delay={0}>
+        <ProfessorCommentsTable
+          key={category.id}
+          comments={comments}
+          categories={categories}
+          defaultCategory={category.name}
+        />
+      </Stagger>
     </section>
   )
 }

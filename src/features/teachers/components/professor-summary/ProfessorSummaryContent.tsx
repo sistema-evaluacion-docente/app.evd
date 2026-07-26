@@ -111,18 +111,16 @@ export function ProfessorSummaryContent() {
   return (
     <>
       {selectedCategory && summary ? (
-        <Stagger delay={0}>
-          <ProfessorCategoryDetail
-            category={selectedCategory}
-            categories={summary.categories}
-            comments={summary.comments}
-            periodValue={periodCode}
-            teacherId={teacherId}
-            periods={periods}
-            onBack={() => setCategoryId(null)}
-            onSelect={setCategoryId}
-          />
-        </Stagger>
+        <ProfessorCategoryDetail
+          category={selectedCategory}
+          categories={summary.categories}
+          comments={summary.comments}
+          periodValue={periodCode}
+          teacherId={teacherId}
+          periods={periods}
+          onBack={() => setCategoryId(null)}
+          onSelect={setCategoryId}
+        />
       ) : categoryId && isLoading ? (
         <ProfessorCategoryDetailSkeleton />
       ) : (
