@@ -67,6 +67,7 @@ export function ProfessorCategoryDetail({
   onSelect,
 }: ProfessorCategoryDetailProps) {
   const [showComparison, setShowComparison] = useState(false)
+
   const questionColumns: DataTableColumn<ProfessorQuestion>[] = [
     {
       header: 'Codigo',
@@ -112,7 +113,7 @@ export function ProfessorCategoryDetail({
   const otherCategories = categories.filter((item) => item.id !== category.id)
 
   return (
-    <>
+    <section className="space-y-6">
       <div>
         <Button variant="ghost" onClick={onBack}>
           <ArrowLeft size={16} />
@@ -210,6 +211,6 @@ export function ProfessorCategoryDetail({
         categories={categories}
         defaultCategory={category.name}
       />
-    </>
+    </section>
   )
 }
