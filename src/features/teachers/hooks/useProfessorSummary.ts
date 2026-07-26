@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 
 import { useGetTeacherComments, useGetTeacherVsDepartment } from '@/features/evaluations'
 import useAuth from '@/shared/hooks/useAuth'
@@ -13,6 +13,7 @@ import useGetTeacherHistory from './useGetTeacherHistory'
 
 export interface UseProfessorSummaryOptions {
   commentsEnabled?: boolean
+  periodValue?: string | null
 }
 
 /**
@@ -37,8 +38,8 @@ export function useProfessorSummary(options?: UseProfessorSummaryOptions) {
     [historyQuery.data],
   )
 
-  const [selectedValue, setSelectedValue] = useState<string | null>(null)
-  const period = periods.find((item) => item.value === selectedValue) ?? periods[0] ?? null
+  const selectedValue = options?.periodValue ?? null
+  const period = periods.find((item) => item.code === selectedValue) ?? periods[0] ?? null
 
   const vsDeptQuery = useGetTeacherVsDepartment(teacherId, period?.periodId)
   const commentsQuery = useGetTeacherComments(period?.evaluationId, teacherId, {
@@ -63,7 +64,6 @@ export function useProfessorSummary(options?: UseProfessorSummaryOptions) {
     periods,
     history,
     period,
-    setPeriodValue: setSelectedValue,
     summary,
     isCommentsLoading: commentsQuery.isLoading,
     isLoading: historyQuery.isLoading || vsDeptQuery.isLoading,
