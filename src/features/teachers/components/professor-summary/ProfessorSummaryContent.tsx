@@ -87,15 +87,15 @@ export function ProfessorSummaryContent() {
           <ProfessorResultCard summary={summary} periodValue={periodCode} />
         </Stagger>
 
-        <Stagger delay={80}>
+        <Stagger delay={0}>
           <ProfessorCategoryChart categories={summary.categories} onSelect={setCategoryId} />
         </Stagger>
 
-        <Stagger delay={160}>
+        <Stagger delay={0}>
           <ProfessorHistoryChart data={history} />
         </Stagger>
 
-        <Stagger delay={240}>
+        <Stagger delay={0}>
           {isCommentsLoading && summary.comments.length === 0 ? (
             <ProfessorCommentsTableSkeleton />
           ) : (
