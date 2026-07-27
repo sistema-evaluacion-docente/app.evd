@@ -146,7 +146,10 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         // }/ws/notifications?token=${firebaseToken}`
 
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-        const host = IS_DEVELOPMENT ? new URL(API_URL)?.host : window.location.host + '/api'
+        const host =
+          IS_DEVELOPMENT || API_URL !== '/api'
+            ? new URL(API_URL)?.host
+            : window.location.host + '/api'
 
         const ws = new WebSocket(`${protocol}//${host}/ws/notifications?token=${firebaseToken}`)
 

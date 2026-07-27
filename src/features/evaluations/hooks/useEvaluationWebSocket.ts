@@ -38,7 +38,8 @@ function getWsUrl(evaluationId: number): string {
 
   // return `${protocol}//${url.host}/ws/evaluations/${evaluationId}`
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-  const host = IS_DEVELOPMENT ? new URL(API_URL)?.host : window.location.host + '/api'
+  const host =
+    IS_DEVELOPMENT || API_URL !== '/api' ? new URL(API_URL)?.host : window.location.host + '/api'
 
   return `${protocol}//${host}/ws/evaluations/${evaluationId}`
 }
