@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 
 import { ThemeSwitcher } from '@/components/common/ThemeSwitcher'
 import Avatar from '@/features/auth/components/Avatar'
+import { NotificationsBell } from '@/features/notifications/components/NotificationsBell'
 
 export interface AppHeaderProps {
   onOpenMenu: () => void
@@ -28,8 +29,8 @@ export function AppHeader({
   rightMode = 'periodo',
 }: AppHeaderProps) {
   return (
-    <header className="sticky top-0 z-30 border-b backdrop-blur-md bg-muted/30 h-17! flex items-center w-full">
-      <div className="flex w-full h-full items-center gap-3 px-4 lg:px-8">
+    <header className="bg-muted/30 sticky top-0 z-30 flex h-17! w-full items-center border-b backdrop-blur-md">
+      <div className="flex h-full w-full items-center gap-3 px-4 lg:px-8">
         <button
           type="button"
           onClick={onOpenMenu}
@@ -40,7 +41,7 @@ export function AppHeader({
         </button>
 
         {showBreadcrumb && breadcrumb && (
-          <nav className="text-muted-foreground hidden min-w-0 items-center gap-1.5 sm:flex animate-fade-in">
+          <nav className="text-muted-foreground animate-fade-in hidden min-w-0 items-center gap-1.5 sm:flex">
             {breadcrumb}
           </nav>
         )}
@@ -61,15 +62,7 @@ export function AppHeader({
             // </div>
           }
 
-          {/* <button
-            type="button"
-            className="cursor-pointer relative inline-flex h-9 w-9 items-center justify-center rounded-md border hover:bg-card"
-            aria-label="Notificaciones"
-          >
-            <Bell size={16} />
-            <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-brand-600 ring-2" />
-          </button> */}
-
+          <NotificationsBell />
           <Avatar />
           <ThemeSwitcher />
         </div>
