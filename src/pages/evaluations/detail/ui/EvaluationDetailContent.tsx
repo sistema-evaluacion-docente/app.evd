@@ -1,21 +1,17 @@
 import type { AiStatus } from '@/features/evaluations'
 import {
-  CommentsTable,
   DimensionOverview,
   GeneralInfoCard,
   NotFoundState,
-  ScoresByGroup,
   StatusBadge,
   SummaryStats,
-  TeacherRankingTable,
   useAnalyzeEvaluation,
   useEvaluationLogsContext,
 } from '@/features/evaluations'
 import { cn } from '@/lib/utils'
-import { BrainCircuit, CirclePile, Loader2, MessageSquare, Users } from 'lucide-react'
+import { BrainCircuit, Loader2 } from 'lucide-react'
 
 import { useEvaluationDetail } from '../model/useEvaluationDetail'
-import EvaluationSection from './EvaluationSection'
 
 type Props = {
   evaluationId: number
@@ -130,7 +126,7 @@ function EvaluationDetailContent({ evaluationId }: Props) {
             isLoading={isLoading}
           />
 
-          <EvaluationSection
+          {/* <EvaluationSection
             title="Docentes"
             icon={<Users size={18} />}
             url={`/evaluations/${evaluationId}/teachers`}
@@ -139,23 +135,23 @@ function EvaluationDetailContent({ evaluationId }: Props) {
           <TeacherRankingTable
             academicPeriodId={evaluation?.academic_period_id}
             departmentId={evaluation?.department_id}
-          />
+          /> */}
 
-          <EvaluationSection
+          {/* <EvaluationSection
             title="Grupos"
             icon={<CirclePile size={18} />}
             url={`/evaluations/${evaluationId}/groups`}
-          />
+          /> */}
 
-          <ScoresByGroup evaluationId={evaluationId} />
+          {/* <ScoresByGroup evaluationId={evaluationId} /> */}
 
-          <EvaluationSection
+          {/* <EvaluationSection
             title="Comentarios"
             icon={<MessageSquare size={18} />}
             url={`/evaluations/${evaluationId}/comments`}
-          />
+          /> */}
 
-          <CommentsTable evaluationId={evaluationId} />
+          {/* <CommentsTable evaluationId={evaluationId} /> */}
         </>
       )}
     </>
