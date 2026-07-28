@@ -57,6 +57,8 @@ export function ProfessorSummaryContent() {
       ? summary.categories.find((category) => category.id === categoryId)
       : undefined
 
+  const isCurrentPeriod = periods.length > 0 && period?.code === periods[0].code
+
   const periodCode = period?.code ?? ''
 
   let content: React.ReactNode
@@ -130,7 +132,13 @@ export function ProfessorSummaryContent() {
               <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-2">
                 Resultados de Evaluacion
                 {periodCode && (
-                  <Badge variant="outline" className="h-7 px-3 text-xs tracking-normal normal-case">
+                  <Badge
+                    variant={isCurrentPeriod ? 'default' : 'outline'}
+                    className="h-7 px-3 text-xs tracking-normal normal-case"
+                  >
+                    {isCurrentPeriod && (
+                      <span className="mr-1 inline-block size-1.5 rounded-full bg-primary-foreground" />
+                    )}
                     Semestre {periodCode}
                   </Badge>
                 )}
@@ -158,7 +166,9 @@ export function ProfessorSummaryContent() {
                     <SelectContent alignItemWithTrigger={false}>
                       {periods.map((item) => (
                         <SelectItem key={item.value} value={item.code}>
-                          {item.label}
+                          <span className="inline-flex items-center gap-2">
+                            {item.label}
+                          </span>
                         </SelectItem>
                       ))}
                     </SelectContent>
