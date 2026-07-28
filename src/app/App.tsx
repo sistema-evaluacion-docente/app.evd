@@ -23,10 +23,11 @@ import { TeacherDetailPage } from '@/pages/teacher-detail'
 import { TeachersPage } from '@/pages/teachers'
 import { UploadTeachersPage } from '@/pages/upload-teachers'
 
+import { IS_DEVELOPMENT } from '@/config'
 import LoginPage from '@/features/auth/pages/LoginPage'
 import { PeriodsPage } from '@/features/periods'
-import UsersPage from '@/pages/users'
 import MyPeriodsPage from '@/pages/my-periods'
+import UsersPage from '@/pages/users'
 
 function App() {
   return (
@@ -81,7 +82,7 @@ function App() {
         <Route component={NotFoundPage} />
       </Switch>
 
-      <DevLogFloat />
+      {IS_DEVELOPMENT && <DevLogFloat />}
     </EvaluationLogsProvider>
   )
 }
