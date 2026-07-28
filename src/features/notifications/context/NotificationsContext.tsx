@@ -9,7 +9,6 @@ import {
   type ReactNode,
 } from 'react'
 
-import { API_URL, IS_DEVELOPMENT } from '@/config'
 import { getToken } from '@/features/auth/api/AuthService'
 import useAuth from '@/shared/hooks/useAuth'
 import {
@@ -40,6 +39,8 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null)
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const reconnectAttemptsRef = useRef(0)
+  const MAX_RECONNECT_ATTEMPTS = 5
 
   const fetchNotifications = useCallback(async () => {
     if (!token) return
@@ -146,17 +147,15 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         // }/ws/notifications?token=${firebaseToken}`
 
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-        const host =
-          IS_DEVELOPMENT || API_URL !== '/api'
-            ? new URL(API_URL)?.host
-            : window.location.host + '/api'
+        const host = window.location.host
 
-        const ws = new WebSocket(`${protocol}//${host}/ws/notifications?token=${firebaseToken}`)
+        const ws = new WebSocket(`${protocol}//${host}/api/ws/notifications?token=${firebaseToken}`)
 
         wsRef.current = ws
 
         ws.onopen = () => {
           console.log('WebSocket notifications connected')
+          reconnectAttemptsRef.current = 0
         }
 
         ws.onmessage = (event) => {
@@ -189,6 +188,13 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
         ws.onclose = () => {
           console.log('WebSocket notifications disconnected')
+
+          if (reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS) {
+            console.log('Max reconnection attempts reached, giving up')
+            return
+          }
+
+          reconnectAttemptsRef.current += 1
           reconnectTimeoutRef.current = setTimeout(() => {
             connectWebSocket()
           }, 5000)
@@ -209,6 +215,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         clearTimeout(reconnectTimeoutRef.current)
         reconnectTimeoutRef.current = null
       }
+      reconnectAttemptsRef.current = 0
     }
   }, [token])
 
