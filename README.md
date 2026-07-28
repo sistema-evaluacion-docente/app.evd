@@ -236,6 +236,42 @@ La app queda disponible en `http://localhost:80`.
 - **nginx.conf** — SPA routing (`try_files`), compresión gzip, caché de assets estáticos (1 año), sin caché para `index.html`.
 - **docker-compose.yml** — Servicio único, expone el puerto 80, reinicia automáticamente si falla.
 
+### CI/CD con GitHub Actions
+
+El workflow `.github/workflows/docker-build.yml` automatiza la construcción y publicación de la imagen Docker:
+
+**Cuándo se ejecuta:**
+
+- En cada push a las ramas `main` o `master`
+- Manualmente desde la pestaña Actions del repositorio
+
+**Qué hace:**
+
+1. Hace checkout del código
+2. Configura Docker Buildx para builds optimizados
+3. Inicia sesión en GitHub Container Registry (`ghcr.io`)
+4. Genera el archivo `.env` con los secrets del repositorio
+5. Construye la imagen Docker y la publica con dos tags:
+   - `:latest` — siempre apunta a la versión más reciente
+   - `:<commit-sha>` — versión específica para trazabilidad
+
+**Secrets requeridos en el repositorio:**
+
+- `VITE_API_URL`
+- `VITE_FIREBASE_API_KEY`
+- `VITE_FIREBASE_AUTH_DOMAIN`
+- `VITE_FIREBASE_PROJECT_ID`
+- `VITE_FIREBASE_STORAGE_BUCKET`
+- `VITE_FIREBASE_MESSAGING_SENDER_ID`
+- `VITE_FIREBASE_APP_ID`
+
+**Optimizaciones:**
+
+- Usa caché de GitHub Actions (`type=gha`) para acelerar builds consecutivos
+- Permisos mínimos: lectura de contenido, escritura de paquetes
+
+La imagen resultante está disponible en `ghcr.io/<usuario>/<repositorio>:latest`.
+
 ---
 
 ## Arquitectura (Feature-Sliced Design)
