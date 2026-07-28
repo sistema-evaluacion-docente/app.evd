@@ -75,6 +75,7 @@ export function EvaluationLogsProvider({ children }: { children: ReactNode }) {
   return (
     <EvaluationLogsContext.Provider value={{ connect, disconnect, clearLogs }}>
       {children}
+
       <FloatingLogs
         logs={logs}
         onClear={clearLogs}
