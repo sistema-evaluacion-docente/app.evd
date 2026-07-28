@@ -149,10 +149,10 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         if (window.location.host.includes('localhost')) {
           host = 'localhost:8000'
         } else {
-          host = window.location.host
+          host = window.location.host + '/api'
         }
 
-        const ws = new WebSocket(`${protocol}//${host}/api/ws/notifications?token=${firebaseToken}`)
+        const ws = new WebSocket(`${protocol}//${host}/ws/notifications?token=${firebaseToken}`)
 
         wsRef.current = ws
 

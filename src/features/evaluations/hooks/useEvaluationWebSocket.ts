@@ -39,10 +39,10 @@ function getWsUrl(evaluationId: number): string {
   if (window.location.host.includes('localhost')) {
     host = 'localhost:8000'
   } else {
-    host = window.location.host
+    host = window.location.host + '/api'
   }
 
-  return `${protocol}//${host}/api/ws/evaluations/${evaluationId}`
+  return `${protocol}//${host}/ws/evaluations/${evaluationId}`
 }
 
 interface UseEvaluationWebSocketOptions {
