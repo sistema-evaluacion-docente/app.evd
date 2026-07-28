@@ -33,7 +33,7 @@ export function ProfessorResultCard({ summary, periodValue }: ProfessorResultCar
         <div className="flex items-center gap-3">
           <div className="flex items-baseline gap-1.5">
             <span className="num text-foreground text-4xl leading-none font-semibold tabular-nums">
-              {summary.overall.toFixed(1)}
+              {summary.overall.toFixed(2)}
             </span>
 
             <span className="text-muted-foreground text-base font-medium">/5.0</span>

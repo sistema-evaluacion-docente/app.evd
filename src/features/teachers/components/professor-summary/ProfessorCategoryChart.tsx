@@ -69,7 +69,7 @@ export function ProfessorCategoryChart({ categories, onSelect }: ProfessorCatego
                     </p>
 
                     <p className="num text-foreground mt-1 text-xl font-semibold tabular-nums">
-                      {category.deptScore.toFixed(1)}
+                      {category.deptScore.toFixed(2)}
                       <span className="text-muted-foreground text-sm font-normal"> / 5.0</span>
                     </p>
 
@@ -78,11 +78,11 @@ export function ProfessorCategoryChart({ categories, onSelect }: ProfessorCatego
                       <span
                         className={`num font-semibold tabular-nums ${professorScoreTone(category.score)}`}
                       >
-                        {category.score.toFixed(1)}
+                        {category.score.toFixed(2)}
                       </span>{' '}
                       <span className="num text-muted-foreground tabular-nums">
                         ({category.score >= category.deptScore ? '+' : ''}
-                        {(category.score - category.deptScore).toFixed(1)})
+                        {(category.score - category.deptScore).toFixed(2)})
                       </span>
                     </p>
                   </HoverCardContent>
@@ -92,7 +92,7 @@ export function ProfessorCategoryChart({ categories, onSelect }: ProfessorCatego
               <span
                 className={`num text-right text-base font-semibold tabular-nums ${professorScoreTone(category.score)}`}
               >
-                {category.score.toFixed(1)}
+                {category.score.toFixed(2)}
               </span>
 
               <ChevronRight size={17} className="text-muted-foreground" />

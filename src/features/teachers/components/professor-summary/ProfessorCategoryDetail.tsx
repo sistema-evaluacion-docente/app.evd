@@ -160,14 +160,14 @@ export function ProfessorCategoryDetail({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <StatTile
             label={`Promedio en ${category.name}`}
-            value={category.score.toFixed(1)}
+            value={category.score.toFixed(2)}
             valueClassName={professorScoreTone(category.score)}
             sub="/5.0 en esta categoria"
           />
 
           <StatTile
             label="Promedio del departamento"
-            value={category.deptScore.toFixed(1)}
+            value={category.deptScore.toFixed(2)}
             sub="promedio del departamento"
           />
         </div>

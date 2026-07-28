@@ -89,7 +89,7 @@ export function ProfessorHistoryChart({ data }: ProfessorHistoryChartProps) {
                         </span>
 
                         <span className="text-foreground font-mono font-medium tabular-nums">
-                          {Number(value).toFixed(1)}
+                          {Number(value).toFixed(2)}
                           <span className="text-muted-foreground"> / 5</span>
                         </span>
                       </span>
