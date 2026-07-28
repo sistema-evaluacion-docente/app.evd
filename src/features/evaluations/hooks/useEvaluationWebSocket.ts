@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { API_URL, IS_DEVELOPMENT } from '@/config'
 import { getToken } from '@/features/auth/api/AuthService'
 
 export type WsConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error'
@@ -33,15 +32,17 @@ const RECONNECT_BASE_DELAY = 1000
 const RECONNECT_MAX_DELAY = 30000
 
 function getWsUrl(evaluationId: number): string {
-  // const url = new URL(API_URL)
-  // const protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
-
-  // return `${protocol}//${url.host}/ws/evaluations/${evaluationId}`
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-  const host =
-    IS_DEVELOPMENT || API_URL !== '/api' ? new URL(API_URL)?.host : window.location.host + '/api'
 
-  return `${protocol}//${host}/ws/evaluations/${evaluationId}`
+  let host
+
+  if (window.location.host.includes('localhost')) {
+    host = 'localhost:8000'
+  } else {
+    host = window.location.host
+  }
+
+  return `${protocol}//${host}/api/ws/evaluations/${evaluationId}`
 }
 
 interface UseEvaluationWebSocketOptions {

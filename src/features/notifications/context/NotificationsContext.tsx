@@ -142,12 +142,15 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
         if (!firebaseToken) return
 
-        // const wsUrl = `${
-        //   import.meta.env.VITE_API_URL?.replace('http', 'ws') || 'ws://localhost:8080/api/v1'
-        // }/ws/notifications?token=${firebaseToken}`
-
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-        const host = window.location.host
+
+        let host
+
+        if (window.location.host.includes('localhost')) {
+          host = 'localhost:8000'
+        } else {
+          host = window.location.host
+        }
 
         const ws = new WebSocket(`${protocol}//${host}/api/ws/notifications?token=${firebaseToken}`)
 
