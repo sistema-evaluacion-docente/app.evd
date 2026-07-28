@@ -1,9 +1,9 @@
 const securityConfig = {
   pages: [
     {
-      path: "/dashboard",
+      path: "/",
       name: "Dashboard",
-      roles: ["DOCENTE", "DIRECTOR DE DEPARTAMENTO", "ADMIN"],
+      roles: ["DIRECTOR DE DEPARTAMENTO", "ADMIN"],
     },
     // {
     //   path: "/summary",
@@ -11,7 +11,7 @@ const securityConfig = {
     //   roles: ["DOCENTE"],
     // },
     {
-      path: "/periods",
+      path: "/",
       name: "Mis periodos",
       roles: ["DOCENTE"],
     },

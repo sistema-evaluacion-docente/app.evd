@@ -20,7 +20,7 @@ const columns = [
       return (
         <Link
           className="hover:underline"
-          href={`/dashboard?period=${encodeURIComponent(entry.period_name)}`}
+          href={`/evaluation?period=${encodeURIComponent(entry.period_name)}`}
         >
           <span className="text-foreground text-[15px] font-semibold">
             {entry.period_name || entry.period_code}
@@ -81,7 +81,7 @@ export function MyPeriodsContent() {
     {
       label: 'Ver detalle',
       onClick: (row: TeacherHistoryEntry) => {
-        setLocation(`/dashboard?period=${encodeURIComponent(row.period_name)}`)
+        setLocation(`/evaluation?period=${encodeURIComponent(row.period_name)}`)
       },
     },
   ]

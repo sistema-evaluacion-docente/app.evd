@@ -34,7 +34,7 @@ function App() {
     <EvaluationLogsProvider>
       <Switch>
         <Route path="/login" component={LoginPage} />
-        <Route path="/dashboard" component={DashboardPage} />
+        <Route path="/" component={DashboardPage} />
 
         {/* Director */}
         <Route path="/teachers" component={TeachersPage} />
@@ -75,7 +75,7 @@ function App() {
         <Route path="/my-plans" component={MyPlansPage} />
         <Route path="/me/history" component={MyHistoryPage} /> */}
         <Route path="/me/profile" component={MyProfilePage} />
-        <Route path="/summary" component={ProfessorSummaryPage} />
+        <Route path="/evaluation" component={ProfessorSummaryPage} />
         <Route path="/periods" component={MyPeriodsPage} />
 
         {/* Default: 404 */}

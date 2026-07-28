@@ -10,13 +10,14 @@ import { useMemo } from "react";
 import { Link, useLocation } from "wouter";
 
 const SEGMENT_LABELS: Record<string, string> = {
-  dashboard: "Dashboard",
+  inicio: "Inicio",
   teachers: "Docentes",
   upload: "Cargar",
   matrix: "Matriz",
   plans: "Planes",
   subjects: "Materias",
   evaluations: "Evaluaciones",
+  evaluation: "Evaluación",
   dimensions: "Dimensiones",
   groups: "Grupos",
   comments: "Comentarios",
@@ -86,7 +87,7 @@ export function AutoBreadcrumb() {
     <Breadcrumb>
       <BreadcrumbList>
         <BreadcrumbItem>
-          <BreadcrumbLink render={<Link to="/dashboard" />}>Inicio</BreadcrumbLink>
+          <BreadcrumbLink render={<Link to="/" />}>Inicio</BreadcrumbLink>
         </BreadcrumbItem>
 
         {items.map((item, index) => (

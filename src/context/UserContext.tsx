@@ -57,7 +57,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         location === "/register" ||
         location === "/"
       ) {
-        setLocation("/dashboard", { replace: true });
+        setLocation("/", { replace: true });
       }
     },
     [user],
@@ -157,7 +157,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
 
       if (location === "/login" || location === "/register") {
-        setLocation("/dashboard");
+        setLocation("/");
       }
     },
     [user, setLocation, location, setSelectedRole],

@@ -1,6 +1,6 @@
 import useAuth from '@/shared/hooks/useAuth'
 
-import { ProfessorSummaryContent } from '@/features/teachers'
+import { MyPeriodsContent } from '@/features/periods'
 
 function DashboardContent() {
   // const [, setLocation] = useLocation()
@@ -17,7 +17,7 @@ function DashboardContent() {
 
   if (selectedRole === 'DOCENTE') {
     // setLocation('/summary')
-    return <ProfessorSummaryContent />
+    return <MyPeriodsContent />
   }
 
   return <span>Dashboard</span>
