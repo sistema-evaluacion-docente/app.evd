@@ -9,12 +9,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { cn } from '@/lib/utils'
 import type { ResponseAPI } from '@/shared/types/Response'
 import type { UseQueryResult } from '@tanstack/react-query'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import type { ColumnDef } from '@tanstack/react-table'
 import { useMemo, useState } from 'react'
 import { normalize, professorRiskBadge, type ProfessorComment } from '../../model/professorSummary'
+
+const COLORS = {
+  bajo: 'bg-green-200! text-green-700! border-green-200!',
+  medio: 'bg-yellow-200! text-yellow-700! border-yellow-200!',
+  alto: 'bg-red-200! text-red-700! border-red-200!',
+}
 
 export interface ProfessorCommentsTableProps {
   comments: ProfessorComment[]
@@ -71,17 +78,15 @@ export function ProfessorCommentsTable({
       accessorKey: 'text',
       header: 'Comentario',
       cell: ({ row }) => (
-        <p
-          className="text-foreground max-w-130 text-sm leading-relaxed"
-          style={{ textWrap: 'pretty' }}
-        >
+        <p className="text-foreground max-w-130 text-left text-sm leading-relaxed">
           <Popover>
-            <PopoverTrigger className="cursor-pointer transition-opacity hover:opacity-80">
-              <span className="text-muted-foreground">"</span>
+            <PopoverTrigger
+              title={row.original.text}
+              className="w-full cursor-pointer text-left transition-opacity hover:opacity-80"
+            >
               {row.original.text?.length > 200
                 ? `${row.original.text.slice(0, 200)}...`
                 : row.original.text}
-              <span className="text-muted-foreground">"</span>
             </PopoverTrigger>
 
             <PopoverContent>
@@ -115,7 +120,7 @@ export function ProfessorCommentsTable({
           </Badge>
 
           {row.original.category_score != null && (
-            <span className="num text-muted-foreground text-xs tabular-nums text-nowrap pl-2">
+            <span className="num text-muted-foreground pl-2 text-xs text-nowrap tabular-nums">
               {(row.original.category_score * 100)?.toFixed(2)}% confianza
             </span>
           )}
@@ -130,12 +135,18 @@ export function ProfessorCommentsTable({
 
         return (
           <div className="flex flex-col items-start gap-1">
-            <Badge variant={badge.variant} className="min-w-16 justify-center">
+            <Badge
+              variant="outline"
+              className={cn(
+                'min-w-16 justify-center',
+                COLORS[row.original.risk as keyof typeof COLORS],
+              )}
+            >
               {badge.label}
             </Badge>
 
             {row.original.risk_score != null && (
-              <span className="num text-muted-foreground text-xs tabular-nums text-nowrap pl-2">
+              <span className="num text-muted-foreground pl-2 text-xs text-nowrap tabular-nums">
                 {(row.original.risk_score * 100)?.toFixed(2)}% confianza
               </span>
             )}
