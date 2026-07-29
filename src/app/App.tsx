@@ -17,7 +17,6 @@ import { EvaluationTeachersPage } from '@/pages/evaluations/teachers'
 import { UploadEvaluationsPage } from '@/pages/evaluations/upload'
 import { MyProfilePage } from '@/pages/my-profile'
 import { NotFoundPage } from '@/pages/not-found'
-import { ProfessorSummaryPage } from '@/pages/professor-summary'
 import { TeacherComparisonPage } from '@/pages/teacher-comparison'
 import { TeacherDetailPage } from '@/pages/teacher-detail'
 import { TeachersPage } from '@/pages/teachers'
@@ -27,6 +26,7 @@ import { IS_DEVELOPMENT } from '@/config'
 import LoginPage from '@/features/auth/pages/LoginPage'
 import { PeriodsPage } from '@/features/periods'
 import MyPeriodsPage from '@/pages/my-periods'
+import { ProfessorSummaryPage } from '@/pages/professor-summary'
 import UsersPage from '@/pages/users'
 
 function App() {
@@ -75,8 +75,8 @@ function App() {
         <Route path="/my-plans" component={MyPlansPage} />
         <Route path="/me/history" component={MyHistoryPage} /> */}
         <Route path="/me/profile" component={MyProfilePage} />
-        <Route path="/evaluation" component={ProfessorSummaryPage} />
         <Route path="/periods" component={MyPeriodsPage} />
+        <Route path="/periods/:id" component={ProfessorSummaryPage} />
 
         {/* Default: 404 */}
         <Route component={NotFoundPage} />

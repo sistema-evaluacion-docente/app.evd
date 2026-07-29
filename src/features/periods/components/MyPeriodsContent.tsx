@@ -6,9 +6,9 @@ import DataTable from '@/components/common/DataTable'
 import SortBy from '@/components/common/SortBy'
 import type { HistorySortBy } from '@/features/teachers/api/getTeacherHistory'
 import type { TeacherHistoryEntry } from '@/features/teachers/types/Teacher'
+import { cn } from '@/lib/utils'
 import { PageHeader } from '@/shared/ui'
 import useTeacherHistoryTable from '../hooks/useTeacherHistoryTable'
-import { cn } from '@/lib/utils'
 
 const col = createColumnHelper<TeacherHistoryEntry>()
 
@@ -20,7 +20,7 @@ const columns = [
       return (
         <Link
           className="hover:underline"
-          href={`/evaluation?period=${encodeURIComponent(entry.period_name)}`}
+          href={`/periods/${encodeURIComponent(entry.period_name)}`}
         >
           <span className="text-foreground text-[15px] font-semibold">
             {entry.period_name || entry.period_code}
@@ -81,7 +81,7 @@ export function MyPeriodsContent() {
     {
       label: 'Ver detalle',
       onClick: (row: TeacherHistoryEntry) => {
-        setLocation(`/evaluation?period=${encodeURIComponent(row.period_name)}`)
+        setLocation(`/periods/${encodeURIComponent(row.period_name)}`)
       },
     },
   ]

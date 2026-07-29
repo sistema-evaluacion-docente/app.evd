@@ -9,8 +9,8 @@ import {
 } from '@/components/ui/select'
 import { useInView } from '@/shared/hooks/useInView'
 import { PageHeader } from '@/shared/ui'
-import { useEffect, useState } from 'react'
-import { useSearchParams } from 'wouter'
+import { useState } from 'react'
+import { useLocation } from 'wouter'
 
 import { Stagger } from '@/components/common/stagger'
 import { useProfessorSummary } from '../../hooks/useProfessorSummary'
@@ -24,12 +24,12 @@ import { ProfessorResultCard } from './ProfessorResultCard'
 import { ProfessorSummarySkeleton } from './ProfessorSummarySkeleton'
 import { StateCard } from './StateCard'
 
-export function ProfessorSummaryContent() {
-  const { ref: commentsRef, isInView: commentsVisible } = useInView({ rootMargin: '700px' })
-  const [categoryId, setCategoryId] = useState<string | null>(null)
-  const [searchParams, setSearchParams] = useSearchParams()
+export function ProfessorSummaryContent({ evaluationId }: { evaluationId: string }) {
+  const [, setLocation] = useLocation()
 
-  const urlPeriod = searchParams.get('period')
+  const { ref: commentsRef, isInView: commentsVisible } = useInView({ rootMargin: '700px' })
+
+  const [categoryId, setCategoryId] = useState<string | null>(null)
 
   const {
     teacherId,
@@ -43,14 +43,8 @@ export function ProfessorSummaryContent() {
     isError,
   } = useProfessorSummary({
     commentsEnabled: commentsVisible || categoryId !== null,
-    periodValue: urlPeriod,
+    periodValue: evaluationId,
   })
-
-  useEffect(() => {
-    if (period && period.code !== urlPeriod) {
-      setSearchParams((prev) => ({ ...prev, period: period.code }))
-    }
-  }, [period, urlPeriod, setSearchParams])
 
   const selectedCategory =
     categoryId && summary
@@ -60,6 +54,7 @@ export function ProfessorSummaryContent() {
   const periodCode = period?.code ?? ''
 
   let content: React.ReactNode
+
   if (!hasTeacherId) {
     content = (
       <StateCard>
@@ -146,7 +141,7 @@ export function ProfessorSummaryContent() {
                     value={period?.code ?? null}
                     onValueChange={(value) => {
                       if (value) {
-                        setSearchParams((prev) => ({ ...prev, period: value }))
+                        setLocation(`/periods/${encodeURIComponent(value)}`)
                         setCategoryId(null)
                       }
                     }}
