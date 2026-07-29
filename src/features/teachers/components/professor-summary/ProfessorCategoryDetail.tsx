@@ -37,7 +37,7 @@ function ComparisonBars({
 }) {
   const rows = [
     { label: periodValue, value: question.mine, fill: 'bg-primary/80' },
-    { label: 'Anterior', value: question.previous, fill: 'bg-muted-foreground/30' },
+    { label: 'Anterior', value: question.previous, fill: 'bg-border/30' },
   ]
   return (
     <div className="flex w-full min-w-44 flex-col gap-1.5">
@@ -46,7 +46,7 @@ function ComparisonBars({
           <span className="text-muted-foreground w-16 shrink-0 text-xs">{row.label}</span>
 
           <Tooltip>
-            <TooltipTrigger className="bg-muted block h-2.5 flex-1 cursor-default overflow-hidden rounded-full">
+            <TooltipTrigger className="bg-border block h-2.5 flex-1 cursor-default overflow-hidden rounded-full">
               <span
                 className={`block h-full rounded-full ${row.fill}`}
                 style={{ width: `${(row.value / 5) * 100}%` }}

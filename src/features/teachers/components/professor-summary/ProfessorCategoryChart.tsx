@@ -35,7 +35,7 @@ export function ProfessorCategoryChart({ categories, onSelect }: ProfessorCatego
             >
               <span className="text-foreground/80 text-sm font-medium">{category.name}</span>
 
-              <span className="bg-muted relative block h-6 rounded-md">
+              <span className="bg-border relative block h-6 rounded-md">
                 {GRID_LINES.map((line) => (
                   <span
                     key={line}
@@ -45,7 +45,7 @@ export function ProfessorCategoryChart({ categories, onSelect }: ProfessorCatego
                 ))}
 
                 <span
-                  className="bg-primary/60 absolute inset-y-0 left-0 rounded-md"
+                  className="bg-primary/80 absolute inset-y-0 left-0 rounded-md"
                   style={{ width: `${(category.score / 5) * 100}%` }}
                 />
 
@@ -115,7 +115,7 @@ export function ProfessorCategoryChart({ categories, onSelect }: ProfessorCatego
       <CardFooter>
         <div className="border-border mt-3.5 flex flex-wrap items-center gap-5">
           <span className="text-foreground/80 inline-flex items-center gap-2 text-sm">
-            <span className="bg-primary/60 size-3.5 rounded-sm" />
+            <span className="bg-primary/90 size-3.5 rounded-sm" />
             Su calificacion
           </span>
 
