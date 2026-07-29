@@ -3,7 +3,6 @@ import { useMemo } from 'react'
 
 import { useCategoryHistory } from '../../hooks/useCategoryHistory'
 import type { ProfessorCategory, ProfessorPeriod } from '../../model/professorSummary'
-import { ProfessorCategoryHistoryChart } from './ProfessorCategoryHistoryChart'
 import { ProfessorCategoryItemsTable } from './ProfessorCategoryItemsTable'
 import { RangeSelect } from './RangeSelect'
 import { useRangeFilter } from './useRangeFilter'
@@ -42,12 +41,14 @@ export function ProfessorCategoryComparison({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Comparacion con semestres anteriores</CardTitle>
+      <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <CardTitle>Comparacion con semestres anteriores</CardTitle>
 
-        <p className="text-muted-foreground mt-1 text-sm">
-          Su nota en «{category.name}» frente al promedio de los docentes, semestre a semestre.
-        </p>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Su nota en «{category.name}» frente al promedio de los docentes, semestre a semestre.
+          </p>
+        </div>
 
         <RangeSelect
           totalItems={points.length}
@@ -70,20 +71,8 @@ export function ProfessorCategoryComparison({
           </div>
         ) : (
           <div className="animate-fade-in">
-            <div className="mt-5">
-              <ProfessorCategoryHistoryChart data={visiblePoints} />
-            </div>
-
-            <div className="mt-7 border-t pt-4">
-              <h3 className="text-foreground text-base font-semibold">Detalle por pregunta</h3>
-
-              <p className="text-muted-foreground mt-1 mb-3 text-sm">
-                Su nota en cada pregunta por semestre y la tendencia respecto al semestre previo.
-              </p>
-
-              <div className="bg-muted rounded">
-                <ProfessorCategoryItemsTable items={visibleItems} periods={visiblePeriods} />
-              </div>
+            <div className="rounded">
+              <ProfessorCategoryItemsTable items={visibleItems} periods={visiblePeriods} />
             </div>
           </div>
         )}
