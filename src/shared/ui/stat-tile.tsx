@@ -14,9 +14,9 @@ export function StatTile({ label, value, sub, icon, valueClassName, className }:
   return (
     <Card className={cn('p-5', className)}>
       <div className="flex items-start justify-between">
-        <div className="text-md text-muted-foreground font-semibold tracking-widest uppercase">
+        <h3 className="text-sm text-muted-foreground font-semibold uppercase">
           {label}
-        </div>
+        </h3>
 
         {icon}
       </div>

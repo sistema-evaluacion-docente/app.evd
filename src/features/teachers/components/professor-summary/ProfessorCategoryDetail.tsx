@@ -157,18 +157,12 @@ export function ProfessorCategoryDetail({
       </Stagger>
 
       <Stagger delay={0}>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
           <StatTile
             label={`Promedio en ${category.name}`}
             value={category.score.toFixed(2)}
             valueClassName={professorScoreTone(category.score)}
             sub="/5.0 en esta categoria"
-          />
-
-          <StatTile
-            label="Promedio del departamento"
-            value={category.deptScore.toFixed(2)}
-            sub="promedio del departamento"
           />
         </div>
       </Stagger>
