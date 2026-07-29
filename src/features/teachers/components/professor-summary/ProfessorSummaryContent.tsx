@@ -57,8 +57,6 @@ export function ProfessorSummaryContent() {
       ? summary.categories.find((category) => category.id === categoryId)
       : undefined
 
-  const isCurrentPeriod = periods.length > 0 && period?.code === periods[0].code
-
   const periodCode = period?.code ?? ''
 
   let content: React.ReactNode
@@ -132,10 +130,7 @@ export function ProfessorSummaryContent() {
               <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-2">
                 Resultados de Evaluacion
                 {periodCode && (
-                  <Badge
-                    variant={isCurrentPeriod ? 'default' : 'outline'}
-                    className="h-7 px-3 text-xs tracking-normal normal-case"
-                  >
+                  <Badge className="h-7 px-3 text-xs tracking-normal normal-case">
                     Semestre {periodCode}
                   </Badge>
                 )}
