@@ -82,13 +82,6 @@ const CATEGORY_INFO = (
   <div className="space-y-3 text-sm leading-relaxed">
     <h5 className="text-foreground text-base font-semibold">Categorías pedagógicas</h5>
 
-    <p className="text-muted-foreground mb-4">
-      Esta clasificación se hace a partir del modelo <strong>DistilBETO</strong>, es solo una
-      hipótesis de trabajo y no un veredicto. La clasificación puede ser incorrecta, por lo que se
-      recomienda revisar los comentarios y no tomar decisiones únicamente con base en la
-      clasificación automática.
-    </p>
-
     <table className="w-full border-separate border-spacing-0 text-left text-sm">
       <thead>
         <tr className="border-b">
