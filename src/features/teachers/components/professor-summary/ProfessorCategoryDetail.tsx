@@ -28,10 +28,16 @@ export interface ProfessorCategoryDetailProps {
   onSelect: (categoryId: string) => void
 }
 
-function ComparisonBars({ question }: { question: ProfessorQuestion }) {
+function ComparisonBars({
+  question,
+  periodValue,
+}: {
+  question: ProfessorQuestion
+  periodValue: string
+}) {
   const rows = [
-    { label: 'Usted', value: question.mine, fill: 'bg-primary/80' },
-    { label: 'Docentes', value: question.dept, fill: 'bg-muted-foreground/30' },
+    { label: periodValue, value: question.mine, fill: 'bg-primary/80' },
+    { label: 'Anterior', value: question.previous, fill: 'bg-muted-foreground/30' },
   ]
   return (
     <div className="flex w-full min-w-44 flex-col gap-1.5">
@@ -90,7 +96,7 @@ export function ProfessorCategoryDetail({
       header: 'Comparacion',
       headerClassName: 'w-70',
       cellClassName: 'align-top py-4',
-      cell: (question) => <ComparisonBars question={question} />,
+      cell: (question) => <ComparisonBars question={question} periodValue={periodValue} />,
     },
     {
       header: 'Puntaje',
@@ -104,7 +110,7 @@ export function ProfessorCategoryDetail({
             {question.mine.toFixed(2)}
           </div>
           <div className="num text-muted-foreground mt-1 text-xs tabular-nums">
-            {question.dept.toFixed(2)}
+            {question.previous.toFixed(2)}
           </div>
         </>
       ),
@@ -129,7 +135,7 @@ export function ProfessorCategoryDetail({
                   {category.name}
                 </h1>
 
-                <Badge variant="outline" className="h-7 px-3 text-xs tracking-normal normal-case">
+                <Badge className="h-7 px-3 text-xs tracking-normal normal-case">
                   Semestre {periodValue}
                 </Badge>
               </div>
@@ -192,7 +198,7 @@ export function ProfessorCategoryDetail({
             <CardTitle>Desglose de preguntas</CardTitle>
 
             <p className="text-muted-foreground mt-1 text-sm">
-              Su calificacion en cada pregunta, comparada con el promedio de los demas docentes.
+              Su calificacion en cada pregunta, comparada con el periodo anterior.
             </p>
           </CardHeader>
 

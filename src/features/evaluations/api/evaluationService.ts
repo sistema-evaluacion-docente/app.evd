@@ -141,6 +141,47 @@ export function getTeacherVsDepartment(
   })
 }
 
+export interface TeacherVsPrevPeriodQuestion {
+  code: string
+  text: string
+  current_average: number | null
+  previous_average: number | null
+}
+
+export interface TeacherVsPrevPeriodDimension {
+  dimension: string
+  current_average: number | null
+  previous_average: number | null
+  questions: TeacherVsPrevPeriodQuestion[]
+}
+
+export interface TeacherVsPrevPeriodData {
+  teacher_id: number
+  academic_period_id: number
+  academic_period_code: string
+  previous_academic_period_id: number | null
+  previous_academic_period_code: string | null
+  current_overall_average: number | null
+  previous_overall_average: number | null
+  dimensions: TeacherVsPrevPeriodDimension[]
+}
+
+/**
+ * Fetches the comparison data between a teacher's current period and their previous period.
+ *
+ * @param teacherId - The ID of the teacher.
+ * @param academicPeriodId - The ID of the current academic period.
+ * @returns A promise that resolves to a ResponseAPI object containing the TeacherVsPrevPeriodData.
+ */
+export function getTeacherVsPreviousPeriod(
+  teacherId: number,
+  academicPeriodId: number,
+): Promise<ResponseAPI<TeacherVsPrevPeriodData>> {
+  return api.get(`/stats/teachers/${teacherId}/period-comparison`, {
+    params: { academic_period_id: academicPeriodId },
+  })
+}
+
 export interface TeacherMatrixCourseItem {
   course_name: string
   question_averages: Record<string, number>

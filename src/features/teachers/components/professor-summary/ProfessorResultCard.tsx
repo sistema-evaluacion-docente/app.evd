@@ -8,20 +8,12 @@ export interface ProfessorResultCardProps {
   periodValue: string
 }
 
-/**
- * A card that displays a professor's evaluation results.
- *
- * @param {ProfessorResultCardProps} props - The props for the component.
- * @param {ProfessorSummary} props.summary - The summary of the professor's evaluation results.
- * @param {string} props.periodValue - The period value for which the results are displayed.
- * @returns {JSX.Element} A card component displaying the professor's evaluation results.
- */
 export function ProfessorResultCard({ summary, periodValue }: ProfessorResultCardProps) {
-  const diff = summary.overall - summary.deptOverall
-  const rounded = Math.round(diff * 10) / 10
-  const abs = Math.abs(rounded)
-  const isPositive = rounded > 0
-  const isZero = rounded === 0
+  const diff = Math.round((summary.overall - summary.previousOverall) * 10) / 10
+
+  const abs = Math.abs(diff)
+  const isPositive = diff > 0
+  const isZero = diff === 0
 
   return (
     <Card className="flex w-full max-w-sm flex-col gap-6 p-6 sm:p-7">
@@ -42,10 +34,10 @@ export function ProfessorResultCard({ summary, periodValue }: ProfessorResultCar
       </div>
 
       <div className="flex items-center gap-2 text-sm">
-        <span className="text-muted-foreground">vs. departamento:</span>
+        <span className="text-muted-foreground">vs. periodo anterior:</span>
 
         <p
-          className={`flex items-center gap-1 font-medium ${isPositive ? 'text-green-600' : isZero ? 'text-muted-foreground' : 'text-red-600'}`}
+          className={`flex items-center gap-1 font-medium ${isPositive ? 'text-emerald-600' : isZero ? 'text-muted-foreground' : 'text-red-600'}`}
         >
           {isZero ? (
             <Minus className="size-3" />
@@ -56,7 +48,7 @@ export function ProfessorResultCard({ summary, periodValue }: ProfessorResultCar
           )}
 
           <span className="num tabular-nums">
-            {isZero ? 'igual' : `${abs.toFixed(1)} ${isPositive ? 'por encima' : 'por debajo'}`}
+            {isZero ? 'igual' : `${abs.toFixed(2)} ${isPositive ? 'mejora' : 'retroceso'}`}
           </span>
         </p>
       </div>

@@ -56,7 +56,7 @@ export function ProfessorCategoryChart({ categories, onSelect }: ProfessorCatego
                     render={
                       <span
                         className="absolute -inset-y-1 -ml-1.25 flex w-2.75 justify-center"
-                        style={{ left: `${(category.deptScore / 5) * 100}%` }}
+                        style={{ left: `${(category.previousScore / 5) * 100}%` }}
                       />
                     }
                   >
@@ -64,12 +64,10 @@ export function ProfessorCategoryChart({ categories, onSelect }: ProfessorCatego
                   </HoverCardTrigger>
 
                   <HoverCardContent side="top" sideOffset={8} className="w-auto min-w-52 p-3.5">
-                    <p className="text-muted-foreground text-xs font-medium">
-                      Promedio del departamento
-                    </p>
+                    <p className="text-muted-foreground text-xs font-medium">Periodo anterior</p>
 
                     <p className="num text-foreground mt-1 text-xl font-semibold tabular-nums">
-                      {category.deptScore.toFixed(2)}
+                      {category.previousScore.toFixed(2)}
                       <span className="text-muted-foreground text-sm font-normal"> / 5.0</span>
                     </p>
 
@@ -81,8 +79,8 @@ export function ProfessorCategoryChart({ categories, onSelect }: ProfessorCatego
                         {category.score.toFixed(2)}
                       </span>{' '}
                       <span className="num text-muted-foreground tabular-nums">
-                        ({category.score >= category.deptScore ? '+' : ''}
-                        {(category.score - category.deptScore).toFixed(2)})
+                        ({category.score >= category.previousScore ? '+' : ''}
+                        {(category.score - category.previousScore).toFixed(2)})
                       </span>
                     </p>
                   </HoverCardContent>
@@ -123,7 +121,7 @@ export function ProfessorCategoryChart({ categories, onSelect }: ProfessorCatego
 
           <span className="text-foreground/80 inline-flex items-center gap-2 text-sm">
             <span className="bg-foreground/60 h-3.5 w-0.5 rounded-full" />
-            Promedio del departamento
+            Periodo anterior
           </span>
         </div>
       </CardFooter>

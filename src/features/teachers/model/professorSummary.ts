@@ -2,6 +2,7 @@ import type {
   TeacherCommentsData,
   TeacherVsDeptData,
   TeacherVsDeptDimension,
+  TeacherVsPrevPeriodData,
 } from '@/features/evaluations'
 import type { TeacherHistoryEntry } from '@/features/teachers/types/Teacher'
 
@@ -11,7 +12,7 @@ export interface ProfessorQuestion {
   code: string
   text: string
   mine: number
-  dept: number
+  previous: number
 }
 
 export interface ProfessorComment {
@@ -29,7 +30,7 @@ export interface ProfessorCategory {
   id: string
   name: string
   score: number
-  deptScore: number
+  previousScore: number
   questions: ProfessorQuestion[]
   comments: ProfessorComment[]
 }
@@ -43,7 +44,7 @@ export interface ProfessorSummary {
   categories: ProfessorCategory[]
   comments: ProfessorComment[]
   overall: number
-  deptOverall: number
+  previousOverall: number
   level: ProfessorLevel
 }
 
@@ -220,20 +221,20 @@ export function mapProfessorComments(data: TeacherCommentsData): ProfessorCommen
 }
 
 export function buildProfessorSummary(
-  vsDept: TeacherVsDeptData,
+  vsPrevPeriod: TeacherVsPrevPeriodData,
   comments: ProfessorComment[],
   historyEntry: TeacherHistoryEntry | undefined,
 ): ProfessorSummary {
-  const categories: ProfessorCategory[] = vsDept.dimensions.map((dimension) => ({
+  const categories: ProfessorCategory[] = vsPrevPeriod.dimensions.map((dimension) => ({
     id: dimension.dimension,
     name: dimension.dimension,
-    score: dimension.teacher_average,
-    deptScore: dimension.department_average,
+    score: dimension.current_average ?? 0,
+    previousScore: dimension.previous_average ?? 0,
     questions: dimension.questions.map((question) => ({
       code: question.code,
       text: question.text,
-      mine: question.teacher_average,
-      dept: question.department_average,
+      mine: question.current_average ?? 0,
+      previous: question.previous_average ?? 0,
     })),
     comments: comments.filter(
       (comment) => normalize(comment.categoryName) === normalize(dimension.dimension),
@@ -250,7 +251,7 @@ export function buildProfessorSummary(
     categories,
     comments,
     overall,
-    deptOverall: vsDept.department_overall_average,
+    previousOverall: vsPrevPeriod.previous_overall_average ?? 0,
     level: levelFor(overall),
   }
 }

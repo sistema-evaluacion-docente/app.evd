@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 
-import { useGetTeacherComments, useGetTeacherVsDepartment } from '@/features/evaluations'
+import { useGetTeacherComments, useGetTeacherVsPreviousPeriod } from '@/features/evaluations'
 import useAuth from '@/shared/hooks/useAuth'
 import {
   buildProfessorSummary,
@@ -41,21 +41,21 @@ export function useProfessorSummary(options?: UseProfessorSummaryOptions) {
   const selectedValue = options?.periodValue ?? null
   const period = periods.find((item) => item.code === selectedValue) ?? periods[0] ?? null
 
-  const vsDeptQuery = useGetTeacherVsDepartment(teacherId, period?.periodId)
+  const vsPrevPeriodQuery = useGetTeacherVsPreviousPeriod(teacherId, period?.periodId)
   const commentsQuery = useGetTeacherComments(period?.evaluationId, teacherId, {
     enabled: options?.commentsEnabled,
   })
 
   const summary: ProfessorSummary | null = useMemo(() => {
-    const vsDept = vsDeptQuery.data?.data
-    if (!period || !vsDept) return null
+    const vsPrevPeriod = vsPrevPeriodQuery.data?.data
+    if (!period || !vsPrevPeriod) return null
 
     const comments = commentsQuery.data?.data ? mapProfessorComments(commentsQuery.data.data) : []
     const historyEntry = historyQuery.data?.data.items.find(
       (entry) => entry.period_id === period.periodId,
     )
-    return buildProfessorSummary(vsDept, comments, historyEntry)
-  }, [period, vsDeptQuery.data, commentsQuery.data, historyQuery.data])
+    return buildProfessorSummary(vsPrevPeriod, comments, historyEntry)
+  }, [period, vsPrevPeriodQuery.data, commentsQuery.data, historyQuery.data])
 
   return {
     user,
@@ -65,8 +65,9 @@ export function useProfessorSummary(options?: UseProfessorSummaryOptions) {
     history,
     period,
     summary,
+    vsPrevPeriod: vsPrevPeriodQuery.data?.data,
     isCommentsLoading: commentsQuery.isLoading,
-    isLoading: historyQuery.isLoading || vsDeptQuery.isLoading,
-    isError: historyQuery.isError || vsDeptQuery.isError || commentsQuery.isError,
+    isLoading: historyQuery.isLoading || vsPrevPeriodQuery.isLoading,
+    isError: historyQuery.isError || vsPrevPeriodQuery.isError || commentsQuery.isError,
   }
 }

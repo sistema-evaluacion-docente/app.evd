@@ -43,6 +43,7 @@ export {
   getTeacherEvaluationDetail,
   getTeacherMatrix,
   getTeacherVsDepartment,
+  getTeacherVsPreviousPeriod,
   updateEvaluationStatus,
   uploadEvaluation,
 } from './api/evaluationService'
@@ -53,6 +54,9 @@ export type {
   TeacherVsDeptData,
   TeacherVsDeptDimension,
   TeacherVsDeptQuestion,
+  TeacherVsPrevPeriodData,
+  TeacherVsPrevPeriodDimension,
+  TeacherVsPrevPeriodQuestion,
 } from './api/evaluationService'
 
 export { default as CourseAveragesCard } from './components/CourseAveragesCard'
@@ -87,6 +91,7 @@ export { default as useGetTeacherComments } from './hooks/useGetTeacherComments'
 export { default as useGetTeacherEvaluationDetail } from './hooks/useGetTeacherEvaluationDetail'
 export { default as useGetTeacherMatrix } from './hooks/useGetTeacherMatrix'
 export { default as useGetTeacherVsDepartment } from './hooks/useGetTeacherVsDepartment'
+export { default as useGetTeacherVsPreviousPeriod } from './hooks/useGetTeacherVsPreviousPeriod'
 export { default as useUpdateEvaluationStatus } from './hooks/useUpdateEvaluationStatus'
 export { useUploadEvaluation, type UploadStatus } from './hooks/useUploadEvaluation'
 

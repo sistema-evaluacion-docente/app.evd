@@ -282,8 +282,7 @@ export function ProfessorCommentsTable({
       <CardHeader>
         <CardTitle>Comentarios de estudiantes</CardTitle>
         <p className="text-muted-foreground text-sm">
-          Todos los comentarios del periodo, clasificados por categoria y nivel de riesgo. (
-          {comments.length} comentarios)
+          Todos los comentarios del periodo, clasificados por categoria y nivel de riesgo.
         </p>
       </CardHeader>
 
