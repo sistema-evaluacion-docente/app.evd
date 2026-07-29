@@ -21,7 +21,7 @@ export default function useTeacherHistoryTable(sortBy?: HistorySortBy) {
 
   const query = useGetTeacherHistory(teacherId, sortBy)
 
-  const items = useMemo(() => query.data?.data.items ?? [], [query.data])
+  const items = useMemo(() => query.data?.data?.items ?? [], [query.data])
 
   const mappedResult = useMemo<HistoryResponse>(
     () => ({
