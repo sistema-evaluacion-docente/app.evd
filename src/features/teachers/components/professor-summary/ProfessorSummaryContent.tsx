@@ -136,9 +136,6 @@ export function ProfessorSummaryContent() {
                     variant={isCurrentPeriod ? 'default' : 'outline'}
                     className="h-7 px-3 text-xs tracking-normal normal-case"
                   >
-                    {isCurrentPeriod && (
-                      <span className="bg-primary-foreground mr-1 inline-block size-1.5 rounded-full" />
-                    )}
                     Semestre {periodCode}
                   </Badge>
                 )}
