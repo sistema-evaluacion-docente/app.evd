@@ -1,5 +1,5 @@
-export * from "./types/User";
+export * from './types/User'
 
-export * from "./components/Avatar";
+export * from './components/Avatar'
 
-export * from "./pages/LoginPage";
+export * from './pages/LoginPage'

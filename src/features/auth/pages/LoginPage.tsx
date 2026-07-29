@@ -1,21 +1,24 @@
-import AppLayoutSkeleton from "@/components/skeletons/AppLayoutSkeleton";
-import useAuth from "@/shared/hooks/useAuth";
-import BrandPanel from "../components/BrandPanel";
-import LoginForm from "../components/LoginForm";
+import { ThemeSwitcher } from '@/components/common/ThemeSwitcher'
+import AppLayoutSkeleton from '@/components/skeletons/AppLayoutSkeleton'
+import useAuth from '@/shared/hooks/useAuth'
+import LoginForm from '../components/LoginForm'
 
 function LoginPage() {
-  const { isLoading } = useAuth();
+  const { isLoading } = useAuth()
 
   if (isLoading) {
-    return <AppLayoutSkeleton />;
+    return <AppLayoutSkeleton />
   }
 
   return (
-    <div className="grid min-h-screen grid-rows-[100px_1fr] md:grid-rows-1 md:grid-cols-2">
-      <BrandPanel />
+    <div className="bg-background relative grid min-h-screen place-items-center">
+      <div className="absolute top-4 right-4">
+        <ThemeSwitcher />
+      </div>
+
       <LoginForm />
     </div>
-  );
+  )
 }
 
-export default LoginPage;
+export default LoginPage
