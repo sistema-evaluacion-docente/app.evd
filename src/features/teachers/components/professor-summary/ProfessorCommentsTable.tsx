@@ -14,6 +14,7 @@ import type { ResponseAPI } from '@/shared/types/Response'
 import type { UseQueryResult } from '@tanstack/react-query'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import type { ColumnDef } from '@tanstack/react-table'
+import { Info } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { normalize, professorRiskBadge, type ProfessorComment } from '../../model/professorSummary'
 
@@ -31,6 +32,144 @@ export interface ProfessorCommentsTableProps {
 
 const ALL = 'all'
 const UNCLASSIFIED = 'sin-clasificar'
+
+const RISK_INFO = (
+  <div className="space-y-3 text-sm leading-relaxed">
+    <h5 className="text-foreground text-base font-semibold">Nivel de riesgo institucional</h5>
+
+    <p className="text-muted-foreground mb-4">
+      Esta clasificación se hace a partir del modelo <strong>DistilBETO</strong>, es solo una
+      hipótesis de trabajo y no un veredicto. La clasificación puede ser incorrecta, por lo que se
+      recomienda revisar los comentarios y no tomar decisiones únicamente con base en la
+      clasificación automática.
+    </p>
+
+    <div className="space-y-1.5">
+      <div className="flex items-start gap-2">
+        <Badge variant="outline" className={cn('mt-0.5 min-w-12 justify-center', COLORS.bajo)}>
+          Bajo
+        </Badge>
+
+        <span>Comentario sin señales de riesgo institucional.</span>
+      </div>
+
+      <div className="flex items-start gap-2">
+        <Badge variant="outline" className={cn('mt-0.5 min-w-12 justify-center', COLORS.medio)}>
+          Medio
+        </Badge>
+
+        <span>Comentario con señales de atención moderada.</span>
+      </div>
+
+      <div className="flex items-start gap-2">
+        <Badge variant="outline" className={cn('mt-0.5 min-w-12 justify-center', COLORS.alto)}>
+          Alto
+        </Badge>
+
+        <span>
+          Comentario con señales de riesgo que requieren atención institucional prioritaria.
+        </span>
+      </div>
+    </div>
+
+    <p className="text-muted-foreground border-t pt-2 text-xs">
+      Modelo: <span className="text-foreground font-medium">DistilBETO</span>
+    </p>
+  </div>
+)
+
+const CATEGORY_INFO = (
+  <div className="space-y-3 text-sm leading-relaxed">
+    <h5 className="text-foreground text-base font-semibold">Categorías pedagógicas</h5>
+
+    <p className="text-muted-foreground mb-4">
+      Esta clasificación se hace a partir del modelo <strong>DistilBETO</strong>, es solo una
+      hipótesis de trabajo y no un veredicto. La clasificación puede ser incorrecta, por lo que se
+      recomienda revisar los comentarios y no tomar decisiones únicamente con base en la
+      clasificación automática.
+    </p>
+
+    <table className="w-full border-separate border-spacing-0 text-left text-sm">
+      <thead>
+        <tr className="border-b">
+          <th className="text-muted-foreground pr-4 pb-2 font-medium">Categoría</th>
+          <th className="text-muted-foreground pb-2 font-medium">Descripción</th>
+        </tr>
+      </thead>
+
+      <tbody className="divide-y">
+        <tr>
+          <td className="py-2 pr-4 align-top">
+            <Badge variant="secondary" className="min-w-12 justify-center">
+              Desarrollo del Conocimiento
+            </Badge>
+          </td>
+
+          <td className="py-2 align-top">
+            Presentación de la programación, dominio de los temas, capacidad de respuesta, relación
+            con la vida real, expresión de ideas y generación de interés investigativo.
+          </td>
+        </tr>
+
+        <tr>
+          <td className="py-2 pr-4 align-top">
+            <Badge variant="secondary" className="min-w-12 justify-center">
+              Desempeño Docente
+            </Badge>
+          </td>
+
+          <td className="py-2 align-top">
+            Planeación de actividades, fomento a la participación, metodologías aplicadas, orden en
+            la presentación, asistencia y puntualidad, asesoría, información bibliográfica y
+            motivación generada en clase.
+          </td>
+        </tr>
+
+        <tr>
+          <td className="py-2 pr-4 align-top">
+            <Badge variant="secondary" className="min-w-12 justify-center">
+              Procesos de Evaluación
+            </Badge>
+          </td>
+
+          <td className="py-2 align-top">
+            Concordancia entre evaluación y contenido, claridad de criterios, entrega oportuna de
+            resultados y espacios de reflexión sobre el rendimiento.
+          </td>
+        </tr>
+
+        <tr>
+          <td className="py-2 pr-4 align-top">
+            <Badge variant="secondary" className="min-w-12 justify-center">
+              Integración Interpersonal
+            </Badge>
+          </td>
+
+          <td className="py-2 align-top">
+            Apertura al diálogo, identidad institucional, respeto mutuo en el aula y consideración
+            ante problemas sociales del estudiante.
+          </td>
+        </tr>
+
+        <tr>
+          <td className="py-2 pr-4 align-top">
+            <Badge variant="secondary" className="min-w-12 justify-center">
+              Sin Clasificación
+            </Badge>
+          </td>
+
+          <td className="py-2 align-top">
+            El sistema no pudo clasificar el comentario en ninguna de las categorías pedagógicas.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p className="text-muted-foreground border-t pt-2 text-xs">
+      Modelo: <span className="text-foreground font-medium">DistilBETO</span>
+    </p>
+  </div>
+)
 
 const RISK_ITEMS = [
   { value: ALL, label: 'Todos los niveles' },
@@ -112,7 +251,23 @@ export function ProfessorCommentsTable({
     },
     {
       accessorKey: 'categoryName',
-      header: 'Categoria',
+      header: () => (
+        <div className="flex items-center gap-1.5">
+          <span>Categoria</span>
+          <Popover>
+            <PopoverTrigger
+              aria-label="Información sobre categorías"
+              className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+            >
+              <Info size={14} />
+            </PopoverTrigger>
+
+            <PopoverContent side="bottom" align="start" className="w-80 md:w-150">
+              {CATEGORY_INFO}
+            </PopoverContent>
+          </Popover>
+        </div>
+      ),
       cell: ({ row }) => (
         <div className="flex flex-col items-start gap-1">
           <Badge variant="secondary" className="min-w-16 justify-center">
@@ -129,7 +284,23 @@ export function ProfessorCommentsTable({
     },
     {
       accessorKey: 'risk',
-      header: 'Nivel de riesgo',
+      header: () => (
+        <div className="flex items-center gap-1.5">
+          <span>Nivel de riesgo</span>
+          <Popover>
+            <PopoverTrigger
+              aria-label="Información sobre nivel de riesgo"
+              className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+            >
+              <Info size={14} />
+            </PopoverTrigger>
+
+            <PopoverContent side="bottom" align="start" className="w-80 md:w-120">
+              {RISK_INFO}
+            </PopoverContent>
+          </Popover>
+        </div>
+      ),
       cell: ({ row }) => {
         const badge = professorRiskBadge(row.original.risk)
 
