@@ -94,15 +94,15 @@ export function ProfessorSummaryContent() {
         </Stagger>
 
         <Stagger delay={0}>
-          <ProfessorHistoryChart data={history} />
-        </Stagger>
-
-        <Stagger delay={0}>
           {isCommentsLoading && summary.comments.length === 0 ? (
             <ProfessorCommentsTableSkeleton />
           ) : (
             <ProfessorCommentsTable comments={summary.comments} />
           )}
+        </Stagger>
+
+        <Stagger delay={0}>
+          <ProfessorHistoryChart data={history} />
         </Stagger>
       </>
     )
@@ -137,7 +137,7 @@ export function ProfessorSummaryContent() {
                     className="h-7 px-3 text-xs tracking-normal normal-case"
                   >
                     {isCurrentPeriod && (
-                      <span className="mr-1 inline-block size-1.5 rounded-full bg-primary-foreground" />
+                      <span className="bg-primary-foreground mr-1 inline-block size-1.5 rounded-full" />
                     )}
                     Semestre {periodCode}
                   </Badge>
@@ -166,9 +166,7 @@ export function ProfessorSummaryContent() {
                     <SelectContent alignItemWithTrigger={false}>
                       {periods.map((item) => (
                         <SelectItem key={item.value} value={item.code}>
-                          <span className="inline-flex items-center gap-2">
-                            {item.label}
-                          </span>
+                          <span className="inline-flex items-center gap-2">{item.label}</span>
                         </SelectItem>
                       ))}
                     </SelectContent>
