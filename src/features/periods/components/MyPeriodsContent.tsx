@@ -44,7 +44,7 @@ const columns = [
           info.getValue() >= 3.5 ? 'text-green-500' : 'text-red-500',
         )}
       >
-        {info.getValue().toFixed(1)}
+        {info.getValue().toFixed(2)}
         <span className="text-muted-foreground text-sm font-medium"> / 5.0</span>
       </span>
     ),
