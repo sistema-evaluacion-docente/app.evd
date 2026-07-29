@@ -81,7 +81,7 @@ function Avatar() {
                 <DropdownMenuRadioGroup
                   value={selectedRole ?? ""}
                   onValueChange={(value) => {
-                    setLocation("/dashboard");
+                    setLocation("/");
                     setSelectedRole(value);
                   }}
                 >
