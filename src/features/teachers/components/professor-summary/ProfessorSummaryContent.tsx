@@ -25,7 +25,7 @@ import { ProfessorSummarySkeleton } from './ProfessorSummarySkeleton'
 import { StateCard } from './StateCard'
 
 export function ProfessorSummaryContent() {
-  const { ref: commentsRef, isInView: commentsVisible } = useInView({ rootMargin: '500px' })
+  const { ref: commentsRef, isInView: commentsVisible } = useInView({ rootMargin: '700px' })
   const [categoryId, setCategoryId] = useState<string | null>(null)
   const [searchParams, setSearchParams] = useSearchParams()
 
