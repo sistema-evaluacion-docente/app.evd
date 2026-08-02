@@ -12,17 +12,29 @@
     sans-serif;
   --font-mono: "Figtree Variable", ui-monospace, monospace;
 
-  /* Brand — institutional red #AF1227 */
-  --color-brand-50: #fdf2f3;
-  --color-brand-100: #fce4e7;
-  --color-brand-200: #f8c0c7;
-  --color-brand-300: #f291a0;
-  --color-brand-400: #e55a6e;
-  --color-brand-500: #c82740;
-  --color-brand-600: #af1227;
-  --color-brand-700: #920f20;
-  --color-brand-800: #75101d;
-  --color-brand-900: #5f121c;
+  /* Brand — primary red #dd4b39 */
+  --color-brand-50: #fdf3f1;
+  --color-brand-100: #fbe5e1;
+  --color-brand-200: #f6c4bc;
+  --color-brand-300: #f09e90;
+  --color-brand-400: #e77462;
+  --color-brand-500: #dd4b39;
+  --color-brand-600: #c93d2d;
+  --color-brand-700: #a63326;
+  --color-brand-800: #832b20;
+  --color-brand-900: #63241b;
+
+  /* Secondary — blue #3c8dbc */
+  --color-secondary-50: #f0f7fc;
+  --color-secondary-100: #dceef8;
+  --color-secondary-200: #b8dbf0;
+  --color-secondary-300: #8cc2e5;
+  --color-secondary-400: #5da6d6;
+  --color-secondary-500: #3c8dbc;
+  --color-secondary-600: #337aa3;
+  --color-secondary-700: #2a6387;
+  --color-secondary-800: #214e6b;
+  --color-secondary-900: #1a3d54;
 
   --shadow-card:
     0 1px 2px 0 rgba(15, 18, 28, 0.04), 0 1px 1px 0 rgba(15, 18, 28, 0.03);
@@ -90,6 +102,17 @@ body {
 }
 ::-webkit-scrollbar-track {
   background: transparent;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #3a4255;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #5a6278;
+  background-clip: padding-box;
+  border: 2px solid transparent;
 }
 
 @theme inline {
@@ -163,97 +186,85 @@ body {
   --ink-800: #161b25;
   --ink-900: #0b0f17;
 
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  /* Primary IS the institutional red. Pinned to the brand ramp (not a separate
-     oklch value) so `bg-primary` and `bg-brand-600` are the same color and the
-     two button kits can't drift apart. Held identical in .dark on purpose. */
+  --background: #ffffff;
+  --foreground: #333333;
+  --card: #ffffff;
+  --card-foreground: #333333;
+  --popover: #ffffff;
+  --popover-foreground: #333333;
   --primary: var(--color-brand-600);
   --primary-foreground: #fff;
-  /* Hover fill for primary/brand buttons. It needs its own token because
-     brand-600 is pinned as --primary while brand-700 gets lightened by the
-     dark ramp flip below — so the raw `hover:bg-brand-700` would go pink. */
   --primary-hover: var(--color-brand-700);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.809 0.105 251.813);
-  --chart-2: oklch(0.623 0.214 259.815);
-  --chart-3: oklch(0.546 0.245 262.881);
-  --chart-4: oklch(0.488 0.243 264.376);
-  --chart-5: oklch(0.424 0.199 265.638);
+  --secondary: #3c8dbc;
+  --secondary-foreground: #fff;
+  --muted: #f4f4f4;
+  --muted-foreground: #666666;
+  --accent: #f4f4f4;
+  --accent-foreground: #333333;
+  --destructive: var(--color-brand-600);
+  --border: #eaeaea;
+  --input: #f4f4f4;
+  --ring: var(--color-brand-500);
+  --chart-1: #dd4b39;
+  --chart-2: #3c8dbc;
+  --chart-3: #00a65a;
+  --chart-4: #f39c12;
+  --chart-5: #605ca8;
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.577 0.245 27.325);
-  --sidebar-primary-foreground: oklch(0.971 0.013 17.38);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: #ffffff;
+  --sidebar-foreground: #333333;
+  --sidebar-primary: var(--color-brand-600);
+  --sidebar-primary-foreground: #fff;
+  --sidebar-accent: #f4f4f4;
+  --sidebar-accent-foreground: #333333;
+  --sidebar-border: #f4f4f4;
+  --sidebar-ring: var(--color-brand-500);
 }
 
 .dark {
-  /* Mirror of the light ramp. The 50/100/200 steps sit above --card
-     (oklch 0.22) so surfaces and borders stay visible against it. */
-  --ink-50: #1b1f27;
-  --ink-100: #232833;
-  --ink-200: #2f3542;
-  --ink-300: #454b57;
-  --ink-400: #6a707d;
-  --ink-500: #9aa0ab;
-  --ink-600: #c4c8d0;
-  --ink-700: #dfe2e7;
-  --ink-800: #eef0f2;
-  --ink-900: #f7f8f9;
+  --ink-50: #181c25;
+  --ink-100: #1e2330;
+  --ink-200: #272d3a;
+  --ink-300: #3a4255;
+  --ink-400: #5a6278;
+  --ink-500: #8a92a6;
+  --ink-600: #b0b7c8;
+  --ink-700: #d0d5e0;
+  --ink-800: #e4e7ee;
+  --ink-900: #f1f3f6;
 
-  --background: oklch(0.18 0.004 285.82);
-  --foreground: oklch(0.93 0.004 285.82);
-  --card: oklch(0.22 0.005 285.82);
-  --card-foreground: oklch(0.93 0.004 285.82);
-  --popover: oklch(0.22 0.005 285.82);
-  --popover-foreground: oklch(0.93 0.004 285.82);
-  /* Same red as light mode — see :root. The old value here was a brighter,
-     more saturated red that read as neon against the dark surfaces. */
-  --primary: var(--color-brand-600);
+  --background: #1a1f2e;
+  --foreground: #e8e8e8;
+  --card: #212738;
+  --card-foreground: #e8e8e8;
+  --popover: #212738;
+  --popover-foreground: #e8e8e8;
+  --primary: var(--color-brand-500);
   --primary-foreground: #fff;
-  /* Dark surfaces expect hover to lighten, not darken: brand-500 is a brighter
-     red. (brand-700 is remapped to a light pink here, so it can't be used.) */
-  --primary-hover: var(--color-brand-500);
-  --secondary: oklch(0.26 0.006 285.82);
-  --secondary-foreground: oklch(0.93 0.004 285.82);
-  --muted: oklch(0.25 0.005 285.82);
-  --muted-foreground: oklch(0.65 0.01 285.82);
-  --accent: oklch(0.25 0.005 285.82);
-  --accent-foreground: oklch(0.93 0.004 285.82);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 8%);
-  --input: oklch(1 0 0 / 10%);
-  --ring: oklch(0.48 0 0);
-  --chart-1: oklch(0.809 0.105 251.813);
-  --chart-2: oklch(0.623 0.214 259.815);
-  --chart-3: oklch(0.546 0.245 262.881);
-  --chart-4: oklch(0.488 0.243 264.376);
-  --chart-5: oklch(0.424 0.199 265.638);
-  --sidebar: oklch(0.2 0.005 285.82);
-  --sidebar-foreground: oklch(0.93 0.004 285.82);
-  --sidebar-primary: oklch(0.637 0.237 25.331);
-  --sidebar-primary-foreground: oklch(0.971 0.013 17.38);
-  --sidebar-accent: oklch(0.25 0.005 285.82);
-  --sidebar-accent-foreground: oklch(0.93 0.004 285.82);
-  --sidebar-border: oklch(1 0 0 / 8%);
-  --sidebar-ring: oklch(0.48 0 0);
+  --primary-hover: var(--color-brand-400);
+  --secondary: #3c8dbc;
+  --secondary-foreground: #fff;
+  --muted: #272d3a;
+  --muted-foreground: #9aa0b4;
+  --accent: #272d3a;
+  --accent-foreground: #e8e8e8;
+  --destructive: var(--color-brand-400);
+  --border: rgba(244, 244, 244, 0.08);
+  --input: rgba(244, 244, 244, 0.1);
+  --ring: var(--color-brand-500);
+  --chart-1: #dd4b39;
+  --chart-2: #3c8dbc;
+  --chart-3: #00a65a;
+  --chart-4: #f39c12;
+  --chart-5: #605ca8;
+  --sidebar: #161a26;
+  --sidebar-foreground: #e8e8e8;
+  --sidebar-primary: var(--color-brand-500);
+  --sidebar-primary-foreground: #fff;
+  --sidebar-accent: #272d3a;
+  --sidebar-accent-foreground: #e8e8e8;
+  --sidebar-border: rgba(244, 244, 244, 0.08);
+  --sidebar-ring: var(--color-brand-500);
 }
 
 /* ---------------------------------------------------------------------------

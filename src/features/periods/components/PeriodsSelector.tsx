@@ -8,7 +8,7 @@ import {
 import { useEffect } from 'react'
 
 import { Spinner } from '@/components/ui/spinner'
-import useGetPeriods from '../hooks/useGetPeriods'
+import useGetPeriodsForSelector from '../hooks/useGetPeriodsForSelector'
 import { usePeriodsStore } from '../store/periodsStore'
 import type { Period } from '../types/Period'
 
@@ -25,11 +25,7 @@ interface PeriodsSelectorProps {
  * @returns {JSX.Element} The rendered component.
  */
 function PeriodsSelector({ className, placeholder, label }: PeriodsSelectorProps) {
-  const { data, isLoading, isFetching } = useGetPeriods({
-    page: 1,
-    limit: 100,
-    search: '',
-  })
+  const { data, isLoading, isFetching } = useGetPeriodsForSelector()
 
   const { selectedPeriod, setSelectedPeriod } = usePeriodsStore()
 
