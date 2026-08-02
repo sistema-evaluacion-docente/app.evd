@@ -64,4 +64,5 @@ export {
 
 export { ProfessorCategoryChart } from './components/professor-summary/ProfessorCategoryChart'
 export { ProfessorCategoryDetail } from './components/professor-summary/ProfessorCategoryDetail'
+export { ProfessorCommentsTable } from './components/professor-summary/ProfessorCommentsTable'
 export { ProfessorSummaryContent } from './components/professor-summary/ProfessorSummaryContent'

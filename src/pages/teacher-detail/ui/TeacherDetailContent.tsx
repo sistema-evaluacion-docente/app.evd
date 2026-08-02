@@ -6,7 +6,6 @@ import {
   HistoricalEvolutionCard,
   MatrizCard,
   NoEvaluationState,
-  TeacherCommentsCard,
   TeacherProfileHeader,
   useCurrentTeacherEvaluation,
 } from '@/features/evaluations'
@@ -14,6 +13,7 @@ import { TeacherPlanHistorySection } from '@/features/plans'
 import {
   ProfessorCategoryChart,
   ProfessorCategoryDetail,
+  ProfessorCommentsTable,
   useGetTeacherById,
   useProfessorSummary,
 } from '@/features/teachers'
@@ -35,7 +35,7 @@ function TeacherDetailContent({ teacherId }: Props) {
   const { summary, periods } = useProfessorSummary({
     teacherId,
     periodValue,
-    commentsEnabled: categoryId !== null,
+    commentsEnabled: true,
   })
 
   if ((isLoading || isFetching) && !isFetched) {
@@ -77,7 +77,10 @@ function TeacherDetailContent({ teacherId }: Props) {
 
                   <MatrizCard teacherId={teacherId} evaluation={evaluation} />
 
-                  <TeacherCommentsCard teacherId={teacherId} evaluation={evaluation} />
+                  <ProfessorCommentsTable
+                    comments={summary.comments}
+                    categories={summary.categories}
+                  />
 
                   <HistoricalEvolutionCard teacherId={teacherId} evaluation={evaluation} />
 
