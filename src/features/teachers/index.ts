@@ -62,4 +62,6 @@ export {
   professorScoreTone,
 } from './model/professorSummary'
 
+export { ProfessorCategoryChart } from './components/professor-summary/ProfessorCategoryChart'
+export { ProfessorCategoryDetail } from './components/professor-summary/ProfessorCategoryDetail'
 export { ProfessorSummaryContent } from './components/professor-summary/ProfessorSummaryContent'

@@ -14,6 +14,7 @@ import useGetTeacherHistory from './useGetTeacherHistory'
 export interface UseProfessorSummaryOptions {
   commentsEnabled?: boolean
   periodValue?: string | null
+  teacherId?: number
 }
 
 /**
@@ -24,7 +25,7 @@ export interface UseProfessorSummaryOptions {
  */
 export function useProfessorSummary(options?: UseProfessorSummaryOptions) {
   const { user } = useAuth()
-  const teacherId = user?.teacher_id ?? 0
+  const teacherId = options?.teacherId ?? user?.teacher_id ?? 0
 
   const historyQuery = useGetTeacherHistory(teacherId)
 

@@ -1,31 +1,51 @@
-import TeacherDetailSkeleton from "@/components/skeletons/TeacherDetailSkeleton";
+import { useState } from 'react'
+import { useSearchParams } from 'wouter'
+
+import TeacherDetailSkeleton from '@/components/skeletons/TeacherDetailSkeleton'
 import {
-  CourseAveragesCard,
-  DimensionAveragesCard,
   HistoricalEvolutionCard,
   MatrizCard,
   NoEvaluationState,
   TeacherCommentsCard,
   TeacherProfileHeader,
   useCurrentTeacherEvaluation,
-} from "@/features/evaluations";
-import { TeacherPlanHistorySection } from "@/features/plans";
-import { useGetTeacherById } from "@/features/teachers";
+} from '@/features/evaluations'
+import { TeacherPlanHistorySection } from '@/features/plans'
+import {
+  ProfessorCategoryChart,
+  ProfessorCategoryDetail,
+  useGetTeacherById,
+  useProfessorSummary,
+} from '@/features/teachers'
 
 type Props = {
-  teacherId: number;
-};
+  teacherId: number
+}
 
 function TeacherDetailContent({ teacherId }: Props) {
-  const { isLoading, isFetching, isFetched } = useGetTeacherById(teacherId);
+  const { isLoading, isFetching, isFetched } = useGetTeacherById(teacherId)
 
-  const { data: evaluation } = useCurrentTeacherEvaluation(teacherId);
+  const { data: evaluation } = useCurrentTeacherEvaluation(teacherId)
+
+  const [searchParams] = useSearchParams()
+  const periodValue = searchParams.get('period')
+
+  const [categoryId, setCategoryId] = useState<string | null>(null)
+
+  const { summary, periods } = useProfessorSummary({
+    teacherId,
+    periodValue,
+    commentsEnabled: categoryId !== null,
+  })
 
   if ((isLoading || isFetching) && !isFetched) {
-    return <TeacherDetailSkeleton />;
+    return <TeacherDetailSkeleton />
   }
 
-  const noData = !isLoading && !isFetching && !evaluation;
+  const noData = !isLoading && !isFetching && !evaluation
+
+  const selectedCategory =
+    categoryId && summary ? (summary.categories.find((c) => c.id === categoryId) ?? null) : null
 
   return (
     <>
@@ -35,29 +55,41 @@ function TeacherDetailContent({ teacherId }: Props) {
         <NoEvaluationState />
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-            <DimensionAveragesCard
-              teacherId={teacherId}
-              evaluation={evaluation}
-            />
+          {evaluation && summary && (
+            <>
+              {selectedCategory ? (
+                <ProfessorCategoryDetail
+                  category={selectedCategory}
+                  categories={summary.categories}
+                  comments={summary.comments}
+                  periodValue={periodValue ?? ''}
+                  teacherId={teacherId}
+                  periods={periods}
+                  onBack={() => setCategoryId(null)}
+                  onSelect={setCategoryId}
+                />
+              ) : (
+                <>
+                  <ProfessorCategoryChart
+                    categories={summary.categories}
+                    onSelect={setCategoryId}
+                  />
 
-            <CourseAveragesCard teacherId={teacherId} evaluation={evaluation} />
-          </div>
+                  <MatrizCard teacherId={teacherId} evaluation={evaluation} />
 
-          <MatrizCard teacherId={teacherId} evaluation={evaluation} />
+                  <TeacherCommentsCard teacherId={teacherId} evaluation={evaluation} />
 
-          <TeacherCommentsCard teacherId={teacherId} evaluation={evaluation} />
+                  <HistoricalEvolutionCard teacherId={teacherId} evaluation={evaluation} />
 
-          <HistoricalEvolutionCard
-            teacherId={teacherId}
-            evaluation={evaluation}
-          />
-
-          <TeacherPlanHistorySection teacherId={teacherId} />
+                  <TeacherPlanHistorySection teacherId={teacherId} />
+                </>
+              )}
+            </>
+          )}
         </>
       )}
     </>
-  );
+  )
 }
 
-export default TeacherDetailContent;
+export default TeacherDetailContent
