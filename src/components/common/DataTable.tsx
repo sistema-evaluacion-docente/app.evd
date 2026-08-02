@@ -251,7 +251,7 @@ function DataTable<TData>({
       <div
         className={cn(
           'bg-background animate-fade-in overflow-x-auto',
-          borders ? 'rounded-lg border' : 'border-none',
+          borders ? 'rounded-xs border' : 'border-none',
           containerClassName,
         )}
       >
