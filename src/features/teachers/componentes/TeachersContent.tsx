@@ -74,7 +74,7 @@ function TeachersContent() {
       header: 'Nombre',
       accessorKey: 'name',
       cell: ({ row }) => (
-        <Link href={`/teachers/${row.original?.id}`}>
+        <Link href={`/teachers/${row.original?.id}?period=${selectedPeriod?.name}`}>
           <div className="flex items-center gap-3">
             <Avatar>
               <AvatarFallback>{row.original?.user?.name?.charAt(0).toUpperCase()}</AvatarFallback>
@@ -219,7 +219,7 @@ function TeachersContent() {
           },
           {
             label: 'Ver detalle',
-            onClick: (row) => navigate(`/teachers/${row.id}`),
+            onClick: (row) => navigate(`/teachers/${row.id}?period=${selectedPeriod?.name}`),
           },
           {
             label: 'Eliminar',
