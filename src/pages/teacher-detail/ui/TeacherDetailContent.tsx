@@ -1,92 +1,84 @@
-import { useState } from 'react'
-import { useSearchParams } from 'wouter'
+import { useMemo, useState } from 'react'
 
-import TeacherDetailSkeleton from '@/components/skeletons/TeacherDetailSkeleton'
-import {
-  HistoricalEvolutionCard,
-  MatrizCard,
-  NoEvaluationState,
-  TeacherProfileHeader,
-  useCurrentTeacherEvaluation,
-} from '@/features/evaluations'
+import { MatrizCard, TeacherNoEvaluationState, TeacherProfileHeader } from '@/features/evaluations'
 import { TeacherPlanHistorySection } from '@/features/plans'
 import {
+  buildProfessorSummary,
+  mapProfessorComments,
   ProfessorCategoryChart,
   ProfessorCategoryDetail,
   ProfessorCommentsTable,
+  TeacherDetailSkeleton,
   useGetTeacherById,
-  useProfessorSummary,
+  useGetTeacherDashboard,
 } from '@/features/teachers'
+import { useSearchParams } from 'wouter'
 
 type Props = {
   teacherId: number
 }
 
 function TeacherDetailContent({ teacherId }: Props) {
-  const { isLoading, isFetching, isFetched } = useGetTeacherById(teacherId)
-
-  const { data: evaluation } = useCurrentTeacherEvaluation(teacherId)
-
   const [searchParams] = useSearchParams()
-  const periodValue = searchParams.get('period')
+  const period = searchParams.get('period') ?? undefined
 
   const [categoryId, setCategoryId] = useState<string | null>(null)
 
-  const { summary, periods } = useProfessorSummary({
-    teacherId,
-    periodValue,
-    commentsEnabled: true,
-  })
+  console.log('period', period)
 
-  if ((isLoading || isFetching) && !isFetched) {
-    return <TeacherDetailSkeleton />
-  }
+  const teacherQuery = useGetTeacherById(teacherId)
+  const departmentId = teacherQuery.data?.data.department_id
+  const dashboardQuery = useGetTeacherDashboard(teacherId, departmentId, period)
 
-  const noData = !isLoading && !isFetching && !evaluation
+  const summary = useMemo(() => {
+    const d = dashboardQuery.data?.data
+    if (!d) return null
+
+    const comments = mapProfessorComments(d.comments)
+    return buildProfessorSummary(d.period_comparison, comments)
+  }, [dashboardQuery.data])
 
   const selectedCategory =
     categoryId && summary ? (summary.categories.find((c) => c.id === categoryId) ?? null) : null
 
+  const teacherData = teacherQuery.data
+  const evaluationDetailData = dashboardQuery.data?.data?.evaluation_detail
+  const matrixData = dashboardQuery.data?.data?.matrix
+
+  if (teacherQuery.isLoading || dashboardQuery.isLoading) {
+    return <TeacherDetailSkeleton />
+  }
+
   return (
     <>
-      <TeacherProfileHeader teacherId={teacherId} evaluation={evaluation} />
+      <TeacherProfileHeader
+        teacherId={teacherId}
+        teacher={teacherData}
+        evaluationDetail={evaluationDetailData}
+      />
 
-      {noData ? (
-        <NoEvaluationState />
+      {!summary ? (
+        <TeacherNoEvaluationState />
       ) : (
         <>
-          {evaluation && summary && (
+          {selectedCategory ? (
+            <ProfessorCategoryDetail
+              category={selectedCategory}
+              categories={summary.categories}
+              comments={summary.comments}
+              teacherId={teacherId}
+              onBack={() => setCategoryId(null)}
+              onSelect={setCategoryId}
+            />
+          ) : (
             <>
-              {selectedCategory ? (
-                <ProfessorCategoryDetail
-                  category={selectedCategory}
-                  categories={summary.categories}
-                  comments={summary.comments}
-                  periodValue={periodValue ?? ''}
-                  teacherId={teacherId}
-                  periods={periods}
-                  onBack={() => setCategoryId(null)}
-                  onSelect={setCategoryId}
-                />
-              ) : (
-                <>
-                  <ProfessorCategoryChart
-                    categories={summary.categories}
-                    onSelect={setCategoryId}
-                  />
+              <ProfessorCategoryChart categories={summary.categories} onSelect={setCategoryId} />
 
-                  <MatrizCard teacherId={teacherId} evaluation={evaluation} />
+              <MatrizCard teacherId={teacherId} matrix={matrixData} />
 
-                  <ProfessorCommentsTable
-                    comments={summary.comments}
-                    categories={summary.categories}
-                  />
+              <ProfessorCommentsTable comments={summary.comments} categories={summary.categories} />
 
-                  <HistoricalEvolutionCard teacherId={teacherId} evaluation={evaluation} />
-
-                  <TeacherPlanHistorySection teacherId={teacherId} />
-                </>
-              )}
+              <TeacherPlanHistorySection teacherId={teacherId} />
             </>
           )}
         </>

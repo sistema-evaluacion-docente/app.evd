@@ -8,6 +8,7 @@ export { useUploadTeachers, type UploadStatus } from './hooks/useUploadTeachers'
 export type {
   Teacher,
   TeacherCreatePayload,
+  TeacherDashboardData,
   TeacherHistoryData,
   TeacherHistoryEntry,
   TeacherSemesterComparisonComments,
@@ -27,6 +28,7 @@ export { default as TeacherSemesterComparisonCard } from './componentes/TeacherS
 export { default as useCreateTeacher } from './hooks/useCreateTeacher'
 export { default as useDeleteTeacher } from './hooks/useDeleteTeacher'
 export { default as useGetTeacherById } from './hooks/useGetTeacherById'
+export { default as useGetTeacherDashboard } from './hooks/useGetTeacherDashboard'
 export { default as useGetTeacherHistory } from './hooks/useGetTeacherHistory'
 export { default as useGetTeachers } from './hooks/useGetTeachers'
 export { default as useGetTeacherSemesterComparison } from './hooks/useGetTeacherSemesterComparison'
@@ -66,3 +68,5 @@ export { ProfessorCategoryChart } from './components/professor-summary/Professor
 export { ProfessorCategoryDetail } from './components/professor-summary/ProfessorCategoryDetail'
 export { ProfessorCommentsTable } from './components/professor-summary/ProfessorCommentsTable'
 export { ProfessorSummaryContent } from './components/professor-summary/ProfessorSummaryContent'
+
+export { TeacherDetailSkeleton } from './components/TeacherDetailSkeleton'

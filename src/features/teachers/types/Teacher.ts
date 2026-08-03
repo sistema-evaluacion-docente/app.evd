@@ -1,4 +1,10 @@
 import type { User } from "@/features/auth";
+import type {
+  TeacherCommentsData,
+  TeacherEvaluationDetail,
+  TeacherMatrixData,
+  TeacherVsPrevPeriodData,
+} from "@/features/evaluations";
 
 export interface Teacher {
   id: number;
@@ -99,4 +105,11 @@ export interface TeacherSemesterComparisonData {
   old_courses: TeacherSemesterComparisonCourse[];
   current_comments: TeacherSemesterComparisonComments;
   old_comments: TeacherSemesterComparisonComments;
+}
+
+export interface TeacherDashboardData {
+  evaluation_detail: TeacherEvaluationDetail;
+  period_comparison: TeacherVsPrevPeriodData;
+  comments: TeacherCommentsData;
+  matrix: TeacherMatrixData;
 }
