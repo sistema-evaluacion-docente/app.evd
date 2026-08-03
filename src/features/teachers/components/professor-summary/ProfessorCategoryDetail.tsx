@@ -1,9 +1,7 @@
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { ArrowLeft, ChevronDown, ChevronUp, TrendingUp } from 'lucide-react'
-import { useState } from 'react'
+import { ArrowLeft } from 'lucide-react'
 
 import { Stagger } from '@/components/common/stagger'
 import { DataTable, StatTile, type DataTableColumn } from '@/shared/ui'
@@ -11,32 +9,22 @@ import {
   professorScoreTone,
   type ProfessorCategory,
   type ProfessorComment,
-  type ProfessorPeriod,
   type ProfessorQuestion,
 } from '../../model/professorSummary'
-import { ProfessorCategoryComparison } from './ProfessorCategoryComparison'
 import { ProfessorCommentsTable } from './ProfessorCommentsTable'
 
 export interface ProfessorCategoryDetailProps {
   category: ProfessorCategory
   categories: ProfessorCategory[]
   comments: ProfessorComment[]
-  periodValue: string
   teacherId: number
-  periods: ProfessorPeriod[]
   onBack: () => void
   onSelect: (categoryId: string) => void
 }
 
-function ComparisonBars({
-  question,
-  periodValue,
-}: {
-  question: ProfessorQuestion
-  periodValue: string
-}) {
+function ComparisonBars({ question }: { question: ProfessorQuestion }) {
   const rows = [
-    { label: periodValue, value: question.mine, fill: 'bg-primary/80' },
+    { label: 'Actual', value: question.mine, fill: 'bg-primary/80' },
     { label: 'Anterior', value: question.previous, fill: 'bg-blue-400/30' },
   ]
   return (
@@ -67,14 +55,9 @@ export function ProfessorCategoryDetail({
   category,
   categories,
   comments,
-  periodValue,
-  teacherId,
-  periods,
   onBack,
   onSelect,
 }: ProfessorCategoryDetailProps) {
-  const [showComparison, setShowComparison] = useState(false)
-
   const questionColumns: DataTableColumn<ProfessorQuestion>[] = [
     {
       header: 'Codigo',
@@ -96,7 +79,7 @@ export function ProfessorCategoryDetail({
       header: 'Comparacion',
       headerClassName: 'w-70',
       cellClassName: 'align-top py-4',
-      cell: (question) => <ComparisonBars question={question} periodValue={periodValue} />,
+      cell: (question) => <ComparisonBars question={question} />,
     },
     {
       header: 'Puntaje',
@@ -130,19 +113,9 @@ export function ProfessorCategoryDetail({
 
           <div className="mt-3 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                <h1 className="text-2xl leading-tight font-semibold tracking-tight">
-                  {category.name}
-                </h1>
-
-                <Badge className="h-7 px-3 text-xs tracking-normal normal-case">
-                  Semestre {periodValue}
-                </Badge>
-              </div>
-
-              {/* <p className="text-muted-foreground mt-1.5 text-sm">
-                Desglose de preguntas y comentarios de esta categoria.
-              </p> */}
+              <h1 className="text-2xl leading-tight font-semibold tracking-tight">
+                {category.name}
+              </h1>
             </div>
 
             <div className="flex flex-wrap gap-2 sm:justify-end">
@@ -172,25 +145,6 @@ export function ProfessorCategoryDetail({
           />
         </div>
       </Stagger>
-
-      <Stagger delay={0}>
-        <div>
-          <Button
-            variant="outline"
-            className="w-full justify-center sm:w-auto"
-            aria-expanded={showComparison}
-            onClick={() => setShowComparison((open) => !open)}
-          >
-            <TrendingUp size={16} />
-            Comparar con semestres anteriores
-            {showComparison ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          </Button>
-        </div>
-      </Stagger>
-
-      {showComparison && (
-        <ProfessorCategoryComparison category={category} teacherId={teacherId} periods={periods} />
-      )}
 
       <Stagger delay={0}>
         <Card className="gap-0 overflow-hidden pb-0">

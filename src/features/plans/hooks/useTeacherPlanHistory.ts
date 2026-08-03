@@ -6,5 +6,6 @@ export default function useTeacherPlanHistory(teacherId: number | null) {
     queryKey: ["teacher-plan-history", teacherId],
     queryFn: () => getTeacherPlanHistory(teacherId as number),
     enabled: teacherId != null,
+    staleTime: 5 * 60 * 1000,
   });
 }

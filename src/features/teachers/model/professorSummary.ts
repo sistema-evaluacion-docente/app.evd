@@ -223,7 +223,6 @@ export function mapProfessorComments(data: TeacherCommentsData): ProfessorCommen
 export function buildProfessorSummary(
   vsPrevPeriod: TeacherVsPrevPeriodData,
   comments: ProfessorComment[],
-  historyEntry: TeacherHistoryEntry | undefined,
 ): ProfessorSummary {
   const categories: ProfessorCategory[] = vsPrevPeriod.dimensions.map((dimension) => ({
     id: dimension.dimension,
@@ -242,7 +241,7 @@ export function buildProfessorSummary(
   }))
 
   const overall =
-    historyEntry?.overall_average ??
+    vsPrevPeriod.current_overall_average ??
     (categories.length > 0
       ? categories.reduce((sum, category) => sum + category.score, 0) / categories.length
       : 0)

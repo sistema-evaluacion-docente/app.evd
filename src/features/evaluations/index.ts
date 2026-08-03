@@ -64,6 +64,7 @@ export { default as DimensionAveragesCard } from './components/DimensionAverages
 export { default as HistoricalEvolutionCard } from './components/HistoricalEvolutionCard'
 export { default as MatrizCard } from './components/MatrizCard'
 export { default as NoEvaluationState } from './components/NoEvaluationState'
+export { default as TeacherNoEvaluationState } from './components/TeacherNoEvaluationState'
 export { default as TeacherProfileHeader } from './components/TeacherProfileHeader'
 export { default as useAnalyzeEvaluation } from './hooks/useAnalyzeEvaluation'
 export { default as useCurrentTeacherEvaluation } from './hooks/useCurrentTeacherEvaluation'

@@ -12,5 +12,6 @@ export default function useGetTeacherById(id?: number) {
       return getTeacherById(id);
     },
     enabled: !!id && id > 0,
+    staleTime: 5 * 60 * 1000,
   });
 }

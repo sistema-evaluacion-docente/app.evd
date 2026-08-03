@@ -1,24 +1,22 @@
-import { Card } from "@/components/ui/card";
-import { AreaChart } from "@/shared/ui";
+import { Card } from '@/components/ui/card'
+import { AreaChart } from '@/shared/ui'
 
-import type { EvaluationRecord } from "@/features/evaluations";
-import { useGetTeacherHistory } from "@/features/teachers";
+import type { EvaluationRecord } from '@/features/evaluations'
+import type { TeacherHistoryEntry } from '@/features/teachers'
 
 interface HistoricalEvolutionCardProps {
-  teacherId: number;
-  evaluation?: EvaluationRecord;
+  teacherId: number
+  evaluation?: EvaluationRecord
+  history?: TeacherHistoryEntry[]
 }
 
 export default function HistoricalEvolutionCard({
-  teacherId,
+  history = [],
 }: HistoricalEvolutionCardProps) {
-  const { data: historyRes } = useGetTeacherHistory(teacherId);
-  const history = historyRes?.data?.items ?? [];
-
   const chartData = history.map((h) => ({
     label: h.period_code,
     value: h.overall_average,
-  }));
+  }))
 
   return (
     <Card className="p-5 sm:p-6 animate-fade-in">
@@ -52,5 +50,5 @@ export default function HistoricalEvolutionCard({
         )}
       </div>
     </Card>
-  );
+  )
 }
