@@ -1,16 +1,13 @@
 import { useMemo, useState } from 'react'
 
-import { MatrizCard, TeacherNoEvaluationState, TeacherProfileHeader } from '@/features/evaluations'
-import { TeacherPlanHistorySection } from '@/features/plans'
+import { TeacherNoEvaluationState, TeacherProfileHeader, useGetTeacherEvaluationDetail } from '@/features/evaluations'
 import {
   buildProfessorSummary,
   mapProfessorComments,
   ProfessorCategoryChart,
   ProfessorCategoryDetail,
-  ProfessorCommentsTable,
   TeacherDetailSkeleton,
-  useGetTeacherById,
-  useGetTeacherDashboard,
+  useGetTeacherById
 } from '@/features/teachers'
 import { useSearchParams } from 'wouter'
 
@@ -28,7 +25,8 @@ function TeacherDetailContent({ teacherId }: Props) {
 
   const teacherQuery = useGetTeacherById(teacherId)
   const departmentId = teacherQuery.data?.data.department_id
-  const dashboardQuery = useGetTeacherDashboard(teacherId, departmentId, period)
+  // const dashboardQuery = useGetTeacherDashboard(teacherId, departmentId, period)
+  const detailQuery = useGetTeacherEvaluationDetail(teacherId, departmentId, period)
 
   const summary = useMemo(() => {
     const d = dashboardQuery.data?.data
@@ -43,7 +41,6 @@ function TeacherDetailContent({ teacherId }: Props) {
 
   const teacherData = teacherQuery.data
   const evaluationDetailData = dashboardQuery.data?.data?.evaluation_detail
-  const matrixData = dashboardQuery.data?.data?.matrix
 
   if (teacherQuery.isLoading || dashboardQuery.isLoading) {
     return <TeacherDetailSkeleton />
@@ -73,12 +70,6 @@ function TeacherDetailContent({ teacherId }: Props) {
           ) : (
             <>
               <ProfessorCategoryChart categories={summary.categories} onSelect={setCategoryId} />
-
-              <MatrizCard teacherId={teacherId} matrix={matrixData} />
-
-              <ProfessorCommentsTable comments={summary.comments} categories={summary.categories} />
-
-              <TeacherPlanHistorySection teacherId={teacherId} />
             </>
           )}
         </>
