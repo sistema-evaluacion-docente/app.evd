@@ -15,28 +15,25 @@ export interface UseProfessorSummaryOptions {
   commentsEnabled?: boolean
   periodValue?: string | null
   teacherId?: number
+  historyData?: ReturnType<typeof useGetTeacherHistory>['data']
 }
 
-/**
- * Custom hook to fetch and manage the professor summary data.
- *
- * @param options - Optional configuration for the hook, including whether comments fetching is enabled.
- * @returns An object containing the professor summary data, loading states, and utility functions.
- */
 export function useProfessorSummary(options?: UseProfessorSummaryOptions) {
   const { user } = useAuth()
   const teacherId = options?.teacherId ?? user?.teacher_id ?? 0
 
   const historyQuery = useGetTeacherHistory(teacherId)
 
+  const historyData = options?.historyData ?? historyQuery.data
+
   const periods = useMemo(
-    () => mapProfessorPeriods(historyQuery.data?.data.items ?? []),
-    [historyQuery.data],
+    () => mapProfessorPeriods(historyData?.data.items ?? []),
+    [historyData],
   )
 
   const history = useMemo(
-    () => mapProfessorHistory(historyQuery.data?.data.items ?? []),
-    [historyQuery.data],
+    () => mapProfessorHistory(historyData?.data.items ?? []),
+    [historyData],
   )
 
   const selectedValue = options?.periodValue ?? null
@@ -52,11 +49,8 @@ export function useProfessorSummary(options?: UseProfessorSummaryOptions) {
     if (!period || !vsPrevPeriod) return null
 
     const comments = commentsQuery.data?.data ? mapProfessorComments(commentsQuery.data.data) : []
-    const historyEntry = historyQuery.data?.data.items.find(
-      (entry) => entry.period_id === period.periodId,
-    )
-    return buildProfessorSummary(vsPrevPeriod, comments, historyEntry)
-  }, [period, vsPrevPeriodQuery.data, commentsQuery.data, historyQuery.data])
+    return buildProfessorSummary(vsPrevPeriod, comments)
+  }, [period, vsPrevPeriodQuery.data, commentsQuery.data])
 
   return {
     user,
