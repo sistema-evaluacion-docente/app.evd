@@ -9,5 +9,6 @@ export default function useGetTeacherMatrix(
     queryKey: ["teacher-matrix", teacherId, evaluationId],
     queryFn: () => getTeacherMatrix(teacherId, evaluationId!),
     enabled: !!teacherId && !!evaluationId,
+    staleTime: 5 * 60 * 1000,
   });
 }

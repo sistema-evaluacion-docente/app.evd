@@ -9,5 +9,6 @@ export default function useGetTeacherEvaluationDetail(
     queryKey: ["teacher-evaluation-detail", evaluationId, teacherId],
     queryFn: () => getTeacherEvaluationDetail(evaluationId!, teacherId),
     enabled: !!evaluationId && !!teacherId,
+    staleTime: 5 * 60 * 1000,
   });
 }
