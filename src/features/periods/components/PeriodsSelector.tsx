@@ -33,7 +33,9 @@ function PeriodsSelector({ className, placeholder, label }: PeriodsSelectorProps
 
   useEffect(() => {
     if (periods.length === 0) return
+
     const isSelectedActive = periods.some((p) => p.id === selectedPeriod?.id)
+
     if (!isSelectedActive) {
       setSelectedPeriod(periods[0])
     }
