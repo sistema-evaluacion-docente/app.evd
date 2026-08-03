@@ -31,14 +31,10 @@ export default function TeacherProfileHeader({
     <>
       <div className="mb-10 flex items-center gap-4">
         <div className="relative shrink-0">
-          <Avatar className="h-16 w-16 sm:h-20 sm:w-20">
+          <Avatar className="h-20 w-20 md:h-24 md:w-24 lg:h-28 lg:w-28">
             <AvatarFallback>{teacherName.at(0)?.toUpperCase()}</AvatarFallback>
             <AvatarImage src={teacher?.user?.avatar_url ?? ''} alt={teacherName} />
           </Avatar>
-
-          {teacher?.active && (
-            <span className="absolute right-0.5 -bottom-0.5 h-3.5 w-3.5 rounded-full bg-emerald-500 ring-2 ring-white" />
-          )}
         </div>
 
         <div className="min-w-0 flex-1">
@@ -54,11 +50,11 @@ export default function TeacherProfileHeader({
             </div>
           ) : (
             <>
-              <h1 className="text-xl leading-tight font-semibold tracking-tight sm:text-xl">
+              <h1 className="text-xl leading-tight font-semibold tracking-tight md:text-2xl lg:text-3xl">
                 {teacherName}
               </h1>
 
-              <ul className="text-muted-foreground mt-1 flex flex-col flex-wrap gap-x-5 gap-y-1.5 text-xs sm:text-sm">
+              <ul className="text-muted-foreground mt-1 flex flex-col flex-wrap gap-x-5 gap-y-1.5 text-xs md:text-sm lg:text-base">
                 <li className="inline-flex items-center gap-2">
                   <Building2 size={14} className="text-muted-foreground" />
                   Cód. {teacher?.institutional_code ?? '—'}
@@ -66,7 +62,7 @@ export default function TeacherProfileHeader({
 
                 <li className="inline-flex items-center gap-2">
                   <Calendar size={14} className="text-muted-foreground" /> Periodo Académico:{' '}
-                  <Badge>{periodLabel}</Badge>
+                  <Badge className="text-sm px-2 py-1">{periodLabel}</Badge>
                 </li>
               </ul>
             </>
