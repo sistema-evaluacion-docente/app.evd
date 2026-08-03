@@ -503,6 +503,72 @@
         }
       }
     },
+    "/teachers/{teacher_id}/dashboard": {
+      "get": {
+        "tags": ["Teachers"],
+        "summary": "Get Teacher Dashboard",
+        "description": "Get combined dashboard data for a teacher (evaluation detail, period comparison, comments, matrix).",
+        "operationId": "get_teacher_dashboard_teachers__teacher_id__dashboard_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "teacher_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Teacher Id" }
+          },
+          {
+            "name": "period_name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Academic period name",
+              "title": "Period Name"
+            },
+            "description": "Academic period name"
+          },
+          {
+            "name": "department_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "Department ID",
+              "title": "Department Id"
+            },
+            "description": "Department ID"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ResponseEnvelope_TeacherDashboardOut_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/teachers/{teacher_id}": {
       "get": {
         "tags": ["Teachers"],
@@ -7350,6 +7416,37 @@
         "required": ["status"],
         "title": "ResponseEnvelope[TeacherCommentsOut]"
       },
+      "ResponseEnvelope_TeacherDashboardOut_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Response status: 'success' or 'error'",
+            "examples": ["success", "error"]
+          },
+          "data": {
+            "anyOf": [{ "$ref": "#/components/schemas/TeacherDashboardOut" }, { "type": "null" }],
+            "description": "Response payload (null for error responses)"
+          },
+          "pagination": {
+            "anyOf": [{ "$ref": "#/components/schemas/Pagination" }, { "type": "null" }],
+            "description": "Pagination metadata (only for paginated list endpoints)"
+          },
+          "error": {
+            "anyOf": [{ "$ref": "#/components/schemas/ErrorDetail" }, { "type": "null" }],
+            "description": "Error details (null for success responses)"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "ISO 8601 UTC timestamp of the response"
+          }
+        },
+        "type": "object",
+        "required": ["status"],
+        "title": "ResponseEnvelope[TeacherDashboardOut]"
+      },
       "ResponseEnvelope_TeacherEvaluationDetail_": {
         "properties": {
           "status": {
@@ -8324,6 +8421,22 @@
         "required": ["email", "name", "institutional_code"],
         "title": "TeacherCreateWithUser",
         "description": "Schema for creating a teacher with user information."
+      },
+      "TeacherDashboardOut": {
+        "properties": {
+          "evaluation_detail": { "$ref": "#/components/schemas/TeacherEvaluationDetail" },
+          "period_comparison": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Period Comparison"
+          },
+          "comments": { "$ref": "#/components/schemas/TeacherCommentsOut" },
+          "matrix": { "additionalProperties": true, "type": "object", "title": "Matrix" }
+        },
+        "type": "object",
+        "required": ["evaluation_detail", "period_comparison", "comments", "matrix"],
+        "title": "TeacherDashboardOut",
+        "description": "Combined dashboard data for a teacher: evaluation detail, period comparison, comments, and matrix."
       },
       "TeacherEvaluationDetail": {
         "properties": {
