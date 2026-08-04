@@ -29,7 +29,6 @@ src/
 ├── context/      # React Context providers (cross-cutting concerns, NOT server or domain state)
 ├── features/     # Business/domain logic, sliced by feature (see below)
 ├── lib/          # Framework-agnostic utilities/helpers (date formatting, cn(), debounce helpers, etc.)
-└── pages/        # Route-level components. Thin: compose features, no business logic.
 ```
 
 ### Import direction (never violate this)
@@ -50,8 +49,12 @@ Every folder under `features/` follows this exact shape:
 features/users/
 ├── api/            # Single barrel: fetch/service functions + the React Query hooks that use them
 │   └── index.ts
+├── store/          # Optional: Zustand stores for this feature's own client state
+│   ├── useUsersFilterStore.ts
+│   └── index.ts    # Barrel — exports every store in this folder
 ├── hooks/          # Optional: feature-specific hooks that are NOT about fetching (e.g. local filter/search state)
-│   └── useUserFilters.ts
+│   ├── useUserSearch.ts
+│   └── index.ts    # Barrel — exports every hook in this folder
 ├── components/     # Feature-scoped presentational/container components
 │   ├── UserList.tsx
 │   ├── UserCard.tsx
@@ -59,10 +62,13 @@ features/users/
 ├── types/          # TypeScript types/interfaces for this feature
 │   ├── user.types.ts
 │   └── index.ts    # Barrel — exports every type in this folder
-└── index.ts        # Public API — re-exports everything from api/, components/, types/ (and hooks/ if present)
+├── pages/          # This feature's own page-level components (full-page composition)
+│   ├── UsersPage.tsx
+│   └── index.ts    # Barrel — exports every page in this folder
+└── index.ts        # Public API — re-exports everything from api/, store/, hooks/, components/, types/, and pages/
 ```
 
-Only create the subfolders a feature actually needs — a tiny feature might skip `hooks/`, but every feature always has `api/index.ts`, `components/index.ts` (if it has components), `types/index.ts` (if it has types), and the top-level `index.ts`.
+Only create the subfolders a feature actually needs — a tiny feature might skip `hooks/`, `store/`, or `pages/`. Every feature always has `api/index.ts` and the top-level `index.ts`; whichever of `store/`, `hooks/`, `components/`, `types/`, `pages/` exist must have their own `index.ts` barrel.
 
 ### `api/` — fetch functions + React Query hooks in one barrel
 
@@ -117,6 +123,36 @@ export function useCreateUser() {
 }
 ```
 
+### `store/` — Zustand stores for this feature (optional)
+
+- Contains this feature's Zustand stores — shared **client** state specific to this feature (UI state, selections, filters kept across components). This is not for server data — that always goes through `api/`.
+- One store per file, named `use<Domain>Store.ts`, exporting a single `use<Domain>Store` hook.
+- Mandatory `store/index.ts` barrel that re-exports every store hook in the folder.
+- If the feature has no client state worth centralizing, skip this folder entirely.
+
+```ts
+// features/cart/store/useCartStore.ts
+import { create } from 'zustand'
+import type { CartItem } from '../types/cart.types'
+
+interface CartState {
+  items: CartItem[]
+  addItem: (item: CartItem) => void
+  removeItem: (id: string) => void
+}
+
+export const useCartStore = create<CartState>((set) => ({
+  items: [],
+  addItem: (item) => set((s) => ({ items: [...s.items, item] })),
+  removeItem: (id) => set((s) => ({ items: s.items.filter((i) => i.id !== id) })),
+}))
+```
+
+```ts
+// features/cart/store/index.ts
+export { useCartStore } from './useCartStore'
+```
+
 ### `hooks/` — non-fetch feature hooks (optional)
 
 - React Query hooks now live in `api/index.ts` (see above), **not here**. This folder is only for feature-specific hooks that have nothing to do with server data — local UI state, derived values, a debounced search input, etc.
@@ -165,20 +201,55 @@ export { UserCard } from './UserCard'
 export type { User, NewUser } from './user.types'
 ```
 
+### `pages/` (inside a feature)
+
+- Contains this feature's own page-level components — the full-page UI for a route, composed from this feature's `components/`, the hooks exported from `api/`, `hooks/`, and `store/`. Same "thin" rule as top-level pages: layout + wiring only, no business logic (that stays in `api/`, `hooks/`, `store/`).
+- One page component per file, PascalCase, suffixed `Page` (e.g. `UsersPage.tsx`, `UserDetailPage.tsx`).
+- Mandatory `pages/index.ts` barrel that re-exports every page in the folder.
+- If the feature has no full-page view of its own (e.g. it's only consumed as a widget inside other pages), skip this folder entirely.
+
+```tsx
+// features/users/pages/UsersPage.tsx
+import { UserList } from '../components'
+import { useGetUsers } from '../api'
+
+/**
+ * Full page listing all users.
+ */
+export function UsersPage() {
+  const { data: users, isLoading } = useGetUsers()
+  return (
+    <div className="p-6">
+      <h1 className="mb-4 text-xl font-semibold">Users</h1>
+      <UserList users={users} isLoading={isLoading} />
+    </div>
+  )
+}
+```
+
+```ts
+// features/users/pages/index.ts
+export { UsersPage } from './UsersPage'
+```
+
+- The top-level `src/pages/` file that wouter actually mounts stays a thin wrapper around this — see the top-level `pages/` section below.
+
 ### `index.ts` — public API (barrel)
 
-- Re-exports **everything** the feature exposes, by re-exporting each subfolder's own barrel: hooks and query keys from `api/index.ts` (the raw request functions stay private automatically, since they were never exported from that file), components from `components/index.ts`, types from `types/index.ts`, and hooks from `hooks/index.ts` if that folder exists.
-- Every subfolder barrel (`api/index.ts`, `components/index.ts`, `types/index.ts`, `hooks/index.ts`) is the single source of truth for what that subfolder exposes — the feature's top-level `index.ts` never re-exports individual files directly, only the subfolder barrels:
+- Re-exports **everything** the feature exposes, by re-exporting each subfolder's own barrel: hooks and query keys from `api/index.ts` (the raw request functions stay private automatically, since they were never exported from that file), stores from `store/index.ts`, hooks from `hooks/index.ts`, components from `components/index.ts`, types from `types/index.ts`, and pages from `pages/index.ts` — whichever of these subfolders exist.
+- Every subfolder barrel (`api/index.ts`, `store/index.ts`, `hooks/index.ts`, `components/index.ts`, `types/index.ts`, `pages/index.ts`) is the single source of truth for what that subfolder exposes — the feature's top-level `index.ts` never re-exports individual files directly, only the subfolder barrels:
 
 ```ts
 // features/users/index.ts
 export * from './api'
+export * from './store' // only if the feature has a store/ folder
+export * from './hooks' // only if the feature has a hooks/ folder
 export * from './components'
 export * from './types'
-export * from './hooks' // only if the feature has a hooks/ folder
+export * from './pages' // only if the feature has a pages/ folder
 ```
 
-- `components/index.ts` and `types/index.ts` are mandatory whenever those folders exist (see their sections above). `hooks/index.ts` follows the same pattern if `hooks/` exists.
+- `components/index.ts` and `types/index.ts` are mandatory whenever those folders exist (see their sections above). `hooks/index.ts`, `store/index.ts`, and `pages/index.ts` follow the same pattern whenever those folders exist.
 
 ## Other top-level folders
 
@@ -209,18 +280,26 @@ export * from './hooks' // only if the feature has a hooks/ folder
 ### `pages/`
 
 - One file (or folder) per route, mounted via wouter's `<Route>`.
-- Pages are thin: they compose feature components/hooks and lay out the page. No direct API/Firebase calls, no inline business logic — if a page needs logic, that logic belongs in a feature hook.
+- Pages are thin: they compose feature components/hooks and lay out the page. No direct API/Firebase calls, no inline business logic — if a page needs logic, that logic belongs in a feature hook, store, or the feature's own `pages/` component.
+- If a route maps 1:1 onto a single feature's page (the common case), keep this file a thin re-export of that feature's `pages/` component instead of re-composing it here:
 
 ```tsx
 // pages/UsersPage.tsx
-import { UserList, useGetUsers } from '@/features/users'
+export { UsersPage as default } from '@/features/users'
+```
 
-export default function UsersPage() {
-  const { data: users, isLoading } = useGetUsers()
+- If a route needs to compose pieces from **multiple** features into one screen, do that composition here directly — still layout + wiring only, no business logic:
+
+```tsx
+// pages/DashboardPage.tsx
+import { RevenueChart } from '@/features/analytics'
+import { RecentUsersList } from '@/features/users'
+
+export default function DashboardPage() {
   return (
-    <div className="p-6">
-      <h1 className="mb-4 text-xl font-semibold">Users</h1>
-      <UserList users={users} isLoading={isLoading} />
+    <div className="grid grid-cols-2 gap-6 p-6">
+      <RevenueChart />
+      <RecentUsersList />
     </div>
   )
 }
@@ -228,7 +307,7 @@ export default function UsersPage() {
 
 ## Zustand conventions
 
-- One store per domain/concern, colocated where it's used: shared/app-wide stores go in `config/` or a dedicated `store/` folder if it grows; feature-specific stores go inside that feature (e.g. `features/cart/hooks/useCartStore.ts` or `features/cart/store.ts`).
+- One store per domain/concern. App-wide/shared stores go in a dedicated top-level `store/` folder (with its own `index.ts` barrel) if the app grows enough to need one, or `config/` for simple config-like state. Feature-specific stores always live in `features/<name>/store/` (see that feature section above) — never in `hooks/` or a loose `store.ts` file.
 - Name store hooks `use<Domain>Store`.
 - Use selectors to avoid unnecessary re-renders: `const count = useCartStore((s) => s.items.length)`, never destructure the whole store.
 - Keep actions inside the store definition; components call actions, they don't mutate state directly.
@@ -269,14 +348,14 @@ All code must be written so it needs no manual fixing to pass lint/format:
 
 ## Documentation conventions (avoid duplicating code)
 
-The barrels (`components/index.ts`, `types/index.ts`, `api/index.ts`, `hooks/index.ts` per feature, plus the top-level `components/` and `lib/`) are the map of everything that already exists in the app. Documentation exists to make that map readable so nobody re-implements something that's already there.
+The barrels (`api/index.ts`, `store/index.ts`, `hooks/index.ts`, `components/index.ts`, `types/index.ts`, `pages/index.ts` per feature, plus the top-level `components/` and `lib/`) are the map of everything that already exists in the app. Documentation exists to make that map readable so nobody re-implements something that's already there.
 
 ### Search before creating
 
-Before writing a new component, hook, or type, check in this order:
+Before writing a new component, hook, store, or page, check in this order:
 
 1. Top-level `components/` — is this generic enough that it should live (or already lives) there?
-2. The relevant feature's `components/index.ts`, `types/index.ts`, `api/index.ts`, `hooks/index.ts` — does this feature already expose something close?
+2. The relevant feature's `components/index.ts`, `types/index.ts`, `api/index.ts`, `hooks/index.ts`, `store/index.ts`, `pages/index.ts` — does this feature already expose something close?
 3. `lib/` — is this a formatting/validation helper that already exists?
 
 If something close already exists, extend it (add a prop, a variant, an optional param) instead of duplicating it. Only create a new file when nothing already covers the need.
@@ -334,12 +413,14 @@ Neither tool replaces the JSDoc — they're just a nicer way to browse it.
 
 ## Checklist when scaffolding a new feature
 
-0. Search existing barrels first (top-level `components/`, the target feature's `api/index.ts` / `components/index.ts` / `types/index.ts` / `hooks/index.ts`, and `lib/`) — extend something existing instead of duplicating it if a close match is found.
-1. Create `features/<name>/` with only the subfolders it needs (`api` is mandatory; add `hooks`, `components`, `types` only if needed).
+0. Search existing barrels first (top-level `components/`, the target feature's `api/index.ts` / `store/index.ts` / `components/index.ts` / `types/index.ts` / `hooks/index.ts` / `pages/index.ts`, and `lib/`) — extend something existing instead of duplicating it if a close match is found.
+1. Create `features/<name>/` with only the subfolders it needs (`api` is mandatory; add `store`, `hooks`, `components`, `types`, `pages` only if needed).
 2. Write `api/index.ts`: private raw request functions (Firebase/Firestore calls live only here), a query-key factory, and the exported React Query hooks that wrap those requests, with proper invalidation on mutations. Add a short JSDoc block above each exported hook.
-3. If the feature needs non-fetch hooks (debounce, local filters, etc.), add them in `hooks/` with its own `index.ts` barrel and JSDoc on each hook.
-4. Write feature components in `components/`, styled with Tailwind, using shared primitives from top-level `components/` where possible, consuming data only through the hooks exported from `api/index.ts`. Add `components/index.ts` re-exporting every component, and a JSDoc block with an `@example` above each.
-5. Add types in `types/`. Add `types/index.ts` re-exporting every type, with a one-line JSDoc description on each type and non-obvious field.
-6. Export the full public surface via `index.ts` (`export * from "./api"`, `"./components"`, `"./types"`, and `"./hooks"` if present) — nothing outside the feature imports from anywhere but this file, and the top-level `index.ts` only re-exports subfolder barrels, never individual files directly.
-7. Wire it into a page in `pages/` (thin composition only) and register the route in `config/routes.ts`.
-8. Double-check imports respect the layering rules above, and that lint/format are clean.
+3. If the feature needs its own client state (not server data), add a Zustand store in `store/` with its own `index.ts` barrel.
+4. If the feature needs non-fetch hooks (debounce, local filters, etc.), add them in `hooks/` with its own `index.ts` barrel and JSDoc on each hook.
+5. Write feature components in `components/`, styled with Tailwind, using shared primitives from top-level `components/` where possible, consuming data only through the hooks exported from `api/index.ts` (and state from `store/` if present). Add `components/index.ts` re-exporting every component, and a JSDoc block with an `@example` above each.
+6. Add types in `types/`. Add `types/index.ts` re-exporting every type, with a one-line JSDoc description on each type and non-obvious field.
+7. If the feature has a full-page view of its own, write it in `pages/`, composed only from this feature's `components/`, `api/`, `hooks/`, and `store/`. Add `pages/index.ts` re-exporting every page.
+8. Export the full public surface via `index.ts` (`export * from "./api"`, `"./store"`, `"./hooks"`, `"./components"`, `"./types"`, `"./pages"` — whichever exist) — nothing outside the feature imports from anywhere but this file, and the top-level `index.ts` only re-exports subfolder barrels, never individual files directly.
+9. Wire it into a page in the top-level `pages/` (thin composition, or a thin re-export of the feature's own page — see the `pages/` section) and register the route in `config/routes.ts`.
+10. Double-check imports respect the layering rules above, and that lint/format are clean.
