@@ -49,7 +49,7 @@ export function ConfirmDialog({
   open,
   onOpenChange,
   title,
-  description,
+  description = 'Esta acción no se puede deshacer. Se eliminarán todos los datos.',
   onConfirm,
   isPending = false,
   confirmLabel = 'Eliminar',
