@@ -60,25 +60,27 @@ export function AppLayout({
           {...header}
         />
 
-        <main className={cn('mx-auto w-full flex-1 px-4 py-6 lg:px-8 lg:py-8', mainClassName)}>
-          {authorized ? (
-            children
-          ) : (
-            <div className="flex h-[calc(100vh-200px)] flex-col items-center justify-center py-20 text-center">
-              <div className="mb-6 flex size-20 items-center justify-center rounded-full bg-red-100">
-                <span className="text-4xl text-red-500">!</span>
+        <div className="bg-muted/50 flex min-h-0 flex-1 flex-col overflow-hidden">
+          <main className={cn('mx-auto w-full flex-1 px-4 py-6 lg:px-8 lg:py-8', mainClassName)}>
+            {authorized ? (
+              children
+            ) : (
+              <div className="flex h-[calc(100vh-200px)] flex-col items-center justify-center py-20 text-center">
+                <div className="mb-6 flex size-20 items-center justify-center rounded-full bg-red-100">
+                  <span className="text-4xl text-red-500">!</span>
+                </div>
+
+                <h2 className="text-2xl font-semibold">Acceso no autorizado</h2>
+
+                <p className="mt-2 mb-4">No tienes permisos para acceder a esta página.</p>
+
+                <Link to="/dashboard">
+                  <Button variant="link">Volver al inicio</Button>
+                </Link>
               </div>
-
-              <h2 className="text-2xl font-semibold">Acceso no autorizado</h2>
-
-              <p className="mt-2 mb-4">No tienes permisos para acceder a esta página.</p>
-
-              <Link to="/dashboard">
-                <Button variant="link">Volver al inicio</Button>
-              </Link>
-            </div>
-          )}
-        </main>
+            )}
+          </main>
+        </div>
       </div>
     </div>
   )
