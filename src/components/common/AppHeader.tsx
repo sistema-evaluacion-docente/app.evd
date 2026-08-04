@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 
 import { useSidebar } from '@/components/ui/sidebar'
 import { Avatar } from '@/features/auth'
-// import { NotificationsBell } from '@/features/notifications/components/NotificationsBell'
+import { NotificationsBell } from '@/features/notifications'
 
 export interface AppHeaderProps {
   showBreadcrumb?: boolean
@@ -64,9 +64,8 @@ export function AppHeader({
             // </div>
           }
 
-          {/* <NotificationsBell /> */}
+          <NotificationsBell />
           <Avatar />
-          {/* <ThemeSwitcher /> */}
         </div>
       </div>
     </header>

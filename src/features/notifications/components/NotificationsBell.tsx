@@ -66,6 +66,12 @@ function NotificationItem({
   )
 }
 
+/**
+ * Bell button that opens a popover with the current user's notifications.
+ *
+ * @example
+ * <NotificationsBell />
+ */
 export function NotificationsBell() {
   const [open, setOpen] = useState(false)
   const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead } = useNotifications()
@@ -120,7 +126,7 @@ export function NotificationsBell() {
                 <p className="text-muted-foreground mt-4 text-sm">No tienes notificaciones</p>
               </div>
             ) : (
-              <div className="">
+              <div>
                 {notifications.map((notification) => (
                   <NotificationItem
                     key={notification.id}
