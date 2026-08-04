@@ -196,9 +196,10 @@ function DataTable<TData>({
         page: String(page),
         limit: String(limit),
         search: value,
+        ...extraFilterParams,
       }
     })
-  }, [page, limit, value, searchParams, setSearchParams, pageSize])
+  }, [page, limit, value, searchParams, setSearchParams, pageSize, extraFilterParams])
 
   return (
     <>

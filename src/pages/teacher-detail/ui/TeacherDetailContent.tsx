@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   TeacherNoEvaluationState,
+  useGetTeacherComments,
   useGetTeacherDetailByPeriod,
   type TeacherEvaluationDetailResponse,
 } from '@/features/evaluations'
@@ -14,11 +15,13 @@ import { ScoreBarInline } from '@/features/evaluations/components/ScoreBarInline
 import { ProfessorCategoryChart } from '@/features/teachers/components/professor-summary/ProfessorCategoryChart'
 import { ProfessorCategoryDetail } from '@/features/teachers/components/professor-summary/ProfessorCategoryDetail'
 import {
+  mapProfessorComments,
   professorScoreTone,
   type ProfessorCategory,
 } from '@/features/teachers/model/professorSummary'
 import { StatTile } from '@/shared/ui'
 import { Building2, Calendar } from 'lucide-react'
+import { ProfessorCommentsTable } from './ProfessorCommentsTable'
 
 type Props = {
   teacherId: number
@@ -107,6 +110,15 @@ function TeacherDetailContent({ teacherId }: Props) {
   const { data, isLoading } = useGetTeacherDetailByPeriod(teacherId, period)
   const detail = data?.data
 
+  const { data: commentsData } = useGetTeacherComments(detail?.evaluation_id, teacherId, {
+    enabled: !!detail?.evaluation_id,
+  })
+
+  const comments = useMemo(
+    () => (commentsData?.data ? mapProfessorComments(commentsData.data) : []),
+    [commentsData],
+  )
+
   const categories = useMemo(
     () => (detail ? mapDimensionsToCategories(detail.dimensions) : []),
     [detail],
@@ -135,24 +147,24 @@ function TeacherDetailContent({ teacherId }: Props) {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-8 lg:grid-cols-[350px_1fr]">
-      <aside className="space-y-6">
+    <div className="grid h-[calc(100vh-10rem)] grid-cols-1 gap-8 lg:grid-cols-[400px_1fr]">
+      <aside className="sticky top-10 space-y-6 self-start">
         <Card>
           <CardContent className="pt-4">
-            <div className="flex items-center gap-4">
+            <div className="flex items-start gap-4 py-4">
               <Avatar className="h-20 w-20 shrink-0">
                 <AvatarFallback>{detail.name?.at(0)?.toUpperCase() ?? '?'}</AvatarFallback>
                 <AvatarImage src={detail.avatar_url ?? ''} alt={detail.name ?? ''} />
               </Avatar>
               <div className="min-w-0">
-                <h1 className="text-xl font-semibold">{detail.name ?? '—'}</h1>
-                <p className="text-muted-foreground flex items-center gap-1.5 text-sm">
+                <h1 className="mb-2 text-2xl font-semibold">{detail.name ?? '—'}</h1>
+                <p className="text-muted-foreground flex items-center gap-1.5 text-base">
                   <Building2 size={14} />
                   Cód. {detail.institutional_code}
                 </p>
-                <p className="text-muted-foreground mt-1 flex items-center gap-1.5 text-sm">
+                <p className="text-muted-foreground mt-1 flex items-center gap-1.5 text-base">
                   <Calendar size={14} />
-                  <Badge className="px-2 py-0.5 text-xs">{detail.period_name ?? '—'}</Badge>
+                  <Badge className="px-2 py-0.5 text-sm">{detail.period_name ?? '—'}</Badge>
                 </p>
               </div>
             </div>
@@ -183,7 +195,7 @@ function TeacherDetailContent({ teacherId }: Props) {
         </Card>
       </aside>
 
-      <div className="space-y-6">
+      <div className="space-y-6 overflow-y-auto pr-2 lg:pr-0">
         {selectedCategory ? (
           <ProfessorCategoryDetail
             category={selectedCategory}
@@ -198,6 +210,12 @@ function TeacherDetailContent({ teacherId }: Props) {
         )}
 
         <CoursesList data={detail} />
+
+        <ProfessorCommentsTable
+          comments={comments}
+          categories={detail.dimensions.map((d) => ({ name: d.dimension }))}
+          period={detail.period_name}
+        />
       </div>
     </div>
   )
