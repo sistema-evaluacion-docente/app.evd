@@ -1,13 +1,14 @@
-import { Button } from '@/components/ui/button'
-import { SidebarProvider } from '@/components/ui/sidebar'
-import { cn } from '@/lib/utils'
+import { ShieldAlert } from 'lucide-react'
 import { type ReactNode } from 'react'
 import { Link, useLocation } from 'wouter'
 
 import AppLayoutSkeleton from '@/components/skeletons/AppLayoutSkeleton'
+import { Button } from '@/components/ui/button'
+import { SidebarProvider } from '@/components/ui/sidebar'
 import securityConfig from '@/config/security'
 import { UserNotAuth } from '@/features/auth'
 import useAuth from '@/hooks/useAuth'
+import { cn } from '@/lib/utils'
 import { AppHeader, type AppHeaderProps } from './AppHeader'
 import { AppSidebar } from './AppSidebar'
 import { AutoBreadcrumb } from './AutoBreadcrumb'
@@ -84,25 +85,34 @@ function AppLayoutContent({
       <div className="flex min-w-0 flex-1 flex-col">
         <AppHeader showBreadcrumb={true} breadcrumb={<AutoBreadcrumb />} {...header} />
 
-        <div className="bg-muted flex min-h-0 flex-1 flex-col overflow-hidden">
-          <main className={cn('mx-auto w-full flex-1 px-4 py-6 lg:px-8 lg:py-8', mainClassName)}>
+        <div className="bg-ink-50 relative flex min-h-0 flex-1 flex-col overflow-hidden">
+          <main
+            className={cn(
+              'relative mx-auto w-full flex-1 overflow-y-auto px-4 py-6 lg:px-8 lg:py-8',
+              mainClassName,
+            )}
+          >
             {authorized ? (
               <>
                 {title ? <PageTitle>{title}</PageTitle> : null}
                 {children}
               </>
             ) : (
-              <div className="flex h-[calc(100vh-200px)] flex-col items-center justify-center py-20 text-center">
-                <div className="mb-6 flex size-20 items-center justify-center rounded-full bg-red-100">
-                  <span className="text-4xl text-red-500">!</span>
+              <div className="flex h-[calc(100vh-220px)] flex-col items-center justify-center py-20 text-center">
+                <div className="animate-rise border-brand-200 bg-brand-50 shadow-pop mb-6 flex size-20 items-center justify-center rounded-2xl border">
+                  <ShieldAlert aria-hidden="true" className="text-brand-600 size-9" />
                 </div>
 
-                <h2 className="text-2xl font-semibold">Acceso no autorizado</h2>
+                <h2 className="animate-rise text-2xl font-bold tracking-tight">
+                  Acceso no autorizado
+                </h2>
 
-                <p className="mt-2 mb-4">No tienes permisos para acceder a esta página.</p>
+                <p className="text-muted-foreground mt-2 mb-6 max-w-sm">
+                  No tienes permisos para acceder a esta página.
+                </p>
 
                 <Link to="/dashboard">
-                  <Button variant="link">Volver al inicio</Button>
+                  <Button>Volver al inicio</Button>
                 </Link>
               </div>
             )}
