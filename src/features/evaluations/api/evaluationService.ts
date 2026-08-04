@@ -8,6 +8,7 @@ import type {
   EvaluationSummary,
   TeacherCommentsData,
   TeacherEvaluationDetail,
+  TeacherEvaluationDetailResponse,
 } from '../types/TeacherEvaluation'
 
 export type { AiStatus } from '../types/Evaluation'
@@ -92,6 +93,15 @@ export function getTeacherEvaluationDetail(
   teacherId: number,
 ): Promise<ResponseAPI<TeacherEvaluationDetail>> {
   return api.get(`/evaluations/${evaluationId}/teachers/${teacherId}`)
+}
+
+export function getTeacherDetailByPeriod(
+  teacherId: number,
+  period: string,
+): Promise<ResponseAPI<TeacherEvaluationDetailResponse>> {
+  return api.get(`/evaluations/teachers/${teacherId}/detail`, {
+    params: { period_name: period },
+  })
 }
 
 export function getTeacherComments(

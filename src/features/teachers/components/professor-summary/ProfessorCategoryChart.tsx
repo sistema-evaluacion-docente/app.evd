@@ -1,5 +1,4 @@
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChevronRight } from 'lucide-react'
 
 import { professorScoreTone, type ProfessorCategory } from '../../model/professorSummary'
@@ -19,7 +18,7 @@ export function ProfessorCategoryChart({ categories, onSelect }: ProfessorCatego
         <CardTitle>Desglose de categorias</CardTitle>
 
         <p className="text-muted-foreground mt-1 text-sm">
-          Seleccione una categoria para ver el desglose de preguntas y sus comentarios.
+          Seleccione una categoria para ver el desglose de preguntas.
         </p>
       </CardHeader>
 
@@ -48,43 +47,6 @@ export function ProfessorCategoryChart({ categories, onSelect }: ProfessorCatego
                   className="bg-primary/80 absolute inset-y-0 left-0 rounded-md"
                   style={{ width: `${(category.score / 5) * 100}%` }}
                 />
-
-                <HoverCard>
-                  <HoverCardTrigger
-                    delay={150}
-                    closeDelay={80}
-                    render={
-                      <span
-                        className="absolute -inset-y-1 -ml-1.25 flex w-2.75 justify-center"
-                        style={{ left: `${(category.previousScore / 5) * 100}%` }}
-                      />
-                    }
-                  >
-                    <span className="bg-foreground/70 h-full w-0.5 rounded-full" />
-                  </HoverCardTrigger>
-
-                  <HoverCardContent side="top" sideOffset={8} className="w-auto min-w-52 p-3.5">
-                    <p className="text-muted-foreground text-xs font-medium">Periodo anterior</p>
-
-                    <p className="num text-foreground mt-1 text-xl font-semibold tabular-nums">
-                      {category.previousScore.toFixed(2)}
-                      <span className="text-muted-foreground text-sm font-normal"> / 5.0</span>
-                    </p>
-
-                    <p className="border-border text-foreground/70 mt-1.5 border-t pt-1.5 text-xs">
-                      Su calificacion:{' '}
-                      <span
-                        className={`num font-semibold tabular-nums ${professorScoreTone(category.score)}`}
-                      >
-                        {category.score.toFixed(2)}
-                      </span>{' '}
-                      <span className="num text-muted-foreground tabular-nums">
-                        ({category.score >= category.previousScore ? '+' : ''}
-                        {(category.score - category.previousScore).toFixed(2)})
-                      </span>
-                    </p>
-                  </HoverCardContent>
-                </HoverCard>
               </span>
 
               <span
@@ -111,20 +73,6 @@ export function ProfessorCategoryChart({ categories, onSelect }: ProfessorCatego
           </div>
         </div>
       </CardContent>
-
-      <CardFooter>
-        <div className="border-border mt-3.5 flex flex-wrap items-center gap-5">
-          <span className="text-foreground/80 inline-flex items-center gap-2 text-sm">
-            <span className="bg-primary/90 size-3.5 rounded-sm" />
-            Su calificacion
-          </span>
-
-          <span className="text-foreground/80 inline-flex items-center gap-2 text-sm">
-            <span className="bg-foreground/60 h-3.5 w-0.5 rounded-full" />
-            Periodo anterior
-          </span>
-        </div>
-      </CardFooter>
     </Card>
   )
 }
