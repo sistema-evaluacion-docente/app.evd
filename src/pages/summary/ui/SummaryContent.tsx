@@ -32,7 +32,7 @@ function SummaryContent() {
 
   return (
     <>
-      <TeacherProfileHeader teacherId={teacherId} evaluation={evaluation} />
+      <TeacherProfileHeader teacherId={teacherId} />
 
       {noData ? (
         <NoEvaluationState />

@@ -9,44 +9,38 @@ import {
   professorScoreTone,
   type ProfessorCategory,
   type ProfessorComment,
+  type ProfessorPeriod,
   type ProfessorQuestion,
 } from '../../model/professorSummary'
-import { ProfessorCommentsTable } from './ProfessorCommentsTable'
 
 export interface ProfessorCategoryDetailProps {
   category: ProfessorCategory
   categories: ProfessorCategory[]
   comments: ProfessorComment[]
   teacherId: number
+  periodValue?: string
+  periods?: ProfessorPeriod[]
   onBack: () => void
   onSelect: (categoryId: string) => void
 }
 
-function ComparisonBars({ question }: { question: ProfessorQuestion }) {
-  const rows = [
-    { label: 'Actual', value: question.mine, fill: 'bg-primary/80' },
-    { label: 'Anterior', value: question.previous, fill: 'bg-blue-400/30' },
-  ]
+function ScoreBar({ value }: { value: number }) {
   return (
     <div className="flex w-full min-w-44 flex-col gap-1.5">
-      {rows.map((row) => (
-        <div key={row.label} className="flex items-center gap-2">
-          <span className="text-muted-foreground w-16 shrink-0 text-xs">{row.label}</span>
+      <div className="flex items-center gap-2">
+        <Tooltip>
+          <TooltipTrigger className="bg-border block h-4 flex-1 cursor-default overflow-hidden rounded-full">
+            <span
+              className="bg-primary/80 block h-full rounded-full"
+              style={{ width: `${(value / 5) * 100}%` }}
+            />
+          </TooltipTrigger>
 
-          <Tooltip>
-            <TooltipTrigger className="bg-border block h-2 flex-1 cursor-default overflow-hidden rounded-full">
-              <span
-                className={`block h-full rounded-full ${row.fill}`}
-                style={{ width: `${(row.value / 5) * 100}%` }}
-              />
-            </TooltipTrigger>
-
-            <TooltipContent>
-              {row.label}: {row.value.toFixed(2)} / 5.00
-            </TooltipContent>
-          </Tooltip>
-        </div>
-      ))}
+          <TooltipContent>
+            Puntaje: {value.toFixed(2)} / 5.00
+          </TooltipContent>
+        </Tooltip>
+      </div>
     </div>
   )
 }
@@ -54,7 +48,6 @@ function ComparisonBars({ question }: { question: ProfessorQuestion }) {
 export function ProfessorCategoryDetail({
   category,
   categories,
-  comments,
   onBack,
   onSelect,
 }: ProfessorCategoryDetailProps) {
@@ -76,26 +69,21 @@ export function ProfessorCategoryDetail({
       ),
     },
     {
-      header: 'Comparacion',
-      headerClassName: 'w-70',
+      header: 'Puntaje',
+      headerClassName: 'w-48',
       cellClassName: 'align-top py-4',
-      cell: (question) => <ComparisonBars question={question} />,
+      cell: (question) => <ScoreBar value={question.mine} />,
     },
     {
-      header: 'Puntaje',
+      header: '',
       headerClassName: 'text-right',
       cellClassName: 'align-top py-4 text-right whitespace-nowrap',
       cell: (question) => (
-        <>
-          <div
-            className={`num text-sm font-semibold tabular-nums ${professorScoreTone(question.mine)}`}
-          >
-            {question.mine.toFixed(2)}
-          </div>
-          <div className="num text-muted-foreground mt-1 text-xs tabular-nums">
-            {question.previous.toFixed(2)}
-          </div>
-        </>
+        <div
+          className={`num text-sm font-semibold tabular-nums ${professorScoreTone(question.mine)}`}
+        >
+          {question.mine.toFixed(2)}
+        </div>
       ),
     },
   ]
@@ -152,7 +140,7 @@ export function ProfessorCategoryDetail({
             <CardTitle>Desglose de preguntas</CardTitle>
 
             <p className="text-muted-foreground mt-1 text-sm">
-              Su calificacion en cada pregunta, comparada con el periodo anterior.
+              Su calificacion en cada pregunta de esta categoria.
             </p>
           </CardHeader>
 
@@ -162,19 +150,10 @@ export function ProfessorCategoryDetail({
               rows={category.questions}
               rowKey={(question) => question.code}
               headerVariant="muted"
-              minWidth={760}
+              minWidth={640}
             />
           </CardContent>
         </Card>
-      </Stagger>
-
-      <Stagger delay={0}>
-        <ProfessorCommentsTable
-          key={category.id}
-          comments={comments}
-          categories={categories}
-          defaultCategory={category.name}
-        />
       </Stagger>
     </section>
   )

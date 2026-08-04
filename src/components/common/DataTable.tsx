@@ -196,9 +196,10 @@ function DataTable<TData>({
         page: String(page),
         limit: String(limit),
         search: value,
+        ...extraFilterParams,
       }
     })
-  }, [page, limit, value, searchParams, setSearchParams, pageSize])
+  }, [page, limit, value, searchParams, setSearchParams, pageSize, extraFilterParams])
 
   return (
     <>
@@ -251,7 +252,7 @@ function DataTable<TData>({
       <div
         className={cn(
           'bg-background animate-fade-in overflow-x-auto',
-          borders ? 'rounded-xs border' : 'border-none',
+          borders ? 'rounded-md border' : 'border-none',
           containerClassName,
         )}
       >

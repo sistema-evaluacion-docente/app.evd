@@ -70,3 +70,18 @@ export interface TeacherEvaluationDetail {
   courses: TeacherCourse[];
   dimensions: EvaluationDimensionScore[];
 }
+
+export interface TeacherEvaluationDetailResponse {
+  teacher_id: number;
+  institutional_code: string;
+  name: string;
+  avatar_url: string | null;
+  contract_type: string;
+  evaluation_id: number;
+  period_code: string;
+  period_name: string;
+  overall_average: number;
+  group_count: number;
+  courses: TeacherCourse[];
+  dimensions: EvaluationDimensionScore[];
+}

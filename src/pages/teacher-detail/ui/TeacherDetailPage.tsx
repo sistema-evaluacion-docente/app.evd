@@ -8,7 +8,7 @@ export function TeacherDetailPage() {
   const teacherId = parseInt(id ?? '0', 10)
 
   return (
-    <AppLayout header={{}}>
+    <AppLayout mainClassName='p-0'>
       <TeacherDetailContent teacherId={teacherId} />
     </AppLayout>
   )

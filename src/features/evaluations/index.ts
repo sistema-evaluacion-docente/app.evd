@@ -22,6 +22,7 @@ export type {
   TeacherCommentsData,
   TeacherCourse,
   TeacherEvaluationDetail,
+  TeacherEvaluationDetailResponse,
   TeacherRankItem,
 } from './types/TeacherEvaluation'
 
@@ -40,6 +41,7 @@ export {
   getQuestions,
   getQuestionScores,
   getTeacherComments,
+  getTeacherDetailByPeriod,
   getTeacherEvaluationDetail,
   getTeacherMatrix,
   getTeacherVsDepartment,
@@ -88,6 +90,7 @@ export { default as useGetEvaluationScoresPaginated } from './hooks/useGetEvalua
 export { default as useGetEvaluationSummary } from './hooks/useGetEvaluationSummary'
 export { default as useGetQuestions } from './hooks/useGetQuestions'
 export { default as useGetTeacherComments } from './hooks/useGetTeacherComments'
+export { default as useGetTeacherDetailByPeriod } from './hooks/useGetTeacherDetailByPeriod'
 export { default as useGetTeacherEvaluationDetail } from './hooks/useGetTeacherEvaluationDetail'
 export { default as useGetTeacherMatrix } from './hooks/useGetTeacherMatrix'
 export { default as useGetTeacherVsDepartment } from './hooks/useGetTeacherVsDepartment'
