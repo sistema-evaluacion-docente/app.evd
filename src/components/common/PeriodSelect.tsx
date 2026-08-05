@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Spinner } from '@/components/ui/spinner'
-import { useGetAcademicPeriods } from '@/features/evaluations'
+import { useAcademicPeriodsStore, useGetAcademicPeriods } from '@/features/periods'
 import { cn } from '@/lib/utils'
 
 export interface PeriodSelectOption {
@@ -46,7 +46,16 @@ export function PeriodSelect({
   const [searchParams, setSearchParams] = useSearchParams()
 
   const { data: periodsData, isLoading } = useGetAcademicPeriods()
-  const options = (externalOptions ?? periodsData?.data ?? []).sort((a, b) =>
+  const setPeriods = useAcademicPeriodsStore((s) => s.setPeriods)
+  const cachedPeriods = useAcademicPeriodsStore((s) => s.periods)
+
+  useEffect(() => {
+    if (periodsData?.data && periodsData.data.length > 0) {
+      setPeriods(periodsData.data)
+    }
+  }, [periodsData, setPeriods])
+
+  const options = (externalOptions ?? periodsData?.data ?? cachedPeriods ?? []).sort((a, b) =>
     b.name.localeCompare(a.name),
   )
 
