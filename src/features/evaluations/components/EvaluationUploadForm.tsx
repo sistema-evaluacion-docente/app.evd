@@ -63,7 +63,7 @@ export function EvaluationUploadForm() {
           <AlertDescription>
             Para evitar problemas al procesar la evaluación, verifica que los docentes ya estén
             registrados antes de continuar.{' '}
-            <TransitionLink href="/teachers/upload">Ir a cargar docentes</TransitionLink>
+            <TransitionLink href="/docentes/cargar">Ir a cargar docentes</TransitionLink>
           </AlertDescription>
         </Alert>
 
