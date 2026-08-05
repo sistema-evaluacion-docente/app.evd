@@ -182,7 +182,7 @@ function DateRangeFilter({
               type="button"
               variant="outline"
               className={cn(
-                'w-full justify-start text-left font-normal',
+                'flex-1 w-full justify-start text-left font-normal',
                 !value?.from && 'text-muted-foreground',
               )}
             />
