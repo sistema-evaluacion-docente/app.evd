@@ -85,6 +85,7 @@ export function AppSidebar() {
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton
                       isActive={active}
+                      className={'cursor-pointer'}
                       onClick={() => {
                         setOpenMobile(false)
                         navigate(item.path)
