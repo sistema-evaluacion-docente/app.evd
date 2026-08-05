@@ -1,89 +1,54 @@
 import { Route, Switch } from 'wouter'
 
-import { DevLogFloat } from '@/features/dev-log'
-import { EvaluationLogsProvider } from '@/features/evaluations'
-import { SettingsPage } from '@/features/settings'
-import { AdminDepartmentsPage } from '@/pages/admin-departments'
-import { AdminFacultiesPage } from '@/pages/admin-faculties'
-import { AdminLogsPage } from '@/pages/admin-logs'
-import { DashboardPage } from '@/pages/dashboard'
-import { DirectorsPage } from '@/pages/directors'
-import { EvaluationsPage } from '@/pages/evaluations'
-import { EvaluationCommentsPage } from '@/pages/evaluations/comments'
-import { EvaluationDetailPage } from '@/pages/evaluations/detail'
-import { EvaluationDimensionsPage } from '@/pages/evaluations/dimensions'
-import { EvaluationGroupsPage } from '@/pages/evaluations/groups'
-import { EvaluationTeachersPage } from '@/pages/evaluations/teachers'
-import { UploadEvaluationsPage } from '@/pages/evaluations/upload'
-import { MyProfilePage } from '@/pages/my-profile'
-import { NotFoundPage } from '@/pages/not-found'
-import { TeacherComparisonPage } from '@/pages/teacher-comparison'
-import { TeacherDetailPage } from '@/pages/teacher-detail'
-import { TeachersPage } from '@/pages/teachers'
-import { UploadTeachersPage } from '@/pages/upload-teachers'
-
-import { IS_DEVELOPMENT } from '@/config'
-import LoginPage from '@/features/auth/pages/LoginPage'
+import { AppLayout } from '@/components/common/AppLayout'
+import { LoginPage } from '@/features/auth'
+import { DashboardPage } from '@/features/dashboard'
+import { EvaluationLogsPanel, EvaluationsPage, EvaluationUploadPage } from '@/features/evaluations'
+import { NotFoundPage } from '@/features/not-found'
 import { PeriodsPage } from '@/features/periods'
-import MyPeriodsPage from '@/pages/my-periods'
-import { ProfessorSummaryPage } from '@/pages/professor-summary'
-import UsersPage from '@/pages/users'
+import { TeachersPage } from '@/features/teachers'
 
 function App() {
   return (
-    <EvaluationLogsProvider>
+    <>
       <Switch>
         <Route path="/login" component={LoginPage} />
-        <Route path="/" component={DashboardPage} />
 
-        {/* Director */}
-        <Route path="/teachers" component={TeachersPage} />
-        <Route path="/teachers/upload" component={UploadTeachersPage} />
-        <Route path="/teachers/:id/comparison" component={TeacherComparisonPage} />
-        <Route path="/teachers/:id" component={TeacherDetailPage} />
+        <Route path="/">
+          <AppLayout>
+            <DashboardPage />
+          </AppLayout>
+        </Route>
 
-        {/* <Route path="/matrix" component={MatrixIndexPage} />
-        <Route path="/matrix/:id" component={MatrixPage} />
-        <Route path="/matrix-mock" component={MatrixPageMock} />
-        <Route path="/plans" component={PlansPage} />
-        <Route path="/plans/new" component={CreatePlanPage} />
-        <Route path="/plans/:id" component={PlanDetailPage} />
-        <Route path="/subjects" component={SubjectsPage} />
-        <Route path="/subjects/:id" component={SubjectDetailPage} /> */}
+        <Route path="/periodos">
+          <AppLayout>
+            <PeriodsPage />
+          </AppLayout>
+        </Route>
 
-        <Route path="/evaluations" component={EvaluationsPage} />
-        <Route path="/evaluations/:id/dimensions" component={EvaluationDimensionsPage} />
-        <Route path="/evaluations/:id/teachers" component={EvaluationTeachersPage} />
-        <Route path="/evaluations/:id/groups" component={EvaluationGroupsPage} />
-        <Route path="/evaluations/:id/comments" component={EvaluationCommentsPage} />
-        <Route path="/evaluations/upload" component={UploadEvaluationsPage} />
-        <Route path="/evaluations/:id" component={EvaluationDetailPage} />
+        <Route path="/docentes">
+          <AppLayout>
+            <TeachersPage />
+          </AppLayout>
+        </Route>
 
-        {/* <Route path="/upload-evaluations" component={UploadEvaluationsPage} /> */}
+        <Route path="/evaluaciones/cargar">
+          <AppLayout>
+            <EvaluationUploadPage />
+          </AppLayout>
+        </Route>
 
-        {/* Super Admin */}
-        <Route path="/admin/users" component={UsersPage} />
-        <Route path="/admin/directors" component={DirectorsPage} />
-        <Route path="/admin/periods" component={PeriodsPage} />
-        <Route path="/admin/settings" component={SettingsPage} />
-        <Route path="/admin/faculties" component={AdminFacultiesPage} />
-        <Route path="/admin/departments" component={AdminDepartmentsPage} />
-        <Route path="/admin/logs" component={AdminLogsPage} />
+        <Route path="/evaluaciones">
+          <AppLayout>
+            <EvaluationsPage />
+          </AppLayout>
+        </Route>
 
-        {/* Docente */}
-        {/* <Route path="/summary" component={SummaryPage} />
-        <Route path="/my-plans" component={MyPlansPage} />
-        <Route path="/me/history" component={MyHistoryPage} /> */}
-        <Route path="/me/profile" component={MyProfilePage} />
-        <Route path="/periods" component={MyPeriodsPage} />
-        <Route path="/periods/:id" component={ProfessorSummaryPage} />
-
-        {/* Default: 404 */}
         <Route component={NotFoundPage} />
       </Switch>
 
-      {IS_DEVELOPMENT && <DevLogFloat />}
-    </EvaluationLogsProvider>
+      <EvaluationLogsPanel />
+    </>
   )
 }
 
