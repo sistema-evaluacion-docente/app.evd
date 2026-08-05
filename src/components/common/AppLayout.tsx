@@ -12,7 +12,6 @@ import { cn } from '@/lib/utils'
 import { AppHeader, type AppHeaderProps } from './AppHeader'
 import { AppSidebar } from './AppSidebar'
 import { AutoBreadcrumb } from './AutoBreadcrumb'
-import { PageTitle } from './PageTitle'
 
 export interface AppLayoutProps {
   children: ReactNode
@@ -32,7 +31,7 @@ function isAuthorizedForPage(path: string, role: string | null): boolean {
 
 export function AppLayout({
   children,
-  mainClassName = 'max-w-[1320px] space-y-5',
+  mainClassName = 'max-w-6xl space-y-5',
   header,
   title,
 }: AppLayoutProps) {
@@ -71,13 +70,7 @@ interface AppLayoutContentProps {
   title?: string
 }
 
-function AppLayoutContent({
-  children,
-  authorized,
-  mainClassName,
-  header,
-  title,
-}: AppLayoutContentProps) {
+function AppLayoutContent({ children, authorized, mainClassName, header }: AppLayoutContentProps) {
   return (
     <>
       <AppSidebar />
@@ -93,10 +86,7 @@ function AppLayoutContent({
             )}
           >
             {authorized ? (
-              <>
-                {title ? <PageTitle>{title}</PageTitle> : null}
-                {children}
-              </>
+              <>{children}</>
             ) : (
               <div className="flex h-[calc(100vh-220px)] flex-col items-center justify-center py-20 text-center">
                 <div className="animate-rise border-brand-200 bg-brand-50 shadow-pop mb-6 flex size-20 items-center justify-center rounded-2xl border">
