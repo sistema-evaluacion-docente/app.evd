@@ -1,5 +1,5 @@
 import type { PaginationState, SortingState } from '@tanstack/react-table'
-import { Eye, Pencil } from 'lucide-react'
+import { Building2, Eye, Pencil } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { useDebounce, useDebouncedCallback } from 'use-debounce'
@@ -9,6 +9,8 @@ import { DataTableFilters, type FilterConfig } from '@/components/common/DataTab
 import { DynamicFormDrawer, type FieldConfig } from '@/components/common/DynamicFormDrawer'
 import { PeriodSelect } from '@/components/common/PeriodSelect'
 import { useAuthStore } from '@/features/auth'
+import { useGetDepartments, useUpdateDepartment } from '@/features/departments'
+import { useGetFaculties } from '@/features/faculties'
 import { useAcademicPeriodsStore } from '@/features/periods'
 import { useNavigate } from '@/hooks/useNavigate'
 import { useTableFilters } from '@/hooks/useTableFilters'
@@ -78,6 +80,7 @@ export function TeachersList() {
   const [sorting, setSorting] = useState<SortingState>([])
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 })
   const [editTarget, setEditTarget] = useState<TeacherRecord | null>(null)
+  const [editDepartmentOpen, setEditDepartmentOpen] = useState(false)
   const { filters, setFilters } = useTableFilters('teachers', {
     active: true,
     hasAverage: true,
@@ -97,6 +100,19 @@ export function TeachersList() {
     sortBy: debouncedFilters.sortBy as string | undefined,
   })
   const { mutate: updateTeacher, isPending: isUpdating } = useUpdateTeacher()
+
+  // Fetch department data for editing
+  const { data: departmentData } = useGetDepartments({
+    limit: 1,
+    search: '',
+  })
+  const currentDepartment = departmentData?.data?.[0]
+
+  // Fetch faculties for the department dropdown
+  const { data: facultiesData } = useGetFaculties({ limit: 100 })
+  const faculties = facultiesData?.data ?? []
+
+  const { mutate: updateDepartment, isPending: isUpdatingDepartment } = useUpdateDepartment()
 
   const editFields: FieldConfig[] = editTarget
     ? [
@@ -165,6 +181,62 @@ export function TeachersList() {
     )
   }
 
+  const departmentFields: FieldConfig[] = currentDepartment
+    ? [
+        {
+          name: 'name',
+          label: 'Nombre del departamento',
+          required: true,
+          defaultValue: currentDepartment.name,
+        },
+        {
+          name: 'code',
+          label: 'Código',
+          required: true,
+          defaultValue: currentDepartment.code,
+        },
+        {
+          name: 'faculty_id',
+          label: 'Facultad',
+          type: 'select',
+          required: true,
+          defaultValue: String(currentDepartment.faculty_id),
+          options: faculties.map((f) => ({ label: f.name, value: String(f.id) })),
+        },
+        {
+          name: 'active',
+          label: 'Activo',
+          type: 'boolean',
+          defaultValue: String(currentDepartment.active),
+        },
+      ]
+    : []
+
+  const handleDepartmentUpdateSubmit = (values: Record<string, string>) => {
+    if (!currentDepartment) return
+
+    updateDepartment(
+      {
+        departmentId: currentDepartment.id,
+        payload: {
+          name: values.name,
+          code: values.code,
+          faculty_id: Number(values.faculty_id),
+          active: values.active === 'true',
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success('Departamento actualizado exitosamente')
+          setEditDepartmentOpen(false)
+        },
+        onError: (error) => {
+          toast.error(error.message || 'Error al actualizar el departamento')
+        },
+      },
+    )
+  }
+
   const teachers = data?.data ?? []
   const pageCount = data?.pagination?.pages ?? 1
 
@@ -189,9 +261,14 @@ export function TeachersList() {
       },
     },
     {
-      label: 'Editar',
+      label: 'Editar docente',
       icon: <Pencil className="size-4" />,
       onClick: (row) => setEditTarget(row),
+    },
+    {
+      label: 'Editar departamento',
+      icon: <Building2 className="size-4" />,
+      onClick: () => setEditDepartmentOpen(true),
     },
   ]
 
@@ -259,6 +336,22 @@ export function TeachersList() {
           fields={editFields}
           onSubmit={handleUpdateSubmit}
           isSubmitting={isUpdating}
+          submitLabel="Guardar"
+          submitSubmittingLabel="Guardando..."
+        />
+      )}
+
+      {currentDepartment && (
+        <DynamicFormDrawer
+          key={`dept-${currentDepartment.id}`}
+          title={`Editar departamento: ${currentDepartment.name}`}
+          description="Actualiza los datos del departamento"
+          hideTrigger
+          open={editDepartmentOpen}
+          onOpenChange={setEditDepartmentOpen}
+          fields={departmentFields}
+          onSubmit={handleDepartmentUpdateSubmit}
+          isSubmitting={isUpdatingDepartment}
           submitLabel="Guardar"
           submitSubmittingLabel="Guardando..."
         />
