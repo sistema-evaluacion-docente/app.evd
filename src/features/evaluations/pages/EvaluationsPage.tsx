@@ -10,7 +10,7 @@ export default function EvaluationsPage() {
 
   return (
     <>
-      <PageTitle onAction={() => navigate('/evaluaciones/cargar')} actionLabel="Cargar Evaluación">
+      <PageTitle onAction={() => navigate('/evaluaciones/cargar')} actionLabel="Cargar evaluación">
         Evaluaciones
       </PageTitle>
 
