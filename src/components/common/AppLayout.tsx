@@ -26,7 +26,7 @@ function isAuthorizedForPage(path: string, role: string | null): boolean {
       (path === page.path || path.startsWith(page.path + '/')) && page.roles?.includes(role ?? ''),
   )
 
-  return !pageConfig || (role !== null && pageConfig.roles.includes(role))
+  return Boolean(pageConfig)
 }
 
 export function AppLayout({
@@ -89,7 +89,7 @@ function AppLayoutContent({ children, authorized, mainClassName, header }: AppLa
               <>{children}</>
             ) : (
               <div className="flex h-[calc(100vh-220px)] flex-col items-center justify-center py-20 text-center">
-                <div className="animate-rise border-brand-200 bg-brand-50 shadow-pop mb-6 flex size-20 items-center justify-center rounded-2xl border">
+                <div className="animate-rise border-brand-200 bg-brand-50 mb-6 flex size-20 items-center justify-center rounded-2xl border">
                   <ShieldAlert aria-hidden="true" className="text-brand-600 size-9" />
                 </div>
 
@@ -101,7 +101,7 @@ function AppLayoutContent({ children, authorized, mainClassName, header }: AppLa
                   No tienes permisos para acceder a esta página.
                 </p>
 
-                <Link to="/dashboard">
+                <Link to="/">
                   <Button>Volver al inicio</Button>
                 </Link>
               </div>
