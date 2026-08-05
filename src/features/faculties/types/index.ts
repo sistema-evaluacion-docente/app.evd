@@ -1,1 +1,6 @@
-export type { Faculty, FacultyParams, UpdateFacultyPayload } from './faculty.types'
+export type {
+  CreateFacultyPayload,
+  Faculty,
+  FacultyParams,
+  UpdateFacultyPayload,
+} from './faculty.types'

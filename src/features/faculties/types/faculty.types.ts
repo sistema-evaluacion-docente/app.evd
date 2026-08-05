@@ -23,6 +23,12 @@ export interface FacultyParams {
   limit: number
 }
 
+/** Payload for creating a new faculty via `POST /faculties/`. */
+export interface CreateFacultyPayload {
+  name: string
+  code: string
+}
+
 /** Payload for updating a faculty via `PUT /faculties/{faculty_id}`. */
 export interface UpdateFacultyPayload {
   name: string

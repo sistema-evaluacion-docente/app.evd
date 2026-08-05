@@ -2,7 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 
 import type { ResponseAPI } from '@/@types/Response'
 import api from '@/config/axios'
-import type { Faculty, FacultyParams, UpdateFacultyPayload } from '../types'
+import type { CreateFacultyPayload, Faculty, FacultyParams, UpdateFacultyPayload } from '../types'
 
 /** Raw request functions. Not exported — call through the hooks below. */
 
@@ -13,6 +13,10 @@ async function getFaculties(params: FacultyParams): Promise<ResponseAPI<Faculty[
   if (params.active !== undefined) query['active'] = params.active
 
   return api.get('/faculties/', { params: query })
+}
+
+async function createFaculty(payload: CreateFacultyPayload): Promise<ResponseAPI<Faculty>> {
+  return api.post('/faculties/', payload)
 }
 
 async function updateFaculty(
@@ -61,6 +65,24 @@ export function useGetFaculties({
       }),
     staleTime: 60_000,
     placeholderData: keepPreviousData,
+  })
+}
+
+/**
+ * Creates a new faculty record (`POST /faculties/`).
+ * Invalidates the faculties list on success.
+ *
+ * @example
+ * const { mutate: createFaculty } = useCreateFaculty();
+ * createFaculty({ name: 'Ingeniería', code: 'ING' });
+ */
+export function useCreateFaculty() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: CreateFacultyPayload) => createFaculty(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: facultiesKeys.lists() })
+    },
   })
 }
 
