@@ -33,8 +33,14 @@ api.interceptors.response.use(
 
     if (body && typeof body === 'object' && (body as Record<string, unknown>).status === 'error') {
       const message = extractApiErrorMessage(body) || 'Ocurrió un error inesperado'
+
       toast.error(message)
-      return Promise.reject(new ApiError(message))
+
+      return Promise.reject(
+        new ApiError(message, {
+          code: (body as { error?: { code?: string } }).error?.code,
+        }),
+      )
     }
 
     return body
