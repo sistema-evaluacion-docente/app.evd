@@ -100,7 +100,6 @@ export function PeriodsList() {
         periodId: editTarget.id,
         payload: {
           name: values.name,
-          code: values.code,
           start_date: values.start_date,
           end_date: values.end_date,
           active: values.active === 'true',

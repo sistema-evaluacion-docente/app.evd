@@ -11,12 +11,6 @@ const periodFields: FieldConfig[] = [
     name: 'name',
     label: 'Nombre del periodo',
     required: true,
-    placeholder: 'Ej: 2024 Primer Semestre',
-  },
-  {
-    name: 'code',
-    label: 'Código',
-    required: true,
     placeholder: 'Ej: 2024-1',
   },
   {
@@ -47,7 +41,6 @@ export function AdminPeriodsPage() {
     createPeriod.mutate(
       {
         name: values.name,
-        code: values.code,
         start_date: values.start_date,
         end_date: values.end_date,
       },

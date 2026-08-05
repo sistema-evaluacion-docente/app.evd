@@ -25,7 +25,6 @@ interface AcademicPeriodParams {
 }
 
 export interface CreateAcademicPeriodPayload {
-  code: string
   name: string
   start_date: string
   end_date: string
@@ -34,7 +33,6 @@ export interface CreateAcademicPeriodPayload {
 }
 
 export interface UpdateAcademicPeriodPayload {
-  code: string
   name: string
   start_date: string
   end_date: string
