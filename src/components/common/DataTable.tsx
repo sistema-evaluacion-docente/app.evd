@@ -68,6 +68,8 @@ interface DataTableProps<TData> {
   emptyMessage?: string
   rowActions?: DataTableAction<TData>[]
   actionsHeaderLabel?: string
+  /** Called when a row is clicked (excluding the actions column). */
+  onRowClick?: (row: TData) => void
   /** Returns `true` for rows that should render in a deactivated (dimmed) state. */
   isRowDisabled?: (row: TData) => boolean
   /** Extra controls rendered next to the search input (e.g. filter selects). */
@@ -122,6 +124,7 @@ export function DataTable<TData>({
   emptyMessage = 'Sin datos para mostrar.',
   rowActions = [],
   actionsHeaderLabel = 'Acciones',
+  onRowClick,
   isRowDisabled,
   toolbar,
   toolbarActions,
@@ -257,7 +260,11 @@ export function DataTable<TData>({
                       rowDisabled
                         ? 'bg-muted/20 hover:bg-muted/20 opacity-60'
                         : 'hover:bg-muted/30',
+                      onRowClick && !rowDisabled && 'cursor-pointer',
                     )}
+                    onClick={
+                      onRowClick && !rowDisabled ? () => onRowClick(row.original) : undefined
+                    }
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id} className="px-4 py-3.5 align-middle">
@@ -266,7 +273,10 @@ export function DataTable<TData>({
                     ))}
 
                     {hasRowActions ? (
-                      <TableCell className="px-4 py-3.5 text-right align-middle">
+                      <TableCell
+                        className="px-4 py-3.5 text-right align-middle"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <DropdownMenu>
                           <DropdownMenuTrigger
                             render={
