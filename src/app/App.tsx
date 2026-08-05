@@ -4,6 +4,7 @@ import { AppLayout } from '@/components/common/AppLayout'
 import { LogsPage } from '@/features/admin'
 import { LoginPage } from '@/features/auth'
 import { DashboardPage } from '@/features/dashboard'
+import { DepartmentsPage } from '@/features/departments'
 import {
   EvaluationDetailPage,
   EvaluationLogsPanel,
@@ -78,6 +79,12 @@ function App() {
         <Route path="/admin/faculties">
           <AppLayout>
             <FacultiesPage />
+          </AppLayout>
+        </Route>
+
+        <Route path="/admin/departments">
+          <AppLayout>
+            <DepartmentsPage />
           </AppLayout>
         </Route>
 
