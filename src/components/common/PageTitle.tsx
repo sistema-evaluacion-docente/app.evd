@@ -13,6 +13,16 @@ interface PageTitleProps {
   actionLabel?: string
   /** Icon of the action button. Defaults to `Plus`. */
   actionIcon?: LucideIcon
+  /** Custom action element rendered instead of the default button. Takes precedence over `onAction`. */
+  action?: ReactNode
+  /** Function run when the secondary action button is clicked. */
+  onSecondaryAction?: () => void
+  /** Label of the secondary action button. */
+  secondaryActionLabel?: string
+  /** Icon of the secondary action button. */
+  secondaryActionIcon?: LucideIcon
+  /** Custom secondary action element rendered instead of the default button. Takes precedence over `onSecondaryAction`. */
+  secondaryAction?: ReactNode
 }
 
 /**
@@ -37,7 +47,15 @@ export function PageTitle({
   onAction,
   actionLabel = 'Nuevo',
   actionIcon: ActionIcon = Plus,
+  action,
+  onSecondaryAction,
+  secondaryActionLabel,
+  secondaryActionIcon: SecondaryActionIcon,
+  secondaryAction,
 }: PageTitleProps) {
+  const hasPrimaryAction = action || onAction
+  const hasSecondaryAction = secondaryAction || onSecondaryAction
+
   return (
     <header className="mb-6">
       <div className="mb-3 flex items-center">
@@ -52,12 +70,31 @@ export function PageTitle({
           {children}
         </h1>
 
-        {onAction ? (
-          <Button type="button" onClick={onAction} className="shrink-0">
-            <ActionIcon className="size-4" aria-hidden="true" />
-            {actionLabel}
-          </Button>
-        ) : null}
+        {(hasSecondaryAction || hasPrimaryAction) && (
+          <div className="flex shrink-0 items-center gap-2">
+            {hasSecondaryAction &&
+              (secondaryAction ? (
+                secondaryAction
+              ) : (
+                <Button type="button" variant="outline" onClick={onSecondaryAction}>
+                  {SecondaryActionIcon && (
+                    <SecondaryActionIcon className="size-4" aria-hidden="true" />
+                  )}
+                  {secondaryActionLabel}
+                </Button>
+              ))}
+
+            {hasPrimaryAction &&
+              (action ? (
+                action
+              ) : (
+                <Button type="button" onClick={onAction}>
+                  <ActionIcon className="size-4" aria-hidden="true" />
+                  {actionLabel}
+                </Button>
+              ))}
+          </div>
+        )}
       </div>
     </header>
   )
