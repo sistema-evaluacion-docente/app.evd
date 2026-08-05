@@ -1,16 +1,61 @@
 import type { PaginationState, SortingState } from '@tanstack/react-table'
 import { Eye } from 'lucide-react'
 import { useState } from 'react'
-import { useDebounce } from 'use-debounce'
+import { useDebounce, useDebouncedCallback } from 'use-debounce'
 
 import { DataTable, type DataTableAction } from '@/components/common/DataTable'
+import { DataTableFilters, type FilterConfig } from '@/components/common/DataTableFilters'
 import { PeriodSelect } from '@/components/common/PeriodSelect'
 import { useAuthStore } from '@/features/auth'
 import { useAcademicPeriodsStore } from '@/features/periods'
 import { useNavigate } from '@/hooks/useNavigate'
+import { useTableFilters } from '@/hooks/useTableFilters'
 import { useGetTeachers } from '../api'
 import type { TeacherRecord } from '../types'
 import { teacherColumns } from './columns'
+
+const CONTRACT_TYPES = [
+  { label: 'Tiempo completo', value: 'Tiempo completo' },
+  { label: 'Medio tiempo', value: 'Medio tiempo' },
+  { label: 'Hora cátedra', value: 'Hora cátedra' },
+  { label: 'Planta', value: 'Planta' },
+]
+
+const SORT_FIELDS = [
+  { value: 'name', label: 'Nombre' },
+  { value: 'overall_average', label: 'Promedio' },
+  { value: 'created_at', label: 'Fecha de creación' },
+]
+
+const filterConfig: FilterConfig[] = [
+  {
+    type: 'boolean',
+    name: 'active',
+    label: 'Activo',
+    trueLabel: 'Sí',
+    falseLabel: 'No',
+  },
+  {
+    type: 'boolean',
+    name: 'hasAverage',
+    label: 'Con promedio',
+    trueLabel: 'Sí',
+    falseLabel: 'No',
+  },
+  {
+    type: 'select',
+    name: 'contractType',
+    label: 'Tipo de contrato',
+    // TODO: define contract typrs
+    options: CONTRACT_TYPES,
+    clearable: true,
+  },
+  {
+    type: 'sort',
+    name: 'sortBy',
+    fields: SORT_FIELDS,
+  },
+]
 
 /**
  * Displays the paginated list of teachers with their averages of the
@@ -30,18 +75,36 @@ export function TeachersList() {
   const [debouncedSearch] = useDebounce(search, 400)
   const [sorting, setSorting] = useState<SortingState>([])
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 })
+  const { filters, setFilters } = useTableFilters('teachers', {
+    active: true,
+    hasAverage: true,
+    contractType: undefined as string | undefined,
+    sortBy: 'name_desc',
+  })
+  const [debouncedFilters] = useDebounce(filters, 400)
 
   const { data, isPending, isFetching } = useGetTeachers({
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     academicPeriodId: selectedPeriodId,
     search: debouncedSearch,
+    active: debouncedFilters.active as boolean | undefined,
+    hasAverage: debouncedFilters.hasAverage as boolean | undefined,
+    contractType: debouncedFilters.contractType as string | undefined,
+    sortBy: debouncedFilters.sortBy as string | undefined,
   })
 
   const teachers = data?.data ?? []
   const pageCount = data?.pagination?.pages ?? 1
 
-  const resetPage = () => setPagination((prev) => ({ ...prev, pageIndex: 0 }))
+  const resetPage = useDebouncedCallback(() => {
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }))
+  }, 400)
+
+  const handleFiltersChange = (newFilters: Record<string, unknown>) => {
+    setFilters(newFilters)
+    resetPage()
+  }
 
   const periodsStore = useAcademicPeriodsStore()
 
@@ -88,14 +151,21 @@ export function TeachersList() {
       emptyMessage="No hay docentes registrados en su departamento."
       rowActions={rowActions}
       toolbar={
-        <PeriodSelect
-          value={selectedPeriodId}
-          onValueChange={(id) => {
-            setSelectedPeriodId(id)
-            resetPage()
-          }}
-          searchParam="period"
-        />
+        <div className="flex flex-wrap items-center gap-3">
+          <PeriodSelect
+            value={selectedPeriodId}
+            onValueChange={(id) => {
+              setSelectedPeriodId(id)
+              resetPage()
+            }}
+            searchParam="period"
+          />
+          <DataTableFilters
+            filters={filterConfig}
+            values={filters}
+            onChange={handleFiltersChange}
+          />
+        </div>
       }
     />
   )

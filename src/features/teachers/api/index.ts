@@ -11,6 +11,10 @@ interface TeacherListParams {
   academic_period_id: number
   search?: string
   department_id?: number
+  active?: boolean
+  contract_type?: string
+  sort_by?: string
+  has_average?: boolean
 }
 
 /** Raw request functions. Not exported — call through the hooks below. */
@@ -26,6 +30,10 @@ async function getTeachersWithAverages(
 
   if (params.search) query['search'] = params.search
   if (params.department_id) query['department_id'] = params.department_id
+  if (params.active !== undefined) query['active'] = params.active
+  if (params.contract_type) query['contract_type'] = params.contract_type
+  if (params.sort_by) query['sort_by'] = params.sort_by
+  if (params.has_average !== undefined) query['has_average'] = params.has_average
 
   return api.get('/teachers/with-averages', { params: query })
 }
@@ -46,6 +54,21 @@ async function uploadTeachers(file: File): Promise<ResponseAPI<TeacherUploadData
   return api.post('/teachers/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
+}
+
+interface CreateTeacherWithUserPayload {
+  email: string
+  name: string
+  institutional_code: string
+  department_id: number
+  contract_type: string
+  active: boolean
+}
+
+async function createTeacherWithUser(
+  payload: CreateTeacherWithUserPayload,
+): Promise<ResponseAPI<TeacherRecord>> {
+  return api.post('/teachers/with-user', payload)
 }
 
 /** Query-key factory so list invalidations stay consistent. */
@@ -70,23 +93,51 @@ export function useGetTeachers({
   limit = 10,
   academicPeriodId,
   search = '',
+  active,
+  contractType,
+  sortBy,
+  hasAverage,
 }: {
   page?: number
   limit?: number
   academicPeriodId?: number
   search?: string
+  active?: boolean
+  contractType?: string
+  sortBy?: string
+  hasAverage?: boolean
 }) {
   const departmentId = useAuthStore((state) => state.user?.department_id) ?? undefined
 
   const params: TeacherListParams | null =
     departmentId != null && academicPeriodId != null
-      ? { page, limit, academic_period_id: academicPeriodId, search, department_id: departmentId }
+      ? {
+          page,
+          limit,
+          academic_period_id: academicPeriodId,
+          search,
+          department_id: departmentId,
+          active,
+          contract_type: contractType,
+          sort_by: sortBy,
+          has_average: hasAverage,
+        }
       : null
 
   return useQuery({
     queryKey: [
       ...teachersKeys.lists(),
-      { page, limit, academicPeriodId, search, department_id: departmentId },
+      {
+        page,
+        limit,
+        academicPeriodId,
+        search,
+        department_id: departmentId,
+        active,
+        contractType,
+        sortBy,
+        hasAverage,
+      },
     ],
     queryFn: () => getTeachersWithAverages(params!),
     enabled: params !== null,
@@ -130,6 +181,25 @@ export function useUploadTeachers() {
 
   return useMutation({
     mutationFn: (file: File) => uploadTeachers(file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teachersKeys.lists() })
+    },
+  })
+}
+
+/**
+ * Creates a new teacher with an associated user account (`POST /teachers/with-user`).
+ * Invalidates the teachers list on success.
+ *
+ * @example
+ * const { mutate: createTeacher, isPending } = useCreateTeacherWithUser();
+ * createTeacher({ email, name, institutional_code, department_id, contract_type, active: true });
+ */
+export function useCreateTeacherWithUser() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (payload: CreateTeacherWithUserPayload) => createTeacherWithUser(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: teachersKeys.lists() })
     },
