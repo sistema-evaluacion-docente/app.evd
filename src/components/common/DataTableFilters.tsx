@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Calendar } from '@/components/ui/calendar'
 import { Label } from '@/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
@@ -13,7 +13,8 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
 import dayjs from 'dayjs'
-import { ListFilter, X } from 'lucide-react'
+import { CalendarIcon, ListFilter, X } from 'lucide-react'
+import type { DateRange as DayPickerDateRange } from 'react-day-picker'
 import SortBy from './SortBy'
 
 export type FilterType = 'date' | 'dateRange' | 'boolean' | 'select' | 'sort' | 'custom'
@@ -123,20 +124,32 @@ function DateFilter({
   onChange: (value: Date | undefined) => void
 }) {
   return (
-    <Input
-      type="date"
-      value={value ? dayjs(value).format('YYYY-MM-DD') : ''}
-      onChange={(e) => {
-        const date = e.target.value ? dayjs(e.target.value).toDate() : undefined
-        onChange(date)
-      }}
-      placeholder={config.placeholder}
-      className="w-full"
-    />
+    <Popover>
+      <PopoverTrigger
+        render={
+          <Button
+            type="button"
+            variant="outline"
+            className={cn(
+              'w-full justify-start text-left font-normal',
+              !value && 'text-muted-foreground',
+            )}
+          />
+        }
+      >
+        <CalendarIcon className="mr-2 size-4" />
+        {value ? dayjs(value).format('DD/MM/YYYY') : config.placeholder || 'Seleccionar fecha'}
+      </PopoverTrigger>
+
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar mode="single" selected={value} onSelect={onChange} />
+      </PopoverContent>
+    </Popover>
   )
 }
 
 function DateRangeFilter({
+  config,
   value,
   onChange,
 }: {
@@ -144,29 +157,61 @@ function DateRangeFilter({
   value: DateRange | undefined
   onChange: (value: DateRange | undefined) => void
 }) {
+  const handleSelect = (range: DayPickerDateRange | undefined) => {
+    if (!range) {
+      onChange(undefined)
+      return
+    }
+
+    onChange({ from: range.from, to: range.to })
+  }
+
+  const formatRange = () => {
+    if (!value?.from) return config.placeholder || 'Seleccionar rango'
+    if (!value.to) return `${dayjs(value.from).format('DD/MM/YYYY')} - ...`
+
+    return `${dayjs(value.from).format('DD/MM/YYYY')} - ${dayjs(value.to).format('DD/MM/YYYY')}`
+  }
+
   return (
     <div className="flex items-center gap-2">
-      <Input
-        type="date"
-        value={value?.from ? dayjs(value.from).format('YYYY-MM-DD') : ''}
-        onChange={(e) => {
-          const from = e.target.value ? dayjs(e.target.value).toDate() : undefined
-          onChange({ from, to: value?.to })
-        }}
-        placeholder="Desde"
-        className="w-full"
-      />
-      <span className="text-muted-foreground shrink-0 text-sm">—</span>
-      <Input
-        type="date"
-        value={value?.to ? dayjs(value.to).format('YYYY-MM-DD') : ''}
-        onChange={(e) => {
-          const to = e.target.value ? dayjs(e.target.value).toDate() : undefined
-          onChange({ from: value?.from, to })
-        }}
-        placeholder="Hasta"
-        className="w-full"
-      />
+      <Popover>
+        <PopoverTrigger
+          render={
+            <Button
+              type="button"
+              variant="outline"
+              className={cn(
+                'w-full justify-start text-left font-normal',
+                !value?.from && 'text-muted-foreground',
+              )}
+            />
+          }
+        >
+          <CalendarIcon className="mr-2 size-4" />
+          {formatRange()}
+        </PopoverTrigger>
+
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="range"
+            selected={{ from: value?.from, to: value?.to }}
+            onSelect={handleSelect}
+            numberOfMonths={2}
+          />
+        </PopoverContent>
+      </Popover>
+
+      {value?.from && (
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={() => onChange(undefined)}
+          aria-label="Limpiar rango"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      )}
     </div>
   )
 }
@@ -219,6 +264,7 @@ function SelectFilter({
         <SelectTrigger className="w-full">
           <SelectValue placeholder={config.placeholder || 'Seleccionar...'} />
         </SelectTrigger>
+
         <SelectContent>
           {config.options.map((option) => (
             <SelectItem key={String(option.value)} value={String(option.value)}>
@@ -313,8 +359,10 @@ export function DataTableFilters({
 
   const activeCount = filters.filter((filter) => {
     const value = values[filter.name]
+
     if (filter.type === 'boolean') return value === true
     if (filter.type === 'sort') return false
+
     return value !== undefined && value !== null && value !== ''
   }).length
 
@@ -361,7 +409,9 @@ export function DataTableFilters({
           <div className="flex items-center justify-between border-b px-4 py-3">
             <div className="flex items-center gap-2">
               <ListFilter className="text-muted-foreground size-4" aria-hidden="true" />
+
               <span className="text-sm font-semibold">{triggerLabel}</span>
+
               {hasActive && (
                 <Badge variant="secondary" className="min-w-5 justify-center px-1.5">
                   {activeCount}

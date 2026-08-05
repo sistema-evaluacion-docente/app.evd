@@ -66,8 +66,8 @@ export function LogsList() {
     limit: pagination.pageSize,
     entityName: debouncedFilters.entityName as string | undefined,
     operation: debouncedFilters.operation as string | undefined,
-    dateFrom: dateRange?.from ? dayjs(dateRange.from).toISOString() : undefined,
-    dateTo: dateRange?.to ? dayjs(dateRange.to).toISOString() : undefined,
+    dateFrom: dateRange?.from ? dayjs(dateRange.from).format('YYYY-MM-DD') : undefined,
+    dateTo: dateRange?.to ? dayjs(dateRange.to).format('YYYY-MM-DD') : undefined,
     search: debouncedSearch,
   })
 
