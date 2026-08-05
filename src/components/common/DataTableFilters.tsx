@@ -75,6 +75,8 @@ export interface SortFilterConfig {
   directions?: SortDirection[]
   parse?: (value: string) => { field: string; direction: string }
   build?: (field: string, direction: string) => string
+  /** Allow resetting the sort to no value (`''`). */
+  clearable?: boolean
 }
 
 export interface CustomFilterConfig {
@@ -257,6 +259,7 @@ function SortFilter({
       onChange={onChange}
       parse={config.parse}
       build={config.build}
+      clearable={config.clearable}
     />
   )
 }
@@ -296,9 +299,11 @@ export function DataTableFilters({
       if (filter.type === 'boolean') {
         cleared[filter.name] = false
       } else if (filter.type === 'sort') {
-        cleared[filter.name] = filter.fields[0]?.value
-          ? `${filter.fields[0].value}_${filter.directions?.[0]?.value || 'desc'}`
-          : ''
+        cleared[filter.name] = filter.clearable
+          ? ''
+          : filter.fields[0]?.value
+            ? `${filter.fields[0].value}_${filter.directions?.[0]?.value || 'desc'}`
+            : ''
       } else {
         cleared[filter.name] = undefined
       }
