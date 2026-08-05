@@ -1,50 +1,42 @@
-import { cn } from '@/lib/utils'
-import type { ResponseAPI } from '@/shared/types/Response'
-import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query'
 import {
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
   useReactTable,
   type ColumnDef,
+  type OnChangeFn,
+  type PaginationState,
+  type SortingState,
 } from '@tanstack/react-table'
 import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   EllipsisVertical,
-  Eye,
-  Pencil,
-  Plus,
-  Power,
-  PowerOff,
-  RotateCcw,
-  Trash2,
+  Inbox,
+  Search,
+  TriangleAlert,
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { toast } from 'sonner'
-import { useDebounce } from 'use-debounce'
-import { useSearchParams } from 'wouter'
-import { Button } from '../ui/button'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog'
+import type { ReactNode } from 'react'
+
+import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../ui/dropdown-menu'
-import { Input } from '../ui/input'
-import { Label } from '../ui/label'
-import { Skeleton } from '../ui/skeleton'
-
-const DEFAULT_ACTION_ICONS: Record<string, React.ReactNode> = {
-  'ver detalle': <Eye className="size-4" />,
-  ver: <Eye className="size-4" />,
-  editar: <Pencil className="size-4" />,
-  activar: <Power className="size-4" />,
-  desactivar: <PowerOff className="size-4" />,
-  eliminar: <Trash2 className="size-4" />,
-  'eliminar permanentemente': <Trash2 className="size-4" />,
-}
+} from '@/components/ui/dropdown-menu'
+import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Spinner } from '@/components/ui/spinner'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { cn } from '@/lib/utils'
 
 export interface DataTableAction<TData> {
   label: string
@@ -53,495 +45,336 @@ export interface DataTableAction<TData> {
   className?: string
   disabled?: (row: TData) => boolean
   visible?: (row: TData) => boolean
-  icon?: React.ReactNode
+  icon?: ReactNode
 }
-
-interface DataTableCreateConfigBase {
-  label?: string
-  dialogTitle?: string
-  dialogDescription?: string
-}
-
-interface DataTableCreateConfigCustomForm extends DataTableCreateConfigBase {
-  renderForm: (helpers: { close: () => void }) => React.ReactNode
-}
-
-interface DataTableCreateConfigDefault extends DataTableCreateConfigBase {
-  mutation: UseMutationResult<unknown, Error, { nombre: string }, unknown>
-  fieldLabel?: string
-  placeholder?: string
-  renderForm?: undefined
-}
-
-export type DataTableCreateConfig = DataTableCreateConfigCustomForm | DataTableCreateConfigDefault
 
 interface DataTableProps<TData> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  columns: ColumnDef<TData, any>[]
-  emptyMessage?: string
-  minWidthClassName?: string
-  containerClassName?: string
-  tableClassName?: string
-  headRowClassName?: string
-  bodyRowClassName?: string
-  headerCellClassName?: string
-  cellClassName?: string
-  enableSorting?: boolean
+  columns: ColumnDef<TData, unknown>[]
+  /** Rows already fetched by the caller's query hook (server-side). */
+  data: TData[]
+  /** Total number of pages reported by the server. */
+  pageCount: number
+  isLoading?: boolean
+  isFetching?: boolean
+  error?: Error | null
+  search: string
+  onSearchChange: (search: string) => void
+  sorting: SortingState
+  onSortingChange: OnChangeFn<SortingState>
+  pagination: PaginationState
+  onPaginationChange: OnChangeFn<PaginationState>
   enableSearch?: boolean
-  enableFilters?: boolean
   searchPlaceholder?: string
-  pageSize?: number
-  pageSizeOptions?: number[]
+  emptyMessage?: string
   rowActions?: DataTableAction<TData>[]
   actionsHeaderLabel?: string
-  queryFn: (params: {
-    page: number
-    limit: number
-    search: string
-  }) => UseQueryResult<ResponseAPI<TData[]>>
-  extraFilterParams?: Record<string, string | number | undefined>
-  createConfig?: DataTableCreateConfig
-  filters?: React.ReactNode
-  disabledPagination?: boolean
-  borders?: boolean
+  /** Returns `true` for rows that should render in a deactivated (dimmed) state. */
+  isRowDisabled?: (row: TData) => boolean
+  /** Extra controls rendered next to the search input (e.g. filter selects). */
+  toolbar?: ReactNode
+  /** Actions rendered on the right side of the toolbar (e.g. refresh). */
+  toolbarActions?: ReactNode
+  pageSizeOptions?: number[]
+  className?: string
 }
 
 /**
- * DataTable component that displays a table with sorting, searching, and pagination capabilities.
- * @template TData The type of data to display in the table.
+ * Presentational, fully server-side table built on `@tanstack/react-table`.
+ * The caller owns the query hook and all table state (search, sorting,
+ * pagination) — this component only renders, so it works with any query.
+ *
+ * @example
+ * const { data, isPending, isFetching } = useGetEvaluations({
+ *   page: pagination.pageIndex + 1,
+ *   limit: pagination.pageSize,
+ *   search: debouncedSearch,
+ * })
+ *
+ * <DataTable
+ *   columns={columns}
+ *   data={data?.data ?? []}
+ *   pageCount={data?.pagination?.pages ?? 1}
+ *   isLoading={isPending}
+ *   isFetching={isFetching}
+ *   search={search}
+ *   onSearchChange={setSearch}
+ *   sorting={sorting}
+ *   onSortingChange={setSorting}
+ *   pagination={pagination}
+ *   onPaginationChange={setPagination}
+ * />
  */
-function DataTable<TData>({
+export function DataTable<TData>({
   columns,
-  emptyMessage = 'Sin datos para mostrar.',
-  minWidthClassName = 'min-w-230',
-  containerClassName,
-  tableClassName,
-  headRowClassName,
-  bodyRowClassName,
-  headerCellClassName,
-  cellClassName,
-  enableSorting = true,
+  data,
+  pageCount,
+  isLoading = false,
+  isFetching = false,
+  error,
+  search,
+  onSearchChange,
+  sorting,
+  onSortingChange,
+  pagination,
+  onPaginationChange,
   enableSearch = true,
-  enableFilters = true,
   searchPlaceholder = 'Buscar...',
-  pageSize = 10,
-  pageSizeOptions = [5, 10, 20, 50],
+  emptyMessage = 'Sin datos para mostrar.',
   rowActions = [],
   actionsHeaderLabel = 'Acciones',
-  queryFn,
-  extraFilterParams,
-  createConfig,
-  filters,
-  disabledPagination,
-  borders = true,
+  isRowDisabled,
+  toolbar,
+  toolbarActions,
+  pageSizeOptions = [5, 10, 20, 50],
+  className,
 }: DataTableProps<TData>) {
-  const [searchParams, setSearchParams] = useSearchParams()
-
-  const pageValue = searchParams.get('page') ?? 1
-  const limitValue = searchParams.get('limit') ?? pageSize
-  const searchValue = searchParams.get('search') ?? ''
-
-  const [search, setSearch] = useState(searchValue)
-  const [page, setPage] = useState(Number(pageValue ?? 1))
-  const [limit, setLimit] = useState(Number(limitValue ?? pageSize))
-
-  const [value] = useDebounce(search ?? '', 400)
-
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [newItemName, setNewItemName] = useState('')
-
-  // A page number is only meaningful for the result set it was drawn from, so
-  // snap back to the first page whenever the search term or an external filter
-  // changes — otherwise a narrower result set leaves you stranded on an empty page.
-  const filterKey = JSON.stringify([value, extraFilterParams])
-  const [appliedFilterKey, setAppliedFilterKey] = useState(filterKey)
-  if (appliedFilterKey !== filterKey) {
-    setAppliedFilterKey(filterKey)
-    setPage(1)
-  }
-
-  const { data, isLoading, isFetching, refetch } = queryFn({
-    page,
-    limit,
-    search: value,
-    ...extraFilterParams,
-  })
-
-  const result = (data?.data ?? []) as TData[]
-  const paginationData = data?.pagination
-  const hasRowActions = rowActions.length > 0
-
   const table = useReactTable({
-    data: result,
+    data,
     columns,
+    state: { sorting, pagination },
+    onSortingChange,
+    onPaginationChange,
+    pageCount,
+    manualPagination: true,
+    manualSorting: true,
+    manualFiltering: true,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    enableSorting,
   })
 
-  useEffect(() => {
-    const currentSearch = searchParams.get('search') ?? ''
-    const currentPage = Number(searchParams.get('page') ?? 1)
-    const currentLimit = Number(searchParams.get('limit') ?? pageSize)
-
-    if (currentSearch === value && currentPage === page && currentLimit === limit) {
-      return
-    }
-
-    setSearchParams((prev) => {
-      return {
-        ...prev,
-        page: String(page),
-        limit: String(limit),
-        search: value,
-        ...extraFilterParams,
-      }
-    })
-  }, [page, limit, value, searchParams, setSearchParams, pageSize, extraFilterParams])
+  const hasRowActions = rowActions.length > 0
+  const visibleColumns = table.getVisibleFlatColumns().length
+  const colSpan = visibleColumns + (hasRowActions ? 1 : 0)
+  const showToolbar = enableSearch || Boolean(toolbar) || Boolean(toolbarActions)
+  const showPagination = !isLoading && !error && data.length > 0
 
   return (
-    <>
-      {enableFilters && (
-        <div className={cn('flex items-center gap-2', !borders ? 'px-4' : '')}>
+    <div className={cn('space-y-4', className)}>
+      {showToolbar ? (
+        <div className="flex flex-wrap items-center gap-3">
           {enableSearch ? (
-            <Input
-              type="text"
-              value={search ?? ''}
-              onChange={(event) => {
-                setSearch(event.target.value)
-              }}
-              placeholder={searchPlaceholder}
-              className="bg-background"
-            />
+            <div className="relative">
+              <Search
+                aria-hidden="true"
+                className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
+              />
+              <Input
+                type="text"
+                value={search}
+                onChange={(event) => onSearchChange(event.target.value)}
+                placeholder={searchPlaceholder}
+                aria-label={searchPlaceholder}
+                className="bg-background h-9 w-56 pl-9 shadow-none"
+              />
+            </div>
           ) : null}
 
-          {filters}
+          {toolbar}
 
           <div className="ml-auto flex items-center gap-2">
-            {createConfig ? (
-              <Button
-                size="sm"
-                type="button"
-                onClick={() => {
-                  setNewItemName('')
-                  setIsCreateDialogOpen(true)
-                }}
-              >
-                <Plus className="size-4" />
-                {createConfig.label ?? 'Nuevo'}
-              </Button>
+            {isFetching ? (
+              <Spinner aria-label="Cargando" className="text-muted-foreground size-4" />
             ) : null}
 
+            {toolbarActions}
+          </div>
+        </div>
+      ) : null}
+
+      <div className="bg-background border-border/70 overflow-hidden rounded-lg border">
+        <Table className="tabular-nums">
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow
+                key={headerGroup.id}
+                className="border-border/70 bg-transparent hover:bg-transparent"
+              >
+                {headerGroup.headers.map((header) => (
+                  <TableHead
+                    key={header.id}
+                    className="text-muted-foreground h-10 px-4 text-xs font-medium tracking-wider uppercase"
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
+                ))}
+
+                {hasRowActions ? (
+                  <TableHead className="text-muted-foreground h-10 px-4 text-right text-xs font-medium tracking-wider uppercase">
+                    {actionsHeaderLabel}
+                  </TableHead>
+                ) : null}
+              </TableRow>
+            ))}
+          </TableHeader>
+
+          <TableBody className={cn('transition-opacity', isFetching && !isLoading && 'opacity-50')}>
+            {isLoading ? (
+              Array.from({ length: 5 }, (_, index) => (
+                <TableRow key={index} className="border-border/60">
+                  {Array.from({ length: visibleColumns }, (__, columnIndex) => (
+                    <TableCell key={columnIndex} className="px-4 py-3.5">
+                      <Skeleton className="h-4 w-full" />
+                    </TableCell>
+                  ))}
+
+                  {hasRowActions ? (
+                    <TableCell className="px-4 py-3.5">
+                      <Skeleton className="ml-auto h-7 w-7" />
+                    </TableCell>
+                  ) : null}
+                </TableRow>
+              ))
+            ) : error ? (
+              <TableRow className="border-border/60">
+                <TableCell colSpan={colSpan} className="py-16 text-center">
+                  <TriangleAlert
+                    aria-hidden="true"
+                    className="text-destructive/60 mx-auto mb-3 size-8"
+                  />
+                  <p className="text-destructive text-sm">{error.message}</p>
+                </TableCell>
+              </TableRow>
+            ) : table.getRowModel().rows.length === 0 ? (
+              <TableRow className="border-border/60">
+                <TableCell colSpan={colSpan} className="py-16 text-center">
+                  <Inbox
+                    aria-hidden="true"
+                    className="text-muted-foreground/40 mx-auto mb-3 size-8"
+                  />
+                  <p className="text-muted-foreground text-sm">{emptyMessage}</p>
+                </TableCell>
+              </TableRow>
+            ) : (
+              table.getRowModel().rows.map((row) => {
+                const rowDisabled = isRowDisabled ? isRowDisabled(row.original) : false
+
+                return (
+                  <TableRow
+                    key={row.id}
+                    className={cn(
+                      'animate-fade-in border-border/60 transition-colors duration-150',
+                      rowDisabled
+                        ? 'bg-muted/20 hover:bg-muted/20 opacity-60'
+                        : 'hover:bg-muted/30',
+                    )}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id} className="px-4 py-3.5 align-middle">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+
+                    {hasRowActions ? (
+                      <TableCell className="px-4 py-3.5 text-right align-middle">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            render={
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
+                                aria-label={actionsHeaderLabel}
+                                className="text-muted-foreground opacity-70 transition-opacity hover:opacity-100"
+                              >
+                                <EllipsisVertical className="size-4" />
+                              </Button>
+                            }
+                          />
+
+                          <DropdownMenuContent align="end" className="w-auto min-w-40">
+                            {rowActions
+                              .filter((action) =>
+                                action.visible ? action.visible(row.original) : true,
+                              )
+                              .map((action) => (
+                                <DropdownMenuItem
+                                  key={action.label}
+                                  variant={action.variant ?? 'default'}
+                                  className={action.className}
+                                  disabled={action.disabled ? action.disabled(row.original) : false}
+                                  onClick={() => action.onClick(row.original)}
+                                >
+                                  {action.icon ? (
+                                    <span aria-hidden="true" className="shrink-0">
+                                      {action.icon}
+                                    </span>
+                                  ) : null}
+
+                                  {action.label}
+                                </DropdownMenuItem>
+                              ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    ) : null}
+                  </TableRow>
+                )
+              })
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {showPagination ? (
+        <div className="text-muted-foreground flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2">
+            <span>Filas por página</span>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button variant="ghost" size="sm" className="text-foreground rounded-md px-2">
+                    {pagination.pageSize}
+                    <ChevronDown aria-hidden="true" className="size-3.5" />
+                  </Button>
+                }
+              />
+
+              <DropdownMenuContent align="start" className="w-20">
+                {pageSizeOptions.map((size) => (
+                  <DropdownMenuItem
+                    key={size}
+                    onClick={() =>
+                      onPaginationChange({ ...pagination, pageSize: size, pageIndex: 0 })
+                    }
+                  >
+                    {size}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          <div className="flex items-center gap-1.5">
             <Button
-              size="sm"
               type="button"
-              variant="outline"
-              onClick={() => refetch()}
-              disabled={isFetching}
-              className="shrink-0"
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              aria-label="Página anterior"
             >
-              <RotateCcw className={cn('size-4', isFetching && 'animate-spin')} />
-              Recargar
+              <ChevronLeft aria-hidden="true" className="size-4" />
+            </Button>
+
+            <span aria-live="polite" className="min-w-20 text-center text-sm tabular-nums">
+              Página {pagination.pageIndex + 1} de {table.getPageCount()}
+            </span>
+
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              aria-label="Página siguiente"
+            >
+              <ChevronRight aria-hidden="true" className="size-4" />
             </Button>
           </div>
         </div>
-      )}
-
-      <div
-        className={cn(
-          'bg-background animate-fade-in overflow-x-auto',
-          borders ? 'rounded-md border' : 'border-none',
-          containerClassName,
-        )}
-      >
-        <table className={cn('w-full text-sm', minWidthClassName, tableClassName)}>
-          <thead>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr
-                key={headerGroup.id}
-                className={cn('bg-background/50 border-b uppercase', headRowClassName)}
-              >
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <th
-                      key={header.id}
-                      className={cn(
-                        'bg-muted/50 text-muted-foreground px-5 py-3 text-left font-semibold first:pl-6 last:pr-6',
-                        headerCellClassName,
-                      )}
-                    >
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                    </th>
-                  )
-                })}
-
-                {hasRowActions ? (
-                  <th
-                    className={cn(
-                      'bg-muted/50 text-muted-foreground px-5 py-3 text-right font-semibold first:pl-6 last:pr-6',
-                      headerCellClassName,
-                    )}
-                  >
-                    {actionsHeaderLabel}
-                  </th>
-                ) : null}
-              </tr>
-            ))}
-          </thead>
-
-          <tbody>
-            <>
-              {isLoading ? (
-                <>
-                  {[0, 1, 2, 3, 4].map((el) => (
-                    <tr key={el} className="w-full">
-                      {columns.map((column, index) => (
-                        <td key={column.id ?? index} className="animate-fade-in w-auto px-2 py-1">
-                          <Skeleton className="h-8 w-full" />
-                        </td>
-                      ))}
-
-                      {hasRowActions ? (
-                        <td className="w-auto px-2 py-1">
-                          <Skeleton className="h-8 w-full" />
-                        </td>
-                      ) : null}
-                    </tr>
-                  ))}
-                </>
-              ) : (
-                <>
-                  {table.getRowModel().rows.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={columns.length + (hasRowActions ? 1 : 0)}
-                        className="animate-fade-in py-10 text-center"
-                      >
-                        <p className="text-muted-foreground">{emptyMessage}</p>
-                      </td>
-                    </tr>
-                  ) : (
-                    table.getRowModel().rows.map((row) => (
-                      <tr
-                        key={row.id}
-                        className={cn('border-b transition-colors', bodyRowClassName)}
-                      >
-                        {row.getVisibleCells().map((cell) => (
-                          <td
-                            key={cell.id}
-                            className={cn(
-                              'animate-fade-in px-5 py-4 align-middle first:pl-6 last:pr-6',
-                              cellClassName,
-                            )}
-                          >
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </td>
-                        ))}
-
-                        {hasRowActions ? (
-                          <td
-                            className={cn(
-                              'animate-fade-in px-5 py-4 text-right align-middle first:pl-6 last:pr-6',
-                              cellClassName,
-                            )}
-                          >
-                            <DropdownMenu>
-                              <DropdownMenuTrigger
-                                render={
-                                  <Button type="button" variant="ghost" size="sm">
-                                    <EllipsisVertical />
-                                  </Button>
-                                }
-                              ></DropdownMenuTrigger>
-
-                              <DropdownMenuContent align="end" className="w-auto min-w-40">
-                                {rowActions
-                                  .filter((action) =>
-                                    action.visible ? action.visible(row.original) : true,
-                                  )
-                                  .map((action) => (
-                                    <DropdownMenuItem
-                                      key={action.label}
-                                      variant={action.variant ?? 'default'}
-                                      className={action.className}
-                                      disabled={
-                                        action.disabled ? action.disabled(row.original) : false
-                                      }
-                                      onClick={() => action.onClick(row.original)}
-                                    >
-                                      {(() => {
-                                        const icon =
-                                          action.icon ??
-                                          DEFAULT_ACTION_ICONS[action.label.toLowerCase()]
-
-                                        return icon ? (
-                                          <span className="size-4 shrink-0">{icon}</span>
-                                        ) : null
-                                      })()}
-
-                                      {action.label}
-                                    </DropdownMenuItem>
-                                  ))}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </td>
-                        ) : null}
-                      </tr>
-                    ))
-                  )}
-                </>
-              )}
-            </>
-          </tbody>
-        </table>
-      </div>
-
-      {!disabledPagination && (
-        <>
-          {!isLoading && table.getRowModel().rows.length > 0 ? (
-            <div
-              className={cn(
-                'text-muted-foreground mt-3 flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between',
-                !borders ? 'px-4' : '',
-              )}
-            >
-              <div className="flex items-center gap-2">
-                <span>Filas por página</span>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger render={<Button variant="outline" size="sm" />}>
-                    {limit}
-                  </DropdownMenuTrigger>
-
-                  <DropdownMenuContent align="start" className="w-24">
-                    {pageSizeOptions.map((size) => (
-                      <DropdownMenuItem key={size} onClick={() => setLimit(size)}>
-                        {size}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <span>
-                  Página {page} de {paginationData?.pages ?? 1}
-                </span>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage(page - 1)}
-                    disabled={page === 1}
-                  >
-                    Anterior
-                  </Button>
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage(page + 1)}
-                    disabled={page >= (paginationData?.pages ?? 0)}
-                  >
-                    Siguiente
-                  </Button>
-                </div>
-              </div>
-            </div>
-          ) : null}
-        </>
-      )}
-
-      {createConfig ? (
-        <Dialog
-          open={isCreateDialogOpen}
-          onOpenChange={(open) => {
-            setIsCreateDialogOpen(open)
-            if (!open) setNewItemName('')
-          }}
-        >
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{createConfig.dialogTitle ?? 'Crear elemento'}</DialogTitle>
-              {createConfig.dialogDescription ? (
-                <p className="text-muted-foreground text-sm">{createConfig.dialogDescription}</p>
-              ) : null}
-            </DialogHeader>
-
-            {createConfig.renderForm ? (
-              createConfig.renderForm({
-                close: () => {
-                  setIsCreateDialogOpen(false)
-                  setNewItemName('')
-                },
-              })
-            ) : (
-              <>
-                <div className="grid gap-2">
-                  <Label>{createConfig.fieldLabel ?? 'Nombre'}</Label>
-                  <Input
-                    value={newItemName}
-                    onChange={(event) => setNewItemName(event.target.value)}
-                    placeholder={createConfig.placeholder ?? 'Ingrese el nombre...'}
-                    onKeyDown={(event) => {
-                      if (
-                        event.key === 'Enter' &&
-                        newItemName.trim() &&
-                        !createConfig.mutation.isPending
-                      ) {
-                        event.preventDefault()
-                        createConfig.mutation.mutate(
-                          { nombre: newItemName.trim() },
-                          {
-                            onSuccess: () => {
-                              toast.success('Elemento creado exitosamente')
-                              setIsCreateDialogOpen(false)
-                              setNewItemName('')
-                            },
-                            onError: () => {
-                              toast.error('Error al crear el elemento')
-                            },
-                          },
-                        )
-                      }
-                    }}
-                  />
-                </div>
-
-                <DialogFooter>
-                  <Button
-                    onClick={() => {
-                      createConfig.mutation.mutate(
-                        { nombre: newItemName.trim() },
-                        {
-                          onSuccess: () => {
-                            toast.success('Elemento creado exitosamente')
-                            setIsCreateDialogOpen(false)
-                            setNewItemName('')
-                          },
-                          onError: () => {
-                            toast.error('Error al crear el elemento')
-                          },
-                        },
-                      )
-                    }}
-                    disabled={!newItemName.trim() || createConfig.mutation.isPending}
-                  >
-                    {createConfig.mutation.isPending ? 'Creando...' : 'Crear'}
-                  </Button>
-                </DialogFooter>
-              </>
-            )}
-          </DialogContent>
-        </Dialog>
       ) : null}
-    </>
+    </div>
   )
 }
-
-export default DataTable
