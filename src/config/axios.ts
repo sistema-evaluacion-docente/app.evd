@@ -1,6 +1,8 @@
 import axios from 'axios'
+import { toast } from 'sonner'
 
 import { getToken } from '@/features/auth'
+import { ApiError, extractApiErrorMessage } from '@/lib/apiError'
 import { API_URL } from '.'
 
 const api = axios.create({
@@ -27,22 +29,35 @@ api.interceptors.request.use(
 
 api.interceptors.response.use(
   (response) => {
-    if (response.data?.status === 'error') {
-      return Promise.reject(
-        new Error(response.data?.message || response.data?.error || 'Unknown error occurred'),
-      )
+    const body = response.data
+
+    if (body && typeof body === 'object' && (body as Record<string, unknown>).status === 'error') {
+      const message = extractApiErrorMessage(body) || 'Ocurrió un error inesperado'
+      toast.error(message)
+      return Promise.reject(new ApiError(message))
     }
 
-    return response.data
+    return body
   },
   (error) => {
-    if (error?.response && error?.response?.data && error?.response?.data?.error) {
-      return Promise.reject(
-        new Error(error?.response?.data?.error?.message || 'Unknown error occurred'),
-      )
+    const payload = error?.response?.data
+    const serverMessage = extractApiErrorMessage(payload)
+
+    let message = serverMessage
+
+    if (!message) {
+      const raw = typeof error?.message === 'string' ? error.message : ''
+      message = raw && raw !== 'Network Error' ? raw : 'Ocurrió un error inesperado'
     }
 
-    return Promise.reject(error)
+    toast.error(message)
+
+    return Promise.reject(
+      new ApiError(message, {
+        status: error?.response?.status,
+        code: payload?.error?.code,
+      }),
+    )
   },
 )
 
