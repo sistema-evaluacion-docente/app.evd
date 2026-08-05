@@ -68,7 +68,7 @@ export const auditLogColumns: ColumnDef<AuditLog>[] = [
       return (
         <Badge
           className={cn(
-            'font-medium',
+            'font-medium uppercase',
             config?.bg ?? 'bg-muted',
             config?.text ?? 'text-muted-foreground'
           )}

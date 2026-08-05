@@ -13,6 +13,9 @@ export const OPERATIONS = [
   { value: 'EXPORT', label: 'Exportar', bg: 'bg-amber-50', text: 'text-amber-700' },
   { value: 'UNASSIGN', label: 'Desasignar', bg: 'bg-brand-50', text: 'text-brand-700' },
   { value: 'ASSIGN', label: 'Asignar', bg: 'bg-sky-50', text: 'text-sky-700' },
+  { value: 'ACTIVATE', label: 'Activar', bg: 'bg-emerald-50', text: 'text-emerald-700' },
+  { value: 'DEACTIVATE', label: 'Desactivar', bg: 'bg-gray-50', text: 'text-gray-700' },
+  { value: 'BULK_CREATE', label: 'Crear en masa', bg: 'bg-blue-50', text: 'text-blue-700' },
 ]
 
 /** Operation options for filters (label/value pairs only). */
