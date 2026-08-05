@@ -29,3 +29,17 @@ export type HistorySortField = 'period_code' | 'overall_average' | 'group_count'
 
 /** Sort criteria accepted by the teacher history endpoint (`<field>_<asc|desc>`). */
 export type HistorySortBy = `${HistorySortField}_asc` | `${HistorySortField}_desc`
+
+/** An academic period option used to filter evaluations. */
+export interface AcademicPeriod {
+  id: number
+  code: string
+  name: string
+  start_date: string | null
+  end_date: string | null
+  evaluation_end_date: string | null
+  final_evaluation_date: string | null
+  active: boolean
+  created_at: string
+  updated_at: string
+}

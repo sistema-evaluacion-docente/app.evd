@@ -1,4 +1,4 @@
 export * from './api'
-export * from './components'
-export * from './pages'
+export * from './store'
 export * from './types'
+export * from './pages'

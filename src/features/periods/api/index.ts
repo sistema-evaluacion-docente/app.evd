@@ -3,6 +3,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import type { ResponseAPI } from '@/@types/Response'
 import api from '@/config/axios'
 import { useAuthStore } from '@/features/auth'
+import type { AcademicPeriod } from '@/features/evaluations'
 import type { HistorySortBy, TeacherHistoryOut, TeacherPeriodHistory } from '../types'
 
 interface TeacherHistoryParams {
@@ -10,6 +11,10 @@ interface TeacherHistoryParams {
   limit?: number
   search?: string
   sort_by?: HistorySortBy
+}
+
+async function getAcademicPeriods(): Promise<ResponseAPI<AcademicPeriod[]>> {
+  return api.get('/academic-periods', { params: { limit: 100 } })
 }
 
 async function getTeacherHistory(
@@ -73,5 +78,20 @@ export function useGetTeacherHistory({
     enabled: teacherId > 0,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
+  })
+}
+
+/**
+ * Fetches the list of academic periods to populate the period filter select
+ * (`GET /academic-periods`). Cached for 5 minutes.
+ *
+ * @example
+ * const { data: periods, isLoading } = useGetAcademicPeriods();
+ */
+export function useGetAcademicPeriods() {
+  return useQuery({
+    queryKey: periodsKeys.all,
+    queryFn: getAcademicPeriods,
+    staleTime: 300_000,
   })
 }
