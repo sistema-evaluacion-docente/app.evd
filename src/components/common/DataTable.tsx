@@ -171,7 +171,7 @@ export function DataTable<TData>({
           {toolbar}
 
           <div className="ml-auto flex items-center gap-2">
-            {isFetching ? (
+            {isFetching || isLoading ? (
               <Spinner aria-label="Cargando" className="text-muted-foreground size-4" />
             ) : null}
 
