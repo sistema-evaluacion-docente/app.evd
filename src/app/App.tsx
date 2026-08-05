@@ -13,7 +13,7 @@ import {
 } from '@/features/evaluations'
 import { FacultiesPage } from '@/features/faculties'
 import { NotFoundPage } from '@/features/not-found'
-import { PeriodsPage } from '@/features/periods'
+import { AdminPeriodsPage, PeriodsPage } from '@/features/periods'
 import { TeacherDetailPage, TeachersPage, TeacherUploadPage } from '@/features/teachers'
 
 function App() {
@@ -85,6 +85,12 @@ function App() {
         <Route path="/admin/departments">
           <AppLayout>
             <DepartmentsPage />
+          </AppLayout>
+        </Route>
+
+        <Route path="/admin/periods">
+          <AppLayout>
+            <AdminPeriodsPage />
           </AppLayout>
         </Route>
 
