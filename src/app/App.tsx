@@ -10,6 +10,7 @@ import {
   EvaluationsPage,
   EvaluationUploadPage,
 } from '@/features/evaluations'
+import { FacultiesPage } from '@/features/faculties'
 import { NotFoundPage } from '@/features/not-found'
 import { PeriodsPage } from '@/features/periods'
 import { TeacherDetailPage, TeachersPage, TeacherUploadPage } from '@/features/teachers'
@@ -71,6 +72,12 @@ function App() {
         <Route path="/admin/logs">
           <AppLayout>
             <LogsPage />
+          </AppLayout>
+        </Route>
+
+        <Route path="/admin/faculties">
+          <AppLayout>
+            <FacultiesPage />
           </AppLayout>
         </Route>
 
