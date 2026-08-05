@@ -4,5 +4,6 @@ export type {
   QuestionDetail,
   TeacherDetail,
   TeacherRecord,
+  TeacherUploadData,
   TeacherUser,
 } from './teacher.types'

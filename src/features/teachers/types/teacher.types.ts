@@ -53,6 +53,13 @@ export interface CourseDetail {
   dimensions: DimensionDetail[]
 }
 
+/** Result of a bulk teacher upload (`POST /teachers/upload`). */
+export interface TeacherUploadData {
+  created: Record<string, unknown>[]
+  skipped: Record<string, unknown>[]
+  errors: Record<string, unknown>[]
+}
+
 /** Full teacher detail as returned by `GET /evaluations/teachers/{id}/detail`. */
 export interface TeacherDetail {
   teacher_id: number

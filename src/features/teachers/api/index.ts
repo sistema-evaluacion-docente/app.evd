@@ -1,9 +1,9 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import type { ResponseAPI } from '@/@types/Response'
 import api from '@/config/axios'
 import { useAuthStore } from '@/features/auth'
-import type { TeacherDetail, TeacherRecord } from '../types'
+import type { TeacherDetail, TeacherRecord, TeacherUploadData } from '../types'
 
 interface TeacherListParams {
   page: number
@@ -36,6 +36,15 @@ async function getTeacherDetail(
 ): Promise<ResponseAPI<TeacherDetail>> {
   return api.get(`/evaluations/teachers/${teacherId}/detail`, {
     params: { period_name: periodName },
+  })
+}
+
+async function uploadTeachers(file: File): Promise<ResponseAPI<TeacherUploadData>> {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  return api.post('/teachers/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
   })
 }
 
@@ -105,5 +114,24 @@ export function useGetTeacherDetail({
     queryFn: () => getTeacherDetail(teacherId!, periodName!),
     enabled: teacherId != null && periodName != null && periodName !== '',
     staleTime: 60_000,
+  })
+}
+
+/**
+ * Uploads a CSV/XLSX file with teacher records (`POST /teachers/upload`) as
+ * multipart/form-data. Resolves with the created, skipped and error entries.
+ *
+ * @example
+ * const { mutate: upload, isPending } = useUploadTeachers();
+ * upload(file);
+ */
+export function useUploadTeachers() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (file: File) => uploadTeachers(file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teachersKeys.lists() })
+    },
   })
 }
