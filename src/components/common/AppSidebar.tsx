@@ -34,9 +34,9 @@ const DEFAULT_ICON = FileText
 
 const MENU_ICON_BY_PATH: Record<string, typeof DEFAULT_ICON> = {
   '/dashboard': LayoutGrid,
-  '/periods': Clock,
-  '/evaluations': ClipboardCheck,
-  '/teachers': Users,
+  '/periodos': Clock,
+  '/evaluaciones': ClipboardCheck,
+  '/docentes': Users,
   '/admin/faculties': Building2,
   '/admin/departments': Library,
   '/admin/periods': Clock,
