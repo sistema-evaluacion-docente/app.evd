@@ -65,10 +65,28 @@ interface CreateTeacherWithUserPayload {
   active: boolean
 }
 
+interface UpdateTeacherPayload {
+  name?: string
+  email?: string
+  avatar_url?: string
+  institutional_code: string
+  department_id: number
+  contract_type: string
+  user_id: number
+  active: boolean
+}
+
 async function createTeacherWithUser(
   payload: CreateTeacherWithUserPayload,
 ): Promise<ResponseAPI<TeacherRecord>> {
   return api.post('/teachers/with-user', payload)
+}
+
+async function updateTeacher(
+  teacherId: number,
+  payload: UpdateTeacherPayload,
+): Promise<ResponseAPI<TeacherRecord>> {
+  return api.put(`/teachers/${teacherId}`, payload)
 }
 
 /** Query-key factory so list invalidations stay consistent. */
@@ -200,6 +218,26 @@ export function useCreateTeacherWithUser() {
 
   return useMutation({
     mutationFn: (payload: CreateTeacherWithUserPayload) => createTeacherWithUser(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teachersKeys.lists() })
+    },
+  })
+}
+
+/**
+ * Updates an existing teacher (`PUT /teachers/{id}`). Invalidates the
+ * teachers list on success.
+ *
+ * @example
+ * const { mutate: updateTeacher, isPending } = useUpdateTeacher();
+ * updateTeacher({ teacherId: 1, payload: { institutional_code, department_id, contract_type, user_id, active } });
+ */
+export function useUpdateTeacher() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ teacherId, payload }: { teacherId: number; payload: UpdateTeacherPayload }) =>
+      updateTeacher(teacherId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: teachersKeys.lists() })
     },
