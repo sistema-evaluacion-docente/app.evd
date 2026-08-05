@@ -1,11 +1,13 @@
 import type { PaginationState, SortingState } from '@tanstack/react-table'
 import { Eye, Power, PowerOff, Sparkles, Trash, Trash2 } from 'lucide-react'
 import { useState } from 'react'
-import { useDebounce } from 'use-debounce'
+import { useDebounce, useDebouncedCallback } from 'use-debounce'
 
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { DataTable, type DataTableAction } from '@/components/common/DataTable'
+import { DataTableFilters, type FilterConfig } from '@/components/common/DataTableFilters'
 import { useNavigate } from '@/hooks/useNavigate'
+import { useTableFilters } from '@/hooks/useTableFilters'
 import {
   evaluationsKeys,
   useAnalyzeEvaluation,
@@ -13,14 +15,48 @@ import {
   useGetEvaluations,
   useUpdateEvaluationStatus,
 } from '../api'
+import { AI_STATUS_OPTIONS, EVALUATION_STATUS_OPTIONS } from '../config'
 import { useEvaluationLogs } from '../hooks'
 import type { EvaluationRecord } from '../types'
 import { evaluationColumns } from './columns'
 
+const filterConfig: FilterConfig[] = [
+  {
+    type: 'select',
+    name: 'status',
+    label: 'Estado',
+    options: EVALUATION_STATUS_OPTIONS,
+    clearable: true,
+  },
+  {
+    type: 'select',
+    name: 'aiStatus',
+    label: 'Análisis IA',
+    options: AI_STATUS_OPTIONS,
+    clearable: true,
+  },
+  {
+    type: 'boolean',
+    name: 'active',
+    label: 'Activo',
+    trueLabel: 'Sí',
+    falseLabel: 'No',
+  },
+  {
+    type: 'sort',
+    name: 'sortBy',
+    fields: [
+      { value: 'average', label: 'Promedio' },
+      { value: 'period_name', label: 'Periodo' },
+    ],
+    clearable: true,
+  },
+]
+
 /**
  * Displays the paginated list of evaluations of the authenticated director's
- * department with server-side search, filters (period, active, sort by
- * average), and row actions (detail, toggle active, delete).
+ * department with server-side search, filters (status, AI status, active, sort
+ * by average), and row actions (detail, toggle active, delete).
  *
  * @example
  * <EvaluationsList />
@@ -34,14 +70,22 @@ export function EvaluationsList() {
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 })
   const [deleteTarget, setDeleteTarget] = useState<EvaluationRecord | null>(null)
 
-  const sortBy =
-    sorting.length > 0 ? `${sorting[0].id}_${sorting[0].desc ? 'desc' : 'asc'}` : undefined
+  const { filters, setFilters } = useTableFilters('evaluations', {
+    status: undefined as string | undefined,
+    aiStatus: undefined as string | undefined,
+    active: undefined as boolean | undefined,
+    sortBy: 'period_name_desc',
+  })
+  const [debouncedFilters] = useDebounce(filters, 400)
 
   const { data, isPending, isFetching } = useGetEvaluations({
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     search: debouncedSearch,
-    sort_by: sortBy,
+    status: debouncedFilters.status as string | undefined,
+    ai_status: debouncedFilters.aiStatus as string | undefined,
+    active: debouncedFilters.active as boolean | undefined,
+    sort_by: (debouncedFilters.sortBy as string | undefined) || undefined,
   })
 
   const evaluations = data?.data ?? []
@@ -52,7 +96,14 @@ export function EvaluationsList() {
   const { mutate: analyze, isPending: isAnalyzing } = useAnalyzeEvaluation()
   const { connect: connectLogs } = useEvaluationLogs()
 
-  const resetPage = () => setPagination((prev) => ({ ...prev, pageIndex: 0 }))
+  const resetPage = useDebouncedCallback(() => {
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }))
+  }, 400)
+
+  const handleFiltersChange = (newFilters: Record<string, unknown>) => {
+    setFilters(newFilters)
+    resetPage()
+  }
 
   const rowActions: DataTableAction<EvaluationRecord>[] = [
     {
@@ -125,6 +176,13 @@ export function EvaluationsList() {
         rowActions={rowActions}
         actionsHeaderLabel="Acciones"
         isRowDisabled={(row) => !row.active}
+        toolbar={
+          <DataTableFilters
+            filters={filterConfig}
+            values={filters}
+            onChange={handleFiltersChange}
+          />
+        }
       />
 
       <ConfirmDialog

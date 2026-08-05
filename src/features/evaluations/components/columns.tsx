@@ -3,20 +3,8 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { ScoreBadge } from '@/components/common/ScoreBadge'
 import { Badge } from '@/components/ui/badge'
 import { Spinner } from '@/components/ui/spinner'
+import { AI_STATUS_DISPLAY, EVALUATION_STATUS_DISPLAY } from '../config'
 import type { AiStatus, EvaluationRecord } from '../types'
-
-const STATUS_MAP: Record<EvaluationRecord['status'], { label: string; className: string }> = {
-  PROCESSING: { label: 'Procesando', className: 'bg-amber-50 text-amber-700' },
-  COMPLETED: { label: 'Completado', className: 'bg-emerald-50 text-emerald-700' },
-  FAILED: { label: 'Fallido', className: 'bg-red-50 text-red-700' },
-}
-
-const AI_STATUS_MAP: Record<AiStatus, { label: string; className: string }> = {
-  PENDING: { label: 'Pendiente', className: 'bg-amber-50 text-amber-700' },
-  ANALYZING: { label: 'Analizando', className: 'bg-blue-50 text-blue-700' },
-  ANALYZED: { label: 'Completado', className: 'bg-emerald-50 text-emerald-700' },
-  FAILED: { label: 'Fallido', className: 'bg-red-50 text-red-700' },
-}
 
 /**
  * Column definitions for the evaluations table (period, status, average, AI
@@ -47,7 +35,7 @@ export const evaluationColumns: ColumnDef<EvaluationRecord>[] = [
     header: 'Estado',
     cell: ({ getValue }) => {
       const status = getValue<EvaluationRecord['status']>()
-      const config = STATUS_MAP[status]
+      const config = EVALUATION_STATUS_DISPLAY[status]
 
       return <Badge className={config.className}>{config.label}</Badge>
     },
@@ -85,7 +73,7 @@ export const evaluationColumns: ColumnDef<EvaluationRecord>[] = [
         return <span className="text-muted-foreground text-xs">No disponible</span>
       }
 
-      const config = AI_STATUS_MAP[aiStatus]
+      const config = AI_STATUS_DISPLAY[aiStatus]
 
       return (
         <Badge className={config.className}>

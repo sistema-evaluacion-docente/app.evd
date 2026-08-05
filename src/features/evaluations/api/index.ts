@@ -12,7 +12,9 @@ interface EvaluationListParams {
   search: string
   sort_by?: string
   period_id?: number | string
-  active?: string
+  active?: boolean
+  status?: string
+  ai_status?: string
   department_id?: number
 }
 
@@ -26,7 +28,9 @@ async function getEvaluations(
   if (params.search) query['search'] = params.search
   if (params.sort_by) query['sort_by'] = params.sort_by
   if (params.period_id) query['period_id'] = params.period_id
-  if (params.active) query['active'] = params.active
+  if (params.active !== undefined) query['active'] = params.active
+  if (params.status) query['status'] = params.status
+  if (params.ai_status) query['ai_status'] = params.ai_status
   if (params.department_id) query['department_id'] = params.department_id
 
   return api.get('/evaluations', { params: query })
@@ -77,13 +81,25 @@ export function useGetEvaluations({
   sort_by,
   period_id,
   active,
+  status,
+  ai_status,
 }: Partial<EvaluationListParams> = {}) {
   const departmentId = useAuthStore((state) => state.user?.department_id) ?? undefined
 
   return useQuery({
     queryKey: [
       ...evaluationsKeys.lists(),
-      { page, limit, search, sort_by, period_id, active, department_id: departmentId },
+      {
+        page,
+        limit,
+        search,
+        sort_by,
+        period_id,
+        active,
+        status,
+        ai_status,
+        department_id: departmentId,
+      },
     ],
     queryFn: () =>
       getEvaluations({
@@ -93,6 +109,8 @@ export function useGetEvaluations({
         sort_by,
         period_id,
         active,
+        status,
+        ai_status,
         department_id: departmentId,
       }),
     enabled: departmentId != null,
