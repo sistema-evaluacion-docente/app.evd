@@ -1,11 +1,12 @@
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { AlertTriangle, LogOut, UserX } from 'lucide-react'
 
-import useAuth from '@/shared/hooks/useAuth'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useAuthStore } from '../store/useAuthStore'
 
-function UserNotAuth() {
-  const { user, handleLogout } = useAuth()
+export function UserNotAuth() {
+  const user = useAuthStore((s) => s.user)
+  const handleLogout = useAuthStore((s) => s.handleLogout)
 
   const isInactive = user ? !user.active : false
   const isNotTeacher = user ? !user.teacher_id : false
@@ -45,5 +46,3 @@ function UserNotAuth() {
     </section>
   )
 }
-
-export default UserNotAuth

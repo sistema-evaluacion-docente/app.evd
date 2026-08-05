@@ -90,6 +90,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
     try {
       await logoutUser()
+
       set({
         user: null,
         token: null,
@@ -97,7 +98,10 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         loggedIn: false,
         isLoading: false,
       })
+
       localStorage.removeItem('selectedRole')
+
+      window.location.href = '/login'
     } finally {
       set({ isLoading: false })
     }
