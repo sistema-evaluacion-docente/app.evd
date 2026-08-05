@@ -1,14 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
-import {
-  ArrowDownIcon,
-  ArrowDownUp,
-  ArrowUpIcon,
-  CheckIcon,
-  ChevronDownIcon,
-  Funnel,
-} from 'lucide-react'
+import { ArrowDownIcon, ArrowDownUp, ArrowUpIcon, CheckIcon, ChevronDownIcon } from 'lucide-react'
 import { useState } from 'react'
 
 export interface SortByField {
@@ -74,16 +67,16 @@ function SortBy({
   const currentFieldLabel = fields.find((f) => f.value === currentField)?.label ?? currentField
 
   function handleOpen(nextOpen: boolean) {
+    if (!nextOpen && (pendingField !== currentField || pendingDirection !== currentDirection)) {
+      onChange(build(pendingField, pendingDirection))
+    }
+
     if (nextOpen) {
       setPendingField(currentField)
       setPendingDirection(currentDirection)
     }
-    setOpen(nextOpen)
-  }
 
-  function handleApply() {
-    onChange(build(pendingField, pendingDirection))
-    setOpen(false)
+    setOpen(nextOpen)
   }
 
   return (
@@ -133,15 +126,6 @@ function SortBy({
                   </button>
                 )
               })}
-            </div>
-
-            <div className="bg-border mx-2 h-px" />
-
-            <div className="flex justify-end p-2">
-              <Button size="sm" variant="outline" onClick={handleApply}>
-                <Funnel />
-                Aplicar
-              </Button>
             </div>
           </div>
         </PopoverContent>
