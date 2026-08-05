@@ -2,10 +2,10 @@ import type { PaginationState, SortingState } from '@tanstack/react-table'
 import { Eye, Power, PowerOff, Sparkles, Trash, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useDebounce } from 'use-debounce'
-import { useLocation } from 'wouter'
 
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { DataTable, type DataTableAction } from '@/components/common/DataTable'
+import { useNavigate } from '@/hooks/useNavigate'
 import {
   evaluationsKeys,
   useAnalyzeEvaluation,
@@ -26,7 +26,8 @@ import { evaluationColumns } from './columns'
  * <EvaluationsList />
  */
 export function EvaluationsList() {
-  const [, navigate] = useLocation()
+  const navigate = useNavigate()
+
   const [search, setSearch] = useState('')
   const [debouncedSearch] = useDebounce(search, 400)
   const [sorting, setSorting] = useState<SortingState>([])

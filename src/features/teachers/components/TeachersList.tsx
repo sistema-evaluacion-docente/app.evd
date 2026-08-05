@@ -2,12 +2,12 @@ import type { PaginationState, SortingState } from '@tanstack/react-table'
 import { Eye } from 'lucide-react'
 import { useState } from 'react'
 import { useDebounce } from 'use-debounce'
-import { useLocation } from 'wouter'
 
 import { DataTable, type DataTableAction } from '@/components/common/DataTable'
 import { PeriodSelect } from '@/components/common/PeriodSelect'
 import { useAuthStore } from '@/features/auth'
 import { useAcademicPeriodsStore } from '@/features/periods'
+import { useNavigate } from '@/hooks/useNavigate'
 import { useGetTeachers } from '../api'
 import type { TeacherRecord } from '../types'
 import { teacherColumns } from './columns'
@@ -21,7 +21,7 @@ import { teacherColumns } from './columns'
  * <TeachersList />
  */
 export function TeachersList() {
-  const [, setLocation] = useLocation()
+  const navigate = useNavigate()
 
   const departmentId = useAuthStore((state) => state.user?.department_id)
 
@@ -51,7 +51,7 @@ export function TeachersList() {
       icon: <Eye className="size-4" />,
       onClick: (row) => {
         const period = periodsStore.periods.find((p) => p.id === selectedPeriodId)
-        setLocation(`/docentes/${row.id}?period=${period?.name}`)
+        navigate(`/docentes/${row.id}?period=${period?.name}`)
       },
     },
   ]
@@ -79,7 +79,7 @@ export function TeachersList() {
       sorting={sorting}
       onRowClick={(row) => {
         const period = periodsStore.periods.find((p) => p.id === selectedPeriodId)
-        setLocation(`/docentes/${row.id}?period=${period?.name}`)
+        navigate(`/docentes/${row.id}?period=${period?.name}`)
       }}
       onSortingChange={setSorting}
       pagination={pagination}

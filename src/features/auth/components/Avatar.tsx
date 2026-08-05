@@ -1,5 +1,4 @@
 import { Building2, LogOut, User } from 'lucide-react'
-import { useLocation } from 'wouter'
 
 import { AvatarFallback, AvatarImage, Avatar as AvatarPrimitive } from '@/components/ui/avatar'
 import {
@@ -17,10 +16,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useNavigate } from '@/hooks/useNavigate'
 import { useAuthStore } from '../store/useAuthStore'
 
 export function Avatar() {
-  const [, setLocation] = useLocation()
+  const navigate = useNavigate()
 
   const user = useAuthStore((s) => s.user)
   const isLoading = useAuthStore((s) => s.isLoading)
@@ -98,7 +98,7 @@ export function Avatar() {
 
             <DropdownMenuSeparator />
 
-            <DropdownMenuItem onClick={() => setLocation('/me/profile')}>
+            <DropdownMenuItem onClick={() => navigate('/me/profile')}>
               <User className="size-4" aria-hidden="true" />
               Perfil
             </DropdownMenuItem>
@@ -110,7 +110,7 @@ export function Avatar() {
                 <DropdownMenuRadioGroup
                   value={selectedRole ?? ''}
                   onValueChange={(value) => {
-                    setLocation('/')
+                    navigate('/')
                     setSelectedRole(value)
                   }}
                 >

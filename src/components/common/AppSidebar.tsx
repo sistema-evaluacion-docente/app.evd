@@ -24,10 +24,11 @@ import {
   UserSearch,
   Users,
 } from 'lucide-react'
-import { Link, useLocation } from 'wouter'
+import { useLocation } from 'wouter'
 
 import { getMenus } from '@/config/security'
 import useAuth from '@/hooks/useAuth'
+import { useNavigate } from '@/hooks/useNavigate'
 import Logo from './Logo'
 
 const DEFAULT_ICON = FileText
@@ -51,6 +52,7 @@ export function AppSidebar() {
   const [location] = useLocation()
   const { setOpenMobile } = useSidebar()
   const { handleLogout, selectedRole } = useAuth()
+  const navigate = useNavigate()
 
   if (!selectedRole) {
     return null
@@ -83,7 +85,10 @@ export function AppSidebar() {
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton
                       isActive={active}
-                      render={<Link href={item.path} onClick={() => setOpenMobile(false)} />}
+                      onClick={() => {
+                        setOpenMobile(false)
+                        navigate(item.path)
+                      }}
                     >
                       <Icon />
                       <span>{item.name}</span>

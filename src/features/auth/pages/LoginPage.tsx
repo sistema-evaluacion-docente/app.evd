@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
-import { useLocation } from 'wouter'
 
 import AppLayoutSkeleton from '@/components/skeletons/AppLayoutSkeleton'
+import { useNavigate } from '@/hooks/useNavigate'
 import { LoginForm } from '../components/LoginForm'
 import { useAuthStore } from '../store/useAuthStore'
 
@@ -11,15 +11,15 @@ import { useAuthStore } from '../store/useAuthStore'
  * redirects to the home page once the user is authenticated.
  */
 export default function LoginPage() {
-  const [, setLocation] = useLocation()
+  const navigate = useNavigate()
   const isLoading = useAuthStore((s) => s.isLoading)
   const loggedIn = useAuthStore((s) => s.loggedIn)
 
   useEffect(() => {
     if (loggedIn) {
-      setLocation('/')
+      navigate('/')
     }
-  }, [loggedIn, setLocation])
+  }, [loggedIn, navigate])
 
   if (isLoading) {
     return <AppLayoutSkeleton />

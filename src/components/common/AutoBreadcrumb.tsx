@@ -1,6 +1,6 @@
-import { Fragment, useMemo } from 'react'
 import { Home } from 'lucide-react'
-import { Link, useLocation } from 'wouter'
+import { Fragment, useMemo } from 'react'
+import { useLocation } from 'wouter'
 
 import {
   Breadcrumb,
@@ -10,6 +10,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
+import { useNavigate } from '@/hooks/useNavigate'
 
 const SEGMENT_LABELS: Record<string, string> = {
   inicio: 'Inicio',
@@ -60,6 +61,7 @@ function isNumericId(segment: string): boolean {
  */
 export function AutoBreadcrumb() {
   const [location] = useLocation()
+  const navigate = useNavigate()
 
   const items = useMemo(() => {
     const segments = location.split('/').filter(Boolean)
@@ -96,7 +98,10 @@ export function AutoBreadcrumb() {
     <Breadcrumb>
       <BreadcrumbList>
         <BreadcrumbItem>
-          <BreadcrumbLink render={<Link to="/" />} className="inline-flex items-center gap-1.5">
+          <BreadcrumbLink
+            onClick={() => navigate('/')}
+            className="inline-flex cursor-pointer items-center gap-1.5"
+          >
             <Home aria-hidden="true" className="size-3.5" />
             Inicio
           </BreadcrumbLink>
@@ -112,7 +117,9 @@ export function AutoBreadcrumb() {
                   {item.label}
                 </BreadcrumbPage>
               ) : (
-                <BreadcrumbLink render={<Link to={item.href} />}>{item.label}</BreadcrumbLink>
+                <BreadcrumbLink onClick={() => navigate(item.href)} className="cursor-pointer">
+                  {item.label}
+                </BreadcrumbLink>
               )}
             </BreadcrumbItem>
           </Fragment>
