@@ -3,7 +3,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import type { ResponseAPI } from '@/@types/Response'
 import api from '@/config/axios'
 import { useAuthStore } from '@/features/auth'
-import type { TeacherRecord } from '../types'
+import type { TeacherDetail, TeacherRecord } from '../types'
 
 interface TeacherListParams {
   page: number
@@ -30,10 +30,21 @@ async function getTeachersWithAverages(
   return api.get('/teachers/with-averages', { params: query })
 }
 
+async function getTeacherDetail(
+  teacherId: number,
+  periodName: string,
+): Promise<ResponseAPI<TeacherDetail>> {
+  return api.get(`/evaluations/teachers/${teacherId}/detail`, {
+    params: { period_name: periodName },
+  })
+}
+
 /** Query-key factory so list invalidations stay consistent. */
 export const teachersKeys = {
   all: ['teachers'] as const,
   lists: () => [...teachersKeys.all, 'list'] as const,
+  detail: (teacherId: number, periodName: string) =>
+    [...teachersKeys.all, 'detail', teacherId, periodName] as const,
 }
 
 /**
@@ -72,5 +83,27 @@ export function useGetTeachers({
     enabled: params !== null,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
+  })
+}
+
+/**
+ * Fetches the full detail of a teacher for a specific academic period
+ * (`GET /evaluations/teachers/{id}/detail`).
+ *
+ * @example
+ * const { data, isLoading } = useGetTeacherDetail({ teacherId: 1, periodName: '2024-I' });
+ */
+export function useGetTeacherDetail({
+  teacherId,
+  periodName,
+}: {
+  teacherId?: number
+  periodName?: string
+}) {
+  return useQuery({
+    queryKey: teachersKeys.detail(teacherId ?? 0, periodName ?? ''),
+    queryFn: () => getTeacherDetail(teacherId!, periodName!),
+    enabled: teacherId != null && periodName != null && periodName !== '',
+    staleTime: 60_000,
   })
 }

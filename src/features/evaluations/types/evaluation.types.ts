@@ -26,20 +26,6 @@ export interface EvaluationStatusUpdate {
   active: boolean
 }
 
-/** An academic period option used to filter evaluations. */
-export interface AcademicPeriod {
-  id: number
-  code: string
-  name: string
-  start_date: string | null
-  end_date: string | null
-  evaluation_end_date: string | null
-  final_evaluation_date: string | null
-  active: boolean
-  created_at: string
-  updated_at: string
-}
-
 /** Connection status of the evaluation progress WebSocket channel. */
 export type WsConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error'
 

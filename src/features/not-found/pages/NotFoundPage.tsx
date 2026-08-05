@@ -1,6 +1,6 @@
+import { TransitionLink } from '@/components/common/TransitionLink'
 import { Button } from '@/components/ui/button'
 import { TriangleAlert } from 'lucide-react'
-import { Link } from 'wouter'
 
 export default function NotFoundPage() {
   return (
@@ -19,17 +19,17 @@ export default function NotFoundPage() {
         </p>
 
         <div className="mt-7 flex flex-col justify-center gap-2 sm:flex-row">
-          <Link href="/">
+          <TransitionLink href="/">
             <Button size="lg" className="w-full sm:w-auto">
               Ir al dashboard
             </Button>
-          </Link>
+          </TransitionLink>
 
-          <Link href="/login">
+          <TransitionLink href="/login">
             <Button variant="outline" size="lg" className="w-full sm:w-auto">
               Ir al login
             </Button>
-          </Link>
+          </TransitionLink>
         </div>
       </div>
     </div>

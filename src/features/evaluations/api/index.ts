@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 import type { ResponseAPI } from '@/@types/Response'
 import api from '@/config/axios'
 import { useAuthStore } from '@/features/auth'
-import type { AcademicPeriod, EvaluationRecord, EvaluationStatusUpdate } from '../types'
+import type { EvaluationRecord, EvaluationStatusUpdate } from '../types'
 
 interface EvaluationListParams {
   page: number
@@ -30,10 +30,6 @@ async function getEvaluations(
   if (params.department_id) query['department_id'] = params.department_id
 
   return api.get('/evaluations', { params: query })
-}
-
-async function getAcademicPeriods(): Promise<ResponseAPI<AcademicPeriod[]>> {
-  return api.get('/academic-periods', { params: { limit: 100 } })
 }
 
 async function updateEvaluationStatus(
@@ -64,7 +60,6 @@ async function uploadEvaluation(file: File): Promise<ResponseAPI<EvaluationRecor
 export const evaluationsKeys = {
   all: ['evaluations'] as const,
   lists: () => [...evaluationsKeys.all, 'list'] as const,
-  periods: ['academic-periods'] as const,
 }
 
 /**
@@ -103,21 +98,6 @@ export function useGetEvaluations({
     enabled: departmentId != null,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
-  })
-}
-
-/**
- * Fetches the list of academic periods to populate the period filter select
- * (`GET /academic-periods`). Cached for 5 minutes.
- *
- * @example
- * const { data: periods, isLoading } = useGetAcademicPeriods();
- */
-export function useGetAcademicPeriods() {
-  return useQuery({
-    queryKey: evaluationsKeys.periods,
-    queryFn: getAcademicPeriods,
-    staleTime: 300_000,
   })
 }
 
