@@ -1,16 +1,18 @@
 import type { PaginationState, SortingState } from '@tanstack/react-table'
-import { Eye } from 'lucide-react'
+import { Eye, Pencil } from 'lucide-react'
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { useDebounce, useDebouncedCallback } from 'use-debounce'
 
 import { DataTable, type DataTableAction } from '@/components/common/DataTable'
 import { DataTableFilters, type FilterConfig } from '@/components/common/DataTableFilters'
+import { DynamicFormDrawer, type FieldConfig } from '@/components/common/DynamicFormDrawer'
 import { PeriodSelect } from '@/components/common/PeriodSelect'
 import { useAuthStore } from '@/features/auth'
 import { useAcademicPeriodsStore } from '@/features/periods'
 import { useNavigate } from '@/hooks/useNavigate'
 import { useTableFilters } from '@/hooks/useTableFilters'
-import { useGetTeachers } from '../api'
+import { useGetTeachers, useUpdateTeacher } from '../api'
 import type { TeacherRecord } from '../types'
 import { teacherColumns } from './columns'
 
@@ -75,6 +77,7 @@ export function TeachersList() {
   const [debouncedSearch] = useDebounce(search, 400)
   const [sorting, setSorting] = useState<SortingState>([])
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 })
+  const [editTarget, setEditTarget] = useState<TeacherRecord | null>(null)
   const { filters, setFilters } = useTableFilters('teachers', {
     active: true,
     hasAverage: true,
@@ -93,6 +96,74 @@ export function TeachersList() {
     contractType: debouncedFilters.contractType as string | undefined,
     sortBy: debouncedFilters.sortBy as string | undefined,
   })
+  const { mutate: updateTeacher, isPending: isUpdating } = useUpdateTeacher()
+
+  const editFields: FieldConfig[] = editTarget
+    ? [
+        {
+          name: 'name',
+          label: 'Nombre completo',
+          required: true,
+          defaultValue: editTarget.user.name,
+        },
+        {
+          name: 'email',
+          label: 'Correo institucional',
+          type: 'email',
+          required: true,
+          defaultValue: editTarget.user.email,
+        },
+        {
+          name: 'institutional_code',
+          label: 'Código institucional',
+          required: true,
+          defaultValue: editTarget.institutional_code,
+        },
+        {
+          name: 'contract_type',
+          label: 'Tipo de contrato',
+          type: 'select',
+          required: true,
+          defaultValue: editTarget.contract_type,
+          options: CONTRACT_TYPES,
+        },
+        {
+          name: 'active',
+          label: 'Activo',
+          type: 'boolean',
+          defaultValue: String(editTarget.active),
+        },
+      ]
+    : []
+
+  const handleUpdateSubmit = (values: Record<string, string>) => {
+    if (!editTarget) return
+
+    updateTeacher(
+      {
+        teacherId: editTarget.id,
+        payload: {
+          name: values.name,
+          email: values.email,
+          avatar_url: values.avatar_url,
+          institutional_code: values.institutional_code,
+          department_id: editTarget.department_id,
+          contract_type: values.contract_type,
+          user_id: editTarget.user_id,
+          active: values.active === 'true',
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success('Docente actualizado exitosamente')
+          setEditTarget(null)
+        },
+        onError: (error) => {
+          toast.error(error.message || 'Error al actualizar el docente')
+        },
+      },
+    )
+  }
 
   const teachers = data?.data ?? []
   const pageCount = data?.pagination?.pages ?? 1
@@ -117,6 +188,11 @@ export function TeachersList() {
         navigate(`/docentes/${row.id}?period=${period?.name}`)
       },
     },
+    {
+      label: 'Editar',
+      icon: <Pencil className="size-4" />,
+      onClick: (row) => setEditTarget(row),
+    },
   ]
 
   if (!departmentId) {
@@ -128,45 +204,65 @@ export function TeachersList() {
   }
 
   return (
-    <DataTable
-      columns={teacherColumns}
-      data={teachers}
-      pageCount={pageCount}
-      isLoading={isPending}
-      isFetching={isFetching}
-      search={search}
-      onSearchChange={(value) => {
-        setSearch(value)
-        resetPage()
-      }}
-      sorting={sorting}
-      onRowClick={(row) => {
-        const period = periodsStore.periods.find((p) => p.id === selectedPeriodId)
-        navigate(`/docentes/${row.id}?period=${period?.name}`)
-      }}
-      onSortingChange={setSorting}
-      pagination={pagination}
-      onPaginationChange={setPagination}
-      searchPlaceholder="Buscar docente..."
-      emptyMessage="No hay docentes registrados en su departamento."
-      rowActions={rowActions}
-      toolbar={
-        <div className="flex flex-wrap items-center gap-3">
-          <PeriodSelect
-            value={selectedPeriodId}
-            onValueChange={(id) => {
-              setSelectedPeriodId(id)
-              resetPage()
-            }}
-            searchParam="period"
-          />
-          <DataTableFilters
-            filters={filterConfig}
-            values={filters}
-            onChange={handleFiltersChange}
-          />
-        </div>
-      }
-    />
+    <>
+      <DataTable
+        columns={teacherColumns}
+        data={teachers}
+        pageCount={pageCount}
+        isLoading={isPending}
+        isFetching={isFetching}
+        search={search}
+        onSearchChange={(value) => {
+          setSearch(value)
+          resetPage()
+        }}
+        sorting={sorting}
+        onRowClick={(row) => {
+          const period = periodsStore.periods.find((p) => p.id === selectedPeriodId)
+          navigate(`/docentes/${row.id}?period=${period?.name}`)
+        }}
+        onSortingChange={setSorting}
+        pagination={pagination}
+        onPaginationChange={setPagination}
+        searchPlaceholder="Buscar docente..."
+        emptyMessage="No hay docentes registrados en su departamento."
+        rowActions={rowActions}
+        toolbar={
+          <div className="flex flex-wrap items-center gap-3">
+            <PeriodSelect
+              value={selectedPeriodId}
+              onValueChange={(id) => {
+                setSelectedPeriodId(id)
+                resetPage()
+              }}
+              searchParam="period"
+            />
+            <DataTableFilters
+              filters={filterConfig}
+              values={filters}
+              onChange={handleFiltersChange}
+            />
+          </div>
+        }
+      />
+
+      {editTarget && (
+        <DynamicFormDrawer
+          key={editTarget.id}
+          title={`Editar docente: ${editTarget.user.name}`}
+          description="Actualiza los datos del docente"
+          hideTrigger
+          open
+          onOpenChange={(open) => {
+            if (!open) setEditTarget(null)
+          }}
+          fields={editFields}
+          onSubmit={handleUpdateSubmit}
+          isSubmitting={isUpdating}
+          submitLabel="Guardar"
+          submitSubmittingLabel="Guardando..."
+        />
+      )}
+    </>
   )
 }
