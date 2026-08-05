@@ -36,6 +36,10 @@ async function getEvaluations(
   return api.get('/evaluations', { params: query })
 }
 
+async function getEvaluationByPeriod(periodId: number): Promise<ResponseAPI<EvaluationRecord>> {
+  return api.get(`/evaluations/by-period/${periodId}`)
+}
+
 async function updateEvaluationStatus(
   evaluationId: number,
   payload: EvaluationStatusUpdate,
@@ -64,6 +68,22 @@ async function uploadEvaluation(file: File): Promise<ResponseAPI<EvaluationRecor
 export const evaluationsKeys = {
   all: ['evaluations'] as const,
   lists: () => [...evaluationsKeys.all, 'list'] as const,
+  detail: (periodId: number) => [...evaluationsKeys.all, 'detail', periodId] as const,
+}
+
+/**
+ * Fetches the evaluation of an academic period (`GET /evaluations/by-period/{period_id}`).
+ *
+ * @example
+ * const { data, isLoading } = useGetEvaluationByPeriod(periodId);
+ */
+export function useGetEvaluationByPeriod(periodId?: number) {
+  return useQuery({
+    queryKey: evaluationsKeys.detail(periodId ?? 0),
+    queryFn: () => getEvaluationByPeriod(periodId!),
+    enabled: periodId != null,
+    staleTime: 60_000,
+  })
 }
 
 /**

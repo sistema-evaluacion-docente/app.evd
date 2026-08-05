@@ -3,7 +3,12 @@ import { Route, Switch } from 'wouter'
 import { AppLayout } from '@/components/common/AppLayout'
 import { LoginPage } from '@/features/auth'
 import { DashboardPage } from '@/features/dashboard'
-import { EvaluationLogsPanel, EvaluationsPage, EvaluationUploadPage } from '@/features/evaluations'
+import {
+  EvaluationDetailPage,
+  EvaluationLogsPanel,
+  EvaluationsPage,
+  EvaluationUploadPage,
+} from '@/features/evaluations'
 import { NotFoundPage } from '@/features/not-found'
 import { PeriodsPage } from '@/features/periods'
 import { TeacherDetailPage, TeachersPage, TeacherUploadPage } from '@/features/teachers'
@@ -53,6 +58,12 @@ function App() {
         <Route path="/evaluaciones">
           <AppLayout>
             <EvaluationsPage />
+          </AppLayout>
+        </Route>
+
+        <Route path="/evaluaciones/:id">
+          <AppLayout>
+            <EvaluationDetailPage />
           </AppLayout>
         </Route>
 
