@@ -32,7 +32,7 @@ export function DepartmentsPage() {
       name: 'code',
       label: 'Código',
       required: true,
-      placeholder: 'Ej: SIS',
+      placeholder: 'Ej: 52',
     },
     {
       name: 'faculty_id',
