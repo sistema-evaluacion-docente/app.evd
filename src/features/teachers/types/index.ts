@@ -1,1 +1,8 @@
-export type { TeacherRecord, TeacherUser } from './teacher.types'
+export type {
+  CourseDetail,
+  DimensionDetail,
+  QuestionDetail,
+  TeacherDetail,
+  TeacherRecord,
+  TeacherUser,
+} from './teacher.types'

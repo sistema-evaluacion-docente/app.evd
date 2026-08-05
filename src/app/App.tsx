@@ -6,7 +6,7 @@ import { DashboardPage } from '@/features/dashboard'
 import { EvaluationLogsPanel, EvaluationsPage, EvaluationUploadPage } from '@/features/evaluations'
 import { NotFoundPage } from '@/features/not-found'
 import { PeriodsPage } from '@/features/periods'
-import { TeachersPage } from '@/features/teachers'
+import { TeacherDetailPage, TeachersPage } from '@/features/teachers'
 
 function App() {
   return (
@@ -29,6 +29,12 @@ function App() {
         <Route path="/docentes">
           <AppLayout>
             <TeachersPage />
+          </AppLayout>
+        </Route>
+
+        <Route path="/docentes/:id">
+          <AppLayout>
+            <TeacherDetailPage />
           </AppLayout>
         </Route>
 
