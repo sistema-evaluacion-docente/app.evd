@@ -73,7 +73,7 @@ export function ScoreProgress({
       aria-label={label}
       aria-valuetext={`${value.toFixed(1)} de ${max}`}
       className={cn(
-        '**:data-[slot=progress-track]:bg-muted',
+        '**:data-[slot=progress-track]:bg-[#aaa]',
         SIZE_CLASS[size],
         indicatorClass,
         className,
