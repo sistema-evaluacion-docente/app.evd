@@ -1,3 +1,6 @@
 export { teacherColumns } from './columns'
+export { TeacherCourseResults } from './TeacherCourseResults'
+export { TeacherGroupAverageChart } from './TeacherGroupAverageChart'
+export { TeacherOverview } from './TeacherOverview'
 export { TeachersList } from './TeachersList'
 export { TeacherUploadForm } from './TeacherUploadForm'
