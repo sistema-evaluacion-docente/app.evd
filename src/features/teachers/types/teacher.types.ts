@@ -32,8 +32,9 @@ export interface TeacherRecord {
 
 /** A single question within a dimension. */
 export interface QuestionDetail {
-  question: string
-  average: number
+  code: string
+  text: string
+  score: number
 }
 
 /** A dimension with its average score and associated questions. */
