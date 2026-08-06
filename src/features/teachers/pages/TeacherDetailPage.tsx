@@ -3,6 +3,7 @@ import { useRoute, useSearchParams } from 'wouter'
 import { BackButton } from '@/components/common/BackButton'
 import { PageTitle } from '@/components/common/PageTitle'
 import TeacherDetailSkeleton from '@/components/skeletons/TeacherDetailSkeleton'
+import { PeriodAverageTrend } from '@/features/periods'
 import { useGetTeacherDetail } from '../api'
 import { TeacherEvaluationDetail } from '../components'
 
@@ -36,6 +37,16 @@ export default function TeacherDetailPage() {
       <BackButton href={`/docentes?period=${teacher.period_name}`} className="mb-4" />
 
       <TeacherEvaluationDetail teacher={teacher} />
+
+      <section className="border-border bg-background rounded-md border">
+        <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
+          Evolución del promedio por periodo
+        </h2>
+
+        <div className="px-6 py-4">
+          <PeriodAverageTrend teacherId={teacher.teacher_id} title={null} />
+        </div>
+      </section>
     </div>
   )
 }

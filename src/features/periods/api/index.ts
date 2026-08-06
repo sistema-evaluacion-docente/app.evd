@@ -88,25 +88,33 @@ export const periodsKeys = {
 }
 
 /**
- * Fetches the paginated evaluation history of the authenticated teacher across
- * all evaluated periods (`GET /teachers/{teacher_id}/history`) and flattens the
- * `items` list so it can be consumed directly by `DataTable`.
+ * Fetches the paginated evaluation history of a teacher across all evaluated
+ * periods (`GET /teachers/{teacher_id}/history`) and flattens the `items` list
+ * so it can be consumed directly by `DataTable`. Defaults to the authenticated
+ * teacher; pass `teacherId` to read another one (director views).
  *
  * @example
  * const { data, isPending } = useGetTeacherHistory({ page, limit, search });
+ *
+ * @example
+ * const { data } = useGetTeacherHistory({ teacherId: 12, sort_by: 'period_code_asc' });
  */
 export function useGetTeacherHistory({
+  teacherId: teacherIdProp,
   page = 1,
   limit = 10,
   search = '',
   sort_by,
 }: {
+  /** Overrides the authenticated teacher. */
+  teacherId?: number
   page?: number
   limit?: number
   search?: string
   sort_by?: HistorySortBy
 } = {}) {
-  const teacherId = useAuthStore((state) => state.user?.teacher_id) ?? 0
+  const authTeacherId = useAuthStore((state) => state.user?.teacher_id) ?? 0
+  const teacherId = teacherIdProp ?? authTeacherId
 
   return useQuery({
     queryKey: periodsKeys.history(teacherId, { page, limit, search, sort_by }),

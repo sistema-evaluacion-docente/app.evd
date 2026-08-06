@@ -1,11 +1,21 @@
+import { PageTitle } from '@/components/common/PageTitle'
 import { UserNotAuth } from '@/features/auth'
+import { PeriodAverageTrend } from '@/features/periods'
 import useAuth from '@/hooks/useAuth'
 
 export default function DashboardPage() {
   const { selectedRole } = useAuth()
 
   if (selectedRole === 'DOCENTE') {
-    return <p>Mi resumen</p>
+    return (
+      <>
+        <PageTitle>Mi resumen</PageTitle>
+
+        <div className="space-y-8">
+          <PeriodAverageTrend />
+        </div>
+      </>
+    )
   }
 
   if (selectedRole === 'DIRECTOR DE DEPARTAMENTO') {
