@@ -121,11 +121,6 @@ export function CommentsPanel({
     >
       {showHeader && (title || description || headerActions) && (
         <header className="border-border relative flex flex-wrap items-end justify-between gap-x-10 gap-y-6 overflow-hidden border-b px-6 py-5">
-          <div
-            aria-hidden="true"
-            className="from-brand-500/8 pointer-events-none absolute -top-20 -left-16 size-48 rounded-full bg-radial to-transparent blur-2xl"
-          />
-
           <div className="relative min-w-0">
             {title && (
               <h2 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
@@ -134,7 +129,7 @@ export function CommentsPanel({
             )}
 
             <p className="mt-1 flex items-baseline gap-2">
-              <span className="num text-3xl leading-none font-bold tracking-tight tabular-nums">
+              <span className="num text-2xl leading-none font-bold tracking-tight tabular-nums">
                 {isFiltered ? filteredCount : totalCount}
               </span>
 
