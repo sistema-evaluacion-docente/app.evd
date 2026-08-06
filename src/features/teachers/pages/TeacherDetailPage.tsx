@@ -1,5 +1,6 @@
 import { useRoute, useSearchParams } from 'wouter'
 
+import { BackButton } from '@/components/common/BackButton'
 import { PageTitle } from '@/components/common/PageTitle'
 import { Stagger } from '@/components/common/stagger'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -51,6 +52,8 @@ export default function TeacherDetailPage() {
   return (
     <>
       <div className="space-y-6">
+        <BackButton href={`/docentes?period=${teacher.period_name}`} className="mb-4" />
+
         <Stagger animation="animate-rise">
           <TeacherOverview teacher={teacher} />
         </Stagger>

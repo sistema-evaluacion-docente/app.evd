@@ -1,6 +1,7 @@
-import { ArrowLeft, Plus, type LucideIcon } from 'lucide-react'
+import { Plus, type LucideIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 
+import { BackButton } from '@/components/common/BackButton'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -59,10 +60,7 @@ export function PageTitle({
   return (
     <header className="mb-6">
       <div className="mb-3 flex items-center">
-        <Button type="button" variant="outline" size="sm" onClick={() => window.history.back()}>
-          <ArrowLeft className="size-4" aria-hidden="true" />
-          Ir atrás
-        </Button>
+        <BackButton />
       </div>
 
       <div className="flex items-center justify-between gap-4">
