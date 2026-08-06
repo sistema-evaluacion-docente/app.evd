@@ -157,7 +157,7 @@ export function CommentsPanel({
       {showFilters && hasData && (
         <div className="border-border bg-muted/20 flex flex-col flex-wrap items-center gap-x-6 gap-y-3 border-b px-6 py-3">
           <div className="flex w-full items-center justify-between gap-x-4">
-            <div className="focus-within:border-brand-500/70 border-border/80 flex max-w-md min-w-56 flex-1 items-center gap-2 border-b pb-1 transition-colors">
+            <div className="focus-within:border-brand-500/70 border-border/80 mb-2 flex max-w-md min-w-56 flex-1 items-center gap-2 border-b pb-1 transition-colors">
               <Search className="text-muted-foreground/70 size-3.5 shrink-0" aria-hidden="true" />
 
               <input
@@ -174,7 +174,7 @@ export function CommentsPanel({
               <button
                 type="button"
                 onClick={reset}
-                className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs font-medium tracking-wide uppercase transition-colors"
+                className="text-muted-foreground hover:text-foreground inline-flex cursor-pointer items-center gap-1 text-xs font-medium tracking-wide uppercase transition-colors"
               >
                 <X className="size-3" aria-hidden="true" />
                 Limpiar
@@ -336,7 +336,7 @@ function ChipGroup({
             aria-pressed={isSelected}
             onClick={() => onSelect(isSelected ? null : option.id)}
             className={cn(
-              'inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium tracking-wide uppercase transition-all duration-200',
+              'inline-flex cursor-pointer items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium tracking-wide uppercase transition-all duration-200',
               isSelected ? 'shadow-card' : 'text-muted-foreground hover:text-foreground',
             )}
             style={
