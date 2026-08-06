@@ -3,7 +3,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import type { ResponseAPI } from '@/@types/Response'
 import api from '@/config/axios'
 import { useAuthStore } from '@/features/auth'
-import type { TeacherDetail, TeacherRecord, TeacherUploadData } from '../types'
+import type { TeacherCommentsData, TeacherDetail, TeacherRecord, TeacherUploadData } from '../types'
 
 interface TeacherListParams {
   page: number
@@ -45,6 +45,13 @@ async function getTeacherDetail(
   return api.get(`/evaluations/teachers/${teacherId}/detail`, {
     params: { period_name: periodName },
   })
+}
+
+async function getTeacherComments(
+  evaluationId: number,
+  teacherId: number,
+): Promise<ResponseAPI<TeacherCommentsData>> {
+  return api.get(`/evaluations/${evaluationId}/teachers/${teacherId}/comments`)
 }
 
 async function uploadTeachers(file: File): Promise<ResponseAPI<TeacherUploadData>> {
@@ -95,6 +102,8 @@ export const teachersKeys = {
   lists: () => [...teachersKeys.all, 'list'] as const,
   detail: (teacherId: number, periodName: string) =>
     [...teachersKeys.all, 'detail', teacherId, periodName] as const,
+  comments: (evaluationId: number, teacherId: number) =>
+    [...teachersKeys.all, 'comments', evaluationId, teacherId] as const,
 }
 
 /**
@@ -182,6 +191,29 @@ export function useGetTeacherDetail({
     queryKey: teachersKeys.detail(teacherId ?? 0, periodName ?? ''),
     queryFn: () => getTeacherDetail(teacherId!, periodName!),
     enabled: teacherId != null && periodName != null && periodName !== '',
+    staleTime: 60_000,
+  })
+}
+
+/**
+ * Fetches the student comments of a teacher for an evaluation, grouped by
+ * course/group (`GET /evaluations/{evaluation_id}/teachers/{teacher_id}/comments`).
+ * Stays disabled until both ids are known.
+ *
+ * @example
+ * const { data, isPending } = useGetTeacherComments({ evaluationId: 3, teacherId: 12 });
+ */
+export function useGetTeacherComments({
+  evaluationId,
+  teacherId,
+}: {
+  evaluationId?: number
+  teacherId?: number
+}) {
+  return useQuery({
+    queryKey: teachersKeys.comments(evaluationId ?? 0, teacherId ?? 0),
+    queryFn: () => getTeacherComments(evaluationId!, teacherId!),
+    enabled: evaluationId != null && teacherId != null,
     staleTime: 60_000,
   })
 }
