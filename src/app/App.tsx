@@ -5,6 +5,7 @@ import { LogsPage, SettingsPage } from '@/features/admin'
 import { LoginPage } from '@/features/auth'
 import { DashboardPage } from '@/features/dashboard'
 import { DepartmentsPage } from '@/features/departments'
+import { DirectorsPage } from '@/features/directors'
 import {
   EvaluationDetailPage,
   EvaluationLogsPanel,
@@ -104,6 +105,12 @@ function App() {
         <Route path="/admin/usuarios">
           <AppLayout>
             <UsersPage />
+          </AppLayout>
+        </Route>
+
+        <Route path="/admin/directores">
+          <AppLayout>
+            <DirectorsPage />
           </AppLayout>
         </Route>
 

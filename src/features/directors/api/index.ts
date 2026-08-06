@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import type { ResponseAPI } from '@/@types/Response'
 import api from '@/config/axios'
@@ -13,6 +13,10 @@ async function getDirectors(params: DirectorParams): Promise<ResponseAPI<Directo
   if (params.active !== undefined) query['active'] = params.active
 
   return api.get('/directors/', { params: query })
+}
+
+async function deleteDirector(directorId: number): Promise<ResponseAPI<Director>> {
+  return api.delete(`/directors/${directorId}`)
 }
 
 /** Query-key factory so list invalidations stay consistent. */
@@ -47,5 +51,23 @@ export function useGetDirectors({
     staleTime: 60_000,
     placeholderData: keepPreviousData,
     enabled,
+  })
+}
+
+/**
+ * Deletes a director record (`DELETE /directors/{director_id}`).
+ * Invalidates the directors list on success.
+ *
+ * @example
+ * const { mutate: deleteDirector } = useDeleteDirector();
+ * deleteDirector(3);
+ */
+export function useDeleteDirector() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (directorId: number) => deleteDirector(directorId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: directorsKeys.lists() })
+    },
   })
 }
