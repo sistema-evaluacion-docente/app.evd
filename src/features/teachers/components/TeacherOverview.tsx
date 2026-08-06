@@ -1,8 +1,9 @@
 import { CalendarRange } from 'lucide-react'
 
+import { ScoreProgress } from '@/components/common/ScoreProgress'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { dimensionColor, shortenDimensionLabel } from '@/lib/dimensionLabel'
 import { getScoreToneClass } from '@/lib/scoreTone'
 import type { TeacherDetail } from '../types'
@@ -102,7 +103,36 @@ export function TeacherOverview({ teacher }: TeacherOverviewProps) {
               {dimension.average.toFixed(2)}
             </p>
 
-            <Progress value={dimension.average} max={5} className="mt-2 h-1.5" />
+            <ScoreProgress
+              value={dimension.average}
+              tone="auto"
+              size="md"
+              className="mt-0.5"
+              label={dimension.dimension}
+              detailsTitle={dimension.dimension}
+              details={
+                dimension.questions.length > 0 && (
+                  <ScrollArea className="h-56 px-4">
+                    {dimension.questions.map((question) => (
+                      <li key={question.code} className="flex items-start gap-3 py-2">
+                        <span className="text-muted-foreground min-w-0 flex-1">
+                          <span className="num text-muted-foreground/70 mr-1.5">
+                            {question.code}
+                          </span>
+                          {question.text}
+                        </span>
+
+                        <span
+                          className={`num shrink-0 font-semibold tabular-nums ${getScoreToneClass(question.score)}`}
+                        >
+                          {question.score.toFixed(2)}
+                        </span>
+                      </li>
+                    ))}
+                  </ScrollArea>
+                )
+              }
+            />
           </div>
         ))}
       </div>
