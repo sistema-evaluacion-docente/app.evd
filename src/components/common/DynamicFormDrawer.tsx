@@ -268,7 +268,9 @@ export function DynamicFormDrawer({
                   <SelectTrigger className="w-full">
                     <SelectValue
                       placeholder={field.placeholder ?? `Selecciona ${field.label.toLowerCase()}`}
-                    />
+                    >
+                      {field.options?.find((option) => option.value === values[field.name])?.label}
+                    </SelectValue>
                   </SelectTrigger>
 
                   <SelectContent>
