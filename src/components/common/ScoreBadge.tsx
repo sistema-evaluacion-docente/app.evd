@@ -46,7 +46,6 @@ const TONE_CLASS: Record<Exclude<ScoreBadgeTone, 'auto'>, string> = {
  */
 export function ScoreBadge({
   value,
-  max = 5,
   decimals = 1,
   tone = 'auto',
   successMin = 3.6,
@@ -64,7 +63,6 @@ export function ScoreBadge({
   return (
     <span className={cn('text-sm font-semibold tabular-nums', toneClass, className)}>
       {value.toFixed(decimals)}
-      <span className="text-muted-foreground font-medium"> / {max.toFixed(decimals)}</span>
     </span>
   )
 }
