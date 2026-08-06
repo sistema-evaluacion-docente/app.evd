@@ -15,6 +15,7 @@ import { FacultiesPage } from '@/features/faculties'
 import { NotFoundPage } from '@/features/not-found'
 import { AdminPeriodsPage, PeriodsPage } from '@/features/periods'
 import { TeacherDetailPage, TeachersPage, TeacherUploadPage } from '@/features/teachers'
+import { UsersPage } from '@/features/users'
 
 function App() {
   return (
@@ -97,6 +98,12 @@ function App() {
         <Route path="/admin/periodos">
           <AppLayout>
             <AdminPeriodsPage />
+          </AppLayout>
+        </Route>
+
+        <Route path="/admin/usuarios">
+          <AppLayout>
+            <UsersPage />
           </AppLayout>
         </Route>
 
