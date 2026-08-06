@@ -124,7 +124,7 @@ export function CommentsPanel({
       className={cn('border-border bg-background overflow-hidden rounded-md border', className)}
     >
       {showHeader && (title || description || headerActions) && (
-        <header className="border-border relative flex flex-wrap items-end justify-between gap-x-10 gap-y-6 overflow-hidden border-b px-6 py-5">
+        <header className="border-border relative flex flex-wrap items-center justify-between gap-x-10 gap-y-6 overflow-hidden border-b px-6 py-5">
           <div className="relative min-w-0">
             {(title || showCategoryHelp) && (
               <div className="flex items-center gap-1">
