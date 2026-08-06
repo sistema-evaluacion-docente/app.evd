@@ -2,7 +2,6 @@ import type { ColumnDef } from '@tanstack/react-table'
 
 import { ActiveBadge } from '@/components/common/ActiveBadge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import formatDate from '@/lib/formatDate'
 import type { Department } from '../types'
 
 /**
@@ -60,15 +59,7 @@ export const departmentColumns: ColumnDef<Department>[] = [
       )
     },
   },
-  {
-    accessorKey: 'active',
-    header: 'Estado',
-    cell: ({ getValue }) => {
-      const active = getValue<boolean>()
 
-      return <ActiveBadge active={active} />
-    },
-  },
   {
     accessorKey: 'teacher_count',
     header: 'Docentes',
@@ -86,12 +77,12 @@ export const departmentColumns: ColumnDef<Department>[] = [
     },
   },
   {
-    accessorKey: 'created_at',
-    header: 'Fecha de creación',
+    accessorKey: 'active',
+    header: 'Estado',
     cell: ({ getValue }) => {
-      const date = getValue<string | null>()
+      const active = getValue<boolean>()
 
-      return <span className="text-muted-foreground">{date ? formatDate(date) : '—'}</span>
+      return <ActiveBadge active={active} />
     },
   },
 ]
