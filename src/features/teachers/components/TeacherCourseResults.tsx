@@ -1,5 +1,6 @@
 import { ChevronRight } from 'lucide-react'
 
+import { ScoreBadge } from '@/components/common/ScoreBadge'
 import { ScoreProgress } from '@/components/common/ScoreProgress'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { dimensionColor } from '@/lib/dimensionLabel'
@@ -101,18 +102,20 @@ function DimensionRow({ dimension }: { dimension: DimensionDetail }) {
       <CollapsibleContent>
         <div className="space-y-6 py-4 pl-5.5">
           {dimension.questions.map((question) => (
-            <div key={question.code}>
-              <div className="mb-1 flex items-baseline justify-between gap-4">
+            <div
+              key={question.code}
+              className="flex flex-col md:flex-row md:items-center md:justify-between"
+            >
+              <div className="flex items-baseline justify-between gap-4">
                 <span className="text-sm">
-                  {question.code} - {question.text}
-                </span>
-
-                <span className="shrink-0 text-sm font-medium tabular-nums">
-                  {question.score.toFixed(2)}
+                  {question.code}. {question.text}
                 </span>
               </div>
 
-              <ScoreProgress value={question.score} label={question.text} />
+              <div className="flex items-center gap-4">
+                <ScoreProgress value={question.score} label={question.text} className="min-w-20" />
+                <ScoreBadge value={question.score} />
+              </div>
             </div>
           ))}
         </div>
