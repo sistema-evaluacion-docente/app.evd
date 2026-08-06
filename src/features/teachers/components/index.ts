@@ -1,3 +1,5 @@
+export { CategoryInfo } from './CategoryInfo'
+export type { CategoryInfoProps } from './CategoryInfo'
 export { CategoryTag } from './CategoryTag'
 export type { CategoryTagProps, CategoryTagSize, CategoryTagVariant } from './CategoryTag'
 export { teacherColumns } from './columns'

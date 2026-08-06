@@ -6,6 +6,7 @@ import { categoryColor, categoryLabel } from '@/lib/categoryLabel'
 import { cn } from '@/lib/utils'
 import { useCommentFilters, type CommentFilterOption } from '../hooks'
 import type { TeacherCommentsCourse } from '../types'
+import { CategoryInfo } from './CategoryInfo'
 import { CommentList, type CommentListProps } from './CommentList'
 
 export interface CommentsPanelProps {
@@ -21,6 +22,8 @@ export interface CommentsPanelProps {
   showHeader?: boolean
   /** Stacked bar with the risk distribution in the header. Defaults to `true`. */
   showRiskSummary?: boolean
+  /** Info button explaining the categories, the percentages and their limits. Defaults to `true`. */
+  showCategoryHelp?: boolean
   /** Search box + risk/category chips. Defaults to `true`. */
   showFilters?: boolean
   /** Render one collapsible section per course. Defaults to `true`. */
@@ -65,6 +68,7 @@ export function CommentsPanel({
   headerActions,
   showHeader = true,
   showRiskSummary = true,
+  showCategoryHelp = true,
   showFilters = true,
   groupByCourse = true,
   defaultOpen = true,
@@ -122,10 +126,16 @@ export function CommentsPanel({
       {showHeader && (title || description || headerActions) && (
         <header className="border-border relative flex flex-wrap items-end justify-between gap-x-10 gap-y-6 overflow-hidden border-b px-6 py-5">
           <div className="relative min-w-0">
-            {title && (
-              <h2 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                {title}
-              </h2>
+            {(title || showCategoryHelp) && (
+              <div className="flex items-center gap-1">
+                {title && (
+                  <h2 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                    {title}
+                  </h2>
+                )}
+
+                {showCategoryHelp && <CategoryInfo />}
+              </div>
             )}
 
             <p className="mt-1 flex items-baseline gap-2">

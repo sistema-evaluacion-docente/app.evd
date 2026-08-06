@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 
+import { PercentMeter } from '@/components/common/PercentMeter'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import type { TeacherComment } from '../types'
@@ -18,6 +19,8 @@ export interface CommentCardProps {
   showRisk?: boolean
   /** Show the pedagogical category. Defaults to `true`. */
   showCategory?: boolean
+  /** Show the risk / category percentages next to their labels. Defaults to `true`. */
+  showScores?: boolean
   /** Show the course/group line. Defaults to `false` (lists usually group by course). */
   showCourse?: boolean
   /** Show the teacher's avatar and name. Defaults to `false`. */
@@ -55,6 +58,7 @@ export function CommentCard({
   index,
   showRisk = true,
   showCategory = true,
+  showScores = true,
   showCourse = false,
   showTeacher = false,
   showGutter,
@@ -144,9 +148,16 @@ export function CommentCard({
             <span
               className="inline-flex items-center gap-1.5"
               style={accent ? { color: accent } : undefined}
-              title={`Riesgo ${comment.risk_score}`}
             >
               {comment.risk_level.name}
+
+              {showScores && (
+                <PercentMeter
+                  value={comment.risk_score}
+                  label={`Probabilidad de acierto del nivel de riesgo ${comment.risk_level.name}`}
+                  showBar={!isCompact}
+                />
+              )}
             </span>
           )}
 
@@ -157,6 +168,8 @@ export function CommentCard({
                 category={comment.pedagogical_category}
                 short={isCompact}
                 showDot={false}
+                score={showScores ? comment.category_score : undefined}
+                showScoreBar={!isCompact}
               />
             </>
           )}

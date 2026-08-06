@@ -1,5 +1,7 @@
+import { PercentMeter } from '@/components/common/PercentMeter'
 import {
   categoryColor,
+  categoryDescription,
   categoryLabel,
   categoryShortLabel,
   isUncategorized,
@@ -25,8 +27,10 @@ export interface CategoryTagProps {
   short?: boolean
   /** Leading color dot. Defaults to `true`. */
   showDot?: boolean
-  /** Classification confidence (0–1); rendered as a percentage suffix. */
-  score?: number
+  /** Probability that the assigned category is correct (0–1 or 0–100); rendered as a percentage suffix. */
+  score?: number | null
+  /** Draw the hairline meter next to the confidence percentage. Defaults to `true`. */
+  showScoreBar?: boolean
   className?: string
 }
 
@@ -60,6 +64,7 @@ export function CategoryTag({
   short = false,
   showDot = true,
   score,
+  showScoreBar = true,
   className,
 }: CategoryTagProps) {
   const code = category?.name ?? name
@@ -93,7 +98,7 @@ export function CategoryTag({
             }
           : undefined
       }
-      title={category?.description || label}
+      title={categoryDescription(code, category?.description) || label}
     >
       {showDot && (
         <span
@@ -105,11 +110,12 @@ export function CategoryTag({
 
       <span className="truncate">{label}</span>
 
-      {score != null && (
-        <span className="num shrink-0 tabular-nums opacity-60">
-          {Math.round((score > 1 ? score / 100 : score) * 100)}%
-        </span>
-      )}
+      <PercentMeter
+        value={score}
+        label={`Probabilidad de acierto de la categoría ${label}`}
+        showBar={showScoreBar}
+        className="shrink-0 opacity-70"
+      />
     </span>
   )
 }
