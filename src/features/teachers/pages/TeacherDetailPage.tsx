@@ -2,7 +2,6 @@ import { useRoute, useSearchParams } from 'wouter'
 
 import { BackButton } from '@/components/common/BackButton'
 import { PageTitle } from '@/components/common/PageTitle'
-import { Stagger } from '@/components/common/stagger'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useGetTeacherDetail } from '../api'
 import {
@@ -54,33 +53,25 @@ export default function TeacherDetailPage() {
       <div className="space-y-6">
         <BackButton href={`/docentes?period=${teacher.period_name}`} className="mb-4" />
 
-        <Stagger animation="animate-rise">
-          <TeacherOverview teacher={teacher} />
-        </Stagger>
+        <TeacherOverview teacher={teacher} />
 
-        <Stagger animation="animate-rise" delay={80}>
-          <section className="border-border bg-card rounded-md border">
-            <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
-              Dimensiones por asignatura
-            </h2>
+        <section className="border-border bg-card rounded-md border">
+          <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
+            Dimensiones por asignatura
+          </h2>
 
-            <div className="px-6 py-4">
-              <TeacherGroupAverageChart courses={teacher.courses} />
-            </div>
-          </section>
-        </Stagger>
+          <div className="px-6 py-4">
+            <TeacherGroupAverageChart courses={teacher.courses} />
+          </div>
+        </section>
 
-        <Stagger animation="animate-rise" delay={160}>
-          <TeacherCourseResults teacher={teacher} />
-        </Stagger>
+        <TeacherCourseResults teacher={teacher} />
 
-        <Stagger animation="animate-rise" delay={240}>
-          <TeacherComments
-            evaluationId={teacher.evaluation_id}
-            teacherId={teacher.teacher_id}
-            title="Comentarios de los estudiantes"
-          />
-        </Stagger>
+        <TeacherComments
+          evaluationId={teacher.evaluation_id}
+          teacherId={teacher.teacher_id}
+          title="Comentarios de los estudiantes"
+        />
       </div>
     </>
   )
