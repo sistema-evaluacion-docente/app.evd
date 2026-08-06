@@ -275,7 +275,7 @@ function CourseCommentsGroup({
 }) {
   return (
     <Collapsible defaultOpen={defaultOpen}>
-      <CollapsibleTrigger className="group flex w-full items-center gap-2.5 py-4 text-left">
+      <CollapsibleTrigger className="group flex w-full items-center gap-2.5 py-4 text-left cursor-pointer">
         <ChevronRight
           aria-hidden="true"
           className="text-muted-foreground/70 size-3.5 shrink-0 transition-transform duration-300 group-data-panel-open:rotate-90"
