@@ -1,3 +1,4 @@
+import { getScoreTone } from '@/lib/scoreTone'
 import { cn } from '@/lib/utils'
 
 type ScoreBadgeTone = 'auto' | 'success' | 'warning' | 'danger' | 'neutral'
@@ -58,13 +59,7 @@ export function ScoreBadge({
   }
 
   const toneClass =
-    tone !== 'auto'
-      ? TONE_CLASS[tone]
-      : value > successMin
-        ? TONE_CLASS.success
-        : value < dangerMax
-          ? TONE_CLASS.danger
-          : TONE_CLASS.warning
+    tone !== 'auto' ? TONE_CLASS[tone] : TONE_CLASS[getScoreTone(value, { successMin, dangerMax })]
 
   return (
     <span className={cn('text-sm font-semibold tabular-nums', toneClass, className)}>
