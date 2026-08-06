@@ -2,6 +2,7 @@ import { Info } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { CATEGORIES } from '@/lib/categoryLabel'
 import { cn } from '@/lib/utils'
 
@@ -45,7 +46,7 @@ export function CategoryInfo({ side = 'bottom', align = 'start', className }: Ca
         className="w-80 gap-0 p-0 sm:w-[26rem] md:w-[32rem] lg:w-[36rem]"
         aria-label="Cómo se analizan los comentarios"
       >
-        <div className="max-h-[60vh] overflow-y-auto">
+        <ScrollArea className="h-[60vh]">
           <div className="border-border border-b px-4 py-3">
             <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
               Cómo se analizan los comentarios
@@ -101,14 +102,13 @@ export function CategoryInfo({ side = 'bottom', align = 'start', className }: Ca
               ))}
             </ul>
           </Section>
-        </div>
+        </ScrollArea>
 
         <div className="border-brand-500/60 bg-brand-50/60 dark:bg-brand-900/15 border-t-2 px-4 py-3">
           <p className="text-foreground/90 text-xs leading-relaxed">
-            Por eso esta clasificación es una{' '}
-            <span className="font-semibold">ayuda para leer y ordenar</span> los comentarios, no un
-            veredicto sobre el docente ni una medición de su desempeño. El texto original siempre
-            manda sobre la etiqueta, y la valoración final la hace el{' '}
+            Por eso esta clasificación es una <span className="font-semibold">ayuda</span>, no un
+            veredicto sobre el docente. El texto original siempre manda sobre la etiqueta, y la
+            valoración final la hace el{' '}
             <span className="font-semibold">director del departamento</span>.
           </p>
         </div>
