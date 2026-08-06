@@ -4,12 +4,7 @@ import { BackButton } from '@/components/common/BackButton'
 import { PageTitle } from '@/components/common/PageTitle'
 import TeacherDetailSkeleton from '@/components/skeletons/TeacherDetailSkeleton'
 import { useGetTeacherDetail } from '../api'
-import {
-  TeacherComments,
-  TeacherCourseResults,
-  TeacherGroupAverageChart,
-  TeacherOverview,
-} from '../components'
+import { TeacherEvaluationDetail } from '../components'
 
 /**
  * Full page displaying the detail of a single teacher for a specific academic period.
@@ -37,30 +32,10 @@ export default function TeacherDetailPage() {
   }
 
   return (
-    <>
-      <div className="space-y-6">
-        <BackButton href={`/docentes?period=${teacher.period_name}`} className="mb-4" />
+    <div className="space-y-6">
+      <BackButton href={`/docentes?period=${teacher.period_name}`} className="mb-4" />
 
-        <TeacherOverview teacher={teacher} />
-
-        <section className="border-border bg-card rounded-md border">
-          <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
-            Dimensiones por asignatura
-          </h2>
-
-          <div className="px-6 py-4">
-            <TeacherGroupAverageChart courses={teacher.courses} />
-          </div>
-        </section>
-
-        <TeacherCourseResults teacher={teacher} />
-
-        <TeacherComments
-          evaluationId={teacher.evaluation_id}
-          teacherId={teacher.teacher_id}
-          title="Comentarios de los estudiantes"
-        />
-      </div>
-    </>
+      <TeacherEvaluationDetail teacher={teacher} />
+    </div>
   )
 }

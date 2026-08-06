@@ -1,13 +1,15 @@
 import type { PaginationState, SortingState } from '@tanstack/react-table'
+import { Eye } from 'lucide-react'
 import { useState } from 'react'
 import { useDebounce, useDebouncedCallback } from 'use-debounce'
 
-import { DataTable } from '@/components/common/DataTable'
+import { DataTable, type DataTableAction } from '@/components/common/DataTable'
 import { DataTableFilters, type FilterConfig } from '@/components/common/DataTableFilters'
 import { useAuthStore } from '@/features/auth'
+import { useNavigate } from '@/hooks/useNavigate'
 import { useTableFilters } from '@/hooks/useTableFilters'
 import { useGetTeacherHistory } from '../api'
-import type { HistorySortBy } from '../types'
+import type { HistorySortBy, TeacherPeriodHistory } from '../types'
 import { columns } from './columns'
 
 const SORT_FIELDS = [
@@ -33,6 +35,7 @@ const filterConfig: FilterConfig[] = [
  * <PeriodsList />
  */
 export function PeriodsList() {
+  const navigate = useNavigate()
   const teacherId = useAuthStore((state) => state.user?.teacher_id)
   const [search, setSearch] = useState('')
   const [debouncedSearch] = useDebounce(search, 400)
@@ -62,6 +65,18 @@ export function PeriodsList() {
     resetPage()
   }
 
+  const goToDetail = (period: TeacherPeriodHistory) => {
+    navigate(`/periodos/${encodeURIComponent(period.period_code)}`)
+  }
+
+  const rowActions: DataTableAction<TeacherPeriodHistory>[] = [
+    {
+      label: 'Ver detalle',
+      icon: <Eye className="size-4" />,
+      onClick: goToDetail,
+    },
+  ]
+
   if (!teacherId) {
     return (
       <div className="text-muted-foreground py-10 text-center text-sm">
@@ -89,6 +104,8 @@ export function PeriodsList() {
       onPaginationChange={setPagination}
       searchPlaceholder="Buscar periodo..."
       emptyMessage="Aún no tiene evaluaciones registradas."
+      onRowClick={goToDetail}
+      rowActions={rowActions}
       toolbar={
         <DataTableFilters filters={filterConfig} values={filters} onChange={handleFiltersChange} />
       }
