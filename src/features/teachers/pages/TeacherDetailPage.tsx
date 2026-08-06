@@ -2,7 +2,7 @@ import { useRoute, useSearchParams } from 'wouter'
 
 import { BackButton } from '@/components/common/BackButton'
 import { PageTitle } from '@/components/common/PageTitle'
-import { Skeleton } from '@/components/ui/skeleton'
+import TeacherDetailSkeleton from '@/components/skeletons/TeacherDetailSkeleton'
 import { useGetTeacherDetail } from '../api'
 import {
   TeacherComments,
@@ -25,19 +25,7 @@ export default function TeacherDetailPage() {
   const { data, isLoading } = useGetTeacherDetail({ teacherId, periodName })
   const teacher = data?.data
 
-  if (isLoading) {
-    return (
-      <>
-        <PageTitle>Detalle del docente</PageTitle>
-
-        <div className="space-y-6">
-          <Skeleton className="h-56 rounded-md" />
-          <Skeleton className="h-72 rounded-md" />
-          <Skeleton className="h-80 rounded-md" />
-        </div>
-      </>
-    )
-  }
+  if (isLoading) return <TeacherDetailSkeleton />
 
   if (!teacher) {
     return (
