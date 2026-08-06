@@ -11,15 +11,25 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import type { VariantProps } from 'class-variance-authority'
-import type { LucideIcon } from 'lucide-react'
+import { Check, Circle, type LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 
 import type { buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 import FormDrawer from './FormDrawer'
 
 export type FieldType =
-  'text' | 'email' | 'number' | 'password' | 'tel' | 'url' | 'textarea' | 'select' | 'boolean'
+  | 'text'
+  | 'email'
+  | 'number'
+  | 'password'
+  | 'tel'
+  | 'url'
+  | 'textarea'
+  | 'select'
+  | 'multiSelect'
+  | 'boolean'
 
 export interface SelectOption {
   label: string
@@ -33,7 +43,7 @@ export interface FieldConfig {
   placeholder?: string
   required?: boolean
   disabled?: boolean
-  defaultValue?: string
+  defaultValue?: string | string[]
   options?: SelectOption[]
 }
 
@@ -64,7 +74,15 @@ interface DynamicFormDrawerProps {
 function buildInitialValues(fields: FieldConfig[]): FormValues {
   const values: FormValues = {}
   for (const field of fields) {
-    values[field.name] = field.defaultValue ?? (field.type === 'boolean' ? 'false' : '')
+    if (field.type === 'multiSelect') {
+      const defaultValue = Array.isArray(field.defaultValue) ? field.defaultValue : []
+      values[field.name] = defaultValue.join(',')
+    } else {
+      const defaultValue = Array.isArray(field.defaultValue)
+        ? field.defaultValue.join(',')
+        : field.defaultValue
+      values[field.name] = defaultValue ?? (field.type === 'boolean' ? 'false' : '')
+    }
   }
   return values
 }
@@ -174,6 +192,49 @@ export function DynamicFormDrawer({
                 onCheckedChange={(checked) => handleChange(field.name, String(checked))}
                 disabled={field.disabled ?? isSubmitting}
               />
+            </div>
+          ) : field.type === 'multiSelect' ? (
+            <div key={field.name} className="space-y-1.5">
+              <Label>
+                {field.label}
+                {field.required && <span className="text-destructive ml-0.5">*</span>}
+              </Label>
+
+              <div className="space-y-2">
+                {field.options?.map((option) => {
+                  const selected = (values[field.name] ?? '').split(',').filter(Boolean)
+                  const isSelected = selected.includes(option.value)
+                  const toggle = () => {
+                    const next = isSelected
+                      ? selected.filter((value) => value !== option.value)
+                      : [...selected, option.value]
+                    handleChange(field.name, next.join(','))
+                  }
+
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      aria-pressed={isSelected}
+                      disabled={field.disabled ?? isSubmitting}
+                      onClick={toggle}
+                      className={cn(
+                        'flex w-full cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+                        isSelected
+                          ? 'border-primary/50 bg-primary/5 text-foreground'
+                          : 'border-border text-muted-foreground hover:bg-muted',
+                      )}
+                    >
+                      {isSelected ? (
+                        <Check aria-hidden="true" className="text-primary size-4" />
+                      ) : (
+                        <Circle aria-hidden="true" className="text-muted-foreground/40 size-4" />
+                      )}
+                      {option.label}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           ) : (
             <div key={field.name} className="space-y-1.5">
