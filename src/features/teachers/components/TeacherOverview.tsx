@@ -55,20 +55,19 @@ export function TeacherOverview({ teacher }: TeacherOverviewProps) {
           className="from-brand-500/10 pointer-events-none absolute -top-24 -right-24 size-56 rounded-full bg-radial to-transparent blur-2xl"
         />
 
-        <div className="relative flex items-start gap-2">
+        <div className="relative flex items-center gap-2">
           <div>
-            <Avatar size="lg">
+            <Avatar className="size-20">
               <AvatarFallback>{teacher.name.at(0)}</AvatarFallback>
               <AvatarImage src={teacher.avatar_url} alt={`Foto de ${teacher.name}`} />
             </Avatar>
           </div>
 
           <div>
-            <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+            <h2 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">{teacher.name}</h2>
+            <p className="text-muted-foreground tracking-wide uppercase">
               {teacher.institutional_code}
             </p>
-
-            <h2 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">{teacher.name}</h2>
           </div>
         </div>
 
