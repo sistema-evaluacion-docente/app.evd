@@ -11,8 +11,12 @@ async function getUsers(params: UserParams): Promise<ResponseAPI<AdminUser[]>> {
 
   if (params.search) query['search'] = params.search
   if (params.active !== undefined) query['active'] = params.active
+  if (params.roles?.length) query['roles'] = params.roles
 
-  return api.get('/users/', { params: query })
+  return api.get('/users/', {
+    params: query,
+    paramsSerializer: { indexes: null },
+  })
 }
 
 async function createUser(payload: CreateUserPayload): Promise<ResponseAPI<AdminUser>> {
@@ -34,25 +38,27 @@ export const usersKeys = {
 
 /**
  * Fetches the paginated list of users (`GET /users/`) with optional
- * search and active status filters.
+ * search, active status and roles filters.
  *
  * @example
- * const { data, isPending } = useGetUsers({ page: 1, limit: 10, search: 'juan', active: true });
+ * const { data, isPending } = useGetUsers({ page: 1, limit: 10, search: 'juan', active: true, roles: ['DOCENTE'] });
  */
 export function useGetUsers({
   page = 1,
   limit = 10,
   search = '',
   active,
+  roles,
 }: {
   page?: number
   limit?: number
   search?: string
   active?: boolean
+  roles?: string[]
 } = {}) {
   return useQuery({
-    queryKey: [...usersKeys.lists(), { page, limit, search, active }],
-    queryFn: () => getUsers({ page, limit, search, active }),
+    queryKey: [...usersKeys.lists(), { page, limit, search, active, roles }],
+    queryFn: () => getUsers({ page, limit, search, active, roles }),
     staleTime: 60_000,
     placeholderData: keepPreviousData,
   })

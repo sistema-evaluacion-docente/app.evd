@@ -1,5 +1,5 @@
 import type { PaginationState, SortingState } from '@tanstack/react-table'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Trash2, UserMinus, UserPlus } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { useDebounce, useDebouncedCallback } from 'use-debounce'
@@ -10,8 +10,14 @@ import { DataTableFilters, type FilterConfig } from '@/components/common/DataTab
 import { DynamicFormDrawer, type FieldConfig } from '@/components/common/DynamicFormDrawer'
 import { useGetFaculties } from '@/features/faculties'
 import { useTableFilters } from '@/hooks/useTableFilters'
-import { useDeleteDepartment, useGetDepartments, useUpdateDepartment } from '../api'
+import {
+  useDeleteDepartment,
+  useGetDepartments,
+  useUnassignDirector,
+  useUpdateDepartment,
+} from '../api'
 import type { Department } from '../types'
+import { AssignDirectorDrawer } from './AssignDirectorDrawer'
 import { departmentColumns } from './columns'
 
 /**
@@ -28,6 +34,8 @@ export function DepartmentsList() {
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 })
   const [editTarget, setEditTarget] = useState<Department | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Department | null>(null)
+  const [assignTarget, setAssignTarget] = useState<Department | null>(null)
+  const [unassignTarget, setUnassignTarget] = useState<Department | null>(null)
   const { filters, setFilters } = useTableFilters('departments-list', {
     active: true,
     facultyId: undefined as number | undefined,
@@ -47,6 +55,7 @@ export function DepartmentsList() {
   })
   const { mutate: updateDepartment, isPending: isUpdating } = useUpdateDepartment()
   const { mutate: deleteDepartment, isPending: isDeleting } = useDeleteDepartment()
+  const { mutate: unassignDirector, isPending: isUnassigning } = useUnassignDirector()
 
   const editFields: FieldConfig[] = editTarget
     ? [
@@ -112,6 +121,17 @@ export function DepartmentsList() {
     })
   }
 
+  const handleUnassign = () => {
+    if (!unassignTarget) return
+
+    unassignDirector(unassignTarget.id, {
+      onSuccess: () => {
+        toast.success('Director desasignado exitosamente')
+        setUnassignTarget(null)
+      },
+    })
+  }
+
   const departments = data?.data ?? []
   const pageCount = data?.pagination?.pages ?? 1
 
@@ -125,6 +145,19 @@ export function DepartmentsList() {
   }
 
   const rowActions: DataTableAction<Department>[] = [
+    {
+      label: 'Asignar director',
+      icon: <UserPlus className="size-4" />,
+      onClick: (row) => setAssignTarget(row),
+      visible: (row) => !row.director,
+    },
+    {
+      label: 'Desasignar director',
+      icon: <UserMinus className="size-4" />,
+      onClick: (row) => setUnassignTarget(row),
+      variant: 'destructive',
+      visible: (row) => !!row.director,
+    },
     {
       label: 'Editar',
       icon: <Pencil className="size-4" />,
@@ -202,6 +235,16 @@ export function DepartmentsList() {
         />
       )}
 
+      {assignTarget && (
+        <AssignDirectorDrawer
+          department={assignTarget}
+          open
+          onOpenChange={(open) => {
+            if (!open) setAssignTarget(null)
+          }}
+        />
+      )}
+
       <ConfirmDialog
         open={deleteTarget !== null}
         title="Eliminar departamento"
@@ -221,6 +264,26 @@ export function DepartmentsList() {
         confirmIcon={<Trash2 />}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
         onConfirm={handleDelete}
+      />
+
+      <ConfirmDialog
+        open={unassignTarget !== null}
+        title="Desasignar director"
+        description={
+          unassignTarget ? (
+            <>
+              ¿Estás seguro de que deseas desasignar a{' '}
+              <strong>{unassignTarget.director?.name}</strong> como director del departamento{' '}
+              <strong>{unassignTarget.name}</strong>?
+            </>
+          ) : null
+        }
+        confirmLabel="Desasignar"
+        pendingLabel="Desasignando..."
+        isPending={isUnassigning}
+        confirmIcon={<UserMinus />}
+        onOpenChange={(open) => !open && setUnassignTarget(null)}
+        onConfirm={handleUnassign}
       />
     </>
   )

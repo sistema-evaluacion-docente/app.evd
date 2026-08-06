@@ -38,6 +38,17 @@ async function deleteDepartment(departmentId: number): Promise<ResponseAPI<void>
   return api.delete(`/departments/${departmentId}`)
 }
 
+async function assignDirector(
+  departmentId: number,
+  payload: { user_id: number },
+): Promise<ResponseAPI<void>> {
+  return api.post(`/departments/${departmentId}/director`, payload)
+}
+
+async function unassignDirector(departmentId: number): Promise<ResponseAPI<void>> {
+  return api.delete(`/departments/${departmentId}/director`)
+}
+
 /** Query-key factory so list invalidations stay consistent. */
 export const departmentsKeys = {
   all: ['departments'] as const,
@@ -133,6 +144,43 @@ export function useDeleteDepartment() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (departmentId: number) => deleteDepartment(departmentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: departmentsKeys.lists() })
+    },
+  })
+}
+
+/**
+ * Assigns a user as director of a department (`POST /departments/{department_id}/director`).
+ * Invalidates the departments list on success.
+ *
+ * @example
+ * const { mutate: assignDirector } = useAssignDirector();
+ * assignDirector({ departmentId: 1, userId: 12 });
+ */
+export function useAssignDirector() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ departmentId, userId }: { departmentId: number; userId: number }) =>
+      assignDirector(departmentId, { user_id: userId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: departmentsKeys.lists() })
+    },
+  })
+}
+
+/**
+ * Unassigns the director of a department (`DELETE /departments/{department_id}/director`).
+ * Invalidates the departments list on success.
+ *
+ * @example
+ * const { mutate: unassignDirector } = useUnassignDirector();
+ * unassignDirector(1);
+ */
+export function useUnassignDirector() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (departmentId: number) => unassignDirector(departmentId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: departmentsKeys.lists() })
     },

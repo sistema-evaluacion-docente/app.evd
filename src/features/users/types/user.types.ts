@@ -17,6 +17,8 @@ export interface UserParams {
   search?: string
   /** Filter by active status. */
   active?: boolean
+  /** Filter by roles (e.g. `['DOCENTE', 'DIRECTOR DE DEPARTAMENTO']`). */
+  roles?: string[]
   page: number
   limit: number
 }
