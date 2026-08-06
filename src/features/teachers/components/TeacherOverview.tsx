@@ -1,4 +1,7 @@
+import { CalendarRange } from 'lucide-react'
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { dimensionColor, shortenDimensionLabel } from '@/lib/dimensionLabel'
 import { getScoreToneClass } from '@/lib/scoreTone'
@@ -9,10 +12,11 @@ interface TeacherOverviewProps {
 }
 
 /**
- * Flat, typographic hero for a teacher's evaluation: the overall average as
- * the single large figure, the four dimension averages as plain numeric
- * columns color-matched to the charts below, and group/respondent/course
- * counts — sections separated by 1px hairlines instead of cards.
+ * Flat, typographic hero for a teacher's evaluation: a context strip naming
+ * the academic period every figure below belongs to, the overall average as
+ * the single large figure, and the four dimension averages as plain numeric
+ * columns color-matched to the charts — sections separated by 1px hairlines
+ * instead of cards.
  *
  * @example
  * <TeacherOverview teacher={teacher} />
@@ -20,6 +24,30 @@ interface TeacherOverviewProps {
 export function TeacherOverview({ teacher }: TeacherOverviewProps) {
   return (
     <section className="divide-border border-border bg-background divide-y overflow-hidden rounded-md border">
+      <div className="bg-brand-50 dark:bg-brand-900/20 flex flex-wrap items-center justify-between gap-x-6 gap-y-1 px-6 py-3">
+        <p className="text-brand-700 dark:text-brand-200 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+          <CalendarRange
+            className="text-brand-600 dark:text-brand-300 size-4 shrink-0"
+            aria-hidden="true"
+          />
+
+          <span className="text-brand-700/80 dark:text-brand-300/80 text-xs font-medium tracking-wide uppercase">
+            Datos del periodo
+          </span>
+
+          <Badge>{teacher.period_name}</Badge>
+        </p>
+
+        {teacher.group_count > 0 && (
+          <p className="text-brand-700/70 dark:text-brand-300/70 text-xs tracking-wide uppercase">
+            <span className="num text-brand-700 dark:text-brand-200 font-bold">
+              {teacher.group_count}
+            </span>{' '}
+            {teacher.group_count === 1 ? 'grupo evaluado' : 'grupos evaluados'}
+          </p>
+        )}
+      </div>
+
       <div className="relative flex flex-wrap items-start justify-between gap-6 overflow-hidden p-6">
         <div
           aria-hidden="true"
@@ -45,7 +73,7 @@ export function TeacherOverview({ teacher }: TeacherOverviewProps) {
 
         <div className="relative text-right">
           <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-            Promedio general
+            Promedio general del periodo
           </p>
 
           <p
