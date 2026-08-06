@@ -35,43 +35,28 @@ const securityConfig = {
       name: 'Docentes',
       roles: ['DIRECTOR DE DEPARTAMENTO'],
     },
-    // {
-    //   path: "/matrix",
-    //   name: "Matriz Evaluativa",
-    //   roles: ["DIRECTOR DE DEPARTAMENTO"],
-    // },
-    // {
-    //   path: "/subjects",
-    //   name: "Materias",
-    //   roles: ["DIRECTOR DE DEPARTAMENTO"],
-    // },
-    // {
-    //   path: "/plans",
-    //   name: "Planes de Mejoramiento",
-    //   roles: ["DIRECTOR DE DEPARTAMENTO"],
-    // },
     {
-      path: '/admin/faculties',
+      path: '/admin/facultades',
       name: 'Facultades',
       roles: ['ADMIN'],
     },
     {
-      path: '/admin/departments',
+      path: '/admin/departamentos',
       name: 'Departamentos',
       roles: ['ADMIN'],
     },
     {
-      path: '/admin/periods',
+      path: '/admin/periodos',
       name: 'Períodos',
       roles: ['ADMIN'],
     },
     {
-      path: '/admin/users',
+      path: '/admin/usuarios',
       name: 'Usuarios',
       roles: ['ADMIN'],
     },
     {
-      path: '/admin/directors',
+      path: '/admin/directores',
       name: 'Directores',
       roles: ['ADMIN'],
     },
@@ -81,7 +66,7 @@ const securityConfig = {
       roles: ['ADMIN'],
     },
     {
-      path: '/admin/settings',
+      path: '/admin/configuracion',
       name: 'Configuración',
       roles: ['ADMIN'],
     },

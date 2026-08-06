@@ -76,25 +76,25 @@ function App() {
           </AppLayout>
         </Route>
 
-        <Route path="/admin/settings">
+        <Route path="/admin/configuracion">
           <AppLayout>
             <SettingsPage />
           </AppLayout>
         </Route>
 
-        <Route path="/admin/faculties">
+        <Route path="/admin/facultades">
           <AppLayout>
             <FacultiesPage />
           </AppLayout>
         </Route>
 
-        <Route path="/admin/departments">
+        <Route path="/admin/departamentos">
           <AppLayout>
             <DepartmentsPage />
           </AppLayout>
         </Route>
 
-        <Route path="/admin/periods">
+        <Route path="/admin/periodos">
           <AppLayout>
             <AdminPeriodsPage />
           </AppLayout>
