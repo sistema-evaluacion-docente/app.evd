@@ -1,1 +1,1 @@
-export type { AdminUser, UpdateUserPayload, UserParams } from './user.types'
+export type { AdminUser, CreateUserPayload, UpdateUserPayload, UserParams } from './user.types'

@@ -29,3 +29,17 @@ export interface UpdateUserPayload {
   /** Roles assigned to the user (e.g. `['DOCENTE']`). */
   roles: string[]
 }
+
+/** Payload for creating a user via `POST /users/`. */
+export interface CreateUserPayload {
+  uid: string
+  email: string
+  name: string
+  active: boolean
+  avatar_url: string
+  institutional_code: string
+  contract_type: string
+  department_id: number
+  /** At least one role is required. */
+  roles: string[]
+}

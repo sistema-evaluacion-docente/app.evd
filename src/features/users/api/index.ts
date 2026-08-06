@@ -2,7 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 
 import type { ResponseAPI } from '@/@types/Response'
 import api from '@/config/axios'
-import type { AdminUser, UpdateUserPayload, UserParams } from '../types'
+import type { AdminUser, CreateUserPayload, UpdateUserPayload, UserParams } from '../types'
 
 /** Raw request functions. Not exported — call through the hooks below. */
 
@@ -13,6 +13,10 @@ async function getUsers(params: UserParams): Promise<ResponseAPI<AdminUser[]>> {
   if (params.active !== undefined) query['active'] = params.active
 
   return api.get('/users/', { params: query })
+}
+
+async function createUser(payload: CreateUserPayload): Promise<ResponseAPI<AdminUser>> {
+  return api.post('/users/', payload)
 }
 
 async function updateUser(
@@ -67,6 +71,24 @@ export function useUpdateUser() {
   return useMutation({
     mutationFn: ({ userId, payload }: { userId: number; payload: UpdateUserPayload }) =>
       updateUser(userId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: usersKeys.lists() })
+    },
+  })
+}
+
+/**
+ * Creates a new user (`POST /users/`).
+ * Invalidates the users list on success.
+ *
+ * @example
+ * const { mutate: createUser } = useCreateUser();
+ * createUser({ uid: 'abc123', email: 'juan@universidad.edu', name: 'Juan', active: true, avatar_url: '', institutional_code: 'DOC-001', contract_type: 'Tiempo completo', department_id: 1, roles: ['DOCENTE'] });
+ */
+export function useCreateUser() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: CreateUserPayload) => createUser(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: usersKeys.lists() })
     },
