@@ -1,16 +1,33 @@
 import type { PaginationState, SortingState } from '@tanstack/react-table'
 import { useState } from 'react'
-import { useDebounce } from 'use-debounce'
+import { useDebounce, useDebouncedCallback } from 'use-debounce'
 
 import { DataTable } from '@/components/common/DataTable'
+import { DataTableFilters, type FilterConfig } from '@/components/common/DataTableFilters'
 import { useAuthStore } from '@/features/auth'
+import { useTableFilters } from '@/hooks/useTableFilters'
 import { useGetTeacherHistory } from '../api'
 import type { HistorySortBy } from '../types'
 import { columns } from './columns'
 
+const SORT_FIELDS = [
+  { value: 'period_code', label: 'Periodo' },
+  { value: 'overall_average', label: 'Promedio' },
+  { value: 'group_count', label: 'Grupos' },
+]
+
+const filterConfig: FilterConfig[] = [
+  {
+    type: 'sort',
+    name: 'sortBy',
+    fields: SORT_FIELDS,
+  },
+]
+
 /**
  * Displays the list of evaluated periods of the authenticated teacher with
- * server-side search, sort, and pagination.
+ * server-side search, sort, and pagination. Sorting is driven by the shared
+ * `DataTableFilters` toolbar and persisted per table by `useTableFilters`.
  *
  * @example
  * <PeriodsList />
@@ -19,22 +36,31 @@ export function PeriodsList() {
   const teacherId = useAuthStore((state) => state.user?.teacher_id)
   const [search, setSearch] = useState('')
   const [debouncedSearch] = useDebounce(search, 400)
-  const [sorting, setSorting] = useState<SortingState>([{ id: 'period_code', desc: true }])
+  const [sorting, setSorting] = useState<SortingState>([])
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 })
-
-  const sortBy: HistorySortBy | undefined = sorting[0]
-    ? (`${sorting[0].id}_${sorting[0].desc ? 'desc' : 'asc'}` as HistorySortBy)
-    : undefined
+  const { filters, setFilters } = useTableFilters('periods-list', {
+    sortBy: 'period_code_desc',
+  })
+  const [debouncedFilters] = useDebounce(filters, 400)
 
   const { data, isPending, isFetching } = useGetTeacherHistory({
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     search: debouncedSearch,
-    sort_by: sortBy,
+    sort_by: (debouncedFilters.sortBy as HistorySortBy) || undefined,
   })
 
   const periods = data?.data ?? []
   const pageCount = data?.pagination?.pages ?? 1
+
+  const resetPage = useDebouncedCallback(() => {
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }))
+  }, 400)
+
+  const handleFiltersChange = (newFilters: Record<string, unknown>) => {
+    setFilters(newFilters)
+    resetPage()
+  }
 
   if (!teacherId) {
     return (
@@ -55,7 +81,7 @@ export function PeriodsList() {
       search={search}
       onSearchChange={(value) => {
         setSearch(value)
-        setPagination((prev) => ({ ...prev, pageIndex: 0 }))
+        resetPage()
       }}
       sorting={sorting}
       onSortingChange={setSorting}
@@ -63,6 +89,9 @@ export function PeriodsList() {
       onPaginationChange={setPagination}
       searchPlaceholder="Buscar periodo..."
       emptyMessage="Aún no tiene evaluaciones registradas."
+      toolbar={
+        <DataTableFilters filters={filterConfig} values={filters} onChange={handleFiltersChange} />
+      }
     />
   )
 }
