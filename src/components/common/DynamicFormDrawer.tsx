@@ -127,19 +127,25 @@ export function DynamicFormDrawer({
   className,
 }: DynamicFormDrawerProps) {
   const [internalOpen, setInternalOpen] = useState(false)
-  const [values, setValues] = useState<FormValues>(() => buildInitialValues(fields))
 
   const open = controlledOpen ?? internalOpen
+
+  const [values, setValues] = useState<FormValues>(() => buildInitialValues(fields))
+  const [prevOpen, setPrevOpen] = useState(open)
+
+  if (prevOpen !== open) {
+    setPrevOpen(open)
+
+    if (!open) {
+      setValues(buildInitialValues(fields))
+    }
+  }
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (controlledOpen === undefined) {
       setInternalOpen(nextOpen)
     }
     onOpenChange?.(nextOpen)
-
-    if (!nextOpen) {
-      setValues(buildInitialValues(fields))
-    }
   }
 
   const handleChange = (name: string, value: string) => {
