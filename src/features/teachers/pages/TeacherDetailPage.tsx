@@ -4,7 +4,12 @@ import { PageTitle } from '@/components/common/PageTitle'
 import { Stagger } from '@/components/common/stagger'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useGetTeacherDetail } from '../api'
-import { TeacherCourseResults, TeacherGroupAverageChart, TeacherOverview } from '../components'
+import {
+  TeacherComments,
+  TeacherCourseResults,
+  TeacherGroupAverageChart,
+  TeacherOverview,
+} from '../components'
 
 /**
  * Full page displaying the detail of a single teacher for a specific academic period.
@@ -64,6 +69,14 @@ export default function TeacherDetailPage() {
 
         <Stagger animation="animate-rise" delay={160}>
           <TeacherCourseResults teacher={teacher} />
+        </Stagger>
+
+        <Stagger animation="animate-rise" delay={240}>
+          <TeacherComments
+            evaluationId={teacher.evaluation_id}
+            teacherId={teacher.teacher_id}
+            title="Comentarios de los estudiantes"
+          />
         </Stagger>
       </div>
     </>
