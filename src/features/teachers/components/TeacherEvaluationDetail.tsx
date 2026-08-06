@@ -1,10 +1,12 @@
 import type { ReactNode } from 'react'
 
+import { DimensionComparisonChart } from '@/components/common/DimensionComparisonChart'
+import { PeriodAverageTrend } from '@/features/periods'
+import { dimensionColor, shortenDimensionLabel } from '@/lib/dimensionLabel'
 import { cn } from '@/lib/utils'
 import type { TeacherDetail } from '../types'
 import { TeacherComments } from './TeacherComments'
 import { TeacherCourseResults } from './TeacherCourseResults'
-import { TeacherGroupAverageChart } from './TeacherGroupAverageChart'
 import { TeacherOverview } from './TeacherOverview'
 
 export interface TeacherEvaluationDetailProps {
@@ -39,13 +41,31 @@ export function TeacherEvaluationDetail({
     <div className={cn('space-y-6', className)}>
       <TeacherOverview teacher={teacher} />
 
-      <section className="border-border bg-card rounded-md border">
+      <section className="border-border bg-background rounded-md border">
         <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
-          Dimensiones por asignatura
+          Perfil por dimensiones
         </h2>
 
         <div className="px-6 py-4">
-          <TeacherGroupAverageChart courses={teacher.courses} />
+          <DimensionComparisonChart
+            series={[
+              {
+                id: 'teacher',
+                label: teacher.name,
+                scores: teacher.dimensions.map((dimension) => ({
+                  dimension: dimension.dimension,
+                  value: dimension.average,
+                })),
+              },
+            ]}
+            dimensions={teacher.dimensions.map((dimension) => ({
+              key: dimension.dimension,
+              color: dimensionColor(dimension.dimension),
+            }))}
+            labelFormatter={shortenDimensionLabel}
+            referenceValue={teacher.overall_average}
+            referenceLabel="Promedio general"
+          />
         </div>
       </section>
 
@@ -58,6 +78,16 @@ export function TeacherEvaluationDetail({
           title={commentsTitle}
         />
       )}
+
+      <section className="border-border bg-background rounded-md border">
+        <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
+          Evolución del promedio por periodo
+        </h2>
+
+        <div className="px-6 py-4">
+          <PeriodAverageTrend teacherId={teacher.teacher_id} title={null} />
+        </div>
+      </section>
     </div>
   )
 }
