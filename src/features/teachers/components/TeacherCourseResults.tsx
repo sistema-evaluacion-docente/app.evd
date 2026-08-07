@@ -4,7 +4,6 @@ import { ScoreBadge } from '@/components/common/ScoreBadge'
 import { ScoreProgress } from '@/components/common/ScoreProgress'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { dimensionColor } from '@/lib/dimensionLabel'
-import { getScoreToneClass } from '@/lib/scoreTone'
 import type { CourseDetail, DimensionDetail, TeacherDetail } from '../types'
 
 interface TeacherCourseResultsProps {
@@ -70,11 +69,12 @@ function CourseRow({
         </div>
 
         <div className="flex shrink-0 items-center gap-6">
-          <span
-            className={`text-lg font-semibold tabular-nums ${getScoreToneClass(course.overall_average)}`}
-          >
-            {course.overall_average.toFixed(2)}
-          </span>
+          <ScoreBadge
+            className="text-lg!"
+            value={course.overall_average}
+            previousValue={previousCourse?.overall_average}
+            previousLabel="periodo anterior"
+          />
         </div>
       </CollapsibleTrigger>
 
@@ -126,11 +126,12 @@ function DimensionRow({
           </span>
         </span>
 
-        <span
-          className={`shrink-0 text-sm font-semibold tabular-nums ${getScoreToneClass(dimension.average)}`}
-        >
-          {dimension.average.toFixed(2)}
-        </span>
+        <ScoreBadge
+          className="text-lg!"
+          value={dimension.average}
+          previousValue={previousDimension?.average}
+          previousLabel="periodo anterior"
+        />
       </CollapsibleTrigger>
 
       <CollapsibleContent>
@@ -156,11 +157,16 @@ function DimensionRow({
                     value={question.score}
                     previousValue={previousQuestion?.score}
                     previousLabel="periodo anterior"
+                    showTrend={false}
                     label={question.text}
                     className="min-w-20"
                   />
 
-                  <ScoreBadge value={question.score} />
+                  <ScoreBadge
+                    value={question.score}
+                    previousValue={previousQuestion?.score}
+                    previousLabel="periodo anterior"
+                  />
                 </div>
               </div>
             )
