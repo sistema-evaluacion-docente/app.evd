@@ -124,10 +124,17 @@ describe('ScoreProgress', () => {
     expect(screen.getByText('-0.30')).toBeInTheDocument()
   })
 
-  it('shows no sign when the score is unchanged from the previous value', () => {
+  it('hides the trend indicator when the score is unchanged from the previous value', async () => {
+    const user = userEvent.setup()
+
     render(<ScoreProgress value={4} previousValue={4} label="Claridad" />)
 
-    expect(screen.getByText('0.00')).toBeInTheDocument()
+    expect(screen.queryByText('0.00')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /Claridad/ }))
+
+    expect(await screen.findByText('periodo anterior:')).toBeInTheDocument()
+    expect(screen.getAllByText('4.00')).toHaveLength(2)
   })
 
   it('describes the trend and previous value on the indicator for assistive tech', async () => {
