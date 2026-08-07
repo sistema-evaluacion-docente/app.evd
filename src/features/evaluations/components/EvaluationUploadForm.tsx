@@ -38,8 +38,9 @@ export function EvaluationUploadForm() {
         connect({
           evaluationId: result.data.id,
           queryKeysToInvalidate: [evaluationsKeys.lists()],
-          detailsUrl: '/evaluations',
+          detailsUrl: `/evaluaciones/${result.data.id}`,
         })
+
         toast.success('Evaluación subida. El procesamiento continúa en segundo plano.')
       },
     })
