@@ -9,6 +9,7 @@ import { DirectorsPage } from '@/features/directors'
 import {
   EvaluationDetailPage,
   EvaluationLogsPanel,
+  EvaluationPdfPage,
   EvaluationsPage,
   EvaluationUploadPage,
 } from '@/features/evaluations'
@@ -69,6 +70,12 @@ function App() {
         <Route path="/evaluaciones">
           <AppLayout>
             <EvaluationsPage />
+          </AppLayout>
+        </Route>
+
+        <Route path="/evaluaciones/:id/pdf">
+          <AppLayout>
+            <EvaluationPdfPage />
           </AppLayout>
         </Route>
 

@@ -64,11 +64,37 @@ async function uploadEvaluation(file: File): Promise<ResponseAPI<EvaluationRecor
   })
 }
 
+async function getEvaluationPdf(evaluationId: number): Promise<Blob> {
+  return api.get(`/evaluations/${evaluationId}/pdf`, { responseType: 'blob' })
+}
+
 /** Query-key factory so list invalidations stay consistent. */
 export const evaluationsKeys = {
   all: ['evaluations'] as const,
   lists: () => [...evaluationsKeys.all, 'list'] as const,
   detail: (periodId: number) => [...evaluationsKeys.all, 'detail', periodId] as const,
+  pdf: (evaluationId: number) => [...evaluationsKeys.all, 'pdf', evaluationId] as const,
+}
+
+/**
+ * Downloads the source PDF of an evaluation as a `Blob`
+ * (`GET /evaluations/{evaluation_id}/pdf`). The file is not a public asset:
+ * the request carries the Bearer token and the backend only serves it to an
+ * ADMIN or the DIRECTOR of the owning department, so a 403 is an expected
+ * outcome. Never retried — neither 403 nor 404 improves on a second try.
+ *
+ * @example
+ * const { data: blob, isPending } = useGetEvaluationPdf(evaluationId);
+ */
+export function useGetEvaluationPdf(evaluationId?: number) {
+  return useQuery({
+    queryKey: evaluationsKeys.pdf(evaluationId ?? 0),
+    queryFn: () => getEvaluationPdf(evaluationId!),
+    enabled: evaluationId != null,
+    retry: false,
+    staleTime: 300_000,
+    gcTime: 300_000,
+  })
 }
 
 /**

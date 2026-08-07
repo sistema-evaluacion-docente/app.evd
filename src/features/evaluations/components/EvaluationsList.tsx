@@ -1,5 +1,5 @@
 import type { PaginationState, SortingState } from '@tanstack/react-table'
-import { Eye, Power, PowerOff, Sparkles, Trash, Trash2 } from 'lucide-react'
+import { Eye, FileText, Power, PowerOff, Sparkles, Trash, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useDebounce, useDebouncedCallback } from 'use-debounce'
 
@@ -111,6 +111,13 @@ export function EvaluationsList() {
       icon: <Eye className="size-4" />,
       onClick: (row) => {
         navigate(`/evaluaciones/${row.academic_period_id}`)
+      },
+    },
+    {
+      label: 'Ver PDF',
+      icon: <FileText className="size-4" />,
+      onClick: (row) => {
+        navigate(`/evaluaciones/${row.id}/pdf`)
       },
     },
     {
