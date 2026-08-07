@@ -161,10 +161,12 @@ export function ScoreProgress({
     comparisonValue != null && comparisonValue !== 0
       ? ((value - comparisonValue) / comparisonValue) * 100
       : null
+  /** No point flagging a trend when the score didn't actually move. */
+  const showTrendBadge = comparisonValue != null && showTrend && delta !== 0
 
   /** Appends the trend indicator next to whichever bar/tooltip/popover variant is rendered below. */
   const withTrend = (node: ReactNode) => {
-    if (comparisonValue == null || !showTrend) return node
+    if (!showTrendBadge) return node
 
     return (
       <div className={cn('flex items-center gap-2', className)}>
@@ -192,7 +194,7 @@ export function ScoreProgress({
         '**:data-[slot=progress-track]:bg-[#aaa]',
         SIZE_CLASS[size],
         indicatorClass,
-        !(comparisonValue != null && showTrend) && className,
+        !showTrendBadge && className,
       )}
     />
   )
@@ -283,18 +285,20 @@ export function ScoreProgress({
               <span className="capitalize">{previousLabel}:</span>
               <span className="num tabular-nums">{comparisonValue.toFixed(decimals)}</span>
 
-              <span
-                className={cn(
-                  'num ml-auto inline-flex items-center gap-0.5 font-semibold tabular-nums',
-                  TREND_TEXT_CLASS[trend],
-                )}
-              >
-                <TrendIcon className="size-3 shrink-0" aria-hidden="true" />
-                {delta && delta > 0 ? '+' : ''}
-                {(delta ?? 0).toFixed(decimals)}
-                {percentChange != null &&
-                  ` (${percentChange > 0 ? '+' : ''}${percentChange.toFixed(0)}%)`}
-              </span>
+              {delta !== 0 && (
+                <span
+                  className={cn(
+                    'num ml-auto inline-flex items-center gap-0.5 font-semibold tabular-nums',
+                    TREND_TEXT_CLASS[trend],
+                  )}
+                >
+                  <TrendIcon className="size-3 shrink-0" aria-hidden="true" />
+                  {delta && delta > 0 ? '+' : ''}
+                  {(delta ?? 0).toFixed(decimals)}
+                  {percentChange != null &&
+                    ` (${percentChange > 0 ? '+' : ''}${percentChange.toFixed(0)}%)`}
+                </span>
+              )}
             </p>
           )}
         </div>
