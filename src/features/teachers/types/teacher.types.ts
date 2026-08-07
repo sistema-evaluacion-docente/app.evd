@@ -75,4 +75,10 @@ export interface TeacherDetail {
   group_count: number
   courses: CourseDetail[]
   dimensions: DimensionDetail[]
+  /**
+   * Same detail, for the immediately previous academic period, included when
+   * the request asks to compare against it. Used to show growth/decrease
+   * against the last period (e.g. per-dimension trend indicators).
+   */
+  previous_period?: TeacherDetail
 }
