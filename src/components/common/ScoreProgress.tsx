@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
 
+import { Minus, TrendingDown, TrendingUp } from 'lucide-react'
+
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Progress } from '@/components/ui/progress'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -8,6 +10,7 @@ import { cn } from '@/lib/utils'
 
 type ScoreProgressTone = 'primary' | 'auto' | 'success' | 'warning' | 'danger' | 'neutral'
 type ScoreProgressSize = 'xs' | 'sm' | 'md'
+type ScoreTrendDirection = 'up' | 'down' | 'flat'
 
 export interface ScoreProgressProps {
   /** Current score, on a 0–`max` scale. */
@@ -36,6 +39,21 @@ export interface ScoreProgressProps {
   detailsTitle?: string
   /** Extra content appended inside the popover (comparisons, history, actions…). */
   details?: ReactNode
+  /**
+   * Score from an earlier point in time (e.g. the previous semester), on the
+   * same 0–`max` scale, to compare the current `value` against. When given,
+   * a compact growth/decrease indicator renders next to the bar and the
+   * breakdown popover gets a comparison line.
+   */
+  previousValue?: number
+  /** Label naming what `previousValue` represents. Defaults to `'periodo anterior'`. */
+  previousLabel?: string
+  /**
+   * Show the inline trend indicator next to the bar. Set to `false` to keep
+   * the comparison in the popover only. Has no effect without `previousValue`.
+   * Defaults to `true`.
+   */
+  showTrend?: boolean
   /** Extra classes merged onto the root element (e.g. width, margin). */
   className?: string
 }
@@ -56,6 +74,24 @@ const TONE_INDICATOR_CLASS: Record<Exclude<ScoreProgressTone, 'auto'>, string> =
   neutral: '**:data-[slot=progress-indicator]:bg-foreground',
 }
 
+const TREND_ICON: Record<ScoreTrendDirection, typeof TrendingUp> = {
+  up: TrendingUp,
+  down: TrendingDown,
+  flat: Minus,
+}
+
+const TREND_TEXT_CLASS: Record<ScoreTrendDirection, string> = {
+  up: 'text-green-600 dark:text-green-400',
+  down: 'text-red-600 dark:text-red-400',
+  flat: 'text-muted-foreground',
+}
+
+const TREND_WORD: Record<ScoreTrendDirection, string> = {
+  up: 'aumentó',
+  down: 'disminuyó',
+  flat: 'se mantuvo igual',
+}
+
 /**
  * Thin horizontal progress bar for a score out of a maximum — e.g. an
  * evaluation question's rating or a dimension average. Hovering (or focusing)
@@ -64,6 +100,11 @@ const TONE_INDICATOR_CLASS: Record<Exclude<ScoreProgressTone, 'auto'>, string> =
  *
  * Both layers are opt-out: `showTooltip={false}` / `interactive={false}` give
  * back the plain decorative bar.
+ *
+ * Passing `previousValue` (e.g. the same metric from the previous semester)
+ * adds a compact trend indicator next to the bar and a comparison line in the
+ * popover, so growth or decrease against that baseline is visible at a
+ * glance without owning any fetching or business logic itself.
  *
  * @example
  * <ScoreProgress value={question.score} label={question.text} />
@@ -79,6 +120,14 @@ const TONE_INDICATOR_CLASS: Record<Exclude<ScoreProgressTone, 'auto'>, string> =
  *   showTooltip={false}
  *   className="w-32"
  * />
+ *
+ * @example
+ * <ScoreProgress
+ *   value={teacher.overall_average}
+ *   previousValue={teacher.previous_overall_average}
+ *   previousLabel="semestre anterior"
+ *   tone="auto"
+ * />
  */
 export function ScoreProgress({
   value,
@@ -92,12 +141,47 @@ export function ScoreProgress({
   interactive = true,
   detailsTitle,
   details,
+  previousValue,
+  previousLabel = 'periodo anterior',
+  showTrend = true,
   className,
 }: ScoreProgressProps) {
   const percentage = Math.min(100, Math.max(0, (value / max) * 100))
   const percentLabel = `${Math.round(percentage)}%`
   const scoreLabel = `${value.toFixed(decimals)} de ${max}`
   const indicatorClass = TONE_INDICATOR_CLASS[tone === 'auto' ? getScoreTone(value) : tone]
+
+  /** Narrowed once so every later check is a plain `!= null` the compiler can track. */
+  const comparisonValue =
+    previousValue != null && Number.isFinite(previousValue) ? previousValue : null
+  const delta = comparisonValue != null ? Number((value - comparisonValue).toFixed(decimals)) : null
+  const trend: ScoreTrendDirection = !delta ? 'flat' : delta > 0 ? 'up' : 'down'
+  const TrendIcon = TREND_ICON[trend]
+  const percentChange =
+    comparisonValue != null && comparisonValue !== 0
+      ? ((value - comparisonValue) / comparisonValue) * 100
+      : null
+
+  /** Appends the trend indicator next to whichever bar/tooltip/popover variant is rendered below. */
+  const withTrend = (node: ReactNode) => {
+    if (comparisonValue == null || !showTrend) return node
+
+    return (
+      <div className={cn('flex items-center gap-2', className)}>
+        <div className="min-w-0 flex-1">{node}</div>
+        <ScoreTrendBadge
+          trend={trend}
+          delta={delta ?? 0}
+          percentChange={percentChange}
+          previousValue={comparisonValue}
+          previousLabel={previousLabel}
+          decimals={decimals}
+          max={max}
+          showTooltip={showTooltip}
+        />
+      </div>
+    )
+  }
 
   const bar = (
     <Progress
@@ -108,12 +192,12 @@ export function ScoreProgress({
         '**:data-[slot=progress-track]:bg-[#aaa]',
         SIZE_CLASS[size],
         indicatorClass,
-        className,
+        !(comparisonValue != null && showTrend) && className,
       )}
     />
   )
 
-  if (!showTooltip && !interactive) return bar
+  if (!showTooltip && !interactive) return withTrend(bar)
 
   /** The bar becomes a real control: focusable, labelled, with a hit area taller than the track. */
   const triggerElement = (
@@ -138,17 +222,17 @@ export function ScoreProgress({
   )
 
   if (!interactive) {
-    return (
+    return withTrend(
       <TooltipProvider delay={150}>
         <Tooltip>
           <TooltipTrigger render={triggerElement}>{bar}</TooltipTrigger>
           {tooltip}
         </Tooltip>
-      </TooltipProvider>
+      </TooltipProvider>,
     )
   }
 
-  return (
+  return withTrend(
     <Popover>
       {showTooltip ? (
         <TooltipProvider delay={150}>
@@ -193,10 +277,97 @@ export function ScoreProgress({
               interactive={false}
             />
           </div>
+
+          {comparisonValue != null && (
+            <p className="text-muted-foreground mt-3 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs">
+              <span className="capitalize">{previousLabel}:</span>
+              <span className="num tabular-nums">{comparisonValue.toFixed(decimals)}</span>
+
+              <span
+                className={cn(
+                  'num ml-auto inline-flex items-center gap-0.5 font-semibold tabular-nums',
+                  TREND_TEXT_CLASS[trend],
+                )}
+              >
+                <TrendIcon className="size-3 shrink-0" aria-hidden="true" />
+                {delta && delta > 0 ? '+' : ''}
+                {(delta ?? 0).toFixed(decimals)}
+                {percentChange != null &&
+                  ` (${percentChange > 0 ? '+' : ''}${percentChange.toFixed(0)}%)`}
+              </span>
+            </p>
+          )}
         </div>
 
         {details && <div className="px-4 py-3 text-xs leading-relaxed">{details}</div>}
       </PopoverContent>
-    </Popover>
+    </Popover>,
+  )
+}
+
+interface ScoreTrendBadgeProps {
+  trend: ScoreTrendDirection
+  delta: number
+  percentChange: number | null
+  previousValue: number
+  previousLabel: string
+  decimals: number
+  max: number
+  showTooltip: boolean
+}
+
+/** Compact icon + signed delta, e.g. `▲ +0.30`, shown next to the bar when a `previousValue` is given. */
+function ScoreTrendBadge({
+  trend,
+  delta,
+  percentChange,
+  previousValue,
+  previousLabel,
+  decimals,
+  max,
+  showTooltip,
+}: ScoreTrendBadgeProps) {
+  const Icon = TREND_ICON[trend]
+  const sign = delta > 0 ? '+' : ''
+  const deltaLabel = `${sign}${delta.toFixed(decimals)}`
+
+  const badge = (
+    <span
+      className={cn(
+        'inline-flex shrink-0 items-center gap-0.5 text-xs font-semibold tabular-nums',
+        TREND_TEXT_CLASS[trend],
+      )}
+    >
+      <Icon className="size-3.5 shrink-0" aria-hidden="true" />
+      {deltaLabel}
+    </span>
+  )
+
+  if (!showTooltip) return badge
+
+  return (
+    <TooltipProvider delay={150}>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <span
+              tabIndex={0}
+              aria-label={`El puntaje ${TREND_WORD[trend]} ${Math.abs(delta).toFixed(decimals)} puntos respecto al ${previousLabel}`}
+              className="focus-visible:ring-ring/50 rounded-sm focus-visible:ring-2 focus-visible:outline-none"
+            />
+          }
+        >
+          {badge}
+        </TooltipTrigger>
+
+        <TooltipContent>
+          <span className="num tabular-nums">
+            {previousLabel}: {previousValue.toFixed(decimals)} / {max}
+            {percentChange != null &&
+              ` · ${percentChange > 0 ? '+' : ''}${percentChange.toFixed(0)}%`}
+          </span>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   )
 }
