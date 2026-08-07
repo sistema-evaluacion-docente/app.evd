@@ -1,4 +1,6 @@
 export { evaluationColumns } from './columns'
+export { EvaluationDimensionsChart } from './EvaluationDimensionsChart'
+export type { EvaluationDimensionsChartProps } from './EvaluationDimensionsChart'
 export { EvaluationLogsPanel } from './EvaluationLogsPanel'
 export { EvaluationOverview } from './EvaluationOverview'
 export type { EvaluationOverviewProps } from './EvaluationOverview'

@@ -4,7 +4,7 @@ import { BackButton } from '@/components/common/BackButton'
 import { PageTitle } from '@/components/common/PageTitle'
 import EvaluationDetailSkeleton from '@/components/skeletons/EvaluationDetailSkeleton'
 import { useGetEvaluation } from '../api'
-import { EvaluationOverview } from '../components'
+import { EvaluationDimensionsChart, EvaluationOverview } from '../components'
 
 /**
  * Full page displaying the summary of a single evaluation.
@@ -38,6 +38,20 @@ export default function EvaluationDetailPage() {
       <BackButton href="/evaluaciones" label="Volver a evaluaciones" className="mb-4" />
 
       <EvaluationOverview evaluation={evaluation} pdfHref={`/evaluaciones/${evaluation.id}/pdf`} />
+
+      <section className="border-border bg-background rounded-md border">
+        <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
+          Promedios por dimensión pedagógica
+        </h2>
+
+        <div className="px-6 py-4">
+          <EvaluationDimensionsChart
+            dimensionAverages={evaluation.dimension_averages}
+            referenceValue={evaluation.overall_average}
+            referenceLabel="Promedio general"
+          />
+        </div>
+      </section>
     </div>
   )
 }

@@ -1,6 +1,24 @@
 /** Processing state of the AI analysis for an evaluation. */
 export type AiStatus = 'PENDING' | 'ANALYZING' | 'ANALYZED' | 'FAILED'
 
+/** Individual question score inside a dimension of an evaluation. */
+export interface EvaluationQuestionScore {
+  id?: number | null
+  code: string
+  text: string
+  /** `null` when the question got no answers. */
+  score: number | null
+}
+
+/** Average of one pedagogical dimension across the whole evaluation. */
+export interface DimensionAverageItem {
+  dimension: string
+  /** `null` when the dimension has no scored questions. */
+  average: number | null
+  question_count: number
+  questions: EvaluationQuestionScore[]
+}
+
 /** A single evaluation record as returned by `GET /evaluations`. */
 export interface EvaluationRecord {
   id: number
@@ -17,6 +35,8 @@ export interface EvaluationRecord {
   /** Number of teachers evaluated in this evaluation. */
   count: number
   overall_average: number
+  /** Per-dimension averages; only returned by `GET /evaluations/{id}`. */
+  dimension_averages?: DimensionAverageItem[]
   created_at: string
   updated_at: string
 }
