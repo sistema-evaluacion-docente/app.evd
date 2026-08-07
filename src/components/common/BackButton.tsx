@@ -1,8 +1,8 @@
 import { ArrowLeft, type LucideIcon } from 'lucide-react'
 import type { ComponentProps, ReactNode } from 'react'
-import { useLocation } from 'wouter'
 
 import { Button } from '@/components/ui/button'
+import { useNavigate } from '@/hooks/useNavigate'
 import { cn } from '@/lib/utils'
 
 export interface BackButtonProps extends Omit<
@@ -51,7 +51,7 @@ export function BackButton({
   className,
   ...props
 }: BackButtonProps) {
-  const [, navigate] = useLocation()
+  const navigate = useNavigate()
 
   function handleClick() {
     if (onBack) return onBack()
