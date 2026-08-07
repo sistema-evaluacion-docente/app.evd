@@ -24,6 +24,8 @@ interface PageTitleProps {
   secondaryActionIcon?: LucideIcon
   /** Custom secondary action element rendered instead of the default button. Takes precedence over `onSecondaryAction`. */
   secondaryAction?: ReactNode
+  /** Whether to show a "go back" button that returns the user to the previous page. Defaults to `true`. */
+  backButton?: boolean
 }
 
 /**
@@ -53,15 +55,18 @@ export function PageTitle({
   secondaryActionLabel,
   secondaryActionIcon: SecondaryActionIcon,
   secondaryAction,
+  backButton = true,
 }: PageTitleProps) {
   const hasPrimaryAction = action || onAction
   const hasSecondaryAction = secondaryAction || onSecondaryAction
 
   return (
     <header className="mb-6">
-      <div className="mb-3 flex items-center">
-        <BackButton />
-      </div>
+      {backButton && (
+        <div className="mb-3 flex items-center">
+          <BackButton />
+        </div>
+      )}
 
       <div className="flex items-center justify-between gap-4">
         <h1 className={cn('text-2xl font-bold tracking-tight sm:text-3xl', className)}>
