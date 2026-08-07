@@ -271,6 +271,18 @@
             "description": "Academic period ID to compute overall_average"
           },
           {
+            "name": "has_average",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Filter teachers that have an overall average or not",
+              "default": true,
+              "title": "Has Average"
+            },
+            "description": "Filter teachers that have an overall average or not"
+          },
+          {
             "name": "search",
             "in": "query",
             "required": false,
@@ -2137,6 +2149,48 @@
         }
       }
     },
+    "/evaluations/{evaluation_id}/pdf": {
+      "get": {
+        "tags": ["Evaluations"],
+        "summary": "Download Evaluation Pdf",
+        "description": "Download the PDF of an evaluation.\n\nOnly ADMIN or the DIRECTOR of the department the evaluation belongs to\nmay access the file — it is no longer served as a public static asset.",
+        "operationId": "download_evaluation_pdf_evaluations__evaluation_id__pdf_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "evaluation_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Evaluation Id" }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "403": { "description": "Forbidden" },
+          "404": { "description": "Not found" },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/evaluations/period/{period_id}/teachers": {
       "get": {
         "tags": ["Evaluations"],
@@ -2347,25 +2401,31 @@
         }
       }
     },
-    "/evaluations/{evaluation_id}/teachers/{teacher_id}/export": {
+    "/evaluations/teachers/{teacher_id}/export": {
       "get": {
         "tags": ["Evaluations"],
         "summary": "Export Teacher Evaluation",
         "description": "Download an Excel report for a teacher's evaluation detail.",
-        "operationId": "export_teacher_evaluation_evaluations__evaluation_id__teachers__teacher_id__export_get",
+        "operationId": "export_teacher_evaluation_evaluations_teachers__teacher_id__export_get",
         "security": [{ "HTTPBearer": [] }],
         "parameters": [
-          {
-            "name": "evaluation_id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "integer", "title": "Evaluation Id" }
-          },
           {
             "name": "teacher_id",
             "in": "path",
             "required": true,
             "schema": { "type": "integer", "title": "Teacher Id" }
+          },
+          {
+            "name": "period_name",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Period Name" }
+          },
+          {
+            "name": "department_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "integer", "title": "Department Id" }
           },
           { "name": "x", "in": "query", "required": true, "schema": { "title": "X" } },
           {
@@ -2397,25 +2457,25 @@
         }
       }
     },
-    "/evaluations/{evaluation_id}/teachers/{teacher_id}": {
+    "/evaluations/teachers/{teacher_id}/detail": {
       "get": {
         "tags": ["Evaluations"],
         "summary": "Get Teacher Evaluation Detail",
         "description": "Return per-course and per-dimension scores for a teacher within an evaluation.",
-        "operationId": "get_teacher_evaluation_detail_evaluations__evaluation_id__teachers__teacher_id__get",
+        "operationId": "get_teacher_evaluation_detail_evaluations_teachers__teacher_id__detail_get",
         "security": [{ "HTTPBearer": [] }],
         "parameters": [
-          {
-            "name": "evaluation_id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "integer", "title": "Evaluation Id" }
-          },
           {
             "name": "teacher_id",
             "in": "path",
             "required": true,
             "schema": { "type": "integer", "title": "Teacher Id" }
+          },
+          {
+            "name": "period_name",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Period Name" }
           },
           {
             "name": "Authorization",
@@ -3578,6 +3638,18 @@
             "in": "query",
             "required": false,
             "schema": { "anyOf": [{ "type": "boolean" }, { "type": "null" }], "title": "Active" }
+          },
+          {
+            "name": "roles",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "array", "items": { "$ref": "#/components/schemas/RoleName" } },
+                { "type": "null" }
+              ],
+              "title": "Roles"
+            }
           },
           {
             "name": "page",
@@ -5844,8 +5916,8 @@
       },
       "AcademicPeriodCreate": {
         "properties": {
-          "code": { "type": "string", "title": "Code" },
-          "name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Name" },
+          "name": { "type": "string", "title": "Name" },
+          "code": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Code" },
           "start_date": {
             "anyOf": [{ "type": "string", "format": "date" }, { "type": "null" }],
             "title": "Start Date"
@@ -5864,7 +5936,7 @@
           }
         },
         "type": "object",
-        "required": ["code"],
+        "required": ["name"],
         "title": "AcademicPeriodCreate",
         "description": "Schema for creating an academic period."
       },
@@ -6461,6 +6533,13 @@
           "overall_average": {
             "anyOf": [{ "type": "number" }, { "type": "null" }],
             "title": "Overall Average"
+          },
+          "dimension_averages": {
+            "anyOf": [
+              { "items": { "$ref": "#/components/schemas/DimensionAverageItem" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Dimension Averages"
           },
           "created_at": { "type": "string", "format": "date-time", "title": "Created At" },
           "updated_at": { "type": "string", "format": "date-time", "title": "Updated At" }
@@ -8300,6 +8379,14 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Changed By"
           },
+          "changed_by_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Changed By Name"
+          },
+          "changed_by_avatar_url": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Changed By Avatar Url"
+          },
           "change_reason": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Change Reason"
@@ -8313,6 +8400,8 @@
           "old_value",
           "new_value",
           "changed_by",
+          "changed_by_name",
+          "changed_by_avatar_url",
           "change_reason",
           "changed_at"
         ],
@@ -8333,6 +8422,14 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Changed By"
           },
+          "changed_by_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Changed By Name"
+          },
+          "changed_by_avatar_url": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Changed By Avatar Url"
+          },
           "effective_from": { "type": "string", "format": "date-time", "title": "Effective From" },
           "created_at": { "type": "string", "format": "date-time", "title": "Created At" },
           "updated_at": { "type": "string", "format": "date-time", "title": "Updated At" }
@@ -8345,6 +8442,8 @@
           "value_type",
           "description",
           "changed_by",
+          "changed_by_name",
+          "changed_by_avatar_url",
           "effective_from",
           "created_at",
           "updated_at"
@@ -8443,6 +8542,10 @@
           "teacher_id": { "type": "integer", "title": "Teacher Id" },
           "institutional_code": { "type": "string", "title": "Institutional Code" },
           "name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Name" },
+          "avatar_url": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Avatar Url"
+          },
           "contract_type": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Contract Type"
@@ -8660,6 +8763,12 @@
       },
       "TeacherUpdate": {
         "properties": {
+          "name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Name" },
+          "email": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Email" },
+          "avatar_url": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Avatar Url"
+          },
           "institutional_code": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Institutional Code"
@@ -8725,6 +8834,10 @@
           "department_id": {
             "anyOf": [{ "type": "integer" }, { "type": "null" }],
             "title": "Department Id"
+          },
+          "department_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Department Name"
           },
           "name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Name" },
           "active": { "anyOf": [{ "type": "boolean" }, { "type": "null" }], "title": "Active" },

@@ -1,9 +1,9 @@
 const securityConfig = {
   pages: [
     {
-      path: "/",
-      name: "Dashboard",
-      roles: ["DIRECTOR DE DEPARTAMENTO", "ADMIN"],
+      path: '/',
+      name: 'Mi Resumen',
+      roles: ['DIRECTOR DE DEPARTAMENTO', 'ADMIN', 'DOCENTE'],
     },
     // {
     //   path: "/summary",
@@ -11,9 +11,9 @@ const securityConfig = {
     //   roles: ["DOCENTE"],
     // },
     {
-      path: "/",
-      name: "Mis periodos",
-      roles: ["DOCENTE"],
+      path: '/periodos',
+      name: 'Mis periodos',
+      roles: ['DOCENTE'],
     },
     // {
     //   path: "/summary",
@@ -26,72 +26,52 @@ const securityConfig = {
     //   roles: ["DOCENTE"],
     // },
     {
-      path: "/evaluations",
-      name: "Evaluaciones",
-      roles: ["DIRECTOR DE DEPARTAMENTO"],
+      path: '/evaluaciones',
+      name: 'Evaluaciones',
+      roles: ['DIRECTOR DE DEPARTAMENTO'],
     },
     {
-      path: "/teachers",
-      name: "Docentes",
-      roles: ["DIRECTOR DE DEPARTAMENTO"],
-    },
-    // {
-    //   path: "/matrix",
-    //   name: "Matriz Evaluativa",
-    //   roles: ["DIRECTOR DE DEPARTAMENTO"],
-    // },
-    // {
-    //   path: "/subjects",
-    //   name: "Materias",
-    //   roles: ["DIRECTOR DE DEPARTAMENTO"],
-    // },
-    // {
-    //   path: "/plans",
-    //   name: "Planes de Mejoramiento",
-    //   roles: ["DIRECTOR DE DEPARTAMENTO"],
-    // },
-    {
-      path: "/admin/faculties",
-      name: "Facultades",
-      roles: ["ADMIN"],
+      path: '/docentes',
+      name: 'Docentes',
+      roles: ['DIRECTOR DE DEPARTAMENTO'],
     },
     {
-      path: "/admin/departments",
-      name: "Departamentos",
-      roles: ["ADMIN"],
+      path: '/admin/facultades',
+      name: 'Facultades',
+      roles: ['ADMIN'],
     },
     {
-      path: "/admin/periods",
-      name: "Períodos",
-      roles: ["ADMIN"],
+      path: '/admin/departamentos',
+      name: 'Departamentos',
+      roles: ['ADMIN'],
     },
     {
-      path: "/admin/users",
-      name: "Usuarios",
-      roles: ["ADMIN"],
+      path: '/admin/periodos',
+      name: 'Períodos',
+      roles: ['ADMIN'],
     },
     {
-      path: "/admin/directors",
-      name: "Directores",
-      roles: ["ADMIN"],
+      path: '/admin/usuarios',
+      name: 'Usuarios',
+      roles: ['ADMIN'],
     },
     {
-      path: "/admin/documents",
-      name: "Documentos",
-      roles: ["ADMIN"],
+      path: '/admin/directores',
+      name: 'Directores',
+      roles: ['ADMIN'],
     },
     {
-      path: "/admin/settings",
-      name: "Configuración",
-      roles: ["ADMIN"],
+      path: '/admin/logs',
+      name: 'Logs',
+      roles: ['ADMIN'],
     },
     {
-      path: "/admin/logs",
-      name: "Logs",
-      roles: ["ADMIN"],
+      path: '/admin/configuracion',
+      name: 'Configuración',
+      roles: ['ADMIN'],
     },
   ],
-};
+}
 
 /**
  * Returns the menus available for a given role.
@@ -99,10 +79,10 @@ const securityConfig = {
  * @param role The role to get the menus for.
  * @returns The menus available for the given role.
  */
-export function getMenus(role: string): SecurityConfig["pages"] {
-  return securityConfig.pages.filter((page) => page.roles.includes(role));
+export function getMenus(role: string): SecurityConfig['pages'] {
+  return securityConfig.pages.filter((page) => page.roles.includes(role))
 }
 
-export type SecurityConfig = typeof securityConfig;
+export type SecurityConfig = typeof securityConfig
 
-export default securityConfig;
+export default securityConfig

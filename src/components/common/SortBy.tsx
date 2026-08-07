@@ -7,7 +7,7 @@ import {
   ArrowUpIcon,
   CheckIcon,
   ChevronDownIcon,
-  Funnel,
+  RotateCcw,
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -46,6 +46,8 @@ interface SortByProps {
   parse?: (value: string) => { field: string; direction: string }
   build?: (field: string, direction: string) => string
   label?: string
+  /** Renders a "clear" action that resets the value to `''`. */
+  clearable?: boolean
   className?: string
 }
 
@@ -63,26 +65,34 @@ function SortBy({
   parse = defaultParse,
   build = defaultBuild,
   label = 'Ordenar por',
+  clearable = false,
   className,
 }: SortByProps) {
   const [open, setOpen] = useState(false)
 
-  const { field: currentField, direction: currentDirection } = parse(value)
+  const current = value ? parse(value) : { field: '', direction: '' }
+  const currentField = current.field
+  const currentDirection = current.direction
   const [pendingField, setPendingField] = useState(currentField)
   const [pendingDirection, setPendingDirection] = useState(currentDirection)
 
   const currentFieldLabel = fields.find((f) => f.value === currentField)?.label ?? currentField
 
   function handleOpen(nextOpen: boolean) {
+    if (!nextOpen && (pendingField !== currentField || pendingDirection !== currentDirection)) {
+      onChange(pendingField ? build(pendingField, pendingDirection) : '')
+    }
+
     if (nextOpen) {
       setPendingField(currentField)
       setPendingDirection(currentDirection)
     }
+
     setOpen(nextOpen)
   }
 
-  function handleApply() {
-    onChange(build(pendingField, pendingDirection))
+  function handleClear() {
+    onChange('')
     setOpen(false)
   }
 
@@ -91,7 +101,7 @@ function SortBy({
       <Popover open={open} onOpenChange={handleOpen}>
         <PopoverTrigger render={<Button variant="outline" className="h-9 gap-2" />}>
           <ArrowDownUp className="size-4" />
-          <span className="text-sm font-medium">{currentFieldLabel}</span>
+          <span className="text-sm font-medium">{currentFieldLabel || 'Ordenar por'}</span>
           <ChevronDownIcon className="text-muted-foreground size-4" />
         </PopoverTrigger>
 
@@ -135,14 +145,22 @@ function SortBy({
               })}
             </div>
 
-            <div className="bg-border mx-2 h-px" />
+            {clearable && (
+              <>
+                <div className="bg-border mx-2 h-px" />
 
-            <div className="flex justify-end p-2">
-              <Button size="sm" variant="outline" onClick={handleApply}>
-                <Funnel />
-                Aplicar
-              </Button>
-            </div>
+                <div className="flex p-1">
+                  <button
+                    type="button"
+                    onClick={handleClear}
+                    className="text-muted-foreground hover:bg-muted hover:text-foreground flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors"
+                  >
+                    <RotateCcw className="size-4" />
+                    <span>Sin orden</span>
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </PopoverContent>
       </Popover>

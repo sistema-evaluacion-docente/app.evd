@@ -1,14 +1,11 @@
-import { Button } from '@/components/ui/button'
-import { ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
-import Logo from '@/components/common/Logo'
-import useAuth from '@/shared/hooks/useAuth'
+import { Button } from '@/components/ui/button'
+import { useAuthStore } from '../store/useAuthStore'
 
-function LoginForm() {
-  const { loginWithGoogle } = useAuth()
-
+export function LoginForm() {
+  const loginWithGoogle = useAuthStore((s) => s.loginWithGoogle)
   const [isLoadingLogin, setIsLoadingLogin] = useState(false)
 
   const handleLoginWithGoogle = () => {
@@ -30,62 +27,60 @@ function LoginForm() {
   }
 
   return (
-    <section className="bg-background flex items-center justify-center px-6 py-12">
-      <div className="flex w-full max-w-100 flex-col">
-        <div className="mb-8 flex justify-center">
-          <Logo />
-        </div>
+    <section className="animate-rise flex w-full max-w-sm flex-col items-center">
+      <div className="bg-card mb-9 flex size-20 items-center justify-center rounded-2xl border">
+        <img src="/logo.png" alt="Logo" className="h-12 w-12" style={{ animationDelay: '60ms' }} />
+      </div>
 
-        <header className="mb-7 text-center">
-          <h1 className="text-lg font-semibold tracking-tight">Acceso al Sistema</h1>
+      <header className="mb-8 text-center" style={{ animationDelay: '120ms' }}>
+        <h1 className="text-[1.6rem] leading-tight font-semibold tracking-tight">
+          Acceso al Sistema
+        </h1>
 
-          <p className="text-muted-foreground mt-2 text-sm">
-            Inicie sesión con sus credenciales institucionales
-          </p>
-        </header>
+        <p className="text-muted-foreground mt-2 text-sm" style={{ textWrap: 'pretty' }}>
+          Inicie sesión con su cuenta institucional para continuar.
+        </p>
+      </header>
 
+      <div className="w-full" style={{ animationDelay: '180ms' }}>
         <Button
           type="button"
           variant="outline"
+          size="lg"
           onClick={handleLoginWithGoogle}
           aria-busy={isLoadingLogin}
-          className="bg-background"
+          className="shadow-card h-11 w-full gap-3 border transition-shadow duration-200"
         >
           <img src="/google.svg" alt="Google" className="h-5 w-5" />
 
           <span className="inline-flex items-center gap-2 whitespace-nowrap">
-            {isLoadingLogin ? 'Verificando cuenta' : 'Iniciar sesión con Google'}
+            {isLoadingLogin ? 'Verificando cuenta' : 'Continuar con Google'}
 
             {isLoadingLogin && (
-              <span className="border-ink-300 h-3 w-3 animate-spin rounded-full border-2 border-t-[#1a73e8]" />
+              <span className="border-ink-300 h-3.5 w-3.5 animate-spin rounded-full border-2 border-t-[#1a73e8]" />
             )}
           </span>
         </Button>
+      </div>
 
-        <p
-          className="text-muted-foreground mt-4 text-center text-sm leading-relaxed"
-          style={{ textWrap: 'pretty' }}
-        >
-          Para acceder, debe utilizar su cuenta de correo electrónico proporcionada por la
-          universidad.
-        </p>
+      <div className="mt-8 flex items-center gap-3">
+        <span className="bg-ink-200 h-px w-8" />
+        <span className="text-muted-foreground text-xs font-semibold tracking-[0.18em] uppercase">
+          Uso autorizado
+        </span>
 
-        <div className="my-6 flex items-center gap-3.5">
-          <span className="bg-ink-200 h-px flex-1" />
-          <span className="text-ink-400 text-[10.5px] font-semibold tracking-[0.18em] uppercase">
-            Información
-          </span>
-          <span className="bg-ink-200 h-px flex-1" />
-        </div>
+        <span className="bg-border h-px w-8" />
+      </div>
 
-        <div className="text-ink-500 inline-flex w-full items-center justify-center gap-2 text-[11.5px] font-semibold tracking-[0.16em] uppercase">
-          <ShieldCheck size={14} className="text-ink-400" />
-
-          <span>Uso exclusivo personal autorizado</span>
-        </div>
+      <div
+        className="text-muted-foreground mt-4 inline-flex items-center justify-center gap-2 text-center text-[11.5px] leading-relaxed font-semibold"
+        style={{ textWrap: 'pretty' }}
+      >
+        <span>
+          Debe usar el correo proporcionado por la universidad. Acceso exclusivo para personal
+          autorizado.
+        </span>
       </div>
     </section>
   )
 }
-
-export default LoginForm

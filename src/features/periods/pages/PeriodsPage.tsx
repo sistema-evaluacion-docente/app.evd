@@ -1,16 +1,15 @@
-import { Calendar } from "lucide-react";
+import { PageTitle } from '@/components/common/PageTitle'
+import { PeriodsList } from '../components'
 
-import HeaderPage from "@/components/common/HeaderPage";
-import DataPeriods from "@/features/periods/components/DataPeriods";
-import { AppLayout } from "@/widgets/layout";
-
-function PeriodsPage() {
+/**
+ * Full page listing the evaluated periods of the authenticated teacher.
+ */
+export default function PeriodsPage() {
   return (
-    <AppLayout>
-      <HeaderPage title="Periodos Académicos" icon={<Calendar />} />
-      <DataPeriods />
-    </AppLayout>
-  );
-}
+    <>
+      <PageTitle>Mis Periodos</PageTitle>
 
-export default PeriodsPage;
+      <PeriodsList />
+    </>
+  )
+}
