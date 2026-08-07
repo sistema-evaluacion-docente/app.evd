@@ -147,14 +147,15 @@ export function EvaluationsList() {
         })
         analyze(row.id)
       },
-      disabled: (row) => isAnalyzing || row.status !== 'COMPLETED',
+      disabled: (row) => isAnalyzing || row.status !== 'COMPLETED' || row.ai_status === 'ANALYZING',
     },
     {
       label: 'Eliminar',
       icon: <Trash2 className="size-4" />,
       variant: 'destructive',
       onClick: (row) => setDeleteTarget(row),
-      disabled: (row) => isAnalyzing || row.status === 'PROCESSING',
+      disabled: (row) =>
+        isAnalyzing || row.status === 'PROCESSING' || row.ai_status === 'ANALYZING',
     },
   ]
 
