@@ -27,15 +27,33 @@ export function TeacherCourseResults({ teacher }: TeacherCourseResultsProps) {
       </h2>
 
       <div className="divide-border divide-y">
-        {teacher.courses.map((course) => (
-          <CourseRow key={`${course.course_code}-${course.group_name}`} course={course} />
-        ))}
+        {teacher.courses.map((course) => {
+          const previousCourse = teacher.previous_period?.courses.find(
+            (previous) =>
+              previous.course_code === course.course_code &&
+              previous.group_name === course.group_name,
+          )
+
+          return (
+            <CourseRow
+              key={`${course.course_code}-${course.group_name}`}
+              course={course}
+              previousCourse={previousCourse}
+            />
+          )
+        })}
       </div>
     </section>
   )
 }
 
-function CourseRow({ course }: { course: CourseDetail }) {
+function CourseRow({
+  course,
+  previousCourse,
+}: {
+  course: CourseDetail
+  previousCourse?: CourseDetail
+}) {
   return (
     <Collapsible className="group/row relative">
       <CollapsibleTrigger className="hover:bg-muted/40 group flex w-full items-center justify-between gap-4 px-6 py-4 text-left transition-colors">
@@ -62,16 +80,32 @@ function CourseRow({ course }: { course: CourseDetail }) {
 
       <CollapsibleContent>
         <div className="divide-border divide-y px-6 pb-2">
-          {course.dimensions.map((dimension) => (
-            <DimensionRow key={dimension.dimension} dimension={dimension} />
-          ))}
+          {course.dimensions.map((dimension) => {
+            const previousDimension = previousCourse?.dimensions.find(
+              (previous) => previous.dimension === dimension.dimension,
+            )
+
+            return (
+              <DimensionRow
+                key={dimension.dimension}
+                dimension={dimension}
+                previousDimension={previousDimension}
+              />
+            )
+          })}
         </div>
       </CollapsibleContent>
     </Collapsible>
   )
 }
 
-function DimensionRow({ dimension }: { dimension: DimensionDetail }) {
+function DimensionRow({
+  dimension,
+  previousDimension,
+}: {
+  dimension: DimensionDetail
+  previousDimension?: DimensionDetail
+}) {
   return (
     <Collapsible>
       <CollapsibleTrigger className="hover:bg-muted/30 group flex w-full items-center justify-between gap-4 py-3 text-left transition-colors">
@@ -101,23 +135,36 @@ function DimensionRow({ dimension }: { dimension: DimensionDetail }) {
 
       <CollapsibleContent>
         <div className="space-y-6 py-4 pl-5.5">
-          {dimension.questions.map((question) => (
-            <div
-              key={question.code}
-              className="flex flex-col md:flex-row md:items-center md:justify-between"
-            >
-              <div className="flex items-baseline justify-between gap-4">
-                <span className="text-sm">
-                  {question.code}. {question.text}
-                </span>
-              </div>
+          {dimension.questions.map((question) => {
+            const previousQuestion = previousDimension?.questions.find(
+              (previous) => previous.code === question.code,
+            )
 
-              <div className="flex items-center gap-4">
-                <ScoreProgress value={question.score} label={question.text} className="min-w-20" />
-                <ScoreBadge value={question.score} />
+            return (
+              <div
+                key={question.code}
+                className="flex flex-col md:flex-row md:items-center md:justify-between"
+              >
+                <div className="flex items-baseline justify-between gap-4">
+                  <span className="text-sm">
+                    {question.code}. {question.text}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <ScoreProgress
+                    value={question.score}
+                    previousValue={previousQuestion?.score}
+                    previousLabel="periodo anterior"
+                    label={question.text}
+                    className="min-w-20"
+                  />
+
+                  <ScoreBadge value={question.score} />
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </CollapsibleContent>
     </Collapsible>
