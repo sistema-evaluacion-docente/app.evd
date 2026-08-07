@@ -85,55 +85,63 @@ export function TeacherOverview({ teacher }: TeacherOverviewProps) {
       </div>
 
       <div className="divide-border grid grid-cols-2 divide-x sm:grid-cols-4">
-        {teacher.dimensions.map((dimension) => (
-          <div key={dimension.dimension} className="px-6 py-4">
-            <p className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase">
-              <span
-                aria-hidden="true"
-                className="size-1.5 shrink-0 rounded-full"
-                style={{ backgroundColor: dimensionColor(dimension.dimension) }}
-              />
-              {shortenDimensionLabel(dimension.dimension)}
-            </p>
+        {teacher.dimensions.map((dimension) => {
+          const previousDimension = teacher.previous_period?.dimensions.find(
+            (previous) => previous.dimension === dimension.dimension,
+          )
 
-            <p
-              className={`mt-1 text-2xl font-semibold tabular-nums ${getScoreToneClass(dimension.average)}`}
-            >
-              {dimension.average.toFixed(2)}
-            </p>
+          return (
+            <div key={dimension.dimension} className="px-6 py-4">
+              <p className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase">
+                <span
+                  aria-hidden="true"
+                  className="size-1.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: dimensionColor(dimension.dimension) }}
+                />
+                {shortenDimensionLabel(dimension.dimension)}
+              </p>
 
-            <ScoreProgress
-              value={dimension.average}
-              tone="auto"
-              size="md"
-              className="mt-0.5"
-              label={dimension.dimension}
-              detailsTitle={dimension.dimension}
-              details={
-                dimension.questions.length > 0 && (
-                  <ScrollArea className="h-56 px-4">
-                    {dimension.questions.map((question) => (
-                      <li key={question.code} className="flex items-start gap-3 py-2">
-                        <span className="text-muted-foreground min-w-0 flex-1">
-                          <span className="num text-muted-foreground/70 mr-1.5">
-                            {question.code}
+              <p
+                className={`mt-1 text-2xl font-semibold tabular-nums ${getScoreToneClass(dimension.average)}`}
+              >
+                {dimension.average.toFixed(2)}
+              </p>
+
+              <ScoreProgress
+                value={dimension.average}
+                previousValue={previousDimension?.average}
+                previousLabel="periodo anterior"
+                tone="auto"
+                size="md"
+                className="mt-0.5"
+                label={dimension.dimension}
+                detailsTitle={dimension.dimension}
+                details={
+                  dimension.questions.length > 0 && (
+                    <ScrollArea className="h-56 px-4">
+                      {dimension.questions.map((question) => (
+                        <li key={question.code} className="flex items-start gap-3 py-2">
+                          <span className="text-muted-foreground min-w-0 flex-1">
+                            <span className="num text-muted-foreground/70 mr-1.5">
+                              {question.code}
+                            </span>
+                            {question.text}
                           </span>
-                          {question.text}
-                        </span>
 
-                        <span
-                          className={`num shrink-0 font-semibold tabular-nums ${getScoreToneClass(question.score)}`}
-                        >
-                          {question.score.toFixed(2)}
-                        </span>
-                      </li>
-                    ))}
-                  </ScrollArea>
-                )
-              }
-            />
-          </div>
-        ))}
+                          <span
+                            className={`num shrink-0 font-semibold tabular-nums ${getScoreToneClass(question.score)}`}
+                          >
+                            {question.score.toFixed(2)}
+                          </span>
+                        </li>
+                      ))}
+                    </ScrollArea>
+                  )
+                }
+              />
+            </div>
+          )
+        })}
       </div>
     </section>
   )
