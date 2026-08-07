@@ -62,9 +62,9 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="offcanvas" side="left" variant="sidebar">
-      <SidebarHeader>
+      <SidebarHeader className="p-4">
         <div className="flex items-center gap-2.5">
-          <Logo className="h-8! w-8!" />
+          <Logo className="h-7! w-7!" />
           <span className="text-sm leading-tight font-semibold">Evaluación Docente</span>
         </div>
       </SidebarHeader>
