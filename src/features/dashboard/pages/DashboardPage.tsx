@@ -11,7 +11,7 @@ export default function DashboardPage() {
       <>
         <PageTitle>Mi resumen</PageTitle>
 
-        <div className="space-y-8">
+        <div className="space-y-8 bg-background p-4 rounded">
           <PeriodAverageTrend />
         </div>
       </>
