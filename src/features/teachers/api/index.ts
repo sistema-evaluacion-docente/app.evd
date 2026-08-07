@@ -43,7 +43,7 @@ async function getTeacherDetail(
   periodName: string,
 ): Promise<ResponseAPI<TeacherDetail>> {
   return api.get(`/evaluations/teachers/${teacherId}/detail`, {
-    params: { period_name: periodName },
+    params: { period_name: periodName, compare_previous: true },
   })
 }
 
