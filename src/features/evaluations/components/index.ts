@@ -1,5 +1,7 @@
 export { evaluationColumns } from './columns'
 export { EvaluationLogsPanel } from './EvaluationLogsPanel'
+export { EvaluationOverview } from './EvaluationOverview'
+export type { EvaluationOverviewProps } from './EvaluationOverview'
 export { EvaluationPdfViewer } from './EvaluationPdfViewer'
 export type { EvaluationPdfViewerProps } from './EvaluationPdfViewer'
 export { EvaluationsList } from './EvaluationsList'
