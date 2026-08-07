@@ -40,6 +40,10 @@ async function getEvaluationByPeriod(periodId: number): Promise<ResponseAPI<Eval
   return api.get(`/evaluations/by-period/${periodId}`)
 }
 
+async function getEvaluationById(evaluationId: number): Promise<ResponseAPI<EvaluationRecord>> {
+  return api.get(`/evaluations/${evaluationId}`)
+}
+
 async function updateEvaluationStatus(
   evaluationId: number,
   payload: EvaluationStatusUpdate,
@@ -73,6 +77,7 @@ export const evaluationsKeys = {
   all: ['evaluations'] as const,
   lists: () => [...evaluationsKeys.all, 'list'] as const,
   detail: (periodId: number) => [...evaluationsKeys.all, 'detail', periodId] as const,
+  byId: (evaluationId: number) => [...evaluationsKeys.all, 'byId', evaluationId] as const,
   pdf: (evaluationId: number) => [...evaluationsKeys.all, 'pdf', evaluationId] as const,
 }
 
@@ -108,6 +113,25 @@ export function useGetEvaluationByPeriod(periodId?: number) {
     queryKey: evaluationsKeys.detail(periodId ?? 0),
     queryFn: () => getEvaluationByPeriod(periodId!),
     enabled: periodId != null,
+    staleTime: 60_000,
+  })
+}
+
+/**
+ * Fetches a single evaluation by its own id (`GET /evaluations/{evaluation_id}`).
+ * Prefer this over `useGetEvaluationByPeriod` when the id at hand is the
+ * evaluation's — a period can only be resolved to one evaluation, so going
+ * through the period is an extra indirection that breaks as soon as a period
+ * holds more than one.
+ *
+ * @example
+ * const { data, isLoading } = useGetEvaluation(evaluationId);
+ */
+export function useGetEvaluation(evaluationId?: number) {
+  return useQuery({
+    queryKey: evaluationsKeys.byId(evaluationId ?? 0),
+    queryFn: () => getEvaluationById(evaluationId!),
+    enabled: evaluationId != null,
     staleTime: 60_000,
   })
 }

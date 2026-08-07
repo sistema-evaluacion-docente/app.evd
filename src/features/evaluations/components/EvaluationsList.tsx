@@ -110,7 +110,7 @@ export function EvaluationsList() {
       label: 'Ver Detalle',
       icon: <Eye className="size-4" />,
       onClick: (row) => {
-        navigate(`/evaluaciones/${row.academic_period_id}`)
+        navigate(`/evaluaciones/${row.id}`)
       },
     },
     {
@@ -143,7 +143,7 @@ export function EvaluationsList() {
         connectLogs({
           evaluationId: row.id,
           queryKeysToInvalidate: [evaluationsKeys.lists()],
-          detailsUrl: `/evaluaciones/${row.academic_period_id}`,
+          detailsUrl: `/evaluaciones/${row.id}`,
         })
         analyze(row.id)
       },
@@ -172,7 +172,7 @@ export function EvaluationsList() {
           resetPage()
         }}
         onRowClick={(row) => {
-          navigate(`/evaluaciones/${row.academic_period_id}`)
+          navigate(`/evaluaciones/${row.id}`)
         }}
         sorting={sorting}
         onSortingChange={setSorting}

@@ -1,26 +1,25 @@
 import { FileText, Users } from 'lucide-react'
-import { useRoute } from 'wouter'
+import { Link, useRoute } from 'wouter'
 
 import { PageTitle } from '@/components/common/PageTitle'
 import { ScoreBadge } from '@/components/common/ScoreBadge'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { cn } from '@/lib/utils'
 
 import formatDate from '@/lib/formatDate'
-import { useGetEvaluationByPeriod } from '../api'
+import { useGetEvaluation } from '../api'
 import { AI_STATUS_DISPLAY, EVALUATION_STATUS_DISPLAY } from '../config'
 
 /**
- * Full page displaying the summary of a single evaluation for an academic
- * period. Route: `/evaluaciones/:id` where `:id` is the academic period id.
+ * Full page displaying the summary of a single evaluation.
+ * Route: `/evaluaciones/:id` where `:id` is the evaluation id.
  */
 export default function EvaluationDetailPage() {
   const [, params] = useRoute('/evaluaciones/:id')
-  const periodId = params?.id ? Number(params.id) : undefined
+  const evaluationId = params?.id ? Number(params.id) : undefined
 
-  const { data, isLoading } = useGetEvaluationByPeriod(periodId)
+  const { data, isLoading } = useGetEvaluation(evaluationId)
   const evaluation = data?.data
 
   if (isLoading) {
@@ -111,18 +110,13 @@ export default function EvaluationDetailPage() {
                   </p>
                 </div>
 
-                <a
-                  href={evaluation.pdf_url ?? undefined}
-                  target="_blank"
-                  rel="noreferrer"
-                  className={cn(
-                    'bg-muted/60 hover:bg-muted text-foreground mt-3 inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-sm font-medium transition-colors',
-                    !evaluation.pdf_url && 'pointer-events-none opacity-50',
-                  )}
+                <Link
+                  href={`/evaluaciones/${evaluation.id}/pdf`}
+                  className="bg-muted/60 hover:bg-muted text-foreground mt-3 inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-sm font-medium transition-colors"
                 >
                   <FileText className="size-4" aria-hidden="true" />
                   Ver PDF
-                </a>
+                </Link>
               </div>
 
               <div className="bg-muted/50 rounded-lg p-4">
