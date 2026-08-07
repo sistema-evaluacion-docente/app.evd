@@ -105,4 +105,70 @@ describe('ScoreProgress', () => {
 
     expect(screen.queryByText('de 5')).not.toBeInTheDocument()
   })
+
+  it('does not render a trend indicator without a previousValue', () => {
+    render(<ScoreProgress value={4} label="Claridad" />)
+
+    expect(screen.queryByText(/^[+-]?\d\.\d{2}$/)).not.toBeInTheDocument()
+  })
+
+  it('shows a growth indicator when the score improved over the previous value', () => {
+    render(<ScoreProgress value={4.3} previousValue={4} label="Claridad" />)
+
+    expect(screen.getByText('+0.30')).toBeInTheDocument()
+  })
+
+  it('shows a decrease indicator when the score dropped from the previous value', () => {
+    render(<ScoreProgress value={3.7} previousValue={4} label="Claridad" />)
+
+    expect(screen.getByText('-0.30')).toBeInTheDocument()
+  })
+
+  it('shows no sign when the score is unchanged from the previous value', () => {
+    render(<ScoreProgress value={4} previousValue={4} label="Claridad" />)
+
+    expect(screen.getByText('0.00')).toBeInTheDocument()
+  })
+
+  it('describes the trend and previous value on the indicator for assistive tech', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <ScoreProgress
+        value={4.3}
+        previousValue={4}
+        previousLabel="semestre anterior"
+        label="Claridad"
+      />,
+    )
+
+    const trigger = screen.getByLabelText(
+      'El puntaje aumentó 0.30 puntos respecto al semestre anterior',
+    )
+
+    await user.hover(trigger)
+
+    expect(await screen.findByText('semestre anterior: 4.00 / 5 · +7%')).toBeInTheDocument()
+  })
+
+  it('hides the inline indicator but keeps the comparison in the breakdown when showTrend is false', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <ScoreProgress
+        value={4.3}
+        previousValue={4}
+        previousLabel="semestre anterior"
+        label="Claridad"
+        showTrend={false}
+      />,
+    )
+
+    expect(screen.queryByText('+0.30')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /Claridad/ }))
+
+    expect(await screen.findByText('semestre anterior:')).toBeInTheDocument()
+    expect(screen.getByText('4.00')).toBeInTheDocument()
+  })
 })
