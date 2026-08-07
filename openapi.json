@@ -6534,6 +6534,13 @@
             "anyOf": [{ "type": "number" }, { "type": "null" }],
             "title": "Overall Average"
           },
+          "dimension_averages": {
+            "anyOf": [
+              { "items": { "$ref": "#/components/schemas/DimensionAverageItem" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Dimension Averages"
+          },
           "created_at": { "type": "string", "format": "date-time", "title": "Created At" },
           "updated_at": { "type": "string", "format": "date-time", "title": "Updated At" }
         },
