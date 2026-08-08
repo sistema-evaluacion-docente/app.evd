@@ -1,3 +1,6 @@
+import { useId, useState } from 'react'
+
+import { Settings2 } from 'lucide-react'
 import {
   Area,
   AreaChart,
@@ -10,6 +13,7 @@ import {
 } from 'recharts'
 
 import { InlineError } from '@/components/common/InlineError'
+import { Button } from '@/components/ui/button'
 import {
   ChartContainer,
   ChartLegend,
@@ -18,6 +22,9 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from '@/components/ui/chart'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 
@@ -69,6 +76,13 @@ export interface AverageTrendChartProps {
   dashPatterns?: boolean
   /** Draw across `null` points instead of breaking the line. Defaults to `false`. */
   connectNulls?: boolean
+  /**
+   * Shows a button that opens a popover to override the Y axis min/max on
+   * the fly, e.g. to zoom into a narrow band of scores. Purely a display
+   * preference — kept as local UI state, never reported back to the caller.
+   * Defaults to `true`.
+   */
+  customizable?: boolean
   /** Formats the value in axis and tooltip. */
   valueFormatter?: (value: number) => string
   /** Formats the x tick label (e.g. `2025-1` → `2025-I`). */
@@ -111,6 +125,9 @@ const DASH_PATTERNS = ['', '6 4', '2 3', '10 4 2 4', '1 3']
  *   chartClassName="h-80"
  *   xFormatter={(code) => code.replace('-', ' · ')}
  * />
+ *
+ * @example
+ * <AverageTrendChart series={series} customizable={false} />
  */
 export function AverageTrendChart({
   series,
@@ -129,14 +146,30 @@ export function AverageTrendChart({
   showTooltip = true,
   dashPatterns,
   connectNulls = false,
+  customizable = true,
   valueFormatter,
   xFormatter,
   chartClassName,
   className,
 }: AverageTrendChartProps) {
+  const minInputId = useId()
+  const maxInputId = useId()
+
+  const [minOverride, setMinOverride] = useState<number | undefined>(undefined)
+  const [maxOverride, setMaxOverride] = useState<number | undefined>(undefined)
+
   const formatValue = valueFormatter ?? ((value: number) => value.toFixed(decimals))
   const withLegend = showLegend ?? series.length > 1
   const withDashes = dashPatterns ?? series.length > 2
+
+  const effectiveMin = minOverride ?? min
+  const effectiveMax = maxOverride ?? max
+  const isCustomized = minOverride != null || maxOverride != null
+
+  const handleResetBounds = () => {
+    setMinOverride(undefined)
+    setMaxOverride(undefined)
+  }
 
   const xValues = categories ?? deriveCategories(series)
   const hasData = series.some((entry) => entry.data.some((point) => point.value != null))
@@ -181,84 +214,161 @@ export function AverageTrendChart({
   const ChartRoot = type === 'area' ? AreaChart : LineChart
 
   return (
-    <ChartContainer config={chartConfig} className={cn('h-64 w-full', chartClassName, className)}>
-      <ChartRoot data={rows} margin={{ top: 12, right: 16, left: -16, bottom: 4 }}>
-        {showGrid && <CartesianGrid vertical={false} stroke="var(--color-border)" />}
-
-        <XAxis
-          dataKey="x"
-          tickLine={false}
-          axisLine={false}
-          tickMargin={8}
-          tickFormatter={xFormatter}
-          tick={{ fontSize: 11, fill: 'var(--color-muted-foreground)' }}
-        />
-
-        <YAxis
-          domain={[min, max]}
-          tickLine={false}
-          axisLine={false}
-          width={44}
-          tick={{ fontSize: 11, fill: 'var(--color-muted-foreground)' }}
-        />
-
-        {referenceValue != null && (
-          <ReferenceLine
-            y={referenceValue}
-            stroke="var(--color-muted-foreground)"
-            strokeDasharray="4 4"
-            strokeOpacity={0.6}
-            label={
-              referenceLabel
-                ? {
-                    value: referenceLabel,
-                    position: 'insideTopRight',
-                    fontSize: 10,
-                    fill: 'var(--color-muted-foreground)',
-                  }
-                : undefined
+    <div className={cn('relative', className)}>
+      {customizable && (
+        <Popover>
+          <PopoverTrigger
+            render={
+              <Button
+                type="button"
+                // variant="ghost"
+                size="icon-sm"
+                aria-label="Personalizar gráfico"
+                className={cn(
+                  'absolute top-0 right-0 z-10',
+                  isCustomized && 'text-primary bg-primary/10 hover:bg-primary/15',
+                )}
+              />
             }
+          >
+            <Settings2 className="size-4" aria-hidden="true" />
+          </PopoverTrigger>
+
+          <PopoverContent align="end" className="w-64">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold">Personalizar gráfico</p>
+
+              {isCustomized && (
+                <button
+                  type="button"
+                  onClick={handleResetBounds}
+                  className="text-muted-foreground hover:text-foreground cursor-pointer text-xs font-medium transition-colors"
+                >
+                  Restablecer
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor={minInputId} className="text-xs font-medium">
+                  Mínimo
+                </Label>
+
+                <Input
+                  id={minInputId}
+                  type="number"
+                  step={0.1}
+                  min={0}
+                  value={effectiveMin}
+                  onChange={(event) => {
+                    const raw = event.target.value
+                    setMinOverride(raw === '' ? undefined : Number(raw))
+                  }}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor={maxInputId} className="text-xs font-medium">
+                  Máximo
+                </Label>
+
+                <Input
+                  id={maxInputId}
+                  type="number"
+                  step={0.1}
+                  max={5}
+                  value={effectiveMax}
+                  onChange={(event) => {
+                    const raw = event.target.value
+                    setMaxOverride(raw === '' ? undefined : Number(raw))
+                  }}
+                />
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+      )}
+
+      <ChartContainer config={chartConfig} className={cn('h-64 w-full pt-6', chartClassName)}>
+        <ChartRoot data={rows} margin={{ top: 12, right: 16, left: 16, bottom: 4 }}>
+          {showGrid && <CartesianGrid vertical={false} stroke="var(--color-border)" />}
+
+          <XAxis
+            dataKey="x"
+            tickLine={false}
+            axisLine={false}
+            tickMargin={8}
+            tickFormatter={xFormatter}
+            tick={{ fontSize: 14, fill: 'var(--color-muted-foreground)' }}
           />
-        )}
 
-        {showTooltip && (
-          <ChartTooltip
-            cursor={{ stroke: 'var(--color-border)', strokeWidth: 1 }}
-            content={<ChartTooltipContent formatter={(value) => formatValue(Number(value))} />}
+          <YAxis
+            domain={[effectiveMin, effectiveMax]}
+            tickLine={false}
+            axisLine={false}
+            width={44}
+            tick={{ fontSize: 14, fill: 'var(--color-muted-foreground)' }}
           />
-        )}
 
-        {withLegend && <ChartLegend content={<ChartLegendContent />} />}
+          {referenceValue != null && (
+            <ReferenceLine
+              y={referenceValue}
+              stroke="var(--color-muted-foreground)"
+              strokeDasharray="4 4"
+              strokeOpacity={0.6}
+              label={
+                referenceLabel
+                  ? {
+                      value: referenceLabel,
+                      position: 'insideTopRight',
+                      fontSize: 14,
+                      fill: 'var(--color-muted-foreground)',
+                    }
+                  : undefined
+              }
+            />
+          )}
 
-        {series.map((entry, index) => {
-          const color = entry.color ?? PALETTE[index % PALETTE.length]
-          const dash =
-            entry.variant === 'dashed'
-              ? '4 4'
-              : withDashes
-                ? DASH_PATTERNS[index % DASH_PATTERNS.length]
-                : ''
+          {showTooltip && (
+            <ChartTooltip
+              cursor={{ stroke: 'var(--color-border)', strokeWidth: 1 }}
+              content={<ChartTooltipContent formatter={(value) => formatValue(Number(value))} />}
+            />
+          )}
 
-          const common = {
-            dataKey: entry.id,
-            name: entry.label,
-            stroke: color,
-            strokeWidth: 2,
-            strokeDasharray: dash || undefined,
-            connectNulls,
-            dot: { r: 4, fill: color, stroke: 'var(--color-background)', strokeWidth: 2 },
-            activeDot: { r: 6, fill: color, stroke: 'var(--color-background)', strokeWidth: 2 },
-            isAnimationActive: false,
-          }
+          {withLegend && <ChartLegend content={<ChartLegendContent />} />}
 
-          return type === 'area' ? (
-            <Area key={entry.id} {...common} type="monotone" fill={color} fillOpacity={0.12} />
-          ) : (
-            <Line key={entry.id} {...common} type="monotone" />
-          )
-        })}
-      </ChartRoot>
-    </ChartContainer>
+          {series.map((entry, index) => {
+            const color = entry.color ?? PALETTE[index % PALETTE.length]
+            const dash =
+              entry.variant === 'dashed'
+                ? '4 4'
+                : withDashes
+                  ? DASH_PATTERNS[index % DASH_PATTERNS.length]
+                  : ''
+
+            const common = {
+              dataKey: entry.id,
+              name: entry.label,
+              stroke: color,
+              strokeWidth: 2,
+              strokeDasharray: dash || undefined,
+              connectNulls,
+              dot: { r: 4, fill: color, stroke: 'var(--color-background)', strokeWidth: 2 },
+              activeDot: { r: 6, fill: color, stroke: 'var(--color-background)', strokeWidth: 2 },
+              isAnimationActive: false,
+            }
+
+            return type === 'area' ? (
+              <Area key={entry.id} {...common} type="monotone" fill={color} fillOpacity={0.12} />
+            ) : (
+              <Line key={entry.id} {...common} type="monotone" />
+            )
+          })}
+        </ChartRoot>
+      </ChartContainer>
+    </div>
   )
 }
 
