@@ -28,6 +28,24 @@ describe('ScoreBadge', () => {
     expect(screen.getByText('Sin nota')).toBeInTheDocument()
   })
 
+  it('defaults to the small font size', () => {
+    render(<ScoreBadge value={2.8} />)
+
+    expect(screen.getByText('2.8')).toHaveClass('text-sm')
+  })
+
+  it('applies the requested font size to the score', () => {
+    render(<ScoreBadge value={2.8} size="lg" />)
+
+    expect(screen.getByText('2.8')).toHaveClass('text-lg')
+  })
+
+  it('applies the requested font size to the placeholder', () => {
+    render(<ScoreBadge value={null} size="xs" />)
+
+    expect(screen.getByText('—')).toHaveClass('text-xs')
+  })
+
   it('does not render a trend indicator without a previousValue', () => {
     const { container } = render(<ScoreBadge value={4} />)
 
