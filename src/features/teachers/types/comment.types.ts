@@ -33,6 +33,10 @@ export interface TeacherComment {
   pedagogical_category: CommentPedagogicalCategory
   /** Confidence/relevance of the assigned pedagogical category. */
   category_score: number
+  /** `true` once a director has overridden the AI-assigned risk level. */
+  risk_level_modified_by_director?: boolean
+  /** `true` once a director has overridden the AI-assigned pedagogical category. */
+  pedagogical_category_modified_by_director?: boolean
   created_at: string
   updated_at: string
 }

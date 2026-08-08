@@ -5,6 +5,8 @@ export type { CategoryTagProps, CategoryTagSize, CategoryTagVariant } from './Ca
 export { teacherColumns } from './columns'
 export { CommentCard } from './CommentCard'
 export type { CommentCardProps, CommentCardVariant } from './CommentCard'
+export { CommentClassificationEditor } from './CommentClassificationEditor'
+export type { CommentClassificationEditorProps } from './CommentClassificationEditor'
 export { CommentList } from './CommentList'
 export type { CommentListProps } from './CommentList'
 export { CommentsPanel } from './CommentsPanel'

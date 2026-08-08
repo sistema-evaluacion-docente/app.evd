@@ -2,9 +2,11 @@ import type { ReactNode } from 'react'
 
 import { PercentMeter } from '@/components/common/PercentMeter'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { useAuthStore } from '@/features/auth'
 import { cn } from '@/lib/utils'
 import type { TeacherComment } from '../types'
 import { CategoryTag } from './CategoryTag'
+import { CommentClassificationEditor } from './CommentClassificationEditor'
 
 /** Layout density of a `CommentCard`. */
 export type CommentCardVariant = 'default' | 'compact'
@@ -43,8 +45,11 @@ const CLAMP_CLASS: Record<number, string> = {
 /**
  * A single student comment set as an editorial entry: a gutter numeral and a
  * risk-colored rail on the left, the verbatim text as a pull quote, and a
- * hairline meta line with risk, category and date. Purely presentational — it
- * receives the comment through props and never fetches.
+ * hairline meta line with risk, category and date. Receives the comment
+ * through props and never fetches — except for the director-only
+ * classification editor, a popover that corrects the risk level and
+ * pedagogical category through `useUpdateComment` (`PATCH /comments/{id}`),
+ * shown only when the active role is `DIRECTOR DE DEPARTAMENTO`.
  *
  * @example
  * <CommentCard comment={comment} index={0} />
@@ -66,6 +71,7 @@ export function CommentCard({
   actions,
   className,
 }: CommentCardProps) {
+  const isDirector = useAuthStore((state) => state.selectedRole) === 'DIRECTOR DE DEPARTAMENTO'
   const isCompact = variant === 'compact'
   const accent = comment.risk_level?.color_hex
   const withGutter = showGutter ?? !isCompact
@@ -158,6 +164,10 @@ export function CommentCard({
                   showBar={!isCompact}
                 />
               )}
+
+              {comment.risk_level_modified_by_director && (
+                <ModifiedMark label="Nivel de riesgo editado por el director" />
+              )}
             </span>
           )}
 
@@ -171,10 +181,20 @@ export function CommentCard({
                 score={showScores ? comment.category_score : undefined}
                 showScoreBar={!isCompact}
               />
+
+              {comment.pedagogical_category_modified_by_director && (
+                <ModifiedMark label="Categoría editada por el director" />
+              )}
             </>
           )}
 
-          {actions && <div className="ml-auto flex items-center gap-1">{actions}</div>}
+          {(actions || isDirector) && (
+            <div className="ml-auto flex items-center gap-1">
+              {isDirector && <CommentClassificationEditor comment={comment} />}
+
+              {actions}
+            </div>
+          )}
         </div>
       </div>
     </article>
@@ -183,4 +203,14 @@ export function CommentCard({
 
 function Divider() {
   return <span aria-hidden="true" className="bg-border/80 h-3 w-px" />
+}
+
+function ModifiedMark({ label }: { label: string }) {
+  return (
+    <span
+      aria-hidden="true"
+      title={label}
+      className="size-1 shrink-0 rounded-full bg-current opacity-60"
+    />
+  )
 }
