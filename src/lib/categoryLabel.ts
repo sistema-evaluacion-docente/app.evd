@@ -1,5 +1,6 @@
 /** A pedagogical category as presented in the UI. */
 export interface CategoryMeta {
+  id: 1 | 2 | 3 | 4 | 5
   /** Raw code returned by the API (`LABEL_0`…`LABEL_4`). */
   code: string
   label: string
@@ -20,6 +21,7 @@ export interface CategoryMeta {
  */
 const CATEGORY_META: Record<string, CategoryMeta> = {
   LABEL_0: {
+    id: 1,
     code: 'LABEL_0',
     label: 'Desarrollo del conocimiento',
     short: 'Conocimiento',
@@ -28,6 +30,7 @@ const CATEGORY_META: Record<string, CategoryMeta> = {
     color: 'var(--color-chart-1)',
   },
   LABEL_1: {
+    id: 2,
     code: 'LABEL_1',
     label: 'Desempeño docente',
     short: 'Desempeño',
@@ -36,6 +39,7 @@ const CATEGORY_META: Record<string, CategoryMeta> = {
     color: 'var(--color-chart-2)',
   },
   LABEL_2: {
+    id: 3,
     code: 'LABEL_2',
     label: 'Procesos de evaluación',
     short: 'Evaluación',
@@ -44,6 +48,7 @@ const CATEGORY_META: Record<string, CategoryMeta> = {
     color: 'var(--color-chart-4)',
   },
   LABEL_3: {
+    id: 4,
     code: 'LABEL_3',
     label: 'Integración interpersonal',
     short: 'Relaciones',
@@ -52,6 +57,7 @@ const CATEGORY_META: Record<string, CategoryMeta> = {
     color: 'var(--color-chart-3)',
   },
   LABEL_4: {
+    id: 5,
     code: 'LABEL_4',
     label: 'Sin categoría',
     short: 'Sin categoría',
