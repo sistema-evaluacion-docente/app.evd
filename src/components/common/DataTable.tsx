@@ -18,7 +18,7 @@ import {
   TriangleAlert,
   X,
 } from 'lucide-react'
-import { useState, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -172,27 +172,32 @@ export function DataTable<TData>({
   const resolvedRowSelection = rowSelection ?? internalRowSelection
   const handleRowSelectionChange = onRowSelectionChange ?? setInternalRowSelection
 
-  const selectColumn: ColumnDef<TData, unknown> = {
-    id: 'select',
-    header: ({ table }) => (
-      <Checkbox
-        aria-label="Seleccionar todo"
-        checked={table.getIsAllPageRowsSelected()}
-        indeterminate={table.getIsSomePageRowsSelected() && !table.getIsAllPageRowsSelected()}
-        onCheckedChange={(checked) => table.toggleAllPageRowsSelected(checked)}
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        aria-label="Seleccionar fila"
-        checked={row.getIsSelected()}
-        disabled={!row.getCanSelect()}
-        onCheckedChange={(checked) => row.toggleSelected(checked)}
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  }
+  // Memoized so `header`/`cell` keep a stable function identity across renders — otherwise
+  // React would remount the checkboxes (losing focus) every time selection state changes.
+  const selectColumn = useMemo<ColumnDef<TData, unknown>>(
+    () => ({
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          aria-label="Seleccionar todo"
+          checked={table.getIsAllPageRowsSelected()}
+          indeterminate={table.getIsSomePageRowsSelected() && !table.getIsAllPageRowsSelected()}
+          onCheckedChange={(checked) => table.toggleAllPageRowsSelected(checked)}
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          aria-label="Seleccionar fila"
+          checked={row.getIsSelected()}
+          disabled={!row.getCanSelect()}
+          onCheckedChange={(checked) => row.toggleSelected(checked)}
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    }),
+    [],
+  )
 
   const tableColumns = enableRowSelection ? [selectColumn, ...columns] : columns
 
