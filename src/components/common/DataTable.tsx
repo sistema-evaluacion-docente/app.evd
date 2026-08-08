@@ -5,6 +5,7 @@ import {
   type ColumnDef,
   type OnChangeFn,
   type PaginationState,
+  type RowSelectionState,
   type SortingState,
 } from '@tanstack/react-table'
 import {
@@ -15,10 +16,12 @@ import {
   Inbox,
   Search,
   TriangleAlert,
+  X,
 } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,6 +49,17 @@ export interface DataTableAction<TData> {
   disabled?: (row: TData) => boolean
   visible?: (row: TData) => boolean
   icon?: ReactNode
+}
+
+export interface DataTableBulkAction<TData> {
+  label: string
+  onClick: (rows: TData[]) => void
+  variant?: 'default' | 'destructive' | 'outline'
+  className?: string
+  disabled?: (rows: TData[]) => boolean
+  icon?: ReactNode
+  /** Keep the current selection after this action runs. Default: `false` (selection is cleared). */
+  keepSelection?: boolean
 }
 
 interface DataTableProps<TData> {
@@ -78,6 +92,22 @@ interface DataTableProps<TData> {
   toolbarActions?: ReactNode
   pageSizeOptions?: number[]
   className?: string
+  /** Renders a checkbox column so one, many, or all rows on the page can be selected. */
+  enableRowSelection?: boolean
+  /** Stable id per row (e.g. `(row) => row.id`). Recommended with `enableRowSelection` so
+   *  selection survives sorting and refetches instead of falling back to row index. */
+  getRowId?: (row: TData, index: number) => string
+  /** Returns `false` to hide the checkbox for rows that shouldn't be selectable. */
+  isRowSelectable?: (row: TData) => boolean
+  /** Controlled selection state, keyed by `getRowId` (or row index). Omit to let the table
+   *  manage selection internally. */
+  rowSelection?: RowSelectionState
+  onRowSelectionChange?: OnChangeFn<RowSelectionState>
+  /** Actions available for the current selection, rendered in a bar above the table
+   *  (e.g. bulk delete/deactivate). Requires `enableRowSelection`. */
+  bulkActions?: DataTableBulkAction<TData>[]
+  /** Customizes the "N selected" label shown in the bulk actions bar. */
+  selectionCountLabel?: (count: number) => string
 }
 
 /**
@@ -130,13 +160,55 @@ export function DataTable<TData>({
   toolbarActions,
   pageSizeOptions = [5, 10, 20, 50],
   className,
+  enableRowSelection = false,
+  getRowId,
+  isRowSelectable,
+  rowSelection,
+  onRowSelectionChange,
+  bulkActions = [],
+  selectionCountLabel = (count) => `${count} seleccionado${count === 1 ? '' : 's'}`,
 }: DataTableProps<TData>) {
+  const [internalRowSelection, setInternalRowSelection] = useState<RowSelectionState>({})
+  const resolvedRowSelection = rowSelection ?? internalRowSelection
+  const handleRowSelectionChange = onRowSelectionChange ?? setInternalRowSelection
+
+  const selectColumn: ColumnDef<TData, unknown> = {
+    id: 'select',
+    header: ({ table }) => (
+      <Checkbox
+        aria-label="Seleccionar todo"
+        checked={table.getIsAllPageRowsSelected()}
+        indeterminate={table.getIsSomePageRowsSelected() && !table.getIsAllPageRowsSelected()}
+        onCheckedChange={(checked) => table.toggleAllPageRowsSelected(checked)}
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        aria-label="Seleccionar fila"
+        checked={row.getIsSelected()}
+        disabled={!row.getCanSelect()}
+        onCheckedChange={(checked) => row.toggleSelected(checked)}
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  }
+
+  const tableColumns = enableRowSelection ? [selectColumn, ...columns] : columns
+
   const table = useReactTable({
     data,
-    columns,
-    state: { sorting, pagination },
+    columns: tableColumns,
+    state: { sorting, pagination, rowSelection: resolvedRowSelection },
     onSortingChange,
     onPaginationChange,
+    onRowSelectionChange: handleRowSelectionChange,
+    getRowId,
+    enableRowSelection: enableRowSelection
+      ? isRowSelectable
+        ? (row) => isRowSelectable(row.original)
+        : true
+      : false,
     pageCount,
     manualPagination: true,
     manualSorting: true,
@@ -149,6 +221,8 @@ export function DataTable<TData>({
   const colSpan = visibleColumns + (hasRowActions ? 1 : 0)
   const showToolbar = enableSearch || Boolean(toolbar) || Boolean(toolbarActions)
   const showPagination = !isLoading && !error && data.length > 0
+  const selectedRows = table.getSelectedRowModel().rows.map((row) => row.original)
+  const showBulkActionsBar = enableRowSelection && bulkActions.length > 0 && selectedRows.length > 0
 
   return (
     <div className={cn('space-y-4', className)}>
@@ -183,6 +257,53 @@ export function DataTable<TData>({
         </div>
       ) : null}
 
+      {showBulkActionsBar ? (
+        <div className="bg-muted/40 border-border/70 animate-fade-in flex flex-wrap items-center gap-3 rounded-lg border px-4 py-2 text-sm">
+          <span className="text-foreground font-medium">
+            {selectionCountLabel(selectedRows.length)}
+          </span>
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground h-7 px-2"
+            onClick={() => table.resetRowSelection()}
+          >
+            <X aria-hidden="true" className="size-3.5" />
+            Limpiar selección
+          </Button>
+
+          <div className="ml-auto flex items-center gap-2">
+            {bulkActions.map((action) => (
+              <Button
+                key={action.label}
+                type="button"
+                variant={action.variant ?? 'outline'}
+                size="sm"
+                className={action.className}
+                disabled={action.disabled ? action.disabled(selectedRows) : false}
+                onClick={() => {
+                  action.onClick(selectedRows)
+
+                  if (!action.keepSelection) {
+                    table.resetRowSelection()
+                  }
+                }}
+              >
+                {action.icon ? (
+                  <span aria-hidden="true" className="shrink-0">
+                    {action.icon}
+                  </span>
+                ) : null}
+
+                {action.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       <div className="bg-background border-border/70 overflow-hidden rounded-lg border">
         <Table className="tabular-nums">
           <TableHeader>
@@ -194,7 +315,10 @@ export function DataTable<TData>({
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    className="text-muted-foreground h-10 px-4 text-xs font-medium tracking-wider uppercase"
+                    className={cn(
+                      'text-muted-foreground h-10 px-4 text-xs font-medium tracking-wider uppercase',
+                      header.column.id === 'select' && 'w-10',
+                    )}
                   >
                     {header.isPlaceholder
                       ? null
@@ -215,9 +339,13 @@ export function DataTable<TData>({
             {isLoading ? (
               Array.from({ length: 5 }, (_, index) => (
                 <TableRow key={index} className="border-border/60">
-                  {Array.from({ length: visibleColumns }, (__, columnIndex) => (
-                    <TableCell key={columnIndex} className="px-4 py-3.5">
-                      <Skeleton className="h-4 w-full" />
+                  {table.getVisibleFlatColumns().map((column) => (
+                    <TableCell key={column.id} className="px-4 py-3.5">
+                      {column.id === 'select' ? (
+                        <Skeleton className="size-4 rounded-sm" />
+                      ) : (
+                        <Skeleton className="h-4 w-full" />
+                      )}
                     </TableCell>
                   ))}
 
@@ -255,6 +383,7 @@ export function DataTable<TData>({
                 return (
                   <TableRow
                     key={row.id}
+                    data-state={row.getIsSelected() ? 'selected' : undefined}
                     className={cn(
                       'animate-fade-in border-border/60 transition-colors duration-150',
                       rowDisabled
@@ -267,7 +396,13 @@ export function DataTable<TData>({
                     }
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className="px-4 py-3.5 align-middle">
+                      <TableCell
+                        key={cell.id}
+                        className="px-4 py-3.5 align-middle"
+                        onClick={
+                          cell.column.id === 'select' ? (e) => e.stopPropagation() : undefined
+                        }
+                      >
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </TableCell>
                     ))}
