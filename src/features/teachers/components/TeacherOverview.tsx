@@ -1,5 +1,6 @@
 import { CalendarRange } from 'lucide-react'
 
+import { ScoreBadge } from '@/components/common/ScoreBadge'
 import { ScoreProgress } from '@/components/common/ScoreProgress'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -76,11 +77,15 @@ export function TeacherOverview({ teacher }: TeacherOverviewProps) {
             Promedio general del periodo
           </p>
 
-          <p
-            className={`text-5xl leading-none font-bold tabular-nums ${getScoreToneClass(teacher.overall_average)}`}
-          >
-            {teacher.overall_average.toFixed(2)}
-          </p>
+          <ScoreBadge
+            value={teacher.overall_average}
+            previousValue={teacher.previous_period?.overall_average}
+            previousLabel="periodo anterior"
+            tone="auto"
+            size="5xl"
+            decimals={2}
+            className="leading-none"
+          />
         </div>
       </div>
 
