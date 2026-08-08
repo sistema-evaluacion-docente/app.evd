@@ -3,7 +3,13 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import type { ResponseAPI } from '@/@types/Response'
 import api from '@/config/axios'
 import { useAuthStore } from '@/features/auth'
-import type { TeacherCommentsData, TeacherDetail, TeacherRecord, TeacherUploadData } from '../types'
+import type {
+  TeacherComment,
+  TeacherCommentsData,
+  TeacherDetail,
+  TeacherRecord,
+  TeacherUploadData,
+} from '../types'
 
 interface TeacherListParams {
   page: number
@@ -94,6 +100,18 @@ async function updateTeacher(
   payload: UpdateTeacherPayload,
 ): Promise<ResponseAPI<TeacherRecord>> {
   return api.put(`/teachers/${teacherId}`, payload)
+}
+
+interface UpdateCommentPayload {
+  risk_level: number
+  pedagogical_category_id: number
+}
+
+async function updateComment(
+  commentId: number,
+  payload: UpdateCommentPayload,
+): Promise<ResponseAPI<TeacherComment>> {
+  return api.patch(`/comments/${commentId}`, payload)
 }
 
 /** Query-key factory so list invalidations stay consistent. */
@@ -272,6 +290,29 @@ export function useUpdateTeacher() {
       updateTeacher(teacherId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: teachersKeys.lists() })
+    },
+  })
+}
+
+/**
+ * Overrides the risk level and/or pedagogical category the AI assigned to a
+ * comment (`PATCH /comments/{comment_id}`) — a director's manual correction.
+ * Invalidates the comments list the updated comment belongs to.
+ *
+ * @example
+ * const { mutate: updateComment, isPending } = useUpdateComment();
+ * updateComment({ commentId: comment.id, payload: { risk_level: 2, pedagogical_category_id: 1 } });
+ */
+export function useUpdateComment() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ commentId, payload }: { commentId: number; payload: UpdateCommentPayload }) =>
+      updateComment(commentId, payload),
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({
+        queryKey: teachersKeys.comments(response.data.evaluation_id, response.data.teacher_id),
+      })
     },
   })
 }
