@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 
 import { DimensionComparisonChart } from '@/components/common/DimensionComparisonChart'
 import { PeriodAverageTrend } from '@/features/periods'
-import { dimensionColor, shortenDimensionLabel } from '@/lib/dimensionLabel'
+import { dimensionColor } from '@/lib/dimensionLabel'
 import { cn } from '@/lib/utils'
 import type { TeacherDetail } from '../types'
 import { TeacherComments } from './TeacherComments'
@@ -62,7 +62,6 @@ export function TeacherEvaluationDetail({
               key: dimension.dimension,
               color: dimensionColor(dimension.dimension),
             }))}
-            labelFormatter={shortenDimensionLabel}
             referenceValue={teacher.overall_average}
             referenceLabel="Promedio general"
           />
