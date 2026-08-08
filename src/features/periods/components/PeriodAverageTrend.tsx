@@ -11,6 +11,10 @@ export interface PeriodAverageTrendProps {
   title?: string | null
   /** Institutional target drawn as a dashed reference line. */
   target?: number
+  /** Y axis lower bound. Overrides `autoMin` when given. */
+  min?: number
+  /** When true, the Y axis lower bound is computed from the data instead of using the default 0. */
+  autoMin?: boolean
   chartClassName?: string
   className?: string
 }
@@ -29,12 +33,20 @@ export interface PeriodAverageTrendProps {
  *
  * @example
  * <PeriodAverageTrend teacherId={teacher.teacher_id} title="Evolución del promedio" />
+ *
+ * @example
+ * <PeriodAverageTrend teacherId={teacher.teacher_id} autoMin={true} />
+ *
+ * @example
+ * <PeriodAverageTrend teacherId={teacher.teacher_id} min={2} />
  */
 export function PeriodAverageTrend({
   teacherId,
   limit = 12,
   title = 'Evolución de mi promedio',
   target,
+  min,
+  autoMin = false,
   chartClassName,
   className,
 }: PeriodAverageTrendProps) {
@@ -61,6 +73,12 @@ export function PeriodAverageTrend({
     },
   ]
 
+  /** Falls back to the chart's own fixed default (0) when there's nothing to measure. */
+  const values = history
+    .map((entry) => entry.overall_average)
+    .filter((value): value is number => value != null)
+  const effectiveMin = min ?? (autoMin && values.length > 0 ? Math.min(...values) - 0.5 : undefined)
+
   if (!effectiveTeacherId) return null
 
   return (
@@ -73,6 +91,7 @@ export function PeriodAverageTrend({
 
       <AverageTrendChart
         series={series}
+        min={effectiveMin}
         isLoading={isPending}
         error={error ? error.message : null}
         referenceValue={target}
