@@ -4,6 +4,7 @@ import { getScoreTone } from '@/lib/scoreTone'
 import { cn } from '@/lib/utils'
 
 type ScoreBadgeTone = 'auto' | 'success' | 'warning' | 'danger' | 'neutral'
+type ScoreBadgeSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl'
 type ScoreTrendDirection = 'up' | 'down' | 'flat'
 
 export interface ScoreBadgeProps {
@@ -18,6 +19,11 @@ export interface ScoreBadgeProps {
    * options force a fixed tone. Defaults to `auto`.
    */
   tone?: ScoreBadgeTone
+  /**
+   * Font size of the score text, from the Tailwind text-size scale. Defaults
+   * to `sm`; the larger sizes suit a hero figure (e.g. an overall average).
+   */
+  size?: ScoreBadgeSize
   /** Above this value the `auto` tone turns success. Defaults to 3.6. */
   successMin?: number
   /** Below this value the `auto` tone turns danger. Defaults to 3. */
@@ -47,6 +53,18 @@ const TONE_CLASS: Record<Exclude<ScoreBadgeTone, 'auto'>, string> = {
   warning: 'text-amber-500',
   danger: 'text-red-500',
   neutral: 'text-foreground',
+}
+
+const SIZE_CLASS: Record<ScoreBadgeSize, string> = {
+  xs: 'text-xs',
+  sm: 'text-sm',
+  md: 'text-base',
+  lg: 'text-lg',
+  xl: 'text-xl',
+  '2xl': 'text-2xl',
+  '3xl': 'text-3xl',
+  '4xl': 'text-4xl',
+  '5xl': 'text-5xl',
 }
 
 const TREND_ICON: Record<ScoreTrendDirection, typeof TrendingUp> = {
@@ -83,14 +101,24 @@ const TREND_WORD: Record<ScoreTrendDirection, string> = {
  * <ScoreBadge value={3.4} tone="warning" />
  * <ScoreBadge value={92.5} max={100} decimals={1} tone="success" />
  * <ScoreBadge value={null} placeholder="Sin nota" />
+ * <ScoreBadge value={4.2} size="lg" />
  *
  * @example
  * <ScoreBadge value={4.2} previousValue={3.9} previousLabel="semestre anterior" />
+ *
+ * @example
+ * <ScoreBadge
+ *   value={teacher.overall_average}
+ *   previousValue={teacher.previous_period?.overall_average}
+ *   size="5xl"
+ *   tone="auto"
+ * />
  */
 export function ScoreBadge({
   value,
   decimals = 1,
   tone = 'auto',
+  size = 'sm',
   successMin = 3.6,
   dangerMax = 3,
   placeholder = '—',
@@ -100,7 +128,11 @@ export function ScoreBadge({
   showTrend = true,
 }: ScoreBadgeProps) {
   if (value == null) {
-    return <span className={cn('text-muted-foreground text-sm', className)}>{placeholder}</span>
+    return (
+      <span className={cn('text-muted-foreground', SIZE_CLASS[size], className)}>
+        {placeholder}
+      </span>
+    )
   }
 
   const toneClass =
@@ -116,7 +148,12 @@ export function ScoreBadge({
 
   const score = (
     <span
-      className={cn('text-sm font-semibold tabular-nums', toneClass, !showTrendBadge && className)}
+      className={cn(
+        'font-semibold tabular-nums',
+        SIZE_CLASS[size],
+        toneClass,
+        !showTrendBadge && className,
+      )}
     >
       {value.toFixed(decimals)}
     </span>
