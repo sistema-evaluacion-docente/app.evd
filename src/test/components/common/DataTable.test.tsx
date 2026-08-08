@@ -1,9 +1,13 @@
+import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-table'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-table'
 import { describe, expect, it, vi } from 'vitest'
 
-import { DataTable, type DataTableAction } from '@/components/common/DataTable'
+import {
+  DataTable,
+  type DataTableAction,
+  type DataTableBulkAction,
+} from '@/components/common/DataTable'
 
 interface Person {
   id: number
@@ -198,5 +202,177 @@ describe('DataTable', () => {
     await user.click(await screen.findByRole('menuitem', { name: '20' }))
 
     expect(onPaginationChange).toHaveBeenCalledWith({ pageIndex: 0, pageSize: 20 })
+  })
+
+  describe('row selection', () => {
+    it('does not render checkboxes by default', () => {
+      renderTable()
+
+      expect(screen.queryByRole('checkbox')).not.toBeInTheDocument()
+    })
+
+    it('renders a checkbox per row plus a select-all checkbox', () => {
+      renderTable({ enableRowSelection: true })
+
+      expect(screen.getByRole('checkbox', { name: 'Seleccionar todo' })).toBeInTheDocument()
+      expect(screen.getAllByRole('checkbox', { name: 'Seleccionar fila' })).toHaveLength(2)
+    })
+
+    it('selects a single row and marks select-all as indeterminate', async () => {
+      const user = userEvent.setup()
+
+      renderTable({ enableRowSelection: true })
+
+      const rowCheckboxes = screen.getAllByRole('checkbox', { name: 'Seleccionar fila' })
+      await user.click(rowCheckboxes[0])
+
+      expect(rowCheckboxes[0]).toBeChecked()
+      expect(screen.getByRole('checkbox', { name: 'Seleccionar todo' })).toHaveAttribute(
+        'aria-checked',
+        'mixed',
+      )
+    })
+
+    it('selects and clears all rows through the select-all checkbox', async () => {
+      const user = userEvent.setup()
+
+      renderTable({ enableRowSelection: true })
+
+      const selectAll = screen.getByRole('checkbox', { name: 'Seleccionar todo' })
+      await user.click(selectAll)
+
+      const rowCheckboxes = screen.getAllByRole('checkbox', { name: 'Seleccionar fila' })
+      expect(rowCheckboxes[0]).toBeChecked()
+      expect(rowCheckboxes[1]).toBeChecked()
+      expect(selectAll).toBeChecked()
+
+      await user.click(selectAll)
+
+      expect(rowCheckboxes[0]).not.toBeChecked()
+      expect(rowCheckboxes[1]).not.toBeChecked()
+    })
+
+    it('does not trigger onRowClick when toggling a row checkbox', async () => {
+      const user = userEvent.setup()
+      const onRowClick = vi.fn()
+
+      renderTable({ enableRowSelection: true, onRowClick })
+
+      const rowCheckboxes = screen.getAllByRole('checkbox', { name: 'Seleccionar fila' })
+      await user.click(rowCheckboxes[0])
+
+      expect(onRowClick).not.toHaveBeenCalled()
+    })
+
+    it('disables the checkbox for rows excluded by isRowSelectable', () => {
+      renderTable({ enableRowSelection: true, isRowSelectable: (row) => row.id !== 1 })
+
+      const rowCheckboxes = screen.getAllByRole('checkbox', { name: 'Seleccionar fila' })
+      expect(rowCheckboxes[0]).toHaveAttribute('aria-disabled', 'true')
+      expect(rowCheckboxes[1]).not.toHaveAttribute('aria-disabled')
+    })
+
+    it('hides the bulk actions bar when nothing is selected', () => {
+      const bulkActions: DataTableBulkAction<Person>[] = [{ label: 'Eliminar', onClick: vi.fn() }]
+
+      renderTable({ enableRowSelection: true, bulkActions })
+
+      expect(screen.queryByText(/seleccionad/)).not.toBeInTheDocument()
+    })
+
+    it('shows the bulk actions bar with the selection count once rows are selected', async () => {
+      const user = userEvent.setup()
+      const bulkActions: DataTableBulkAction<Person>[] = [{ label: 'Eliminar', onClick: vi.fn() }]
+
+      renderTable({ enableRowSelection: true, bulkActions })
+
+      const rowCheckboxes = screen.getAllByRole('checkbox', { name: 'Seleccionar fila' })
+      await user.click(rowCheckboxes[0])
+      await user.click(rowCheckboxes[1])
+
+      expect(screen.getByText('2 seleccionados')).toBeInTheDocument()
+    })
+
+    it('runs the clicked bulk action with the selected rows and clears the selection', async () => {
+      const user = userEvent.setup()
+      const onDeleteMany = vi.fn()
+      const bulkActions: DataTableBulkAction<Person>[] = [
+        { label: 'Eliminar', onClick: onDeleteMany },
+      ]
+
+      renderTable({ enableRowSelection: true, bulkActions })
+
+      const rowCheckboxes = screen.getAllByRole('checkbox', { name: 'Seleccionar fila' })
+      await user.click(rowCheckboxes[0])
+      await user.click(screen.getByRole('button', { name: 'Eliminar' }))
+
+      expect(onDeleteMany).toHaveBeenCalledWith([PEOPLE[0]])
+      expect(screen.queryByText(/seleccionad/)).not.toBeInTheDocument()
+      expect(rowCheckboxes[0]).not.toBeChecked()
+    })
+
+    it('keeps the selection after a bulk action when keepSelection is set', async () => {
+      const user = userEvent.setup()
+      const bulkActions: DataTableBulkAction<Person>[] = [
+        { label: 'Exportar', onClick: vi.fn(), keepSelection: true },
+      ]
+
+      renderTable({ enableRowSelection: true, bulkActions })
+
+      const rowCheckboxes = screen.getAllByRole('checkbox', { name: 'Seleccionar fila' })
+      await user.click(rowCheckboxes[0])
+      await user.click(screen.getByRole('button', { name: 'Exportar' }))
+
+      expect(rowCheckboxes[0]).toBeChecked()
+      expect(screen.getByText('1 seleccionado')).toBeInTheDocument()
+    })
+
+    it('clears the selection through the "Limpiar selección" button', async () => {
+      const user = userEvent.setup()
+      const bulkActions: DataTableBulkAction<Person>[] = [{ label: 'Eliminar', onClick: vi.fn() }]
+
+      renderTable({ enableRowSelection: true, bulkActions })
+
+      const rowCheckboxes = screen.getAllByRole('checkbox', { name: 'Seleccionar fila' })
+      await user.click(rowCheckboxes[0])
+      await user.click(screen.getByRole('button', { name: /Limpiar selección/ }))
+
+      expect(rowCheckboxes[0]).not.toBeChecked()
+      expect(screen.queryByText(/seleccionad/)).not.toBeInTheDocument()
+    })
+
+    it('reports selection changes through a controlled rowSelection prop', async () => {
+      const user = userEvent.setup()
+      const onRowSelectionChange = vi.fn()
+
+      renderTable({
+        enableRowSelection: true,
+        rowSelection: {},
+        onRowSelectionChange,
+      })
+
+      const rowCheckboxes = screen.getAllByRole('checkbox', { name: 'Seleccionar fila' })
+      await user.click(rowCheckboxes[0])
+
+      expect(onRowSelectionChange).toHaveBeenCalled()
+      // Controlled state does not change on its own until the caller updates it.
+      expect(rowCheckboxes[0]).not.toBeChecked()
+    })
+
+    it('uses a custom selection count label', async () => {
+      const user = userEvent.setup()
+      const bulkActions: DataTableBulkAction<Person>[] = [{ label: 'Eliminar', onClick: vi.fn() }]
+
+      renderTable({
+        enableRowSelection: true,
+        bulkActions,
+        selectionCountLabel: (count) => `${count} docente(s) elegido(s)`,
+      })
+
+      const rowCheckboxes = screen.getAllByRole('checkbox', { name: 'Seleccionar fila' })
+      await user.click(rowCheckboxes[0])
+
+      expect(screen.getByText('1 docente(s) elegido(s)')).toBeInTheDocument()
+    })
   })
 })
