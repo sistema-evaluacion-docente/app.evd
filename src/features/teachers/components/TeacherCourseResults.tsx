@@ -70,7 +70,7 @@ function CourseRow({
 
         <div className="flex shrink-0 items-center gap-6">
           <ScoreBadge
-            className="text-lg!"
+            size="lg"
             value={course.overall_average}
             previousValue={previousCourse?.overall_average}
             previousLabel="periodo anterior"
@@ -127,7 +127,7 @@ function DimensionRow({
         </span>
 
         <ScoreBadge
-          className="text-lg!"
+          size="lg"
           value={dimension.average}
           previousValue={previousDimension?.average}
           previousLabel="periodo anterior"
