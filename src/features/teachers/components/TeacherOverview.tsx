@@ -5,7 +5,7 @@ import { ScoreProgress } from '@/components/common/ScoreProgress'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { dimensionColor, shortenDimensionLabel } from '@/lib/dimensionLabel'
+import { dimensionColor } from '@/lib/dimensionLabel'
 import { getScoreToneClass } from '@/lib/scoreTone'
 import type { TeacherDetail } from '../types'
 
@@ -103,7 +103,7 @@ export function TeacherOverview({ teacher }: TeacherOverviewProps) {
                   className="size-1.5 shrink-0 rounded-full"
                   style={{ backgroundColor: dimensionColor(dimension.dimension) }}
                 />
-                {shortenDimensionLabel(dimension.dimension)}
+                {dimension.dimension}
               </p>
 
               <p
