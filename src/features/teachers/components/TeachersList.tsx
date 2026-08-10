@@ -15,21 +15,9 @@ import { useAcademicPeriodsStore } from '@/features/periods'
 import { useNavigate } from '@/hooks/useNavigate'
 import { useTableFilters } from '@/hooks/useTableFilters'
 import { useGetTeachers, useUpdateTeacher } from '../api'
+import { CONTRACT_TYPES, TEACHER_SORT_FIELDS } from '../config'
 import type { TeacherRecord } from '../types'
 import { teacherColumns } from './columns'
-
-const CONTRACT_TYPES = [
-  { label: 'Tiempo completo', value: 'Tiempo completo' },
-  { label: 'Medio tiempo', value: 'Medio tiempo' },
-  { label: 'Hora cátedra', value: 'Hora cátedra' },
-  { label: 'Planta', value: 'Planta' },
-]
-
-const SORT_FIELDS = [
-  { value: 'name', label: 'Nombre' },
-  { value: 'overall_average', label: 'Promedio' },
-  { value: 'created_at', label: 'Fecha de creación' },
-]
 
 const filterConfig: FilterConfig[] = [
   {
@@ -57,7 +45,7 @@ const filterConfig: FilterConfig[] = [
   {
     type: 'sort',
     name: 'sortBy',
-    fields: SORT_FIELDS,
+    fields: TEACHER_SORT_FIELDS,
   },
 ]
 
