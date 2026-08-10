@@ -125,18 +125,25 @@ export const teachersKeys = {
 }
 
 /**
- * Fetches the paginated list of teachers with their averages of the
- * authenticated director's department for an academic period
- * (`GET /teachers/with-averages`). The department id is read from the auth
- * store and always sent so results stay scoped to the current user.
+ * Fetches the paginated list of teachers with their averages for an academic
+ * period (`GET /teachers/with-averages`). By default the department id is
+ * read from the authenticated director's store so results stay scoped to
+ * their own department; pass `departmentId` explicitly to override that
+ * (e.g. an admin browsing a chosen department) or `departmentId: null` to
+ * span every department the caller is allowed to see.
  *
  * @example
  * const { data, isPending } = useGetTeachers({ page, limit, academicPeriodId: 1, search });
+ *
+ * @example
+ * // Admin widget: no department scoping, caller picks the department instead.
+ * const { data } = useGetTeachers({ academicPeriodId, departmentId: selectedDepartmentId });
  */
 export function useGetTeachers({
   page = 1,
   limit = 10,
   academicPeriodId,
+  departmentId,
   search = '',
   active,
   contractType,
@@ -146,22 +153,27 @@ export function useGetTeachers({
   page?: number
   limit?: number
   academicPeriodId?: number
+  /** Overrides the department read from the auth store. Pass `null` to omit the filter entirely. */
+  departmentId?: number | null
   search?: string
   active?: boolean
   contractType?: string
   sortBy?: string
   hasAverage?: boolean
 }) {
-  const departmentId = useAuthStore((state) => state.user?.department_id) ?? undefined
+  const authDepartmentId = useAuthStore((state) => state.user?.department_id) ?? undefined
+  const resolvedDepartmentId =
+    (departmentId === undefined ? authDepartmentId : departmentId) ?? undefined
+  const departmentResolved = departmentId !== undefined || authDepartmentId != null
 
   const params: TeacherListParams | null =
-    departmentId != null && academicPeriodId != null
+    academicPeriodId != null && departmentResolved
       ? {
           page,
           limit,
           academic_period_id: academicPeriodId,
           search,
-          department_id: departmentId,
+          department_id: resolvedDepartmentId,
           active,
           contract_type: contractType,
           sort_by: sortBy,
@@ -177,7 +189,7 @@ export function useGetTeachers({
         limit,
         academicPeriodId,
         search,
-        department_id: departmentId,
+        department_id: resolvedDepartmentId,
         active,
         contractType,
         sortBy,
