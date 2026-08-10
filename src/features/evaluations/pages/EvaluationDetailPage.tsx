@@ -3,6 +3,9 @@ import { useRoute } from 'wouter'
 import { BackButton } from '@/components/common/BackButton'
 import { PageTitle } from '@/components/common/PageTitle'
 import EvaluationDetailSkeleton from '@/components/skeletons/EvaluationDetailSkeleton'
+import { useAcademicPeriodsStore } from '@/features/periods'
+import { TeacherAveragesTable } from '@/features/teachers'
+import { useNavigate } from '@/hooks/useNavigate'
 import { useGetEvaluation } from '../api'
 import { EvaluationDimensionsChart, EvaluationOverview } from '../components'
 
@@ -13,6 +16,8 @@ import { EvaluationDimensionsChart, EvaluationOverview } from '../components'
 export default function EvaluationDetailPage() {
   const [, params] = useRoute('/evaluaciones/:id')
   const evaluationId = params?.id ? Number(params.id) : undefined
+  const navigate = useNavigate()
+  const periods = useAcademicPeriodsStore((state) => state.periods)
 
   const { data, isLoading } = useGetEvaluation(evaluationId)
   const evaluation = data?.data
@@ -52,6 +57,15 @@ export default function EvaluationDetailPage() {
           />
         </div>
       </section>
+
+      <TeacherAveragesTable
+        departmentId={evaluation.department_id}
+        defaultPeriodId={evaluation.academic_period_id}
+        onTeacherClick={(teacher, periodId) => {
+          const period = periods.find((p) => p.id === periodId)
+          navigate(`/docentes/${teacher.id}?period=${period?.name}`)
+        }}
+      />
     </div>
   )
 }
