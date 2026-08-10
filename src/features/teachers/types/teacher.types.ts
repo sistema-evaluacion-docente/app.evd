@@ -4,6 +4,7 @@ export interface TeacherUser {
   uid: string
   email: string
   department_id: number
+  department_name?: string
   name: string
   active: boolean
   avatar_url: string
