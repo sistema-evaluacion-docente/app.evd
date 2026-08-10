@@ -6,13 +6,7 @@ import { CloudUpload, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCreateTeacherWithUser } from '../api'
 import { TeachersList } from '../components'
-
-const CONTRACT_TYPES = [
-  { label: 'Tiempo completo', value: 'Tiempo completo' },
-  { label: 'Medio tiempo', value: 'Medio tiempo' },
-  { label: 'Hora cátedra', value: 'Hora cátedra' },
-  { label: 'Planta', value: 'Planta' },
-]
+import { CONTRACT_TYPES } from '../config'
 
 const teacherFields: FieldConfig[] = [
   { name: 'name', label: 'Nombre completo', required: true, placeholder: 'Ej: Juan Pérez García' },
