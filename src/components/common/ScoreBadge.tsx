@@ -9,7 +9,7 @@ type ScoreTrendDirection = 'up' | 'down' | 'flat'
 
 export interface ScoreBadgeProps {
   /** Score to display, or null to render the placeholder. */
-  value: number | null
+  value?: number
   /** Maximum possible score, shown after the slash. Defaults to 5. */
   max?: number
   /** Number of decimals for both the value and the max. Defaults to 1. */
@@ -116,7 +116,7 @@ const TREND_WORD: Record<ScoreTrendDirection, string> = {
  */
 export function ScoreBadge({
   value,
-  decimals = 1,
+  decimals = 2,
   tone = 'auto',
   size = 'sm',
   successMin = 3.6,
