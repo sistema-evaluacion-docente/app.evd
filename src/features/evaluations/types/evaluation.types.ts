@@ -6,13 +6,14 @@ export interface EvaluationQuestionScore {
   id?: number | null
   code: string
   text: string
-  average: number | null
+  average?: number
+  score?: number
 }
 
 /** Average of one pedagogical dimension across the whole evaluation. */
 export interface DimensionAverageItem {
   dimension: string
-  average: number | null
+  average?: number
   question_count: number
   questions: EvaluationQuestionScore[]
 }
@@ -88,7 +89,7 @@ export interface DimensionTeacherScore {
 /** Full breakdown of one pedagogical dimension for an evaluation, as returned by `GET /evaluations/{id}/dimensions/detail`. */
 export interface EvaluationDimensionDetail {
   dimension: string
-  average: number
+  average?: number
   question_count: number
   questions: EvaluationQuestionScore[]
   best_teacher: DimensionTeacherScore | null

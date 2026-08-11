@@ -9,11 +9,13 @@ import type { EvaluationDimensionDetail } from '../types'
 export interface EvaluationDimensionDetailCardProps {
   dimension: EvaluationDimensionDetail
   /**
-   * Same dimension computed at department level, for comparison. Passed only
-   * when the page is filtered by teacher and/or course — shows a trend badge
-   * next to the dimension and question averages.
+   * Same dimension computed at a different scope (department, previous
+   * period…), for comparison — shows a trend badge next to the dimension
+   * and question averages.
    */
   overallDimension?: EvaluationDimensionDetail
+  /** Label naming what `overallDimension` represents. Defaults to `'promedio del departamento'`. */
+  previousLabel?: string
 }
 
 /**
@@ -34,6 +36,7 @@ export interface EvaluationDimensionDetailCardProps {
 export function EvaluationDimensionDetailCard({
   dimension,
   overallDimension,
+  previousLabel = 'promedio del departamento',
 }: EvaluationDimensionDetailCardProps) {
   return (
     <Collapsible className="group/row">
@@ -60,7 +63,7 @@ export function EvaluationDimensionDetailCard({
           size="lg"
           value={dimension.average}
           previousValue={overallDimension?.average}
-          previousLabel="promedio del departamento"
+          previousLabel={previousLabel}
         />
       </CollapsibleTrigger>
 
@@ -85,16 +88,15 @@ export function EvaluationDimensionDetailCard({
                     {question.code}. {question.text}
                   </span>
 
-                  <div className="flex shrink-0 items-center gap-4">
+                  <div className="flex w-auto shrink-0 items-center gap-4">
                     <ScoreProgress
                       value={question.average ?? 0}
                       previousValue={overallQuestion?.average ?? undefined}
-                      previousLabel="promedio del departamento"
+                      previousLabel={previousLabel}
                       label={question.text}
-                      className="min-w-20"
                     />
 
-                    <ScoreBadge value={question.average} />
+                    <ScoreBadge value={question.average} size="lg" />
                   </div>
                 </div>
               )

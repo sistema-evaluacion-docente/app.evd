@@ -2,13 +2,19 @@ import { Link, useRoute } from 'wouter'
 
 import { BackButton } from '@/components/common/BackButton'
 import { PageTitle } from '@/components/common/PageTitle'
+import { ScoreBadge } from '@/components/common/ScoreBadge'
 import EvaluationDetailSkeleton from '@/components/skeletons/EvaluationDetailSkeleton'
 import { Button } from '@/components/ui/button'
 import { useAcademicPeriodsStore } from '@/features/periods'
 import { TeacherAveragesTable } from '@/features/teachers'
 import { useNavigate } from '@/hooks/useNavigate'
 import { useGetEvaluation } from '../api'
-import { EvaluationDimensionsChart, EvaluationOverview } from '../components'
+import {
+  EvaluationDimensionDetailCard,
+  EvaluationDimensionsChart,
+  EvaluationOverview,
+} from '../components'
+import type { EvaluationDimensionDetail } from '../types'
 
 /**
  * Full page displaying the summary of a single evaluation.
@@ -39,6 +45,33 @@ export default function EvaluationDetailPage() {
     )
   }
 
+  const comparison = evaluation.comparison
+
+  const previousDimensions: EvaluationDimensionDetail[] | undefined = comparison?.dimensions.map(
+    (dim) => ({
+      dimension: dim.dimension,
+      average: dim.old_average,
+      question_count: dim.questions.length,
+      questions: dim.questions.map((q) => ({ code: q.code, text: q.text, average: q.old_average })),
+      best_teacher: null,
+      worst_teacher: null,
+    }),
+  )
+
+  const currentDimensions: EvaluationDimensionDetail[] | undefined =
+    evaluation?.dimension_averages?.map((dim) => ({
+      dimension: dim.dimension,
+      average: dim.average,
+      question_count: dim.questions.length,
+      questions: dim.questions.map((q) => ({
+        code: q.code,
+        text: q.text,
+        average: q.score,
+      })),
+      best_teacher: null,
+      worst_teacher: null,
+    }))
+
   return (
     <div className="space-y-6">
       <BackButton href="/evaluaciones" label="Volver a evaluaciones" className="mb-4" />
@@ -63,11 +96,46 @@ export default function EvaluationDetailPage() {
         <div className="px-6 py-4">
           <EvaluationDimensionsChart
             dimensionAverages={evaluation.dimension_averages}
+            compareAverages={previousDimensions}
+            compareLabel={comparison?.previous_period_name}
             referenceValue={evaluation.overall_average}
             referenceLabel="Promedio general"
           />
         </div>
       </section>
+
+      {currentDimensions && (
+        <section className="border-border bg-background rounded-md border">
+          <div className="border-border flex flex-wrap items-center justify-between gap-2 border-b px-6 py-4">
+            <h2 className="text-muted-foreground text-sm font-medium">
+              Dimensiones pedagógicas{' '}
+              {comparison && `comparadas con ${comparison?.previous_period_name}`}
+            </h2>
+
+            {comparison && (
+              <ScoreBadge
+                value={comparison.current_average}
+                previousValue={comparison.old_average}
+                previousLabel={comparison.previous_period_name}
+                tone="auto"
+              />
+            )}
+          </div>
+
+          <div className="divide-border divide-y">
+            {currentDimensions.map((dimension) => (
+              <EvaluationDimensionDetailCard
+                key={dimension.dimension}
+                dimension={dimension}
+                overallDimension={previousDimensions?.find(
+                  (item) => item.dimension === dimension.dimension,
+                )}
+                previousLabel={comparison?.previous_period_name}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       <TeacherAveragesTable
         departmentId={evaluation.department_id}
