@@ -6,14 +6,12 @@ export interface EvaluationQuestionScore {
   id?: number | null
   code: string
   text: string
-  /** `null` when the question got no answers. */
-  score: number | null
+  average: number | null
 }
 
 /** Average of one pedagogical dimension across the whole evaluation. */
 export interface DimensionAverageItem {
   dimension: string
-  /** `null` when the dimension has no scored questions. */
   average: number | null
   question_count: number
   questions: EvaluationQuestionScore[]
@@ -44,6 +42,41 @@ export interface EvaluationRecord {
 /** Payload accepted by `PATCH /evaluations/{id}/status`. */
 export interface EvaluationStatusUpdate {
   active: boolean
+}
+
+/** A teacher's average score within one dimension — used for the ranking list and the best/worst highlight. */
+export interface DimensionTeacherScore {
+  teacher_id: number
+  institutional_code: string
+  name: string
+  average: number
+}
+
+/** Full breakdown of one pedagogical dimension for an evaluation, as returned by `GET /evaluations/{id}/dimensions/detail`. */
+export interface EvaluationDimensionDetail {
+  dimension: string
+  average: number
+  question_count: number
+  questions: EvaluationQuestionScore[]
+  best_teacher: DimensionTeacherScore | null
+  worst_teacher: DimensionTeacherScore | null
+}
+
+/** Department-wide equivalent of a teacher/course-scoped detail — same shape, used to compare the scoped figures against the department. */
+export interface EvaluationDimensionsOverall {
+  department_average: number
+  dimensions: EvaluationDimensionDetail[]
+}
+
+/** Per-dimension breakdown of an evaluation (`GET /evaluations/{evaluation_id}/dimensions/detail`). */
+export interface EvaluationDimensionsDetail {
+  evaluation_id: number
+  period_code: string
+  period_name: string
+  department_average: number
+  dimensions: EvaluationDimensionDetail[]
+  /** Department-level comparison data, only returned when scoped by `teacher_id` and/or `course_id`. */
+  overall?: EvaluationDimensionsOverall | null
 }
 
 /** Connection status of the evaluation progress WebSocket channel. */
