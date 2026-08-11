@@ -1,6 +1,10 @@
 export type {
   AiStatus,
   DimensionAverageItem,
+  DimensionTeacherScore,
+  EvaluationDimensionDetail,
+  EvaluationDimensionsDetail,
+  EvaluationDimensionsOverall,
   EvaluationLogEvent,
   EvaluationProgressEvent,
   EvaluationQuestionScore,
