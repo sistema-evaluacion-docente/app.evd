@@ -33,9 +33,7 @@ describe('DimensionComparisonChart', () => {
   it('shows the empty message when every score is null', () => {
     render(
       <DimensionComparisonChart
-        series={[
-          { id: 'teacher', label: 'Docente', scores: [{ dimension: 'Metodología', value: null }] },
-        ]}
+        series={[{ id: 'teacher', label: 'Docente', scores: [{ dimension: 'Metodología' }] }]}
       />,
     )
 

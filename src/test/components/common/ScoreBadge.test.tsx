@@ -16,14 +16,14 @@ describe('ScoreBadge', () => {
     expect(screen.getByText('92.50')).toBeInTheDocument()
   })
 
-  it('renders the placeholder when value is null', () => {
-    render(<ScoreBadge value={null} />)
+  it('renders the placeholder when value is undefined', () => {
+    render(<ScoreBadge value={undefined} />)
 
     expect(screen.getByText('—')).toBeInTheDocument()
   })
 
-  it('renders a custom placeholder when value is null', () => {
-    render(<ScoreBadge value={null} placeholder="Sin nota" />)
+  it('renders a custom placeholder when value is undefined', () => {
+    render(<ScoreBadge value={undefined} placeholder="Sin nota" />)
 
     expect(screen.getByText('Sin nota')).toBeInTheDocument()
   })
@@ -41,7 +41,7 @@ describe('ScoreBadge', () => {
   })
 
   it('applies the requested font size to the placeholder', () => {
-    render(<ScoreBadge value={null} size="xs" />)
+    render(<ScoreBadge value={undefined} size="xs" />)
 
     expect(screen.getByText('—')).toHaveClass('text-xs')
   })

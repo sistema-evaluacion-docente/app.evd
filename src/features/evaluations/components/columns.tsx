@@ -45,7 +45,7 @@ export const evaluationColumns: ColumnDef<EvaluationRecord>[] = [
     accessorKey: 'overall_average',
     header: 'Promedio',
     cell: ({ getValue }) => {
-      const average = getValue<number | null>()
+      const average = getValue<number | undefined>()
 
       return <ScoreBadge value={average} decimals={2} />
     },

@@ -40,7 +40,7 @@ export interface DimensionAxis {
 export interface DimensionScore {
   /** Must match a `DimensionAxis.key`. */
   dimension: string
-  value: number | null
+  value?: number
 }
 
 /** One entity being compared: a teacher, a department, a period, a target… */
