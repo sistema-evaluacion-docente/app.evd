@@ -17,6 +17,34 @@ export interface DimensionAverageItem {
   questions: EvaluationQuestionScore[]
 }
 
+/** One question's average in the current evaluation vs. the previous period. */
+export interface EvaluationComparisonQuestion {
+  code: string
+  text: string
+  current_average: number
+  old_average: number
+  difference: number
+}
+
+/** One dimension's average in the current evaluation vs. the previous period. */
+export interface EvaluationComparisonDimension {
+  dimension: string
+  current_average: number
+  old_average: number
+  difference: number
+  questions: EvaluationComparisonQuestion[]
+}
+
+/** Overall + per-dimension comparison against the immediately previous academic period. */
+export interface EvaluationComparison {
+  previous_period_code: string
+  previous_period_name: string
+  current_average: number
+  old_average: number
+  average_difference: number
+  dimensions: EvaluationComparisonDimension[]
+}
+
 /** A single evaluation record as returned by `GET /evaluations`. */
 export interface EvaluationRecord {
   id: number
@@ -35,6 +63,11 @@ export interface EvaluationRecord {
   overall_average: number
   /** Per-dimension averages; only returned by `GET /evaluations/{id}`. */
   dimension_averages?: DimensionAverageItem[]
+  /**
+   * Comparison against the immediately previous academic period, only
+   * returned by `GET /evaluations/{id}` when such a period exists.
+   */
+  comparison?: EvaluationComparison | null
   created_at: string
   updated_at: string
 }
