@@ -19,7 +19,6 @@ import type { DepartmentSubjectAverage, DepartmentSubjectGroup } from '../types'
 const SORT_FIELDS: SortField[] = [
   { value: 'course_name', label: 'Nombre' },
   { value: 'overall_average', label: 'Promedio' },
-  { value: 'total_respondents', label: 'Encuestados' },
 ]
 
 export interface DepartmentSubjectsTableProps {
