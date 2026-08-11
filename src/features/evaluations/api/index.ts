@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 import type { ResponseAPI } from '@/@types/Response'
 import api from '@/config/axios'
 import { useAuthStore } from '@/features/auth'
-import type { EvaluationRecord, EvaluationStatusUpdate } from '../types'
+import type { EvaluationDimensionsDetail, EvaluationRecord, EvaluationStatusUpdate } from '../types'
 
 interface EvaluationListParams {
   page: number
@@ -72,6 +72,23 @@ async function getEvaluationPdf(evaluationId: number): Promise<Blob> {
   return api.get(`/evaluations/${evaluationId}/pdf`, { responseType: 'blob' })
 }
 
+interface EvaluationDimensionsDetailParams {
+  teacherId?: number
+  courseId?: number
+}
+
+async function getEvaluationDimensionsDetail(
+  evaluationId: number,
+  { teacherId, courseId }: EvaluationDimensionsDetailParams = {},
+): Promise<ResponseAPI<EvaluationDimensionsDetail>> {
+  const query: Record<string, unknown> = {}
+
+  if (teacherId) query['teacher_id'] = teacherId
+  if (courseId) query['course_id'] = courseId
+
+  return api.get(`/evaluations/${evaluationId}/dimensions/detail`, { params: query })
+}
+
 /** Query-key factory so list invalidations stay consistent. */
 export const evaluationsKeys = {
   all: ['evaluations'] as const,
@@ -79,6 +96,8 @@ export const evaluationsKeys = {
   detail: (periodId: number) => [...evaluationsKeys.all, 'detail', periodId] as const,
   byId: (evaluationId: number) => [...evaluationsKeys.all, 'byId', evaluationId] as const,
   pdf: (evaluationId: number) => [...evaluationsKeys.all, 'pdf', evaluationId] as const,
+  dimensionsDetail: (evaluationId: number, filters: EvaluationDimensionsDetailParams = {}) =>
+    [...evaluationsKeys.all, 'dimensionsDetail', evaluationId, filters] as const,
 }
 
 /**
@@ -184,6 +203,31 @@ export function useGetEvaluations({
         department_id: departmentId,
       }),
     enabled: departmentId != null,
+    staleTime: 60_000,
+    placeholderData: keepPreviousData,
+  })
+}
+
+/**
+ * Fetches the per-dimension breakdown of an evaluation — each dimension's
+ * questions, every teacher's average, and the best/worst performer
+ * (`GET /evaluations/{evaluation_id}/dimensions/detail`). Optionally scoped
+ * to one teacher and/or one course.
+ *
+ * @example
+ * const { data, isLoading } = useGetEvaluationDimensionsDetail(evaluationId);
+ *
+ * @example
+ * const { data } = useGetEvaluationDimensionsDetail(evaluationId, { teacherId, courseId });
+ */
+export function useGetEvaluationDimensionsDetail(
+  evaluationId?: number,
+  { teacherId, courseId }: EvaluationDimensionsDetailParams = {},
+) {
+  return useQuery({
+    queryKey: evaluationsKeys.dimensionsDetail(evaluationId ?? 0, { teacherId, courseId }),
+    queryFn: () => getEvaluationDimensionsDetail(evaluationId!, { teacherId, courseId }),
+    enabled: evaluationId != null,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
   })
