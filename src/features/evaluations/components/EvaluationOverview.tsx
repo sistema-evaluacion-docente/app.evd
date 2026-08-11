@@ -2,10 +2,10 @@ import { CalendarRange, FileText } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link } from 'wouter'
 
+import { ScoreBadge } from '@/components/common/ScoreBadge'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import formatDate from '@/lib/formatDate'
-import { getScoreToneClass } from '@/lib/scoreTone'
 import { AI_STATUS_DISPLAY, EVALUATION_STATUS_DISPLAY } from '../config'
 import type { EvaluationRecord } from '../types'
 
@@ -23,6 +23,8 @@ export interface EvaluationOverviewProps {
  * academic period, the overall average as the single large figure, and the
  * processing/AI/state facts as hairline-separated columns — same visual
  * language as `TeacherOverview`, so both detail pages read as one system.
+ * When `evaluation.comparison` is present, the average shows a trend badge
+ * against the previous academic period.
  *
  * @example
  * <EvaluationOverview evaluation={evaluation} pdfHref={`/evaluaciones/${evaluation.id}/pdf`} />
@@ -94,11 +96,15 @@ export function EvaluationOverview({
             Promedio general
           </p>
 
-          <p
-            className={`text-5xl leading-none font-bold tabular-nums ${getScoreToneClass(evaluation.overall_average)}`}
-          >
-            {evaluation.overall_average?.toFixed(2)}
-          </p>
+          <ScoreBadge
+            value={evaluation.overall_average}
+            previousValue={evaluation.comparison?.old_average}
+            previousLabel={evaluation.comparison?.previous_period_name}
+            tone="auto"
+            size="5xl"
+            decimals={2}
+            className="leading-none"
+          />
         </div>
       </div>
 
