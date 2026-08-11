@@ -4,6 +4,7 @@ import { AverageTrendChart } from '@/components/common/AverageTrendChart'
 import { InlineError } from '@/components/common/InlineError'
 import { PeriodSelect } from '@/components/common/PeriodSelect'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Spinner } from '@/components/ui/spinner'
 import { useGetAcademicPeriods } from '@/features/periods'
 import { cn } from '@/lib/utils'
 import { useGetDepartmentPeriodRangeStats } from '../api'
@@ -67,7 +68,7 @@ export function DepartmentPeriodRangeSummary({
     if (period && startPeriod && period.code < startPeriod.code) setStartPeriodId(id)
   }
 
-  const { data, isPending, error } = useGetDepartmentPeriodRangeStats({
+  const { data, isPending, isFetching, error } = useGetDepartmentPeriodRangeStats({
     startPeriod: startPeriod?.code,
     endPeriod: endPeriod?.code,
   })
@@ -92,6 +93,8 @@ export function DepartmentPeriodRangeSummary({
           placeholder="Periodo final"
           ariaLabel="Periodo final"
         />
+
+        {isFetching && <Spinner className="text-muted-foreground size-4" />}
       </div>
 
       {error && <InlineError message={error.message} />}
@@ -104,7 +107,12 @@ export function DepartmentPeriodRangeSummary({
       )}
 
       {!isPending && stats && (
-        <>
+        <div
+          className={cn(
+            'space-y-6 transition-opacity',
+            isFetching && 'pointer-events-none opacity-60',
+          )}
+        >
           <DepartmentStatsHero stats={stats} />
 
           <section className="border-border bg-background rounded-md border">
@@ -149,7 +157,7 @@ export function DepartmentPeriodRangeSummary({
             endPeriod={endPeriod?.code}
             title="Promedios por asignatura"
           />
-        </>
+        </div>
       )}
 
       {!isPending && !stats && !error && (
