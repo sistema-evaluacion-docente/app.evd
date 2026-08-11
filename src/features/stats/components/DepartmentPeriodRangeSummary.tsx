@@ -129,28 +129,30 @@ export function DepartmentPeriodRangeSummary({
             </div>
           </section>
 
-          <section className="border-border bg-background rounded-md border">
-            <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
-              Evolución del promedio por periodo
-            </h2>
+          {startPeriod !== endPeriod && (
+            <section className="border-border bg-background rounded-md border">
+              <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
+                Evolución del promedio por periodo
+              </h2>
 
-            <div className="px-6 py-4">
-              <AverageTrendChart
-                series={[
-                  {
-                    id: 'department',
-                    label: 'Promedio del departamento',
-                    data: stats.period_averages.map((period) => ({
-                      x: period.academic_period_name || period.academic_period_code,
-                      value: period.overall_average,
-                    })),
-                  },
-                ]}
-                referenceValue={stats.overall_average}
-                referenceLabel="Promedio del rango"
-              />
-            </div>
-          </section>
+              <div className="px-6 py-4">
+                <AverageTrendChart
+                  series={[
+                    {
+                      id: 'department',
+                      label: 'Promedio del departamento',
+                      data: stats.period_averages.map((period) => ({
+                        x: period.academic_period_name || period.academic_period_code,
+                        value: period.overall_average,
+                      })),
+                    },
+                  ]}
+                  referenceValue={stats.overall_average}
+                  referenceLabel="Promedio del rango"
+                />
+              </div>
+            </section>
+          )}
 
           <DepartmentSubjectsTable
             startPeriod={startPeriod?.code}
