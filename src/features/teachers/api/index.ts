@@ -44,6 +44,14 @@ async function getTeachersWithAverages(
   return api.get('/teachers/with-averages', { params: query })
 }
 
+async function getTeachers(params: {
+  page: number
+  limit: number
+  department_id?: number | null
+}): Promise<ResponseAPI<TeacherRecord[]>> {
+  return api.get('/teachers/', { params })
+}
+
 async function getTeacherDetail(
   teacherId: number,
   periodName: string,
@@ -198,6 +206,41 @@ export function useGetTeachers({
     ],
     queryFn: () => getTeachersWithAverages(params!),
     enabled: params !== null,
+    staleTime: 60_000,
+    placeholderData: keepPreviousData,
+  })
+}
+
+/**
+ * Fetches the plain paginated list of teachers, with no period/average
+ * attached (`GET /teachers/`) — e.g. to populate a teacher picker. By
+ * default the department id is read from the authenticated director's
+ * store; pass `departmentId` explicitly to override it, or `null` to span
+ * every department.
+ *
+ * @example
+ * const { data, isPending } = useListTeachers({ page: 1, limit: 50 });
+ */
+export function useListTeachers({
+  page = 1,
+  limit = 10,
+  departmentId,
+}: {
+  page?: number
+  limit?: number
+  /** Overrides the department read from the auth store. Pass `null` to omit the filter entirely. */
+  departmentId?: number | null
+} = {}) {
+  const authDepartmentId = useAuthStore((state) => state.user?.department_id) ?? undefined
+  const resolvedDepartmentId = departmentId === undefined ? authDepartmentId : departmentId
+
+  return useQuery({
+    queryKey: [
+      ...teachersKeys.lists(),
+      'plain',
+      { page, limit, department_id: resolvedDepartmentId },
+    ],
+    queryFn: () => getTeachers({ page, limit, department_id: resolvedDepartmentId }),
     staleTime: 60_000,
     placeholderData: keepPreviousData,
   })
