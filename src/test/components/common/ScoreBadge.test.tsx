@@ -4,10 +4,10 @@ import { describe, expect, it } from 'vitest'
 import { ScoreBadge } from '@/components/common/ScoreBadge'
 
 describe('ScoreBadge', () => {
-  it('renders the score with one decimal by default', () => {
-    render(<ScoreBadge value={2.8} />)
+  it('renders the score with two decimal by default', () => {
+    render(<ScoreBadge value={2.80} />)
 
-    expect(screen.getByText('2.8')).toBeInTheDocument()
+    expect(screen.getByText('2.80')).toBeInTheDocument()
   })
 
   it('renders the requested number of decimals', () => {
@@ -29,15 +29,15 @@ describe('ScoreBadge', () => {
   })
 
   it('defaults to the small font size', () => {
-    render(<ScoreBadge value={2.8} />)
+    render(<ScoreBadge value={2.80} />)
 
-    expect(screen.getByText('2.8')).toHaveClass('text-sm')
+    expect(screen.getByText('2.80')).toHaveClass('text-sm')
   })
 
   it('applies the requested font size to the score', () => {
-    render(<ScoreBadge value={2.8} size="lg" />)
+    render(<ScoreBadge value={2.80} size="lg" />)
 
-    expect(screen.getByText('2.8')).toHaveClass('text-lg')
+    expect(screen.getByText('2.80')).toHaveClass('text-lg')
   })
 
   it('applies the requested font size to the placeholder', () => {
