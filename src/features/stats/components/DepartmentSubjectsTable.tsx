@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { TeacherSelect } from '@/features/teachers'
 import { cn } from '@/lib/utils'
+import { Link } from 'wouter'
 import { useGetDepartmentPeriodRangeSubjects } from '../api'
 import type { DepartmentSubjectAverage, DepartmentSubjectGroup } from '../types'
 
@@ -223,21 +224,26 @@ function SubjectRow({ subject }: { subject: DepartmentSubjectAverage }) {
 function GroupRow({ group }: { group: DepartmentSubjectGroup }) {
   return (
     <div className="flex items-center justify-between gap-4 py-3">
-      <div className="flex min-w-0 items-start gap-2">
-        <Avatar size="lg">
-          <AvatarFallback className="uppercase">{group.teacher_name.at(0) ?? '?'}</AvatarFallback>
-          <AvatarImage src={group.teacher_avatar_url} alt={group.teacher_name} />
-        </Avatar>
+      <Link
+        href={`/docentes/${group.teacher_id}?period=${group.academic_period_code}`}
+        className="flex min-w-0 items-start gap-2"
+      >
+        <div className="flex min-w-0 items-start gap-2">
+          <Avatar size="lg">
+            <AvatarFallback className="uppercase">{group.teacher_name.at(0) ?? '?'}</AvatarFallback>
+            <AvatarImage src={group.teacher_avatar_url} alt={group.teacher_name} />
+          </Avatar>
 
-        <div>
-          <p className="truncate text-xs">{group.teacher_name}</p>
+          <div>
+            <p className="truncate text-xs">{group.teacher_name}</p>
 
-          <p className="text-muted-foreground truncate text-sm">
-            {group.course_code} - {group.group_name}{' '}
-            <Badge variant="outline">{group.academic_period_code}</Badge>
-          </p>
+            <p className="text-muted-foreground truncate text-sm">
+              {group.course_code} - {group.group_name}{' '}
+              <Badge variant="outline">{group.academic_period_code}</Badge>
+            </p>
+          </div>
         </div>
-      </div>
+      </Link>
 
       <div className="shrink-0 text-right">
         <ScoreBadge value={group.overall_average} />
