@@ -10,7 +10,9 @@ import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Spinner } from '@/components/ui/spinner'
 import { TeacherSelect } from '@/features/teachers'
+import { cn } from '@/lib/utils'
 import { useGetDepartmentPeriodRangeSubjects } from '../api'
 import type { DepartmentSubjectAverage, DepartmentSubjectGroup } from '../types'
 
@@ -120,6 +122,8 @@ export function DepartmentSubjectsTable({
             resetPage()
           }}
         />
+
+        {isFetching && <Spinner className="text-muted-foreground size-4" />}
       </div>
 
       <div className="border-border bg-background rounded-md border">
@@ -132,7 +136,12 @@ export function DepartmentSubjectsTable({
         ) : subjects.length === 0 ? (
           <p className="text-muted-foreground px-6 py-10 text-center text-sm">{emptyMessage}</p>
         ) : (
-          <div className="divide-border divide-y">
+          <div
+            className={cn(
+              'divide-border divide-y transition-opacity',
+              isFetching && 'pointer-events-none opacity-60',
+            )}
+          >
             {subjects.map((subject) => (
               <SubjectRow key={subject.course_name} subject={subject} />
             ))}
