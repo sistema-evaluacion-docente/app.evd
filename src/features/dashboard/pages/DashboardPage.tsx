@@ -1,6 +1,7 @@
 import { PageTitle } from '@/components/common/PageTitle'
 import { UserNotAuth } from '@/features/auth'
 import { PeriodAverageTrend } from '@/features/periods'
+import { DepartmentPeriodRangeSummary } from '@/features/stats'
 import useAuth from '@/hooks/useAuth'
 
 export default function DashboardPage() {
@@ -11,7 +12,7 @@ export default function DashboardPage() {
       <>
         <PageTitle>Mi resumen</PageTitle>
 
-        <div className="space-y-8 bg-background p-4 rounded">
+        <div className="bg-background space-y-8 rounded p-4">
           <PeriodAverageTrend />
         </div>
       </>
@@ -19,7 +20,13 @@ export default function DashboardPage() {
   }
 
   if (selectedRole === 'DIRECTOR DE DEPARTAMENTO') {
-    return <p>Resumen del departamento</p>
+    return (
+      <section className="mb-20">
+        <PageTitle>Resumen del departamento</PageTitle>
+
+        <DepartmentPeriodRangeSummary />
+      </section>
+    )
   }
 
   if (selectedRole === 'ADMIN') {
