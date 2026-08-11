@@ -1,0 +1,8 @@
+export { DepartmentDimensionsChart } from './DepartmentDimensionsChart'
+export type { DepartmentDimensionsChartProps } from './DepartmentDimensionsChart'
+export { DepartmentPeriodRangeSummary } from './DepartmentPeriodRangeSummary'
+export type { DepartmentPeriodRangeSummaryProps } from './DepartmentPeriodRangeSummary'
+export { DepartmentStatsHero } from './DepartmentStatsHero'
+export type { DepartmentStatsHeroProps } from './DepartmentStatsHero'
+export { DepartmentSubjectsTable } from './DepartmentSubjectsTable'
+export type { DepartmentSubjectsTableProps } from './DepartmentSubjectsTable'
