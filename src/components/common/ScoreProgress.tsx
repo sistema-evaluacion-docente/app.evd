@@ -81,8 +81,8 @@ const TREND_ICON: Record<ScoreTrendDirection, typeof TrendingUp> = {
 }
 
 const TREND_TEXT_CLASS: Record<ScoreTrendDirection, string> = {
-  up: 'text-green-600 dark:text-green-400',
-  down: 'text-red-600 dark:text-red-400',
+  up: 'text-green-600 dark:text-green-400 opacity-70',
+  down: 'text-red-600 dark:text-red-400 opacity-70',
   flat: 'text-muted-foreground',
 }
 
@@ -191,7 +191,7 @@ export function ScoreProgress({
       aria-label={label}
       aria-valuetext={`${scoreLabel} (${percentLabel})`}
       className={cn(
-        '**:data-[slot=progress-track]:bg-[#aaa]',
+        '**:data-[slot=progress-track]:bg-[#aaa] min-w-15',
         SIZE_CLASS[size],
         indicatorClass,
         !showTrendBadge && className,
