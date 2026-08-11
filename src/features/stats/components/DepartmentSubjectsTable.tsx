@@ -186,7 +186,7 @@ function SubjectRow({ subject }: { subject: DepartmentSubjectAverage }) {
 
   return (
     <Collapsible className="group/row">
-      <CollapsibleTrigger className="hover:bg-muted/40 group flex w-full items-center justify-between gap-4 px-6 py-4 text-left transition-colors">
+      <CollapsibleTrigger className="hover:bg-muted/40 group flex w-full cursor-pointer items-center justify-between gap-4 px-6 py-4 text-left transition-colors">
         <div className="flex min-w-0 items-center gap-3">
           <ChevronRight
             aria-hidden="true"
