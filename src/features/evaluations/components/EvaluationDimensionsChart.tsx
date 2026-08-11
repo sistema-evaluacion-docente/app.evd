@@ -1,6 +1,7 @@
 import {
   DimensionComparisonChart,
   type DimensionComparisonChartProps,
+  type DimensionSeries,
 } from '@/components/common/DimensionComparisonChart'
 import { dimensionColor, shortenDimensionLabel } from '@/lib/dimensionLabel'
 import type { DimensionAverageItem } from '../types'
@@ -12,6 +13,13 @@ export interface EvaluationDimensionsChartProps extends Omit<
   dimensionAverages: DimensionAverageItem[] | undefined
   /** Series label shown in tooltips. Defaults to "Promedio de la evaluación". */
   label?: string
+  /**
+   * A second series to draw alongside, e.g. the department-wide averages
+   * when `dimensionAverages` is scoped to a teacher/course.
+   */
+  compareAverages?: DimensionAverageItem[]
+  /** Label for `compareAverages`. Defaults to "Promedio del departamento". */
+  compareLabel?: string
 }
 
 /**
@@ -33,20 +41,32 @@ export interface EvaluationDimensionsChartProps extends Omit<
 export function EvaluationDimensionsChart({
   dimensionAverages,
   label = 'Promedio de la evaluación',
+  compareAverages,
+  compareLabel = 'Promedio del departamento',
   emptyMessage = 'Esta evaluación todavía no tiene promedios por dimensión.',
   ...chartProps
 }: EvaluationDimensionsChartProps) {
   const items = dimensionAverages ?? []
 
+  const series: DimensionSeries[] = [
+    {
+      id: 'evaluation',
+      label,
+      scores: items.map((item) => ({ dimension: item.dimension, value: item.average })),
+    },
+  ]
+
+  if (compareAverages) {
+    series.push({
+      id: 'overall',
+      label: compareLabel,
+      scores: compareAverages.map((item) => ({ dimension: item.dimension, value: item.average })),
+    })
+  }
+
   return (
     <DimensionComparisonChart
-      series={[
-        {
-          id: 'evaluation',
-          label,
-          scores: items.map((item) => ({ dimension: item.dimension, value: item.average })),
-        },
-      ]}
+      series={series}
       dimensions={items.map((item) => ({
         key: item.dimension,
         color: dimensionColor(item.dimension),

@@ -1,8 +1,9 @@
-import { useRoute } from 'wouter'
+import { Link, useRoute } from 'wouter'
 
 import { BackButton } from '@/components/common/BackButton'
 import { PageTitle } from '@/components/common/PageTitle'
 import EvaluationDetailSkeleton from '@/components/skeletons/EvaluationDetailSkeleton'
+import { Button } from '@/components/ui/button'
 import { useAcademicPeriodsStore } from '@/features/periods'
 import { TeacherAveragesTable } from '@/features/teachers'
 import { useNavigate } from '@/hooks/useNavigate'
@@ -45,9 +46,19 @@ export default function EvaluationDetailPage() {
       <EvaluationOverview evaluation={evaluation} pdfHref={`/evaluaciones/${evaluation.id}/pdf`} />
 
       <section className="border-border bg-background rounded-md border">
-        <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
-          Promedios por dimensión pedagógica
-        </h2>
+        <div className="border-border flex items-center justify-between gap-4 border-b px-6 py-4">
+          <h2 className="text-muted-foreground text-sm font-medium">
+            Promedios por dimensión pedagógica
+          </h2>
+
+          <Button
+            variant="outline"
+            size="sm"
+            render={<Link href={`/evaluaciones/${evaluation.id}/dimensiones`} />}
+          >
+            Ver detalle
+          </Button>
+        </div>
 
         <div className="px-6 py-4">
           <EvaluationDimensionsChart
