@@ -3,13 +3,7 @@ import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select'
 import { Spinner } from '@/components/ui/spinner'
 import { cn } from '@/lib/utils'
 import { useListTeachers } from '../api'
@@ -73,7 +67,7 @@ export function TeacherSelect({
         disabled={disabled}
       >
         <SelectTrigger aria-label={ariaLabel} size={size} className={cn('w-fit', className)}>
-          <SelectValue placeholder={placeholder}>{value}</SelectValue>
+          <span>{value || placeholder}</span>
         </SelectTrigger>
 
         <SelectContent className="w-72">
