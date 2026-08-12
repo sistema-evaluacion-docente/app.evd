@@ -16,17 +16,10 @@ import { useAuthStore } from '@/features/auth'
 import { useGetTeacherDetail } from '@/features/teachers'
 import { useNavigate } from '@/hooks/useNavigate'
 import { useGetTeacherHistory } from '../api'
+import { courseHref } from '../config'
 import type { TeacherPeriodHistory } from '../types'
 
 const PERIOD_ROUTE = /^\/periodos\/([^/]+)/
-
-function courseHref(period: string, courseCode: string, groupName: string) {
-  const encodedPeriod = encodeURIComponent(period)
-  const encodedCourse = encodeURIComponent(courseCode)
-  const encodedGroup = encodeURIComponent(groupName)
-
-  return `/periodos/${encodedPeriod}/materias/${encodedCourse}/${encodedGroup}`
-}
 
 /**
  * "Materias" disclosure rendered under "Mis periodos" for role DOCENTE: a

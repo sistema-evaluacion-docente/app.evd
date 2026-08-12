@@ -5,6 +5,7 @@ import { PageTitle } from '@/components/common/PageTitle'
 import TeacherDetailSkeleton from '@/components/skeletons/TeacherDetailSkeleton'
 import { useAuthStore } from '@/features/auth'
 import { TeacherEvaluationDetail, useGetTeacherDetail } from '@/features/teachers'
+import { courseHref } from '../config'
 
 /**
  * Full page with the authenticated teacher's own results for one academic
@@ -55,7 +56,13 @@ export default function PeriodDetailPage() {
     <div className="space-y-6">
       <BackButton href="/periodos" label="Volver a mis periodos" className="mb-4" />
 
-      <TeacherEvaluationDetail teacher={teacher} commentsTitle="Comentarios de sus estudiantes" />
+      <TeacherEvaluationDetail
+        teacher={teacher}
+        commentsTitle="Comentarios de sus estudiantes"
+        getCourseHref={(course) =>
+          courseHref(teacher.period_code, course.course_code, course.group_name)
+        }
+      />
     </div>
   )
 }

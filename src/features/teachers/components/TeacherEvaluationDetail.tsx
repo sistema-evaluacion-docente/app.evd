@@ -4,7 +4,7 @@ import { DimensionComparisonChart } from '@/components/common/DimensionCompariso
 import { PeriodAverageTrend } from '@/features/periods'
 import { dimensionColor } from '@/lib/dimensionLabel'
 import { cn } from '@/lib/utils'
-import type { TeacherDetail } from '../types'
+import type { CourseDetail, TeacherDetail } from '../types'
 import { TeacherComments } from './TeacherComments'
 import { TeacherCourseResults } from './TeacherCourseResults'
 import { TeacherOverview } from './TeacherOverview'
@@ -15,6 +15,8 @@ export interface TeacherEvaluationDetailProps {
   commentsTitle?: ReactNode
   /** Hide the comments panel — e.g. on a read-only summary. Defaults to `false`. */
   hideComments?: boolean
+  /** Forwarded to `TeacherCourseResults` — see its own docs. */
+  getCourseHref?: (course: CourseDetail) => string
   className?: string
 }
 
@@ -35,6 +37,7 @@ export function TeacherEvaluationDetail({
   teacher,
   commentsTitle = 'Comentarios de los estudiantes',
   hideComments = false,
+  getCourseHref,
   className,
 }: TeacherEvaluationDetailProps) {
   return (
@@ -68,7 +71,7 @@ export function TeacherEvaluationDetail({
         </div>
       </section>
 
-      <TeacherCourseResults teacher={teacher} />
+      <TeacherCourseResults teacher={teacher} getCourseHref={getCourseHref} />
 
       {!hideComments && (
         <TeacherComments
