@@ -113,6 +113,12 @@ export function EvaluationOverview({
           <span className="num text-2xl font-semibold tabular-nums">{evaluation.count}</span>
         </Fact>
 
+        <Fact label="Comentarios de alto riesgo">
+          <span className="num text-2xl font-semibold text-primary tabular-nums">
+            {evaluation.comments_risk_counts?.ALTO ?? '—'}
+          </span>
+        </Fact>
+
         <Fact label="Procesamiento">
           <Badge className={statusConfig.className}>{statusConfig.label}</Badge>
         </Fact>
@@ -123,12 +129,6 @@ export function EvaluationOverview({
           ) : (
             <span className="text-muted-foreground text-sm">No disponible</span>
           )}
-        </Fact>
-
-        <Fact label="Comentarios de alto riesgo">
-          <span className="num text-2xl font-semibold text-red-600 tabular-nums dark:text-red-400">
-            {evaluation.comments_risk_counts?.ALTO ?? '—'}
-          </span>
         </Fact>
       </div>
     </section>
