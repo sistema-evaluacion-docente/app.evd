@@ -364,9 +364,12 @@ export function useUpdateComment() {
   return useMutation({
     mutationFn: ({ commentId, payload }: { commentId: number; payload: UpdateCommentPayload }) =>
       updateComment(commentId, payload),
-    onSuccess: (response) => {
+    onSuccess: () => {
+      // Also matches the flat `/comments/` list (features/comments) — both key
+      // families include 'comments', so one predicate invalidates each cache
+      // this edit could be visible in without a cross-feature import.
       queryClient.invalidateQueries({
-        queryKey: teachersKeys.comments(response.data.evaluation_id, response.data.teacher_id),
+        predicate: (query) => query.queryKey.includes('comments'),
       })
     },
   })
