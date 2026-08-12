@@ -96,7 +96,7 @@ export default function EvaluationDetailPage() {
         <div className="px-6 py-4">
           <EvaluationDimensionsChart
             dimensionAverages={evaluation.dimension_averages}
-            compareAverages={previousDimensions}
+            // compareAverages={previousDimensions}
             compareLabel={comparison?.previous_period_name}
             referenceValue={evaluation.overall_average}
             referenceLabel="Promedio general"
