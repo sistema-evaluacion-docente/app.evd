@@ -127,20 +127,6 @@ export function DepartmentPeriodRangeSummary({
             }
           />
 
-          <section className="border-border bg-background rounded-md border">
-            <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
-              Promedios por dimensión pedagógica
-            </h2>
-
-            <div className="px-6 py-4">
-              <DepartmentDimensionsChart
-                dimensions={stats.dimensions}
-                referenceValue={stats.overall_average}
-                referenceLabel="Promedio general"
-              />
-            </div>
-          </section>
-
           {startPeriod !== endPeriod && (
             <section className="border-border bg-background rounded-md border">
               <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
@@ -165,6 +151,20 @@ export function DepartmentPeriodRangeSummary({
               </div>
             </section>
           )}
+
+          <section className="border-border bg-background rounded-md border">
+            <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
+              Promedios por dimensión pedagógica
+            </h2>
+
+            <div className="px-6 py-4">
+              <DepartmentDimensionsChart
+                dimensions={stats.dimensions}
+                referenceValue={stats.overall_average}
+                referenceLabel="Promedio general"
+              />
+            </div>
+          </section>
 
           {/* <DepartmentSubjectsTable
             startPeriod={startPeriod?.code}
