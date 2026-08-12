@@ -1,12 +1,24 @@
-import { CalendarRange } from 'lucide-react'
+import { CalendarRange, MessageSquareText } from 'lucide-react'
+import type { ReactNode } from 'react'
 
 import { ScoreBadge } from '@/components/common/ScoreBadge'
+import { TransitionLink } from '@/components/common/TransitionLink'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { DepartmentPeriodRangeStats } from '../types'
 
+/** Ordered risk levels shown in the comments breakdown, label + object key. */
+const COMMENTS_RISK_LEVELS = [
+  { key: 'BAJO', label: 'Comentarios de riesgo bajo' },
+  { key: 'MEDIO', label: 'Comentarios de riesgo medio' },
+  { key: 'ALTO', label: 'Comentarios de riesgo alto' },
+] as const
+
 export interface DepartmentStatsHeroProps {
   stats: DepartmentPeriodRangeStats
+  /** Link to the comments page filtered by the selected period, e.g. `/comentarios?period=2024-1`. Pass `undefined` to hide the action. */
+  commentsHref?: string
   className?: string
 }
 
@@ -19,7 +31,7 @@ export interface DepartmentStatsHeroProps {
  * @example
  * <DepartmentStatsHero stats={stats} />
  */
-export function DepartmentStatsHero({ stats, className }: DepartmentStatsHeroProps) {
+export function DepartmentStatsHero({ stats, commentsHref, className }: DepartmentStatsHeroProps) {
   const rangeLabel =
     stats.start_period_code === stats.end_period_code
       ? stats.start_period_code
@@ -77,6 +89,53 @@ export function DepartmentStatsHero({ stats, className }: DepartmentStatsHeroPro
           />
         </div>
       </div>
+
+      {stats.comments_risk_counts && (
+        <div>
+          <div className="flex items-center justify-between gap-3 px-6 py-3">
+            <p className="text-muted-foreground flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
+              <MessageSquareText className="size-4 shrink-0" aria-hidden="true" />
+              Comentarios por nivel de riesgo
+            </p>
+
+            {commentsHref && (
+              <Button
+                variant="outline"
+                size="sm"
+                render={<TransitionLink href={commentsHref} />}
+                className="bg-background"
+              >
+                Ver comentarios
+              </Button>
+            )}
+          </div>
+
+          <div className="divide-border border-border grid grid-cols-3 divide-x border-t">
+            {COMMENTS_RISK_LEVELS.map(({ key, label }) => (
+              <Fact key={key} label={label}>
+                <span
+                  className={cn(
+                    'num text-2xl font-semibold tabular-nums',
+                    key === 'ALTO' && 'text-primary',
+                  )}
+                >
+                  {stats.comments_risk_counts?.[key] ?? '—'}
+                </span>
+              </Fact>
+            ))}
+          </div>
+        </div>
+      )}
     </section>
+  )
+}
+
+function Fact({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="px-6 py-4">
+      <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">{label}</p>
+
+      <div className="mt-2 flex min-h-8 items-center">{children}</div>
+    </div>
   )
 }

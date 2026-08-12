@@ -73,4 +73,6 @@ export interface DepartmentPeriodRangeStats {
   period_averages: DepartmentPeriodAverage[]
   /** Overall average broken down by pedagogical dimension. */
   dimensions: DepartmentDimensionAverage[]
+  /** Count of comments per risk level (BAJO/MEDIO/ALTO). */
+  comments_risk_counts?: { BAJO: number; MEDIO: number; ALTO: number }
 }

@@ -121,7 +121,12 @@ export function DepartmentPeriodRangeSummary({
             isFetching && 'pointer-events-none opacity-60',
           )}
         >
-          <DepartmentStatsHero stats={stats} />
+          <DepartmentStatsHero
+            stats={stats}
+            commentsHref={
+              endPeriod ? `/comentarios?period=${encodeURIComponent(endPeriod.name)}` : undefined
+            }
+          />
 
           <section className="border-border bg-background rounded-md border">
             <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
