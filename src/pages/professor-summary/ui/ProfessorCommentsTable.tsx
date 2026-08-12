@@ -23,6 +23,8 @@ export interface ProfessorCommentsTableProps {
   categories?: readonly { name: string }[]
   /** Preselects the category filter by name (e.g. from a category detail). */
   defaultCategory?: string
+  /** Preselects the subject filter by name (e.g. from a subject detail). */
+  defaultSubject?: string
 }
 
 const ALL = 'all'
@@ -44,9 +46,10 @@ export function ProfessorCommentsTable({
   comments,
   categories,
   defaultCategory,
+  defaultSubject,
 }: ProfessorCommentsTableProps) {
   const [search, setSearch] = useState('')
-  const [subject, setSubject] = useState(ALL)
+  const [subject, setSubject] = useState(defaultSubject ?? ALL)
   // The category filter is keyed by normalized name so a preselected category
   // matches its comments regardless of casing.
   const [category, setCategory] = useState(
@@ -54,15 +57,17 @@ export function ProfessorCommentsTable({
   )
   const [risk, setRisk] = useState(ALL)
 
-  const subjectItems = useMemo(
-    () => [
+  const subjectItems = useMemo(() => {
+    const names = new Set(comments.map((comment) => comment.subject))
+    // Keep a preselected subject selectable even if it has no comments.
+    if (defaultSubject) names.add(defaultSubject)
+    return [
       { value: ALL, label: 'Todas las asignaturas' },
-      ...[...new Set(comments.map((comment) => comment.subject))]
+      ...[...names]
         .sort((a, b) => a.localeCompare(b, 'es'))
         .map((name) => ({ value: name, label: name })),
-    ],
-    [comments],
-  )
+    ]
+  }, [comments, defaultSubject])
 
   const categoryItems = useMemo(() => {
     // Normalized name -> display name. Seed with the always-shown categories,

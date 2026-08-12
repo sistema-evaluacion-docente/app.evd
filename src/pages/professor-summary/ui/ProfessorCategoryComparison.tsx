@@ -11,8 +11,11 @@ import { Card } from '@/shared/ui'
 
 import type { ProfessorCategory, ProfessorPeriod } from '../model/data'
 import { useCategoryHistory } from '../model/useCategoryHistory'
+import { useSubjectHistory } from '../model/useSubjectHistory'
 import { ProfessorCategoryHistoryChart } from './ProfessorCategoryHistoryChart'
 import { ProfessorCategoryItemsTable } from './ProfessorCategoryItemsTable'
+import { ProfessorCommentsBySemester } from './ProfessorCommentsBySemester'
+import { ProfessorSubjectHistoryTable } from './ProfessorSubjectHistoryTable'
 
 /** Comparison ranges, in number of most-recent semesters. */
 const RANGE_OPTIONS = [2, 3, 5] as const
@@ -37,6 +40,9 @@ export function ProfessorCategoryComparison({
     periods,
     category.id,
   )
+  // Teacher-wide history (all subjects + comments), shown below the per-category
+  // comparison. It has no department benchmark per subject, hence its own block.
+  const subjectHistory = useSubjectHistory(teacherId, periods)
 
   // Only offer a "last N" range when there is more history than N to trim.
   const rangeItems = useMemo(() => {
@@ -70,6 +76,21 @@ export function ProfessorCategoryComparison({
         .filter((item) => item.byPeriod.length > 0),
     }
   }, [items, visiblePoints])
+
+  const { visibleSubjects, visibleComments } = useMemo(() => {
+    const codes = new Set(visiblePoints.map((point) => point.code))
+    return {
+      visibleSubjects: subjectHistory.subjects
+        .map((subject) => ({
+          ...subject,
+          byPeriod: subject.byPeriod.filter((entry) => codes.has(entry.code)),
+        }))
+        .filter((subject) => subject.byPeriod.length > 0),
+      visibleComments: subjectHistory.commentsByPeriod.filter((period) =>
+        codes.has(period.code),
+      ),
+    }
+  }, [subjectHistory.subjects, subjectHistory.commentsByPeriod, visiblePoints])
 
   return (
     <Card className="p-6 sm:p-7">
@@ -129,6 +150,43 @@ export function ProfessorCategoryComparison({
               Su nota en cada pregunta por semestre y la tendencia respecto al semestre previo.
             </p>
             <ProfessorCategoryItemsTable items={visibleItems} periods={visiblePeriods} />
+          </div>
+
+          <div className="mt-8 border-t border-ink-100 pt-7">
+            <h3 className="text-[15px] font-semibold text-ink-900">Notas por materia</h3>
+            <p className="mt-1 mb-3 text-[13px] text-ink-500">
+              Su promedio en cada asignatura, semestre a semestre (todas las materias).
+            </p>
+            {subjectHistory.isLoading ? (
+              <div className="h-32 w-full animate-pulse rounded-lg bg-ink-100" />
+            ) : subjectHistory.isError ? (
+              <p className="text-[13.5px] text-ink-500">
+                No se pudieron cargar las notas por materia.
+              </p>
+            ) : (
+              <ProfessorSubjectHistoryTable
+                subjects={visibleSubjects}
+                periods={visiblePeriods}
+              />
+            )}
+          </div>
+
+          <div className="mt-8 border-t border-ink-100 pt-7">
+            <h3 className="text-[15px] font-semibold text-ink-900">
+              Comentarios por semestre
+            </h3>
+            <p className="mt-1 mb-3 text-[13px] text-ink-500">
+              Los comentarios de estudiantes de cada semestre, lado a lado.
+            </p>
+            {subjectHistory.isLoading ? (
+              <div className="h-40 w-full animate-pulse rounded-lg bg-ink-100" />
+            ) : subjectHistory.isError ? (
+              <p className="text-[13.5px] text-ink-500">
+                No se pudieron cargar los comentarios del historial.
+              </p>
+            ) : (
+              <ProfessorCommentsBySemester periods={visibleComments} />
+            )}
           </div>
         </>
       )}

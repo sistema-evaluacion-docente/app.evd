@@ -1,5 +1,6 @@
 import type {
   TeacherCommentsData,
+  TeacherEvaluationDetail,
   TeacherVsDeptData,
   TeacherVsDeptDimension,
 } from '@/features/evaluations'
@@ -278,4 +279,150 @@ export function buildProfessorSummary(
     deptOverall: vsDept.department_overall_average,
     level: levelFor(overall),
   }
+}
+
+// ---------------------------------------------------------------------------
+// Notas por materia (subject-level breakdown)
+// ---------------------------------------------------------------------------
+
+/** One question's score within a subject's category (no department benchmark). */
+export interface ProfessorSubjectQuestion {
+  code: string
+  text: string
+  score: number
+}
+
+/** A category (dimension) scored for a single subject. No department average
+ * exists per subject, so only the teacher's own score is kept. */
+export interface ProfessorSubjectCategory {
+  id: string
+  name: string
+  score: number
+  questions: ProfessorSubjectQuestion[]
+}
+
+/** A subject (course + group) the teacher was evaluated on, with its own
+ * overall grade and per-category breakdown. */
+export interface ProfessorSubject {
+  /** Stable id for selection (`course_code__group_name`). */
+  key: string
+  code: string
+  name: string
+  group: string
+  respondents: number
+  score: number
+  categories: ProfessorSubjectCategory[]
+}
+
+/** Builds the per-subject list from a teacher's evaluation detail. */
+export function mapProfessorSubjects(detail: TeacherEvaluationDetail): ProfessorSubject[] {
+  return detail.courses.map((course) => ({
+    key: `${course.course_code}__${course.group_name}`,
+    code: course.course_code,
+    name: course.course_name,
+    group: course.group_name,
+    respondents: course.respondent_count,
+    score: course.overall_average,
+    categories: course.dimensions.map((dimension) => ({
+      id: dimension.dimension,
+      name: dimension.dimension,
+      score: dimension.average,
+      questions: (dimension.questions ?? []).map((question) => ({
+        code: question.code,
+        text: question.text,
+        score: question.score,
+      })),
+    })),
+  }))
+}
+
+/** Finds a subject's category by name (matched normalized, like the summary). */
+export function findSubjectCategory(
+  subject: ProfessorSubject,
+  categoryName: string,
+): ProfessorSubjectCategory | undefined {
+  const target = normalize(categoryName)
+  return subject.categories.find((category) => normalize(category.name) === target)
+}
+
+// ---------------------------------------------------------------------------
+// Comparación por materia / comentarios entre semestres (Parte C)
+// ---------------------------------------------------------------------------
+
+/** One subject's grade in a single semester. */
+export interface SubjectPeriodScore {
+  code: string
+  score: number
+}
+
+/** A subject tracked across every semester it was taught. */
+export interface SubjectGradeHistory {
+  key: string
+  name: string
+  group: string
+  byPeriod: SubjectPeriodScore[]
+}
+
+/** All the comments of a single semester. */
+export interface PeriodComments {
+  periodId: number
+  code: string
+  name: string
+  comments: ProfessorComment[]
+}
+
+export interface SubjectHistory {
+  subjects: SubjectGradeHistory[]
+  commentsByPeriod: PeriodComments[]
+}
+
+/**
+ * Rebuilds, across every evaluated semester, both the per-subject overall grade
+ * (from each period's evaluation detail) and the semester's comments. Subject
+ * order follows the most recent semester; subjects seen only in older semesters
+ * are appended so nothing disappears.
+ */
+export function buildSubjectHistory(
+  entries: {
+    period: ProfessorPeriod
+    detail: TeacherEvaluationDetail | undefined
+    comments: ProfessorComment[]
+  }[],
+): SubjectHistory {
+  const sorted = [...entries].sort((a, b) => a.period.code.localeCompare(b.period.code))
+
+  const order: string[] = []
+  const meta = new Map<string, { name: string; group: string }>()
+  for (let i = sorted.length - 1; i >= 0; i--) {
+    for (const course of sorted[i].detail?.courses ?? []) {
+      const key = `${course.course_code}__${course.group_name}`
+      if (!meta.has(key)) {
+        meta.set(key, { name: course.course_name, group: course.group_name })
+        order.push(key)
+      }
+    }
+  }
+
+  const subjects: SubjectGradeHistory[] = order.map((key) => ({
+    key,
+    name: meta.get(key)!.name,
+    group: meta.get(key)!.group,
+    byPeriod: sorted
+      .map(({ period, detail }) => {
+        const course = detail?.courses.find(
+          (item) => `${item.course_code}__${item.group_name}` === key,
+        )
+        return course ? { code: period.code, score: course.overall_average } : null
+      })
+      .filter((score): score is SubjectPeriodScore => score != null),
+  }))
+
+  const commentsByPeriod: PeriodComments[] = sorted.map(({ period, comments }) => ({
+    periodId: period.periodId,
+    code: period.code,
+    name: period.label,
+    comments,
+  }))
+
+  return { subjects, commentsByPeriod }
 }

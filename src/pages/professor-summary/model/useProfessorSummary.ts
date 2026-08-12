@@ -1,6 +1,10 @@
 import { useMemo, useState } from 'react'
 
-import { useGetTeacherComments, useGetTeacherVsDepartment } from '@/features/evaluations'
+import {
+  useGetTeacherComments,
+  useGetTeacherEvaluationDetail,
+  useGetTeacherVsDepartment,
+} from '@/features/evaluations'
 import { useGetTeacherHistory } from '@/features/teachers'
 import useAuth from '@/shared/hooks/useAuth'
 
@@ -9,6 +13,8 @@ import {
   mapProfessorComments,
   mapProfessorHistory,
   mapProfessorPeriods,
+  mapProfessorSubjects,
+  type ProfessorSubject,
   type ProfessorSummary,
 } from './data'
 
@@ -34,6 +40,12 @@ export function useProfessorSummary() {
 
   const vsDeptQuery = useGetTeacherVsDepartment(teacherId, period?.periodId)
   const commentsQuery = useGetTeacherComments(period?.evaluationId, teacherId)
+  const detailQuery = useGetTeacherEvaluationDetail(period?.evaluationId, teacherId)
+
+  const subjects: ProfessorSubject[] = useMemo(
+    () => (detailQuery.data?.data ? mapProfessorSubjects(detailQuery.data.data) : []),
+    [detailQuery.data],
+  )
 
   const summary: ProfessorSummary | null = useMemo(() => {
     const vsDept = vsDeptQuery.data?.data
@@ -57,6 +69,10 @@ export function useProfessorSummary() {
     period,
     setPeriodValue: setSelectedValue,
     summary,
+    subjects,
+    // The evaluation detail feeds the extra "por materia" features; keep it out
+    // of the page's error gate so a detail failure only hides those, not the page.
+    subjectsLoading: detailQuery.isLoading,
     isLoading:
       historyQuery.isLoading || vsDeptQuery.isLoading || commentsQuery.isLoading,
     isError: historyQuery.isError || vsDeptQuery.isError || commentsQuery.isError,

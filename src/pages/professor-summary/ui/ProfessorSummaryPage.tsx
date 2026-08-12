@@ -18,6 +18,8 @@ import { ProfessorCategoryDetailSkeleton } from './ProfessorCategoryDetailSkelet
 import { ProfessorCommentsTable } from './ProfessorCommentsTable'
 import { ProfessorHistoryChart } from './ProfessorHistoryChart'
 import { ProfessorResultCard } from './ProfessorResultCard'
+import { ProfessorSubjectDetail } from './ProfessorSubjectDetail'
+import { ProfessorSubjectGrades } from './ProfessorSubjectGrades'
 import { ProfessorSummarySkeleton } from './ProfessorSummarySkeleton'
 
 function StateCard({ children }: { children: React.ReactNode }) {
@@ -38,16 +40,60 @@ export function ProfessorSummaryPage() {
     period,
     setPeriodValue,
     summary,
+    subjects,
+    subjectsLoading,
     isLoading,
     isError,
   } = useProfessorSummary()
 
   const [categoryId, setCategoryId] = useState<string | null>(null)
+  const [subjectKey, setSubjectKey] = useState<string | null>(null)
+  // Tracks whether the open category detail was reached by drilling into a
+  // subject, so "Volver" returns to that subject instead of the summary.
+  const [cameFromSubject, setCameFromSubject] = useState(false)
 
   const selectedCategory =
     categoryId && summary
       ? summary.categories.find((category) => category.id === categoryId)
       : undefined
+
+  const selectedSubject =
+    subjectKey && summary
+      ? subjects.find((subject) => subject.key === subjectKey)
+      : undefined
+
+  const openCategoryFromChart = (id: string) => {
+    setSubjectKey(null)
+    setCameFromSubject(false)
+    setCategoryId(id)
+  }
+
+  const openSubject = (key: string) => {
+    setCameFromSubject(false)
+    setCategoryId(null)
+    setSubjectKey(key)
+  }
+
+  const openCategoryFromSubject = (id: string) => {
+    setCameFromSubject(true)
+    setCategoryId(id)
+  }
+
+  const backFromCategory = () => {
+    if (cameFromSubject && subjectKey) {
+      setCategoryId(null)
+    } else {
+      setCategoryId(null)
+      setSubjectKey(null)
+    }
+    setCameFromSubject(false)
+  }
+
+  const backToSummary = () => {
+    setCategoryId(null)
+    setSubjectKey(null)
+    setCameFromSubject(false)
+  }
 
   const periodCode = period?.code ?? ''
 
@@ -76,7 +122,15 @@ export function ProfessorSummaryPage() {
     content = (
       <>
         <ProfessorResultCard summary={summary} periodValue={periodCode} />
-        <ProfessorCategoryChart categories={summary.categories} onSelect={setCategoryId} />
+        <ProfessorCategoryChart
+          categories={summary.categories}
+          onSelect={openCategoryFromChart}
+        />
+        <ProfessorSubjectGrades
+          subjects={subjects}
+          onSelect={openSubject}
+          isLoading={subjectsLoading}
+        />
         <ProfessorHistoryChart data={history} />
         <ProfessorCommentsTable comments={summary.comments} />
       </>
@@ -95,8 +149,19 @@ export function ProfessorSummaryPage() {
           periodValue={periodCode}
           teacherId={teacherId}
           periods={periods}
-          onBack={() => setCategoryId(null)}
-          onSelect={setCategoryId}
+          subjects={subjects}
+          subjectKey={subjectKey}
+          onSubjectChange={setSubjectKey}
+          onBack={backFromCategory}
+        />
+      ) : selectedSubject && summary ? (
+        <ProfessorSubjectDetail
+          subject={selectedSubject}
+          categories={summary.categories}
+          comments={summary.comments}
+          periodValue={periodCode}
+          onBack={backToSummary}
+          onSelectCategory={openCategoryFromSubject}
         />
       ) : categoryId && isLoading ? (
         <ProfessorCategoryDetailSkeleton />
@@ -127,7 +192,7 @@ export function ProfessorSummaryPage() {
                     onValueChange={(value) => {
                       if (value) {
                         setPeriodValue(value)
-                        setCategoryId(null)
+                        backToSummary()
                       }
                     }}
                   >
