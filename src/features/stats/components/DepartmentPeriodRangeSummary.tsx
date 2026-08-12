@@ -10,7 +10,6 @@ import { cn } from '@/lib/utils'
 import { useGetDepartmentPeriodRangeStats } from '../api'
 import { DepartmentDimensionsChart } from './DepartmentDimensionsChart'
 import { DepartmentStatsHero } from './DepartmentStatsHero'
-import { DepartmentSubjectsTable } from './DepartmentSubjectsTable'
 
 export interface DepartmentPeriodRangeSummaryProps {
   /** How many trailing periods to preselect once periods load. Defaults to 1 (just the latest period). */
@@ -167,11 +166,11 @@ export function DepartmentPeriodRangeSummary({
             </section>
           )}
 
-          <DepartmentSubjectsTable
+          {/* <DepartmentSubjectsTable
             startPeriod={startPeriod?.code}
             endPeriod={endPeriod?.code}
             title="Promedios por asignatura"
-          />
+          /> */}
         </div>
       )}
 

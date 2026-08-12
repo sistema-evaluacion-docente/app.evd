@@ -37,6 +37,8 @@ export function DepartmentStatsHero({ stats, commentsHref, className }: Departme
       ? stats.start_period_code
       : `${stats.start_period_code} — ${stats.end_period_code}`
 
+  console.log('stats', stats)
+
   return (
     <section
       className={cn(
@@ -57,6 +59,12 @@ export function DepartmentStatsHero({ stats, commentsHref, className }: Departme
 
           <Badge className="text-sm font-bold">{rangeLabel}</Badge>
         </p>
+
+        <div>
+          <TransitionLink href={`/evaluaciones/`}>
+            <Button size="sm">Ver evaluaciones</Button>
+          </TransitionLink>
+        </div>
       </div>
 
       <div className="relative flex flex-wrap items-end justify-between gap-6 overflow-hidden p-6">
