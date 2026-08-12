@@ -15,6 +15,12 @@ export interface CommentPedagogicalCategory {
   color_hex: string
 }
 
+/** A pedagogical category assigned to a comment, with its confidence score. */
+export interface CommentPedagogicalCategoryScore extends CommentPedagogicalCategory {
+  /** Confidence/relevance of this assigned pedagogical category. */
+  score: number
+}
+
 /** A single student comment about a teacher, already analyzed by the backend. */
 export interface TeacherComment {
   id: number
@@ -30,9 +36,8 @@ export interface TeacherComment {
   risk_level: CommentRiskLevel
   /** Numeric risk assigned to the comment. */
   risk_score: number
-  pedagogical_category: CommentPedagogicalCategory
-  /** Confidence/relevance of the assigned pedagogical category. */
-  category_score: number
+  /** A comment can be classified into several pedagogical categories at once. */
+  pedagogical_categories: CommentPedagogicalCategoryScore[]
   /** `true` once a director has overridden the AI-assigned risk level. */
   risk_level_modified_by_director?: boolean
   /** `true` once a director has overridden the AI-assigned pedagogical category. */

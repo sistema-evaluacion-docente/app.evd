@@ -54,7 +54,7 @@ export function useCommentFilters(
     for (const course of allCourses) {
       for (const comment of course.comments) {
         countInto(riskMap, comment.risk_level)
-        countInto(categoryMap, comment.pedagogical_category)
+        comment.pedagogical_categories.forEach((category) => countInto(categoryMap, category))
       }
     }
 
@@ -75,14 +75,20 @@ export function useCommentFilters(
         ...course,
         comments: course.comments.filter((comment) => {
           if (riskLevelId !== null && comment.risk_level?.id !== riskLevelId) return false
-          if (categoryId !== null && comment.pedagogical_category?.id !== categoryId) return false
+
+          if (
+            categoryId !== null &&
+            !comment.pedagogical_categories.some((category) => category.id === categoryId)
+          )
+            return false
+
           if (term === '') return true
 
           return [
             comment.original_text,
             comment.course_name,
             comment.group_name,
-            categoryLabel(comment.pedagogical_category?.name),
+            ...comment.pedagogical_categories.map((category) => categoryLabel(category.name)),
             comment.risk_level?.name,
           ]
             .filter(Boolean)

@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select'
@@ -15,12 +16,19 @@ export interface CommentClassificationEditorProps {
   comment: TeacherComment
 }
 
+function sameIds(a: number[], b: number[]) {
+  if (a.length !== b.length) return false
+  const bSet = new Set(b)
+  return a.every((id) => bSet.has(id))
+}
+
 /**
  * Director-only popover that overrides a comment's risk level and
- * pedagogical category through `useUpdateComment` (`PATCH /comments/{id}`).
- * Options come from the fixed catalogs (`RISK_LEVELS`, `CATEGORIES`) — there's
- * no endpoint to list them, so every level/category is always offered
- * regardless of what this teacher's own comments happen to cover.
+ * pedagogical categories (one or more) through `useUpdateComment` (`PATCH
+ * /comments/{id}`). Options come from the fixed catalogs (`RISK_LEVELS`,
+ * `CATEGORIES`) — there's no endpoint to list them, so every level/category
+ * is always offered regardless of what this teacher's own comments happen
+ * to cover.
  *
  * @example
  * <CommentClassificationEditor comment={comment} />
@@ -28,28 +36,37 @@ export interface CommentClassificationEditorProps {
 export function CommentClassificationEditor({ comment }: CommentClassificationEditorProps) {
   const [open, setOpen] = useState(false)
   const [riskLevelId, setRiskLevelId] = useState(comment.risk_level?.id)
-  const [categoryId, setCategoryId] = useState(comment.pedagogical_category?.id)
+  const [categoryIds, setCategoryIds] = useState(
+    comment.pedagogical_categories.map((category) => category.id),
+  )
   const { mutate: updateComment, isPending } = useUpdateComment()
 
+  const initialCategoryIds = comment.pedagogical_categories.map((category) => category.id)
   const hasChanges =
-    riskLevelId !== comment.risk_level?.id || categoryId !== comment.pedagogical_category?.id
+    riskLevelId !== comment.risk_level?.id || !sameIds(categoryIds, initialCategoryIds)
 
   function handleOpenChange(next: boolean) {
     setOpen(next)
 
     if (next) {
       setRiskLevelId(comment.risk_level?.id)
-      setCategoryId(comment.pedagogical_category?.id)
+      setCategoryIds(comment.pedagogical_categories.map((category) => category.id))
     }
   }
 
+  function toggleCategory(categoryId: number, checked: boolean) {
+    setCategoryIds((ids) =>
+      checked ? [...ids, categoryId] : ids.filter((id) => id !== categoryId),
+    )
+  }
+
   function handleSave() {
-    if (riskLevelId == null || categoryId == null) return
+    if (riskLevelId == null || categoryIds.length === 0) return
 
     updateComment(
       {
         commentId: comment.id,
-        payload: { risk_level: riskLevelId, pedagogical_category_id: categoryId },
+        payload: { risk_level: riskLevelId, pedagogical_category_ids: categoryIds },
       },
       {
         onSuccess: () => {
@@ -100,23 +117,19 @@ export function CommentClassificationEditor({ comment }: CommentClassificationEd
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-xs font-medium">Categoría pedagógica</Label>
+          <Label className="text-xs font-medium">Categorías pedagógicas</Label>
 
-          <Select value={categoryId} onValueChange={(value) => setCategoryId(value as number)}>
-            <SelectTrigger className="w-full">
-              {categoryId != null
-                ? CATEGORIES.find((category) => category.id === categoryId)?.label
-                : 'Selecciona una categoría'}
-            </SelectTrigger>
-
-            <SelectContent>
-              {CATEGORIES.map((category) => (
-                <SelectItem key={category.id} value={category.id}>
-                  {category.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="space-y-1.5">
+            {CATEGORIES.map((category) => (
+              <label key={category.id} className="flex items-center gap-2 text-sm font-normal">
+                <Checkbox
+                  checked={categoryIds.includes(category.id)}
+                  onCheckedChange={(checked) => toggleCategory(category.id, checked === true)}
+                />
+                {category.label}
+              </label>
+            ))}
+          </div>
         </div>
 
         <Button

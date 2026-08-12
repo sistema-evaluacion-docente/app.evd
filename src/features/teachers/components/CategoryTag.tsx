@@ -51,7 +51,7 @@ const PADDING_CLASS: Record<CategoryTagSize, string> = {
  * uncategorized comments are deliberately muted.
  *
  * @example
- * <CategoryTag category={comment.pedagogical_category} />
+ * <CategoryTag category={comment.pedagogical_categories[0]} />
  *
  * @example
  * <CategoryTag name="LABEL_2" variant="soft" short score={0.82} />

@@ -112,7 +112,7 @@ async function updateTeacher(
 
 interface UpdateCommentPayload {
   risk_level: number
-  pedagogical_category_id: number
+  pedagogical_category_ids: number[]
 }
 
 async function updateComment(
@@ -356,7 +356,7 @@ export function useUpdateTeacher() {
  *
  * @example
  * const { mutate: updateComment, isPending } = useUpdateComment();
- * updateComment({ commentId: comment.id, payload: { risk_level: 2, pedagogical_category_id: 1 } });
+ * updateComment({ commentId: comment.id, payload: { risk_level: 2, pedagogical_category_ids: [1, 3] } });
  */
 export function useUpdateComment() {
   const queryClient = useQueryClient()

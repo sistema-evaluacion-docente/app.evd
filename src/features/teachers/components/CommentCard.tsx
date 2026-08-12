@@ -161,7 +161,7 @@ export function CommentCard({
                 <PercentMeter
                   value={comment.risk_score}
                   label={`Probabilidad de acierto del nivel de riesgo ${comment.risk_level.name}`}
-                  showBar={!isCompact}
+                  showBar={false}
                 />
               )}
 
@@ -171,16 +171,20 @@ export function CommentCard({
             </span>
           )}
 
-          {showCategory && comment.pedagogical_category && (
+          {showCategory && comment.pedagogical_categories.length > 0 && (
             <>
               {showRisk && <Divider />}
-              <CategoryTag
-                category={comment.pedagogical_category}
-                short={isCompact}
-                showDot={false}
-                score={showScores ? comment.category_score : undefined}
-                showScoreBar={!isCompact}
-              />
+
+              {comment.pedagogical_categories.map((category) => (
+                <CategoryTag
+                  key={category.id}
+                  category={category}
+                  short={isCompact}
+                  showDot={false}
+                  score={showScores ? category.score : undefined}
+                  showScoreBar={false}
+                />
+              ))}
 
               {comment.pedagogical_category_modified_by_director && (
                 <ModifiedMark label="Categoría editada por el director" />
