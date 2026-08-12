@@ -15,5 +15,6 @@ export const CONTRACT_TYPES = [
 export const TEACHER_SORT_FIELDS: SortField[] = [
   { value: 'name', label: 'Nombre' },
   { value: 'overall_average', label: 'Promedio' },
+  { value: 'high_risk_comments_count', label: 'Comentarios de alto riesgo' },
   { value: 'created_at', label: 'Fecha de creación' },
 ]

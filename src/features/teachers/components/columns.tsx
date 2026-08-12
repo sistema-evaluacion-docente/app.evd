@@ -1,6 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table'
 
-import { ActiveBadge } from '@/components/common/ActiveBadge'
 import { ScoreBadge } from '@/components/common/ScoreBadge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import type { TeacherRecord } from '../types'
@@ -93,10 +92,23 @@ export function buildTeacherColumns({
       },
     },
     {
-      accessorKey: 'active',
-      header: 'Estado',
-      cell: ({ row }) => <ActiveBadge active={row.original.active} />,
+      accessorKey: 'high_risk_comments_count',
+      header: 'Comentarios de alto riesgo',
+      cell: ({ getValue }) => {
+        const count = getValue<number | undefined>()
+
+        return (
+          <div className="text-center">
+            <span className="text-muted-foreground text-sm tabular-nums">{count ?? '—'}</span>
+          </div>
+        )
+      },
     },
+    // {
+    //   accessorKey: 'active',
+    //   header: 'Estado',
+    //   cell: ({ row }) => <ActiveBadge active={row.original.active} />,
+    // },
   )
 
   return columns

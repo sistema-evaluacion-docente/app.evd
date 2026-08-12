@@ -27,6 +27,8 @@ export interface TeacherRecord {
   active: boolean
   /** Average score of the teacher across their evaluated groups. */
   overall_average: number
+  /** Number of comments classified as high risk for this teacher. */
+  high_risk_comments_count?: number
   created_at: string
   updated_at: string
 }
