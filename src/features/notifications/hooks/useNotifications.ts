@@ -25,7 +25,6 @@ export function useNotifications() {
   useEffect(() => {
     if (!token) return
 
-    void useNotificationsStore.getState().fetchNotifications()
     void useNotificationsStore.getState().connectWebSocket()
 
     return () => {
