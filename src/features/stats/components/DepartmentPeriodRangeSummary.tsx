@@ -36,7 +36,7 @@ export function DepartmentPeriodRangeSummary({
   defaultRangeSize = 1,
   className,
 }: DepartmentPeriodRangeSummaryProps) {
-  const { data: periodsData } = useGetAcademicPeriods()
+  const { data: periodsData, isPending: isPeriodsPending } = useGetAcademicPeriods()
   const periods = periodsData?.data ?? []
   const sortedPeriods = [...periods].sort((a, b) => a.code.localeCompare(b.code))
 
@@ -74,6 +74,14 @@ export function DepartmentPeriodRangeSummary({
   })
 
   const stats = data?.data
+
+  if (!isPeriodsPending && sortedPeriods.length === 0) {
+    return (
+      <p className={cn('text-muted-foreground py-10 text-center text-sm', className)}>
+        No existen periodos académicos para mostrar.
+      </p>
+    )
+  }
 
   return (
     <div className={cn('space-y-6', className)}>
