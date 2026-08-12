@@ -3,6 +3,7 @@ import { Route, Switch } from 'wouter'
 import { AppLayout } from '@/components/common/AppLayout'
 import { LogsPage, SettingsPage } from '@/features/admin'
 import { LoginPage } from '@/features/auth'
+import { CommentsPage } from '@/features/comments'
 import { DashboardPage } from '@/features/dashboard'
 import { DepartmentsPage } from '@/features/departments'
 import { DirectorsPage } from '@/features/directors'
@@ -59,6 +60,12 @@ function App() {
         <Route path="/docentes/:id">
           <AppLayout>
             <TeacherDetailPage />
+          </AppLayout>
+        </Route>
+
+        <Route path="/comentarios">
+          <AppLayout>
+            <CommentsPage />
           </AppLayout>
         </Route>
 
