@@ -108,7 +108,7 @@ export function EvaluationOverview({
         </div>
       </div>
 
-      <div className="divide-border grid grid-cols-2 divide-x sm:grid-cols-3">
+      <div className="divide-border grid grid-cols-2 divide-x sm:grid-cols-4">
         <Fact label="Docentes evaluados">
           <span className="num text-2xl font-semibold tabular-nums">{evaluation.count}</span>
         </Fact>
@@ -123,6 +123,12 @@ export function EvaluationOverview({
           ) : (
             <span className="text-muted-foreground text-sm">No disponible</span>
           )}
+        </Fact>
+
+        <Fact label="Comentarios de alto riesgo">
+          <span className="num text-2xl font-semibold text-red-600 tabular-nums dark:text-red-400">
+            {evaluation.comments_risk_counts?.ALTO ?? '—'}
+          </span>
         </Fact>
       </div>
     </section>

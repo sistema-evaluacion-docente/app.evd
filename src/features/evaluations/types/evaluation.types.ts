@@ -62,6 +62,8 @@ export interface EvaluationRecord {
   /** Number of teachers evaluated in this evaluation. */
   count: number
   overall_average: number
+  /** Count of comments per risk level (BAJO/MEDIO/ALTO). */
+  comments_risk_counts?: { BAJO: number; MEDIO: number; ALTO: number }
   /** Per-dimension averages; only returned by `GET /evaluations/{id}`. */
   dimension_averages?: DimensionAverageItem[]
   /**
