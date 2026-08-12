@@ -3,7 +3,7 @@ import { Link } from 'wouter'
 
 interface TransitionLinkProps {
   href: string
-  children: ReactNode
+  children?: ReactNode
   className?: string
   onClick?: (e: MouseEvent<HTMLAnchorElement>) => void
 }
