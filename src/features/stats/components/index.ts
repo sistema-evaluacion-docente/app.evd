@@ -1,3 +1,7 @@
+export { DepartmentCommentCategoriesChart } from './DepartmentCommentCategoriesChart'
+export type { DepartmentCommentCategoriesChartProps } from './DepartmentCommentCategoriesChart'
+export { DepartmentCommentRiskChart } from './DepartmentCommentRiskChart'
+export type { DepartmentCommentRiskChartProps } from './DepartmentCommentRiskChart'
 export { DepartmentDimensionsChart } from './DepartmentDimensionsChart'
 export type { DepartmentDimensionsChartProps } from './DepartmentDimensionsChart'
 export { DepartmentPeriodRangeSummary } from './DepartmentPeriodRangeSummary'

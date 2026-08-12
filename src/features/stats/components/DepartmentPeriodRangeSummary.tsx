@@ -8,6 +8,8 @@ import { Spinner } from '@/components/ui/spinner'
 import { useGetAcademicPeriods } from '@/features/periods'
 import { cn } from '@/lib/utils'
 import { useGetDepartmentPeriodRangeStats } from '../api'
+import { DepartmentCommentCategoriesChart } from './DepartmentCommentCategoriesChart'
+import { DepartmentCommentRiskChart } from './DepartmentCommentRiskChart'
 import { DepartmentDimensionsChart } from './DepartmentDimensionsChart'
 import { DepartmentStatsHero } from './DepartmentStatsHero'
 
@@ -165,6 +167,42 @@ export function DepartmentPeriodRangeSummary({
               />
             </div>
           </section>
+
+          {(stats.comments_risk_counts || stats.comments_pedagogical_category_counts) && (
+            <section className="border-border bg-background rounded-md border">
+              <div className="border-border border-b px-6 py-4">
+                <h2 className="text-sm font-medium">Comentarios de la heteroevaluación</h2>
+                <p className="text-muted-foreground mt-0.5 text-xs">
+                  Clasificación de los comentarios que los estudiantes dejaron en las evaluaciones
+                  del departamento durante el rango seleccionado.
+                </p>
+              </div>
+
+              <div className="divide-border grid divide-y sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+                {stats.comments_risk_counts && (
+                  <div className="px-6 py-4">
+                    <h3 className="text-muted-foreground mb-3 text-xs font-medium tracking-wide uppercase">
+                      Por nivel de riesgo
+                    </h3>
+
+                    <DepartmentCommentRiskChart counts={stats.comments_risk_counts} />
+                  </div>
+                )}
+
+                {stats.comments_pedagogical_category_counts && (
+                  <div className="px-6 py-4">
+                    <h3 className="text-muted-foreground mb-3 text-xs font-medium tracking-wide uppercase">
+                      Por categoría pedagógica
+                    </h3>
+
+                    <DepartmentCommentCategoriesChart
+                      counts={stats.comments_pedagogical_category_counts}
+                    />
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
 
           {/* <DepartmentSubjectsTable
             startPeriod={startPeriod?.code}

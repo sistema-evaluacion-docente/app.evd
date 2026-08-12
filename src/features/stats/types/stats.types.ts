@@ -75,4 +75,6 @@ export interface DepartmentPeriodRangeStats {
   dimensions: DepartmentDimensionAverage[]
   /** Count of comments per risk level (BAJO/MEDIO/ALTO). */
   comments_risk_counts?: { BAJO: number; MEDIO: number; ALTO: number }
+  /** Count of comments per pedagogical category code (`LABEL_0`…`LABEL_4`). */
+  comments_pedagogical_category_counts?: Record<string, number>
 }
