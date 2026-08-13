@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
+import { useSearchParams } from 'wouter'
 
 import { PercentMeter } from '@/components/common/PercentMeter'
+import { TransitionLink } from '@/components/common/TransitionLink'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuthStore } from '@/features/auth'
 import { cn } from '@/lib/utils'
@@ -76,6 +78,10 @@ export function CommentCard({
   const accent = comment.risk_level?.color_hex
   const withGutter = showGutter ?? !isCompact
 
+  const [searchParams] = useSearchParams()
+  const period = searchParams.get('period')
+  const teacherHref = `/docentes/${comment.teacher_id}${period ? `?period=${encodeURIComponent(period)}` : ''}`
+
   return (
     <article
       className={cn(
@@ -115,19 +121,23 @@ export function CommentCard({
         {(showTeacher || showCourse) && (
           <header className="mb-2 flex items-center gap-2">
             {showTeacher && (
-              <Avatar size="sm">
-                <AvatarFallback>{comment.teacher_name?.at(0)}</AvatarFallback>
+              <TransitionLink href={teacherHref}>
+                <Avatar size="lg">
+                  <AvatarFallback>{comment.teacher_name?.at(0)}</AvatarFallback>
 
-                <AvatarImage
-                  src={comment.teacher_avatar_url}
-                  alt={`Foto de ${comment.teacher_name}`}
-                />
-              </Avatar>
+                  <AvatarImage
+                    src={comment.teacher_avatar_url}
+                    alt={`Foto de ${comment.teacher_name}`}
+                  />
+                </Avatar>
+              </TransitionLink>
             )}
 
             <div className="min-w-0">
               {showTeacher && (
-                <p className="truncate text-sm font-medium">{comment.teacher_name}</p>
+                <TransitionLink href={teacherHref} className="hover:underline">
+                  <p className="truncate text-sm font-medium">{comment.teacher_name}</p>
+                </TransitionLink>
               )}
 
               {showCourse && (
