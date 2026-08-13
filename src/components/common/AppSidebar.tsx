@@ -27,6 +27,7 @@ import {
 import { useLocation } from 'wouter'
 
 import { getMenus } from '@/config/security'
+import { PeriodsSidebarSubmenu } from '@/features/periods'
 import useAuth from '@/hooks/useAuth'
 import { useNavigate } from '@/hooks/useNavigate'
 import Logo from './Logo'
@@ -80,6 +81,7 @@ export function AppSidebar() {
                 const active =
                   item.path !== '#' &&
                   (location === item.path || location.startsWith(`${item.path}/`))
+                const showMateriasSubmenu = selectedRole === 'DOCENTE' && item.path === '/periodos'
 
                 return (
                   <SidebarMenuItem key={item.path}>
@@ -94,6 +96,8 @@ export function AppSidebar() {
                       <Icon />
                       <span>{item.name}</span>
                     </SidebarMenuButton>
+
+                    {showMateriasSubmenu && <PeriodsSidebarSubmenu />}
                   </SidebarMenuItem>
                 )
               })}

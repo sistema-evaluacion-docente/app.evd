@@ -1,3 +1,6 @@
+export { CourseAverageTrend } from './CourseAverageTrend'
+export type { CourseAverageTrendProps } from './CourseAverageTrend'
 export { PeriodAverageTrend } from './PeriodAverageTrend'
 export type { PeriodAverageTrendProps } from './PeriodAverageTrend'
 export { PeriodsList } from './PeriodsList'
+export { PeriodsSidebarSubmenu } from './PeriodsSidebarSubmenu'

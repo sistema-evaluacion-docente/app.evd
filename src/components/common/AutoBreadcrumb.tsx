@@ -77,6 +77,23 @@ export function AutoBreadcrumb() {
         continue
       }
 
+      // "materias/:courseCode/:groupName" always resolves to the same
+      // subject detail page — collapse the trio into one crumb instead of
+      // three, since "materias" alone has no page of its own to link to.
+      if (segment === 'materias' && segments[i + 1] && segments[i + 2]) {
+        const courseCode = decodeURIComponent(segments[i + 1])
+        const groupName = decodeURIComponent(segments[i + 2])
+        currentPath += `/${segments[i + 1]}/${segments[i + 2]}`
+
+        result.push({
+          label: `${courseCode} · Grupo ${groupName}`,
+          href: currentPath,
+          isCurrent: true,
+        })
+
+        break
+      }
+
       const isLast = i === segments.length - 1 || segments.slice(i + 1).every(isNumericId)
       const label = getLabel(segment)
 

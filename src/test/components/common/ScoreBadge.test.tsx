@@ -78,6 +78,18 @@ describe('ScoreBadge', () => {
     expect(screen.getByText('4.30')).toBeInTheDocument()
   })
 
+  it('does not render the max score by default', () => {
+    render(<ScoreBadge value={3.92} />)
+
+    expect(screen.queryByText('/5.0')).not.toBeInTheDocument()
+  })
+
+  it('renders the max score at the same font size when showMax is true', () => {
+    render(<ScoreBadge value={3.92} size="5xl" showMax />)
+
+    expect(screen.getByText('/5.0')).toHaveClass('text-5xl')
+  })
+
   it('describes the trend and previous value on the indicator for assistive tech', () => {
     render(
       <ScoreBadge value={4.3} previousValue={4} previousLabel="semestre anterior" decimals={2} />,

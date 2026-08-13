@@ -17,7 +17,12 @@ import {
 } from '@/features/evaluations'
 import { FacultiesPage } from '@/features/faculties'
 import { NotFoundPage } from '@/features/not-found'
-import { AdminPeriodsPage, PeriodDetailPage, PeriodsPage } from '@/features/periods'
+import {
+  AdminPeriodsPage,
+  PeriodCourseDetailPage,
+  PeriodDetailPage,
+  PeriodsPage,
+} from '@/features/periods'
 import { TeacherDetailPage, TeachersPage, TeacherUploadPage } from '@/features/teachers'
 import { UsersPage } from '@/features/users'
 
@@ -42,6 +47,12 @@ function App() {
         <Route path="/periodos/:period">
           <AppLayout>
             <PeriodDetailPage />
+          </AppLayout>
+        </Route>
+
+        <Route path="/periodos/:period/materias/:courseCode/:groupName">
+          <AppLayout>
+            <PeriodCourseDetailPage />
           </AppLayout>
         </Route>
 
