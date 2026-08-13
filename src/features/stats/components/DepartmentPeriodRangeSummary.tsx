@@ -1,17 +1,11 @@
 import { useState } from 'react'
 
-import { AverageTrendChart } from '@/components/common/AverageTrendChart'
-import { InlineError } from '@/components/common/InlineError'
 import { PeriodSelect } from '@/components/common/PeriodSelect'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { useGetAcademicPeriods } from '@/features/periods'
 import { cn } from '@/lib/utils'
 import { useGetDepartmentPeriodRangeStats } from '../api'
-import { DepartmentCommentCategoriesChart } from './DepartmentCommentCategoriesChart'
-import { DepartmentCommentRiskChart } from './DepartmentCommentRiskChart'
-import { DepartmentDimensionsChart } from './DepartmentDimensionsChart'
-import { DepartmentStatsHero } from './DepartmentStatsHero'
+import { DepartmentPeriodRangeSummaryLayout } from './DepartmentPeriodRangeSummaryLayout'
 
 export interface DepartmentPeriodRangeSummaryProps {
   /** How many trailing periods to preselect once periods load. Defaults to 1 (just the latest period). */
@@ -20,12 +14,13 @@ export interface DepartmentPeriodRangeSummaryProps {
 }
 
 /**
- * Full self-contained widget with the director's own department averages —
+ * Self-contained widget with the director's own department averages —
  * overall, per-dimension, per-period trend and per-subject — across a
  * selectable range of academic periods
  * (`GET /stats/departments/period-range`). Owns its own start/end period
- * selectors and query, so it can be dropped straight into the dashboard.
- * Defaults to showing just the latest period until the user widens the range.
+ * selectors and query, then hands the result to `DepartmentPeriodRangeSummaryLayout`
+ * for rendering. Defaults to showing just the latest period until the user
+ * widens the range.
  *
  * @example
  * <DepartmentPeriodRangeSummary />
@@ -74,8 +69,6 @@ export function DepartmentPeriodRangeSummary({
     endPeriod: endPeriod?.code,
   })
 
-  const stats = data?.data
-
   if (!isPeriodsPending && sortedPeriods.length === 0) {
     return (
       <p className={cn('text-muted-foreground py-10 text-center text-sm', className)}>
@@ -106,117 +99,14 @@ export function DepartmentPeriodRangeSummary({
         {isFetching && <Spinner className="text-muted-foreground size-4" />}
       </div>
 
-      {error && <InlineError message={error.message} />}
-
-      {isPending && !error && (
-        <div className="space-y-6">
-          <Skeleton className="h-48 w-full rounded-md" />
-          <Skeleton className="h-64 w-full rounded-md" />
-        </div>
-      )}
-
-      {!isPending && stats && (
-        <div
-          className={cn(
-            'space-y-6 transition-opacity',
-            isFetching && 'pointer-events-none opacity-60',
-          )}
-        >
-          <DepartmentStatsHero
-            stats={stats}
-            commentsHref={
-              endPeriod ? `/comentarios?period=${encodeURIComponent(endPeriod.name)}` : undefined
-            }
-          />
-
-          {startPeriod !== endPeriod && (
-            <section className="border-border bg-background rounded-md border">
-              <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
-                Evolución del promedio por periodo
-              </h2>
-
-              <div className="px-6 py-4">
-                <AverageTrendChart
-                  series={[
-                    {
-                      id: 'department',
-                      label: 'Promedio del departamento',
-                      data: stats.period_averages.map((period) => ({
-                        x: period.academic_period_name || period.academic_period_code,
-                        value: period.overall_average,
-                      })),
-                    },
-                  ]}
-                  referenceValue={stats.overall_average}
-                  referenceLabel="Promedio del rango"
-                />
-              </div>
-            </section>
-          )}
-
-          <section className="border-border bg-background rounded-md border">
-            <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
-              Promedios por dimensión pedagógica
-            </h2>
-
-            <div className="px-6 py-4">
-              <DepartmentDimensionsChart
-                dimensions={stats.dimensions}
-                referenceValue={stats.overall_average}
-                referenceLabel="Promedio general"
-              />
-            </div>
-          </section>
-
-          {(stats.comments_risk_counts || stats.comments_pedagogical_category_counts) && (
-            <section className="border-border bg-background rounded-md border">
-              <div className="border-border border-b px-6 py-4">
-                <h2 className="text-sm font-medium">Comentarios de la heteroevaluación</h2>
-                <p className="text-muted-foreground mt-0.5 text-xs">
-                  Clasificación de los comentarios que los estudiantes dejaron en las evaluaciones
-                  del departamento durante el rango seleccionado.
-                </p>
-              </div>
-
-              <div className="divide-border grid divide-y sm:grid-cols-2 sm:divide-x sm:divide-y-0">
-                {stats.comments_risk_counts && (
-                  <div className="px-6 py-4">
-                    <h3 className="text-muted-foreground mb-3 text-xs font-medium tracking-wide uppercase">
-                      Por nivel de riesgo
-                    </h3>
-
-                    <DepartmentCommentRiskChart counts={stats.comments_risk_counts} />
-                  </div>
-                )}
-
-                {stats.comments_pedagogical_category_counts && (
-                  <div className="px-6 py-4">
-                    <h3 className="text-muted-foreground mb-3 text-xs font-medium tracking-wide uppercase">
-                      Por categoría pedagógica
-                    </h3>
-
-                    <DepartmentCommentCategoriesChart
-                      counts={stats.comments_pedagogical_category_counts}
-                    />
-                  </div>
-                )}
-              </div>
-            </section>
-          )}
-
-          {/* <DepartmentSubjectsTable
-            startPeriod={startPeriod?.code}
-            endPeriod={endPeriod?.code}
-            title="Promedios por asignatura"
-          /> */}
-        </div>
-      )}
-
-      {!isPending && !stats && !error && (
-        <p className="text-muted-foreground py-10 text-center text-sm">
-          No hay datos para el rango de periodos seleccionado.
-        </p>
-      )}
+      <DepartmentPeriodRangeSummaryLayout
+        stats={data?.data}
+        isPending={isPending}
+        isFetching={isFetching}
+        error={error}
+        startPeriod={startPeriod}
+        endPeriod={endPeriod}
+      />
     </div>
   )
 }
