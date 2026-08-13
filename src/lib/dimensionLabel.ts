@@ -5,22 +5,22 @@
  */
 const DIMENSION_META: Record<string, { label: string; key: string; color: string }> = {
   'Desarrollo del Conocimiento': {
-    label: 'Conocimiento',
+    label: 'Desarrollo del Conocimiento',
     key: 'conocimiento',
     color: 'var(--color-chart-1)',
   },
   'Desempeño Docente': {
-    label: 'Desempeño',
+    label: 'Desempeño Docente',
     key: 'desempeno',
     color: 'var(--color-chart-2)',
   },
   'Integración Interpersonal': {
-    label: 'Relaciones',
+    label: 'Integración Interpersonal',
     key: 'relaciones',
     color: 'var(--color-chart-3)',
   },
   'Procesos de Evaluación': {
-    label: 'Evaluación',
+    label: 'Procesos de Evaluación',
     key: 'evaluacion',
     color: 'var(--color-chart-4)',
   },
