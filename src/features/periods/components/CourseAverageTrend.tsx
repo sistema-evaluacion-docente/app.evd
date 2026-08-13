@@ -17,9 +17,8 @@ export interface CourseAverageTrendProps {
 
 /**
  * Evolution of one specific course across every period the teacher taught
- * it, against the department's average for the same course each period —
- * built on the shared `AverageTrendChart`, fed by
- * `useGetTeacherCourseHistory`.
+ * it — just their own average, no department comparison — built on the
+ * shared `AverageTrendChart`, fed by `useGetTeacherCourseHistory`.
  *
  * @example
  * <CourseAverageTrend courseCode={course.course_code} />
@@ -48,8 +47,6 @@ export function CourseAverageTrend({
     a.period_code.localeCompare(b.period_code),
   )
 
-  const hasDepartmentAverage = items.some((item) => item.department_average != null)
-
   const series: TrendSeries[] = [
     {
       id: 'overall_average',
@@ -60,18 +57,6 @@ export function CourseAverageTrend({
       })),
     },
   ]
-
-  if (hasDepartmentAverage) {
-    series.push({
-      id: 'department_average',
-      label: 'Promedio del departamento',
-      variant: 'dashed',
-      data: items.map((item) => ({
-        x: item.period_name ?? item.period_code,
-        value: item.department_average,
-      })),
-    })
-  }
 
   if (!effectiveTeacherId) return null
 

@@ -7,6 +7,7 @@ import { PeriodSelect, type PeriodSelectOption } from '@/components/common/Perio
 import { ScoreBadge } from '@/components/common/ScoreBadge'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { AI_STATUS_DISPLAY, type AiStatus } from '@/features/evaluations'
 import {
   CommentsPanel,
@@ -52,7 +53,11 @@ export default function PeriodCourseDetailPage() {
       ? periodCourses[courseIndex + 1]
       : undefined
 
-  const { data: historyData } = useGetTeacherCourseHistory({ teacherId, courseCode, limit: 12 })
+  const { data: historyData, isLoading: isHistoryLoading } = useGetTeacherCourseHistory({
+    teacherId,
+    courseCode,
+    limit: 12,
+  })
   const comparisonOptions = (historyData?.data.items ?? []).filter(
     (item) => item.period_code !== period,
   )
@@ -217,12 +222,16 @@ export default function PeriodCourseDetailPage() {
               Promedio en esta asignatura
             </p>
 
-            <span className="text-muted-foreground text-xs">
-              Ha dictado esta materia en:{' '}
-              <span className="text-foreground text-base font-bold">
-                {periodsTaughtCount} {periodsTaughtCount === 1 ? 'periodo' : 'periodos'}
+            {isHistoryLoading ? (
+              <Skeleton className="h-4 w-40" />
+            ) : (
+              <span className="text-muted-foreground text-xs">
+                Ha dictado esta materia en:{' '}
+                <span className="text-foreground text-base font-bold">
+                  {periodsTaughtCount} {periodsTaughtCount === 1 ? 'periodo' : 'periodos'}
+                </span>
               </span>
-            </span>
+            )}
           </div>
 
           <ScoreBadge
@@ -234,38 +243,46 @@ export default function PeriodCourseDetailPage() {
             className="mt-1"
           />
 
-          {comparisonSelectOptions.length > 0 && (
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="text-muted-foreground text-xs">
-                Comparar la misma materia respecto al periodo:
-              </span>
+          {isHistoryLoading ? (
+            <Skeleton className="mt-3 h-8 w-64" />
+          ) : (
+            comparisonSelectOptions.length > 0 && (
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="text-muted-foreground text-xs">
+                  Comparar la misma materia respecto al periodo:
+                </span>
 
-              <PeriodSelect
-                options={comparisonSelectOptions}
-                value={selectedComparison?.academic_period_id}
-                onValueChange={setComparisonPeriodId}
-                size="sm"
-                ariaLabel="Periodo de comparación"
-              />
-            </div>
+                <PeriodSelect
+                  options={comparisonSelectOptions}
+                  value={selectedComparison?.academic_period_id}
+                  onValueChange={setComparisonPeriodId}
+                  size="sm"
+                  ariaLabel="Periodo de comparación"
+                />
+              </div>
+            )
           )}
 
-          {(showBestMover || showWorstMover) && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {showBestMover && bestMover && (
-                <Badge className="gap-1 bg-emerald-50 text-emerald-700">
-                  <TrendingUp className="size-3.5" aria-hidden="true" />
-                  Mayor mejora: {bestMover.dimension} (+{bestMover.delta.toFixed(2)})
-                </Badge>
-              )}
+          {isHistoryLoading ? (
+            <Skeleton className="mt-4 h-5 w-48 rounded-full" />
+          ) : (
+            (showBestMover || showWorstMover) && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {showBestMover && bestMover && (
+                  <Badge className="gap-1 bg-emerald-50 text-emerald-700">
+                    <TrendingUp className="size-3.5" aria-hidden="true" />
+                    Mayor mejora: {bestMover.dimension} (+{bestMover.delta.toFixed(2)})
+                  </Badge>
+                )}
 
-              {showWorstMover && worstMover && (
-                <Badge className="gap-1 bg-red-50 text-red-700">
-                  <TrendingDown className="size-3.5" aria-hidden="true" />
-                  Requiere atención: {worstMover.dimension} ({worstMover.delta.toFixed(2)})
-                </Badge>
-              )}
-            </div>
+                {showWorstMover && worstMover && (
+                  <Badge className="gap-1 bg-red-50 text-red-700">
+                    <TrendingDown className="size-3.5" aria-hidden="true" />
+                    Requiere atención: {worstMover.dimension} ({worstMover.delta.toFixed(2)})
+                  </Badge>
+                )}
+              </div>
+            )
           )}
         </div>
 
@@ -315,16 +332,6 @@ export default function PeriodCourseDetailPage() {
 
       <section className="border-border bg-background rounded-md border">
         <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
-          Evolución en esta asignatura
-        </h2>
-
-        <div className="px-6 py-4">
-          <CourseAverageTrend courseCode={courseCode ?? ''} teacherId={teacherId} title={null} />
-        </div>
-      </section>
-
-      <section className="border-border bg-background rounded-md border">
-        <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
           {selectedComparison
             ? `Dimensiones pedagógicas comparadas con ${selectedComparison.period_name}`
             : 'Dimensiones pedagógicas'}
@@ -355,6 +362,16 @@ export default function PeriodCourseDetailPage() {
         title="Comentarios de los estudiantes"
         emptyMessage="Todavía no hay comentarios registrados para esta materia."
       />
+
+      <section className="border-border bg-background rounded-md border">
+        <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
+          Evolución de esta asignatura: {course.course_name}
+        </h2>
+
+        <div className="px-6 py-4">
+          <CourseAverageTrend courseCode={courseCode ?? ''} teacherId={teacherId} title={null} />
+        </div>
+      </section>
     </div>
   )
 }

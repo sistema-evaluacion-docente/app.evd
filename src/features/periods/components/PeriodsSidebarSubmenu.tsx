@@ -4,6 +4,7 @@ import { useLocation } from 'wouter'
 
 import { PeriodSelect, type PeriodSelectOption } from '@/components/common/PeriodSelect'
 import { ScoreBadge } from '@/components/common/ScoreBadge'
+import { Stagger } from '@/components/common/stagger'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import {
   SidebarMenuSub,
@@ -146,23 +147,25 @@ function PeriodCourseList({ routePeriod, periods, teacherId }: PeriodCourseListP
           Sin materias registradas
         </SidebarMenuSubItem>
       ) : (
-        courses.map((course) => {
+        courses.map((course, index) => {
           const href = courseHref(selectedPeriod, course.course_code, course.group_name)
           const isActive = location === href
 
           return (
             <SidebarMenuSubItem key={`${course.course_code}-${course.group_name}`}>
-              <SidebarMenuSubButton
-                render={<button type="button" />}
-                isActive={isActive}
-                className="h-auto min-h-7 w-full cursor-pointer items-start gap-2 py-1.5"
-                onClick={() => goToCourse(href)}
-              >
-                <span className="min-w-0 flex-1 text-left leading-snug wrap-break-word">
-                  {course.course_name}
-                </span>
-                <ScoreBadge value={course.overall_average} size="xs" className="shrink-0 pt-0.5" />
-              </SidebarMenuSubButton>
+              <Stagger delay={index * 40}>
+                <SidebarMenuSubButton
+                  render={<button type="button" />}
+                  isActive={isActive}
+                  className="h-auto min-h-7 w-full cursor-pointer items-start gap-2 py-1.5"
+                  onClick={() => goToCourse(href)}
+                >
+                  <span className="min-w-0 flex-1 text-left leading-snug wrap-break-word">
+                    {course.course_name}
+                  </span>
+                  <ScoreBadge value={course.overall_average} size="xs" className="shrink-0 pt-0.5" />
+                </SidebarMenuSubButton>
+              </Stagger>
             </SidebarMenuSubItem>
           )
         })
