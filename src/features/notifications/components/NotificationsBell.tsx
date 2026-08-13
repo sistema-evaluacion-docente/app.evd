@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AlertTriangle, Bell, CheckCheck, CheckCircle, Info, XCircle } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import { TransitionLink } from '@/components/common/TransitionLink'
 import formatDate from '@/lib/formatDate'
@@ -90,12 +90,7 @@ function NotificationItem({
  */
 export function NotificationsBell() {
   const [open, setOpen] = useState(false)
-  const { notifications, unreadCount, isLoading, refetch, markAsRead, markAllAsRead } =
-    useNotifications()
-
-  useEffect(() => {
-    if (open) void refetch()
-  }, [open, refetch])
+  const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead } = useNotifications()
 
   const handleMarkAsRead = (id: number) => {
     markAsRead([id])
