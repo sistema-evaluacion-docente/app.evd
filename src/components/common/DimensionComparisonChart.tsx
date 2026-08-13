@@ -1,3 +1,6 @@
+import { useId, useState } from 'react'
+
+import { Settings2 } from 'lucide-react'
 import {
   Bar,
   BarChart,
@@ -15,6 +18,7 @@ import {
 } from 'recharts'
 
 import { InlineError } from '@/components/common/InlineError'
+import { Button } from '@/components/ui/button'
 import {
   ChartContainer,
   ChartLegend,
@@ -23,6 +27,9 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from '@/components/ui/chart'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 
@@ -66,6 +73,13 @@ export interface DimensionComparisonChartProps {
   isLoading?: boolean
   error?: string | null
   emptyMessage?: string
+  /**
+   * Shows a button that opens a popover to override the axis min/max on the
+   * fly, e.g. to zoom into a narrow band of scores. Purely a display
+   * preference — kept as local UI state, never reported back to the caller.
+   * Defaults to `true`.
+   */
+  customizable?: boolean
   /** Dashed marker, e.g. the institutional target or the overall average. */
   referenceValue?: number
   referenceLabel?: string
@@ -136,6 +150,7 @@ export function DimensionComparisonChart({
   isLoading = false,
   error = null,
   emptyMessage = 'No hay dimensiones para comparar.',
+  customizable = true,
   referenceValue,
   referenceLabel,
   showLegend,
@@ -148,6 +163,21 @@ export function DimensionComparisonChart({
   chartClassName,
   className,
 }: DimensionComparisonChartProps) {
+  const minInputId = useId()
+  const maxInputId = useId()
+
+  const [minOverride, setMinOverride] = useState<number | undefined>(undefined)
+  const [maxOverride, setMaxOverride] = useState<number | undefined>(undefined)
+
+  const effectiveMin = minOverride ?? min
+  const effectiveMax = maxOverride ?? max
+  const isCustomized = minOverride != null || maxOverride != null
+
+  const handleResetBounds = () => {
+    setMinOverride(undefined)
+    setMaxOverride(undefined)
+  }
+
   const formatValue = valueFormatter ?? ((value: number) => value.toFixed(decimals))
   const withLegend = showLegend ?? series.length > 1
   const withValues = showValues ?? series.length <= 2
@@ -200,20 +230,210 @@ export function DimensionComparisonChart({
     )
   }
 
-  const boxClass = cn('h-64 w-full', chartClassName, className)
+  const boxClass = cn('h-64 w-full pt-6', chartClassName)
   const tickStyle = { fontSize: 11, fill: 'var(--color-muted-foreground)' }
+
+  const rangeControl = customizable && (
+    <Popover>
+      <PopoverTrigger
+        render={
+          <Button
+            type="button"
+            size="icon-sm"
+            aria-label="Personalizar gráfico"
+            className={cn(
+              'absolute top-0 right-0 z-10',
+              isCustomized && 'text-primary bg-primary/10 hover:bg-primary/15',
+            )}
+          />
+        }
+      >
+        <Settings2 className="size-4" aria-hidden="true" />
+      </PopoverTrigger>
+
+      <PopoverContent align="end" className="w-64">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold">Personalizar gráfico</p>
+
+          {isCustomized && (
+            <button
+              type="button"
+              onClick={handleResetBounds}
+              className="text-muted-foreground hover:text-foreground cursor-pointer text-xs font-medium transition-colors"
+            >
+              Restablecer
+            </button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor={minInputId} className="text-xs font-medium">
+              Mínimo
+            </Label>
+
+            <Input
+              id={minInputId}
+              type="number"
+              step={0.1}
+              max={effectiveMax}
+              value={effectiveMin}
+              onChange={(event) => {
+                const raw = event.target.value
+                setMinOverride(raw === '' ? undefined : Number(raw))
+              }}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor={maxInputId} className="text-xs font-medium">
+              Máximo
+            </Label>
+
+            <Input
+              id={maxInputId}
+              type="number"
+              step={0.1}
+              min={effectiveMin}
+              value={effectiveMax}
+              onChange={(event) => {
+                const raw = event.target.value
+                setMaxOverride(raw === '' ? undefined : Number(raw))
+              }}
+            />
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  )
 
   if (variant === 'radar') {
     return (
-      <ChartContainer config={chartConfig} className={boxClass}>
-        <RadarChart data={rows} outerRadius="72%">
-          {showGrid && <PolarGrid stroke="var(--color-border)" />}
+      <div className={cn('relative', className)}>
+        {rangeControl}
 
-          <PolarAngleAxis dataKey="dimension" tick={tickStyle} />
-          <PolarRadiusAxis domain={[min, max]} tick={tickStyle} axisLine={false} />
+        <ChartContainer config={chartConfig} className={boxClass}>
+          <RadarChart data={rows} outerRadius="72%">
+            {showGrid && <PolarGrid stroke="var(--color-border)" />}
+
+            <PolarAngleAxis dataKey="dimension" tick={tickStyle} />
+            <PolarRadiusAxis
+              domain={[effectiveMin, effectiveMax]}
+              tick={tickStyle}
+              axisLine={false}
+            />
+
+            {showTooltip && (
+              <ChartTooltip
+                content={<ChartTooltipContent formatter={(value) => formatValue(Number(value))} />}
+              />
+            )}
+
+            {withLegend && <ChartLegend content={<ChartLegendContent />} />}
+
+            {series.map((entry, index) => {
+              const color = entry.color ?? PALETTE[index % PALETTE.length]
+
+              return (
+                <Radar
+                  key={entry.id}
+                  dataKey={entry.id}
+                  name={entry.label}
+                  stroke={color}
+                  strokeWidth={2}
+                  fill={color}
+                  fillOpacity={singleSeries ? 0.18 : 0.1}
+                  dot={{ r: 3, fill: color, stroke: 'var(--color-background)', strokeWidth: 1 }}
+                  isAnimationActive={false}
+                />
+              )
+            })}
+          </RadarChart>
+        </ChartContainer>
+      </div>
+    )
+  }
+
+  const isHorizontal = orientation === 'horizontal'
+
+  return (
+    <div className={cn('relative', className)}>
+      {rangeControl}
+
+      <ChartContainer config={chartConfig} className={boxClass}>
+        <BarChart
+          data={rows}
+          layout={isHorizontal ? 'vertical' : 'horizontal'}
+          margin={{ top: 8, right: withValues ? 40 : 12, left: isHorizontal ? 8 : -16, bottom: 8 }}
+          barGap={2}
+        >
+          {showGrid && (
+            <CartesianGrid
+              horizontal={!isHorizontal}
+              vertical={isHorizontal}
+              stroke="var(--color-border)"
+            />
+          )}
+
+          {isHorizontal ? (
+            <>
+              <XAxis
+                type="number"
+                domain={[effectiveMin, effectiveMax]}
+                tickLine={false}
+                axisLine={false}
+                tick={tickStyle}
+              />
+              <YAxis
+                type="category"
+                dataKey="dimension"
+                width={120}
+                tickLine={false}
+                axisLine={false}
+                tick={tickStyle}
+              />
+            </>
+          ) : (
+            <>
+              <XAxis
+                type="category"
+                dataKey="dimension"
+                tickLine={false}
+                axisLine={false}
+                tick={tickStyle}
+              />
+              <YAxis
+                type="number"
+                domain={[effectiveMin, effectiveMax]}
+                tickLine={false}
+                axisLine={false}
+                tick={tickStyle}
+              />
+            </>
+          )}
+
+          {referenceValue != null && (
+            <ReferenceLine
+              {...(isHorizontal ? { x: referenceValue } : { y: referenceValue })}
+              stroke="var(--color-muted-foreground)"
+              strokeDasharray="4 4"
+              strokeOpacity={0.6}
+              label={
+                referenceLabel
+                  ? {
+                      value: referenceLabel,
+                      position: isHorizontal ? 'insideTopRight' : 'insideTopLeft',
+                      fontSize: 10,
+                      fill: 'var(--color-muted-foreground)',
+                    }
+                  : undefined
+              }
+            />
+          )}
 
           {showTooltip && (
             <ChartTooltip
+              cursor={{ fill: 'var(--color-muted)', fillOpacity: 0.4 }}
               content={<ChartTooltipContent formatter={(value) => formatValue(Number(value))} />}
             />
           )}
@@ -224,142 +444,38 @@ export function DimensionComparisonChart({
             const color = entry.color ?? PALETTE[index % PALETTE.length]
 
             return (
-              <Radar
+              <Bar
                 key={entry.id}
                 dataKey={entry.id}
                 name={entry.label}
-                stroke={color}
-                strokeWidth={2}
                 fill={color}
-                fillOpacity={singleSeries ? 0.18 : 0.1}
-                dot={{ r: 3, fill: color, stroke: 'var(--color-background)', strokeWidth: 1 }}
+                radius={4}
+                maxBarSize={28}
                 isAnimationActive={false}
-              />
+              >
+                {paintByDimension &&
+                  axis.map((dimension, dimensionIndex) => (
+                    <Cell
+                      key={dimension.key}
+                      fill={dimension.color ?? PALETTE[dimensionIndex % PALETTE.length]}
+                    />
+                  ))}
+
+                {withValues && (
+                  <LabelList
+                    dataKey={`${entry.id}${LABEL_SUFFIX}`}
+                    position={isHorizontal ? 'right' : 'top'}
+                    offset={6}
+                    className="fill-foreground"
+                    fontSize={11}
+                  />
+                )}
+              </Bar>
             )
           })}
-        </RadarChart>
+        </BarChart>
       </ChartContainer>
-    )
-  }
-
-  const isHorizontal = orientation === 'horizontal'
-
-  return (
-    <ChartContainer config={chartConfig} className={boxClass}>
-      <BarChart
-        data={rows}
-        layout={isHorizontal ? 'vertical' : 'horizontal'}
-        margin={{ top: 8, right: withValues ? 40 : 12, left: isHorizontal ? 8 : -16, bottom: 8 }}
-        barGap={2}
-      >
-        {showGrid && (
-          <CartesianGrid
-            horizontal={!isHorizontal}
-            vertical={isHorizontal}
-            stroke="var(--color-border)"
-          />
-        )}
-
-        {isHorizontal ? (
-          <>
-            <XAxis
-              type="number"
-              domain={[min, max]}
-              tickLine={false}
-              axisLine={false}
-              tick={tickStyle}
-            />
-            <YAxis
-              type="category"
-              dataKey="dimension"
-              width={120}
-              tickLine={false}
-              axisLine={false}
-              tick={tickStyle}
-            />
-          </>
-        ) : (
-          <>
-            <XAxis
-              type="category"
-              dataKey="dimension"
-              tickLine={false}
-              axisLine={false}
-              tick={tickStyle}
-            />
-            <YAxis
-              type="number"
-              domain={[min, max]}
-              tickLine={false}
-              axisLine={false}
-              tick={tickStyle}
-            />
-          </>
-        )}
-
-        {referenceValue != null && (
-          <ReferenceLine
-            {...(isHorizontal ? { x: referenceValue } : { y: referenceValue })}
-            stroke="var(--color-muted-foreground)"
-            strokeDasharray="4 4"
-            strokeOpacity={0.6}
-            label={
-              referenceLabel
-                ? {
-                    value: referenceLabel,
-                    position: isHorizontal ? 'insideTopRight' : 'insideTopLeft',
-                    fontSize: 10,
-                    fill: 'var(--color-muted-foreground)',
-                  }
-                : undefined
-            }
-          />
-        )}
-
-        {showTooltip && (
-          <ChartTooltip
-            cursor={{ fill: 'var(--color-muted)', fillOpacity: 0.4 }}
-            content={<ChartTooltipContent formatter={(value) => formatValue(Number(value))} />}
-          />
-        )}
-
-        {withLegend && <ChartLegend content={<ChartLegendContent />} />}
-
-        {series.map((entry, index) => {
-          const color = entry.color ?? PALETTE[index % PALETTE.length]
-
-          return (
-            <Bar
-              key={entry.id}
-              dataKey={entry.id}
-              name={entry.label}
-              fill={color}
-              radius={4}
-              maxBarSize={28}
-              isAnimationActive={false}
-            >
-              {paintByDimension &&
-                axis.map((dimension, dimensionIndex) => (
-                  <Cell
-                    key={dimension.key}
-                    fill={dimension.color ?? PALETTE[dimensionIndex % PALETTE.length]}
-                  />
-                ))}
-
-              {withValues && (
-                <LabelList
-                  dataKey={`${entry.id}${LABEL_SUFFIX}`}
-                  position={isHorizontal ? 'right' : 'top'}
-                  offset={6}
-                  className="fill-foreground"
-                  fontSize={11}
-                />
-              )}
-            </Bar>
-          )
-        })}
-      </BarChart>
-    </ChartContainer>
+    </div>
   )
 }
 
