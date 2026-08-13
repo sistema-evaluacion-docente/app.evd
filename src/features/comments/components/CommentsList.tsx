@@ -62,6 +62,7 @@ export function CommentsList() {
       ? Number(filters.pedagogicalCategoryId)
       : undefined,
     search: debouncedSearch,
+    enabled: periodId !== undefined,
   })
 
   const comments = data?.data ?? []

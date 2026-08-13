@@ -51,6 +51,7 @@ export function useGetComments({
   riskLevel,
   pedagogicalCategoryId,
   search = '',
+  enabled = true,
 }: {
   page?: number
   limit?: number
@@ -59,6 +60,8 @@ export function useGetComments({
   riskLevel?: number
   pedagogicalCategoryId?: number
   search?: string
+  /** Set to false while a required filter (e.g. the period) hasn't resolved yet. */
+  enabled?: boolean
 } = {}) {
   return useQuery({
     queryKey: [
@@ -77,5 +80,6 @@ export function useGetComments({
       }),
     staleTime: 60_000,
     placeholderData: keepPreviousData,
+    enabled,
   })
 }
