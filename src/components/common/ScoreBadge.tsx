@@ -10,8 +10,14 @@ type ScoreTrendDirection = 'up' | 'down' | 'flat'
 export interface ScoreBadgeProps {
   /** Score to display, or null to render the placeholder. */
   value?: number
-  /** Maximum possible score, shown after the slash. Defaults to 5. */
+  /** Maximum possible score. Only shown when `showMax` is `true`. Defaults to 5. */
   max?: number
+  /**
+   * Show `max` after a slash (e.g. "3.92 / 5.0"), at the same font size as
+   * the value. Defaults to `false` to keep every existing usage unchanged —
+   * enable it for prominent, standalone score displays.
+   */
+  showMax?: boolean
   /** Number of decimals for both the value and the max. Defaults to 1. */
   decimals?: number
   /**
@@ -113,9 +119,14 @@ const TREND_WORD: Record<ScoreTrendDirection, string> = {
  *   size="5xl"
  *   tone="auto"
  * />
+ *
+ * @example
+ * <ScoreBadge value={3.92} previousValue={3.65} size="5xl" showMax />
  */
 export function ScoreBadge({
   value,
+  max = 5,
+  showMax = false,
   decimals = 2,
   tone = 'auto',
   size = 'sm',
@@ -146,17 +157,28 @@ export function ScoreBadge({
   /** No point flagging a trend when the score didn't actually move. */
   const showTrendBadge = comparisonValue != null && showTrend && delta !== 0
 
-  const score = (
+  const valueSpan = (
     <span
       className={cn(
         'font-semibold tabular-nums',
         SIZE_CLASS[size],
         toneClass,
-        !showTrendBadge && className,
+        !showTrendBadge && !showMax && className,
       )}
     >
       {value.toFixed(decimals)}
     </span>
+  )
+
+  const score = showMax ? (
+    <span className={cn('inline-flex items-baseline', !showTrendBadge && className)}>
+      {valueSpan}
+      <span className={cn('text-muted-foreground/70 ml-1 font-normal', SIZE_CLASS[size])}>
+        /{max.toFixed(1)}
+      </span>
+    </span>
+  ) : (
+    valueSpan
   )
 
   if (!showTrendBadge) return score

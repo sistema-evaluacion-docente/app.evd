@@ -11,6 +11,11 @@ export { CommentList } from './CommentList'
 export type { CommentListProps } from './CommentList'
 export { CommentsPanel } from './CommentsPanel'
 export type { CommentsPanelProps } from './CommentsPanel'
+export { CourseDimensionBreakdown } from './CourseDimensionBreakdown'
+export type {
+  CourseComparisonSource,
+  CourseDimensionBreakdownProps,
+} from './CourseDimensionBreakdown'
 export { TeacherAveragesTable } from './TeacherAveragesTable'
 export type { TeacherAveragesTableProps } from './TeacherAveragesTable'
 export { TeacherComments } from './TeacherComments'

@@ -1,3 +1,5 @@
+import type { AiStatus } from '@/features/evaluations'
+
 /** Risk classification assigned to a comment by the AI analysis. */
 export interface CommentRiskLevel {
   id: number
@@ -55,5 +57,7 @@ export interface TeacherCommentsCourse {
 export interface TeacherCommentsData {
   teacher_id: number
   evaluation_id: number
+  /** Whether the AI has finished classifying these comments by risk/category yet. */
+  ai_status: AiStatus | null
   courses: TeacherCommentsCourse[]
 }

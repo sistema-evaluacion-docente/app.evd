@@ -2,11 +2,10 @@ import { ArrowUpRight, ChevronRight } from 'lucide-react'
 import { Link } from 'wouter'
 
 import { ScoreBadge } from '@/components/common/ScoreBadge'
-import { ScoreProgress } from '@/components/common/ScoreProgress'
 import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import { dimensionColor } from '@/lib/dimensionLabel'
-import type { CourseDetail, DimensionDetail, TeacherDetail } from '../types'
+import type { CourseDetail, TeacherDetail } from '../types'
+import { CourseDimensionBreakdown } from './CourseDimensionBreakdown'
 
 interface TeacherCourseResultsProps {
   teacher: TeacherDetail
@@ -109,99 +108,11 @@ function CourseRow({
       </div>
 
       <CollapsibleContent>
-        <div className="divide-border divide-y px-6 pb-2">
-          {course.dimensions.map((dimension) => {
-            const previousDimension = previousCourse?.dimensions.find(
-              (previous) => previous.dimension === dimension.dimension,
-            )
-
-            return (
-              <DimensionRow
-                key={dimension.dimension}
-                dimension={dimension}
-                previousDimension={previousDimension}
-              />
-            )
-          })}
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
-  )
-}
-
-function DimensionRow({
-  dimension,
-  previousDimension,
-}: {
-  dimension: DimensionDetail
-  previousDimension?: DimensionDetail
-}) {
-  return (
-    <Collapsible>
-      <CollapsibleTrigger className="hover:bg-muted/30 group flex w-full items-center justify-between gap-4 py-3 text-left transition-colors">
-        <span className="flex min-w-0 items-center gap-2">
-          <ChevronRight
-            aria-hidden="true"
-            className="text-muted-foreground size-3.5 shrink-0 transition-transform group-data-panel-open:rotate-90"
-          />
-
-          <span
-            aria-hidden="true"
-            className="size-1.5 shrink-0 rounded-full"
-            style={{ backgroundColor: dimensionColor(dimension.dimension) }}
-          />
-
-          <span className="text-muted-foreground truncate text-xs font-medium tracking-wide uppercase">
-            {dimension.dimension}
-          </span>
-        </span>
-
-        <ScoreBadge
-          size="lg"
-          value={dimension.average}
-          previousValue={previousDimension?.average}
-          previousLabel="periodo anterior"
+        <CourseDimensionBreakdown
+          course={course}
+          previousCourse={previousCourse}
+          className="px-6 pb-2"
         />
-      </CollapsibleTrigger>
-
-      <CollapsibleContent>
-        <div className="space-y-6 py-4 pl-5.5">
-          {dimension.questions.map((question) => {
-            const previousQuestion = previousDimension?.questions.find(
-              (previous) => previous.code === question.code,
-            )
-
-            return (
-              <div
-                key={question.code}
-                className="flex flex-col md:flex-row md:items-center md:justify-between"
-              >
-                <div className="flex items-baseline justify-between gap-4">
-                  <span className="text-sm">
-                    {question.code}. {question.text}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <ScoreProgress
-                    value={question.score}
-                    previousValue={previousQuestion?.score}
-                    previousLabel="periodo anterior"
-                    showTrend={false}
-                    label={question.text}
-                    className="min-w-20"
-                  />
-
-                  <ScoreBadge
-                    value={question.score}
-                    previousValue={previousQuestion?.score}
-                    previousLabel="periodo anterior"
-                  />
-                </div>
-              </div>
-            )
-          })}
-        </div>
       </CollapsibleContent>
     </Collapsible>
   )
