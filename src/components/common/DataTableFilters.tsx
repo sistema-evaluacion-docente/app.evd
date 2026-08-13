@@ -182,7 +182,7 @@ function DateRangeFilter({
               type="button"
               variant="outline"
               className={cn(
-                'flex-1 w-full justify-start text-left font-normal',
+                'w-full flex-1 justify-start text-left font-normal',
                 !value?.from && 'text-muted-foreground',
               )}
             />
@@ -262,7 +262,9 @@ function SelectFilter({
         onValueChange={(val) => onChange(val === '' || val == null ? undefined : val)}
       >
         <SelectTrigger className="w-full">
-          <SelectValue placeholder={config.placeholder || 'Seleccionar...'} />
+          <SelectValue placeholder={config.placeholder || 'Seleccionar...'}>
+            {config.options.find((option) => String(option.value) === String(value))?.label}
+          </SelectValue>
         </SelectTrigger>
 
         <SelectContent>
