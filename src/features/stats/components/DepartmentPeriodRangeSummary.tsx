@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 
 import { AverageTrendChart } from '@/components/common/AverageTrendChart'
 import { InlineError } from '@/components/common/InlineError'
 import { PeriodSelect } from '@/components/common/PeriodSelect'
+import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
+import { Switch } from '@/components/ui/switch'
 import { useGetAcademicPeriods } from '@/features/periods'
 import { cn } from '@/lib/utils'
 import { useGetDepartmentPeriodRangeStats } from '../api'
@@ -14,18 +16,17 @@ import { DepartmentDimensionsChart } from './DepartmentDimensionsChart'
 import { DepartmentStatsHero } from './DepartmentStatsHero'
 
 export interface DepartmentPeriodRangeSummaryProps {
-  /** How many trailing periods to preselect once periods load. Defaults to 1 (just the latest period). */
+  /** How many trailing periods to preselect once "comparar un rango" is turned on. Defaults to 2. */
   defaultRangeSize?: number
   className?: string
 }
 
 /**
  * Full self-contained widget with the director's own department averages —
- * overall, per-dimension, per-period trend and per-subject — across a
- * selectable range of academic periods
- * (`GET /stats/departments/period-range`). Owns its own start/end period
- * selectors and query, so it can be dropped straight into the dashboard.
- * Defaults to showing just the latest period until the user widens the range.
+ * overall, per-dimension, per-period trend and comment breakdowns
+ * (`GET /stats/departments/period-range`). Defaults to the single most
+ * recent period, the common case; comparing a range of periods is an
+ * explicit opt-in via a toggle, not the default view.
  *
  * @example
  * <DepartmentPeriodRangeSummary />
@@ -34,9 +35,10 @@ export interface DepartmentPeriodRangeSummaryProps {
  * <DepartmentPeriodRangeSummary defaultRangeSize={4} />
  */
 export function DepartmentPeriodRangeSummary({
-  defaultRangeSize = 1,
+  defaultRangeSize = 2,
   className,
 }: DepartmentPeriodRangeSummaryProps) {
+  const compareRangeId = useId()
   const { data: periodsData, isPending: isPeriodsPending } = useGetAcademicPeriods()
   const periods = periodsData?.data ?? []
   const sortedPeriods = [...periods].sort((a, b) => a.code.localeCompare(b.code))
@@ -46,11 +48,14 @@ export function DepartmentPeriodRangeSummary({
   const defaultEnd = sortedPeriods[sortedPeriods.length - 1]
   const defaultStart = sortedPeriods[Math.max(0, sortedPeriods.length - defaultRangeSize)]
 
+  const [compareRange, setCompareRange] = useState(false)
   const [startPeriodId, setStartPeriodId] = useState<number | undefined>(undefined)
   const [endPeriodId, setEndPeriodId] = useState<number | undefined>(undefined)
 
-  const effectiveStartId = startPeriodId ?? defaultStart?.id
   const effectiveEndId = endPeriodId ?? defaultEnd?.id
+  // Outside "comparar un rango" mode, start always tracks end — there's only
+  // ever one period selector on screen, so nothing can drift out of sync.
+  const effectiveStartId = compareRange ? (startPeriodId ?? defaultStart?.id) : effectiveEndId
 
   const startPeriod = periods.find((period) => period.id === effectiveStartId)
   const endPeriod = periods.find((period) => period.id === effectiveEndId)
@@ -66,7 +71,9 @@ export function DepartmentPeriodRangeSummary({
     setEndPeriodId(id)
 
     const period = periods.find((p) => p.id === id)
-    if (period && startPeriod && period.code < startPeriod.code) setStartPeriodId(id)
+    if (period && compareRange && startPeriod && period.code < startPeriod.code) {
+      setStartPeriodId(id)
+    }
   }
 
   const { data, isPending, isFetching, error } = useGetDepartmentPeriodRangeStats({
@@ -86,24 +93,44 @@ export function DepartmentPeriodRangeSummary({
 
   return (
     <div className={cn('space-y-6', className)}>
-      <div className="flex flex-wrap items-center gap-3">
-        <PeriodSelect
-          value={effectiveStartId}
-          onValueChange={handleStartChange}
-          placeholder="Periodo inicial"
-          ariaLabel="Periodo inicial"
-        />
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {compareRange ? (
+            <>
+              <PeriodSelect
+                value={effectiveStartId}
+                onValueChange={handleStartChange}
+                placeholder="Periodo inicial"
+                ariaLabel="Periodo inicial"
+              />
 
-        <span className="text-muted-foreground text-sm">hasta</span>
+              <span className="text-muted-foreground text-sm">hasta</span>
 
-        <PeriodSelect
-          value={effectiveEndId}
-          onValueChange={handleEndChange}
-          placeholder="Periodo final"
-          ariaLabel="Periodo final"
-        />
+              <PeriodSelect
+                value={effectiveEndId}
+                onValueChange={handleEndChange}
+                placeholder="Periodo final"
+                ariaLabel="Periodo final"
+              />
+            </>
+          ) : (
+            <PeriodSelect
+              value={effectiveEndId}
+              onValueChange={handleEndChange}
+              placeholder="Periodo"
+              ariaLabel="Periodo"
+            />
+          )}
 
-        {isFetching && <Spinner className="text-muted-foreground size-4" />}
+          {isFetching && <Spinner className="text-muted-foreground size-4" />}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Switch id={compareRangeId} checked={compareRange} onCheckedChange={setCompareRange} />
+          <Label htmlFor={compareRangeId} className="text-muted-foreground text-sm font-normal">
+            Comparar un rango de periodos
+          </Label>
+        </div>
       </div>
 
       {error && <InlineError message={error.message} />}
@@ -129,7 +156,7 @@ export function DepartmentPeriodRangeSummary({
             }
           />
 
-          {startPeriod !== endPeriod && (
+          {compareRange && startPeriod !== endPeriod && (
             <section className="border-border bg-background rounded-md border">
               <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
                 Evolución del promedio por periodo
@@ -204,11 +231,8 @@ export function DepartmentPeriodRangeSummary({
             </section>
           )}
 
-          {/* <DepartmentSubjectsTable
-            startPeriod={startPeriod?.code}
-            endPeriod={endPeriod?.code}
-            title="Promedios por asignatura"
-          /> */}
+          {/* Subjects table intentionally not shown here — belongs to the
+              dedicated Materias flow, not the general summary. */}
         </div>
       )}
 

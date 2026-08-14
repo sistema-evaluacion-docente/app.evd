@@ -5,6 +5,7 @@ import { PageTitle } from '@/components/common/PageTitle'
 import TeacherDetailSkeleton from '@/components/skeletons/TeacherDetailSkeleton'
 import { useGetTeacherDetail } from '../api'
 import { TeacherEvaluationDetail } from '../components'
+import { courseTeacherHref } from '../config'
 
 /**
  * Full page displaying the detail of a single teacher for a specific academic period.
@@ -34,7 +35,12 @@ export default function TeacherDetailPage() {
   return (
     <div className="space-y-6">
       <BackButton href={`/docentes?period=${teacher.period_name}`} className="mb-4" />
-      <TeacherEvaluationDetail teacher={teacher} />
+      <TeacherEvaluationDetail
+        teacher={teacher}
+        getCourseHref={(course) =>
+          courseTeacherHref(course.course_code, teacher.teacher_id, teacher.period_code, course.group_name)
+        }
+      />
     </div>
   )
 }

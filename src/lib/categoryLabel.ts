@@ -70,7 +70,8 @@ const CATEGORY_META: Record<string, CategoryMeta> = {
 /** Every category in display order, for legends and help panels. */
 export const CATEGORIES: CategoryMeta[] = Object.values(CATEGORY_META)
 
-const UNCATEGORIZED = 'LABEL_4'
+/** Category code the AI assigns when a comment doesn't fit any real category. */
+export const UNCATEGORIZED = 'LABEL_4'
 const FALLBACK_COLOR = 'var(--color-muted-foreground)'
 
 /** Normalizes an incoming category name to its `LABEL_n` key when possible. */
