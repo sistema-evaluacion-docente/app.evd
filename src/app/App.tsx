@@ -23,6 +23,7 @@ import {
   PeriodDetailPage,
   PeriodsPage,
 } from '@/features/periods'
+import { CreatePlanPage, MyPlansPage, PlanDetailPage, PlansPage } from '@/features/plans'
 import { TeacherDetailPage, TeachersPage, TeacherUploadPage } from '@/features/teachers'
 import { UsersPage } from '@/features/users'
 
@@ -77,6 +78,30 @@ function App() {
         <Route path="/comentarios">
           <AppLayout>
             <CommentsPage />
+          </AppLayout>
+        </Route>
+
+        <Route path="/mis-planes">
+          <AppLayout>
+            <MyPlansPage />
+          </AppLayout>
+        </Route>
+
+        <Route path="/planes/nuevo">
+          <AppLayout>
+            <CreatePlanPage />
+          </AppLayout>
+        </Route>
+
+        <Route path="/planes">
+          <AppLayout>
+            <PlansPage />
+          </AppLayout>
+        </Route>
+
+        <Route path="/planes/:id">
+          <AppLayout>
+            <PlanDetailPage />
           </AppLayout>
         </Route>
 
