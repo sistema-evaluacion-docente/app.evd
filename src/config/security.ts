@@ -5,26 +5,16 @@ const securityConfig = {
       name: 'Mi Resumen',
       roles: ['DIRECTOR DE DEPARTAMENTO', 'ADMIN', 'DOCENTE'],
     },
-    // {
-    //   path: "/summary",
-    //   name: "Mi Resumen",
-    //   roles: ["DOCENTE"],
-    // },
     {
       path: '/periodos',
       name: 'Mis periodos',
       roles: ['DOCENTE'],
     },
-    // {
-    //   path: "/summary",
-    //   name: "Mi Resumen",
-    //   roles: ["DOCENTE"],
-    // },
-    // {
-    //   path: "/my-plans",
-    //   name: "Mi Plan de Mejora",
-    //   roles: ["DOCENTE"],
-    // },
+    {
+      path: '/mis-planes',
+      name: 'Mi plan de mejoramiento',
+      roles: ['DOCENTE'],
+    },
     {
       path: '/evaluaciones',
       name: 'Evaluaciones',
@@ -38,6 +28,11 @@ const securityConfig = {
     {
       path: '/comentarios',
       name: 'Comentarios',
+      roles: ['DIRECTOR DE DEPARTAMENTO'],
+    },
+    {
+      path: '/planes',
+      name: 'Planes de mejoramiento',
       roles: ['DIRECTOR DE DEPARTAMENTO'],
     },
     {
