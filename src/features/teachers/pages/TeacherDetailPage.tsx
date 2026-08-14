@@ -3,6 +3,7 @@ import { useRoute, useSearchParams } from 'wouter'
 import { BackButton } from '@/components/common/BackButton'
 import { PageTitle } from '@/components/common/PageTitle'
 import TeacherDetailSkeleton from '@/components/skeletons/TeacherDetailSkeleton'
+import { TeacherPlanAction } from '@/features/plans'
 import { useGetTeacherDetail } from '../api'
 import { TeacherEvaluationDetail } from '../components'
 
@@ -35,6 +36,7 @@ export default function TeacherDetailPage() {
     <div className="space-y-6">
       <BackButton href={`/docentes?period=${teacher.period_name}`} className="mb-4" />
       <TeacherEvaluationDetail teacher={teacher} />
+      <TeacherPlanAction teacherId={teacher.teacher_id} periodCode={teacher.period_code} />
     </div>
   )
 }
