@@ -99,6 +99,7 @@ function CourseRow({
             <Button
               variant="ghost"
               size="sm"
+              nativeButton={false}
               className="text-muted-foreground hover:text-primary gap-1 hover:bg-transparent"
               render={<Link href={href} />}
             >

@@ -384,106 +384,108 @@ export function DataTableFilters({
         />
       ))}
 
-      <Popover>
-        <PopoverTrigger
-          render={
-            <Button
-              type="button"
-              variant="outline"
-              className={cn(
-                'gap-2',
-                hasActive && 'border-primary/40 bg-primary/5 text-primary hover:bg-primary/10',
-                className,
-              )}
-            />
-          }
-        >
-          <ListFilter className="size-4" aria-hidden="true" />
-          {triggerLabel}
-          {hasActive && (
-            <Badge variant="secondary" className="ml-0.5 min-w-5 justify-center px-1.5">
-              {activeCount}
-            </Badge>
-          )}
-        </PopoverTrigger>
+      {popoverFilters.length > 0 && (
+        <Popover>
+          <PopoverTrigger
+            render={
+              <Button
+                type="button"
+                variant="outline"
+                className={cn(
+                  'gap-2',
+                  hasActive && 'border-primary/40 bg-primary/5 text-primary hover:bg-primary/10',
+                  className,
+                )}
+              />
+            }
+          >
+            <ListFilter className="size-4" aria-hidden="true" />
+            {triggerLabel}
+            {hasActive && (
+              <Badge variant="secondary" className="ml-0.5 min-w-5 justify-center px-1.5">
+                {activeCount}
+              </Badge>
+            )}
+          </PopoverTrigger>
 
-        <PopoverContent align="end" className="w-80 p-0" sideOffset={6}>
-          <div className="flex items-center justify-between border-b px-4 py-3">
-            <div className="flex items-center gap-2">
-              <ListFilter className="text-muted-foreground size-4" aria-hidden="true" />
+          <PopoverContent align="end" className="w-80 p-0" sideOffset={6}>
+            <div className="flex items-center justify-between border-b px-4 py-3">
+              <div className="flex items-center gap-2">
+                <ListFilter className="text-muted-foreground size-4" aria-hidden="true" />
 
-              <span className="text-sm font-semibold">{triggerLabel}</span>
+                <span className="text-sm font-semibold">{triggerLabel}</span>
+
+                {hasActive && (
+                  <Badge variant="secondary" className="min-w-5 justify-center px-1.5">
+                    {activeCount}
+                  </Badge>
+                )}
+              </div>
 
               {hasActive && (
-                <Badge variant="secondary" className="min-w-5 justify-center px-1.5">
-                  {activeCount}
-                </Badge>
+                <button
+                  type="button"
+                  onClick={handleClearAll}
+                  className="text-muted-foreground hover:text-foreground cursor-pointer text-xs font-medium transition-colors"
+                >
+                  {clearAllLabel}
+                </button>
               )}
             </div>
 
-            {hasActive && (
-              <button
-                type="button"
-                onClick={handleClearAll}
-                className="text-muted-foreground hover:text-foreground cursor-pointer text-xs font-medium transition-colors"
-              >
-                {clearAllLabel}
-              </button>
-            )}
-          </div>
+            <div className="max-h-[60vh] space-y-5 overflow-y-auto p-4">
+              {popoverFilters.map((filter) => {
+                const value = values[filter.name]
 
-          <div className="max-h-[60vh] space-y-5 overflow-y-auto p-4">
-            {popoverFilters.map((filter) => {
-              const value = values[filter.name]
+                return (
+                  <div key={filter.name} className="space-y-1.5">
+                    {filter.label && filter.type !== 'boolean' && (
+                      <Label htmlFor={filter.name} className="text-xs font-medium">
+                        {filter.label}
+                      </Label>
+                    )}
 
-              return (
-                <div key={filter.name} className="space-y-1.5">
-                  {filter.label && filter.type !== 'boolean' && (
-                    <Label htmlFor={filter.name} className="text-xs font-medium">
-                      {filter.label}
-                    </Label>
-                  )}
+                    {filter.type === 'date' && (
+                      <DateFilter
+                        config={filter}
+                        value={value as Date | undefined}
+                        onChange={(val) => handleChange(filter.name, val)}
+                      />
+                    )}
 
-                  {filter.type === 'date' && (
-                    <DateFilter
-                      config={filter}
-                      value={value as Date | undefined}
-                      onChange={(val) => handleChange(filter.name, val)}
-                    />
-                  )}
+                    {filter.type === 'dateRange' && (
+                      <DateRangeFilter
+                        config={filter}
+                        value={value as DateRange | undefined}
+                        onChange={(val) => handleChange(filter.name, val)}
+                      />
+                    )}
 
-                  {filter.type === 'dateRange' && (
-                    <DateRangeFilter
-                      config={filter}
-                      value={value as DateRange | undefined}
-                      onChange={(val) => handleChange(filter.name, val)}
-                    />
-                  )}
+                    {filter.type === 'boolean' && (
+                      <BooleanFilter
+                        config={filter}
+                        value={Boolean(value)}
+                        onChange={(val) => handleChange(filter.name, val)}
+                      />
+                    )}
 
-                  {filter.type === 'boolean' && (
-                    <BooleanFilter
-                      config={filter}
-                      value={Boolean(value)}
-                      onChange={(val) => handleChange(filter.name, val)}
-                    />
-                  )}
+                    {filter.type === 'select' && (
+                      <SelectFilter
+                        config={filter}
+                        value={value as string | number | undefined}
+                        onChange={(val) => handleChange(filter.name, val)}
+                      />
+                    )}
 
-                  {filter.type === 'select' && (
-                    <SelectFilter
-                      config={filter}
-                      value={value as string | number | undefined}
-                      onChange={(val) => handleChange(filter.name, val)}
-                    />
-                  )}
-
-                  {filter.type === 'custom' &&
-                    filter.render(value, (val) => handleChange(filter.name, val))}
-                </div>
-              )
-            })}
-          </div>
-        </PopoverContent>
-      </Popover>
+                    {filter.type === 'custom' &&
+                      filter.render(value, (val) => handleChange(filter.name, val))}
+                  </div>
+                )
+              })}
+            </div>
+          </PopoverContent>
+        </Popover>
+      )}
     </div>
   )
 }

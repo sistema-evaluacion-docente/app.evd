@@ -2,7 +2,11 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query'
 
 import type { ResponseAPI } from '@/@types/Response'
 import api from '@/config/axios'
-import type { DepartmentPeriodRangeStats, DepartmentSubjectAverage } from '../types'
+import type {
+  DepartmentPeriodRangeStats,
+  DepartmentSubjectAverage,
+  TeacherComparisonEntry,
+} from '../types'
 
 interface DepartmentPeriodRangeSubjectsParams {
   startPeriod: string
@@ -47,6 +51,16 @@ async function getDepartmentPeriodRangeSubjects({
   })
 }
 
+async function getCourseTeachersComparison(
+  courseCode: string,
+  period: string,
+): Promise<ResponseAPI<TeacherComparisonEntry[]>> {
+  return api.get(
+    `/stats/departments/subjects/${encodeURIComponent(courseCode)}/teachers-comparison`,
+    { params: { period } },
+  )
+}
+
 /** Query-key factory so range invalidations stay consistent. */
 export const statsKeys = {
   all: ['stats'] as const,
@@ -66,6 +80,8 @@ export const statsKeys = {
       'department-period-range-subjects',
       { startPeriod, endPeriod, page, limit, search, sortBy, teacherName },
     ] as const,
+  courseTeachersComparison: (courseCode: string, period: string) =>
+    [...statsKeys.all, 'course-teachers-comparison', courseCode, period] as const,
 }
 
 /**
@@ -151,6 +167,33 @@ export function useGetDepartmentPeriodRangeSubjects({
       }),
     enabled: Boolean(startPeriod) && Boolean(endPeriod),
     placeholderData: keepPreviousData,
+    staleTime: 60_000,
+  })
+}
+
+/**
+ * Fetches every teacher's results for a single subject ("materia") in a
+ * single period, for the director's side-by-side comparison
+ * (`GET /stats/departments/subjects/{course_code}/teachers-comparison`). Only
+ * enabled once both the course code and period are known.
+ *
+ * @example
+ * const { data, isPending } = useGetCourseTeachersComparison({
+ *   courseCode: '1155304',
+ *   period: '2025-1',
+ * });
+ */
+export function useGetCourseTeachersComparison({
+  courseCode,
+  period,
+}: {
+  courseCode?: string
+  period?: string
+}) {
+  return useQuery({
+    queryKey: statsKeys.courseTeachersComparison(courseCode ?? '', period ?? ''),
+    queryFn: () => getCourseTeachersComparison(courseCode!, period!),
+    enabled: Boolean(courseCode) && Boolean(period),
     staleTime: 60_000,
   })
 }

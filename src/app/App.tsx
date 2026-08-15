@@ -22,7 +22,9 @@ import {
   PeriodCourseDetailPage,
   PeriodDetailPage,
   PeriodsPage,
+  TeacherMateriasPage,
 } from '@/features/periods'
+import { SubjectComparisonPage, SubjectsPage, SubjectTeacherDetailPage } from '@/features/subjects'
 import { TeacherDetailPage, TeachersPage, TeacherUploadPage } from '@/features/teachers'
 import { UsersPage } from '@/features/users'
 
@@ -41,6 +43,12 @@ function App() {
         <Route path="/periodos">
           <AppLayout>
             <PeriodsPage />
+          </AppLayout>
+        </Route>
+
+        <Route path="/periodos/materias">
+          <AppLayout>
+            <TeacherMateriasPage />
           </AppLayout>
         </Route>
 
@@ -71,6 +79,24 @@ function App() {
         <Route path="/docentes/:id">
           <AppLayout>
             <TeacherDetailPage />
+          </AppLayout>
+        </Route>
+
+        <Route path="/materias/:courseCode/docentes/:teacherId">
+          <AppLayout>
+            <SubjectTeacherDetailPage />
+          </AppLayout>
+        </Route>
+
+        <Route path="/materias/:courseCode/comparar">
+          <AppLayout>
+            <SubjectComparisonPage />
+          </AppLayout>
+        </Route>
+
+        <Route path="/materias">
+          <AppLayout>
+            <SubjectsPage />
           </AppLayout>
         </Route>
 

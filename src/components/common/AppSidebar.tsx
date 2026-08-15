@@ -16,6 +16,7 @@ import {
   ClipboardCheck,
   Clock,
   FileText,
+  Layers,
   LayoutGrid,
   Library,
   LogOut,
@@ -27,7 +28,6 @@ import {
 import { useLocation } from 'wouter'
 
 import { getMenus } from '@/config/security'
-import { PeriodsSidebarSubmenu } from '@/features/periods'
 import useAuth from '@/hooks/useAuth'
 import { useNavigate } from '@/hooks/useNavigate'
 import Logo from './Logo'
@@ -37,8 +37,10 @@ const DEFAULT_ICON = FileText
 const MENU_ICON_BY_PATH: Record<string, typeof DEFAULT_ICON> = {
   '/dashboard': LayoutGrid,
   '/periodos': Clock,
+  '/periodos/materias': Layers,
   '/evaluaciones': ClipboardCheck,
   '/docentes': Users,
+  '/materias': Layers,
   '/admin/facultades': Building2,
   '/admin/departamentos': Library,
   '/admin/periodos': Clock,
@@ -81,7 +83,6 @@ export function AppSidebar() {
                 const active =
                   item.path !== '#' &&
                   (location === item.path || location.startsWith(`${item.path}/`))
-                const showMateriasSubmenu = selectedRole === 'DOCENTE' && item.path === '/periodos'
 
                 return (
                   <SidebarMenuItem key={item.path}>
@@ -96,8 +97,6 @@ export function AppSidebar() {
                       <Icon />
                       <span>{item.name}</span>
                     </SidebarMenuButton>
-
-                    {showMateriasSubmenu && <PeriodsSidebarSubmenu />}
                   </SidebarMenuItem>
                 )
               })}

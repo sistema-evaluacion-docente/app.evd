@@ -11,11 +11,15 @@ export { CommentList } from './CommentList'
 export type { CommentListProps } from './CommentList'
 export { CommentsPanel } from './CommentsPanel'
 export type { CommentsPanelProps } from './CommentsPanel'
+export { CourseAverageTrend } from './CourseAverageTrend'
+export type { CourseAverageTrendProps } from './CourseAverageTrend'
 export { CourseDimensionBreakdown } from './CourseDimensionBreakdown'
 export type {
   CourseComparisonSource,
   CourseDimensionBreakdownProps,
 } from './CourseDimensionBreakdown'
+export { CourseTeacherDetail } from './CourseTeacherDetail'
+export type { CourseTeacherDetailProps } from './CourseTeacherDetail'
 export { TeacherAveragesTable } from './TeacherAveragesTable'
 export type { TeacherAveragesTableProps } from './TeacherAveragesTable'
 export { TeacherComments } from './TeacherComments'

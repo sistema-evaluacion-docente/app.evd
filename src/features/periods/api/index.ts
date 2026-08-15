@@ -3,13 +3,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import type { ResponseAPI } from '@/@types/Response'
 import api from '@/config/axios'
 import { useAuthStore } from '@/features/auth'
-import type {
-  AcademicPeriod,
-  CourseHistoryOut,
-  HistorySortBy,
-  TeacherHistoryOut,
-  TeacherPeriodHistory,
-} from '../types'
+import type { AcademicPeriod, HistorySortBy, TeacherHistoryOut, TeacherPeriodHistory } from '../types'
 
 interface TeacherHistoryParams {
   page?: number
@@ -81,23 +75,11 @@ async function getTeacherHistory(
   return api.get(`/teachers/${teacherId}/history`, { params })
 }
 
-async function getTeacherCourseHistory(
-  teacherId: number,
-  courseCode: string,
-  params: { limit?: number },
-): Promise<ResponseAPI<CourseHistoryOut>> {
-  return api.get(`/teachers/${teacherId}/courses/${encodeURIComponent(courseCode)}/history`, {
-    params,
-  })
-}
-
 export const periodsKeys = {
   all: ['periods'] as const,
   lists: () => [...periodsKeys.all, 'list'] as const,
   history: (teacherId: number, params: TeacherHistoryParams) =>
     [...periodsKeys.all, 'history', teacherId, params] as const,
-  courseHistory: (teacherId: number, courseCode: string, limit?: number) =>
-    [...periodsKeys.all, 'course-history', teacherId, courseCode, limit] as const,
 }
 
 /**
@@ -156,33 +138,6 @@ export function useGetTeacherHistory({
     enabled: teacherId > 0,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
-  })
-}
-
-/**
- * Fetches a teacher's per-period score history for one specific course
- * (`GET /teachers/{teacher_id}/courses/{course_code}/history`), most recent
- * period first — includes the department average and full dimension
- * breakdown per period, so a screen can let the user compare against any
- * period the course was taught, not just the immediately previous one.
- *
- * @example
- * const { data } = useGetTeacherCourseHistory({ teacherId: 12, courseCode: 'SIS101', limit: 12 });
- */
-export function useGetTeacherCourseHistory({
-  teacherId,
-  courseCode,
-  limit,
-}: {
-  teacherId?: number
-  courseCode?: string
-  limit?: number
-}) {
-  return useQuery({
-    queryKey: periodsKeys.courseHistory(teacherId ?? 0, courseCode ?? '', limit),
-    queryFn: () => getTeacherCourseHistory(teacherId!, courseCode!, { limit }),
-    enabled: teacherId != null && teacherId > 0 && Boolean(courseCode),
-    staleTime: 60_000,
   })
 }
 

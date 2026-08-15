@@ -1,3 +1,6 @@
+import type { AiStatus } from '@/features/evaluations'
+import type { CourseHistoryQuestion } from '@/features/teachers'
+
 /** Minimal reference to an academic period embedded in a stats report. */
 export interface StatsPeriodRef {
   academic_period_id: number
@@ -33,6 +36,36 @@ export interface DepartmentSubjectGroup {
   academic_period_code: string
   overall_average: number
   respondent_count: number
+}
+
+/** One pedagogical dimension's average for a teacher, in a subject comparison. */
+export interface TeacherComparisonDimension {
+  /** Full dimension name (e.g. "Desarrollo del Conocimiento") — matches `dimensionColor()`/`shortenDimensionLabel()`. */
+  dimension: string
+  average: number | null
+  questions: CourseHistoryQuestion[]
+}
+
+/**
+ * One teacher's results for a single subject ("materia") in a single period,
+ * as one entry in a teachers-comparison report. A teacher who taught two
+ * groups of the same subject appears twice (one entry per group).
+ */
+export interface TeacherComparisonEntry {
+  teacher_id: number
+  teacher_name: string
+  teacher_avatar_url: string | null
+  group_name: string
+  /** The teacher's evaluation for this period — pass to `useGetTeacherComments` to load their real comments on demand. */
+  evaluation_id: number
+  overall_average: number | null
+  respondent_count: number
+  /** Always all four pedagogical dimensions, in this order. */
+  dimensions: TeacherComparisonDimension[]
+  comments_risk_counts: { BAJO: number; MEDIO: number; ALTO: number }
+  /** Comment count per pedagogical category code (`LABEL_0`…`LABEL_4`); may be partial or empty — see `ai_status`. */
+  comments_pedagogical_category_counts: Record<string, number>
+  ai_status: AiStatus
 }
 
 /**

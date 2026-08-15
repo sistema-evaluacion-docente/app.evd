@@ -96,6 +96,11 @@ function SortBy({
     setOpen(false)
   }
 
+  function handleApply() {
+    onChange(pendingField ? build(pendingField, pendingDirection) : '')
+    setOpen(false)
+  }
+
   return (
     <div className={cn('flex items-center gap-2', className)} title={label}>
       <Popover open={open} onOpenChange={handleOpen}>
@@ -161,6 +166,14 @@ function SortBy({
                 </div>
               </>
             )}
+
+            <div className="bg-border mx-2 h-px" />
+
+            <div className="p-1">
+              <Button type="button" size="sm" className="w-full" onClick={handleApply}>
+                Aplicar
+              </Button>
+            </div>
           </div>
         </PopoverContent>
       </Popover>

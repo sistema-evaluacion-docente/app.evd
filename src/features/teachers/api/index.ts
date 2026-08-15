@@ -4,6 +4,7 @@ import type { ResponseAPI } from '@/@types/Response'
 import api from '@/config/axios'
 import { useAuthStore } from '@/features/auth'
 import type {
+  CourseHistoryOut,
   TeacherComment,
   TeacherCommentsData,
   TeacherDetail,
@@ -68,6 +69,16 @@ async function getTeacherComments(
   return api.get(`/evaluations/${evaluationId}/teachers/${teacherId}/comments`)
 }
 
+async function getTeacherCourseHistory(
+  teacherId: number,
+  courseCode: string,
+  params: { limit?: number },
+): Promise<ResponseAPI<CourseHistoryOut>> {
+  return api.get(`/teachers/${teacherId}/courses/${encodeURIComponent(courseCode)}/history`, {
+    params,
+  })
+}
+
 async function uploadTeachers(file: File): Promise<ResponseAPI<TeacherUploadData>> {
   const formData = new FormData()
   formData.append('file', file)
@@ -130,6 +141,8 @@ export const teachersKeys = {
     [...teachersKeys.all, 'detail', teacherId, periodName] as const,
   comments: (evaluationId: number, teacherId: number) =>
     [...teachersKeys.all, 'comments', evaluationId, teacherId] as const,
+  courseHistory: (teacherId: number, courseCode: string, limit?: number) =>
+    [...teachersKeys.all, 'course-history', teacherId, courseCode, limit] as const,
 }
 
 /**
@@ -287,6 +300,35 @@ export function useGetTeacherComments({
     queryKey: teachersKeys.comments(evaluationId ?? 0, teacherId ?? 0),
     queryFn: () => getTeacherComments(evaluationId!, teacherId!),
     enabled: evaluationId != null && teacherId != null,
+    staleTime: 60_000,
+  })
+}
+
+/**
+ * Fetches a teacher's per-period score history for one specific course
+ * (`GET /teachers/{teacher_id}/courses/{course_code}/history`), most recent
+ * period first — includes the department average and full dimension
+ * breakdown per period, so a screen can let the user compare against any
+ * period the course was taught, not just the immediately previous one.
+ * Works for any teacher id — used both by the teacher's own view and a
+ * director's read of that teacher.
+ *
+ * @example
+ * const { data } = useGetTeacherCourseHistory({ teacherId: 12, courseCode: 'SIS101', limit: 12 });
+ */
+export function useGetTeacherCourseHistory({
+  teacherId,
+  courseCode,
+  limit,
+}: {
+  teacherId?: number
+  courseCode?: string
+  limit?: number
+}) {
+  return useQuery({
+    queryKey: teachersKeys.courseHistory(teacherId ?? 0, courseCode ?? '', limit),
+    queryFn: () => getTeacherCourseHistory(teacherId!, courseCode!, { limit }),
+    enabled: teacherId != null && teacherId > 0 && Boolean(courseCode),
     staleTime: 60_000,
   })
 }

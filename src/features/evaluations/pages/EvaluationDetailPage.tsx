@@ -87,6 +87,7 @@ export default function EvaluationDetailPage() {
           <Button
             variant="outline"
             size="sm"
+            nativeButton={false}
             render={<Link href={`/evaluaciones/${evaluation.id}/dimensiones`} />}
           >
             Ver detalle
