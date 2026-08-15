@@ -1,4 +1,6 @@
 import { PageTitle } from '@/components/common/PageTitle'
+import { Badge } from '@/components/ui/badge'
+import { useSearchParams } from 'wouter'
 import { SubjectsList } from '../components'
 
 /**
@@ -9,9 +11,18 @@ import { SubjectsList } from '../components'
  * Route: `/materias`
  */
 export default function SubjectsPage() {
+  const [params] = useSearchParams()
+
+  const period = params.get('period') ?? undefined
+
   return (
     <>
-      <PageTitle>Materias</PageTitle>
+      <PageTitle>
+        <div className="flex flex-wrap items-center gap-2">
+          <p>Materias</p>
+          <Badge className="text-sm font-bold">{period ?? 'Sin periodo seleccionado'}</Badge>
+        </div>
+      </PageTitle>
 
       <SubjectsList />
     </>
