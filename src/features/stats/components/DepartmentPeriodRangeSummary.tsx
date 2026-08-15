@@ -8,7 +8,12 @@ import { Switch } from '@/components/ui/switch'
 import { useGetAcademicPeriods } from '@/features/periods'
 import { cn } from '@/lib/utils'
 import { useGetDepartmentPeriodRangeStats } from '../api'
-import { DepartmentPeriodRangeSummaryLayout } from './DepartmentPeriodRangeSummaryLayout'
+import { InlineError } from '@/components/common/InlineError'
+import { DepartmentStatsHero } from './DepartmentStatsHero'
+import { AverageTrendChart } from '@/components/common/AverageTrendChart'
+import { DepartmentDimensionsChart } from './DepartmentDimensionsChart'
+import { DepartmentCommentRiskChart } from './DepartmentCommentRiskChart'
+import { DepartmentCommentCategoriesChart } from './DepartmentCommentCategoriesChart'
 
 export interface DepartmentPeriodRangeSummaryProps {
   /** How many trailing periods to preselect once "comparar un rango" is turned on. Defaults to 2. */
@@ -135,7 +140,7 @@ export function DepartmentPeriodRangeSummary({
         </div>
       )}
 
-      {!isPending && stats && (
+      {!isPending && data?.data && (
         <div
           className={cn(
             'space-y-6 transition-opacity',
@@ -143,7 +148,7 @@ export function DepartmentPeriodRangeSummary({
           )}
         >
           <DepartmentStatsHero
-            stats={stats}
+            stats={data?.data}
             commentsHref={
               endPeriod ? `/comentarios?period=${encodeURIComponent(endPeriod.name)}` : undefined
             }
@@ -161,13 +166,13 @@ export function DepartmentPeriodRangeSummary({
                     {
                       id: 'department',
                       label: 'Promedio del departamento',
-                      data: stats.period_averages.map((period) => ({
+                      data: data?.data.period_averages.map((period) => ({
                         x: period.academic_period_name || period.academic_period_code,
                         value: period.overall_average,
                       })),
                     },
                   ]}
-                  referenceValue={stats.overall_average}
+                  referenceValue={data?.data?.overall_average}
                   referenceLabel="Promedio del rango"
                 />
               </div>
@@ -181,17 +186,19 @@ export function DepartmentPeriodRangeSummary({
 
             <div className="px-6 py-4">
               <DepartmentDimensionsChart
-                dimensions={stats.dimensions}
-                referenceValue={stats.overall_average}
+                dimensions={data?.data?.dimensions}
+                referenceValue={data?.data?.overall_average}
                 referenceLabel="Promedio general"
               />
             </div>
           </section>
 
-          {(stats.comments_risk_counts || stats.comments_pedagogical_category_counts) && (
+          {(data?.data?.comments_risk_counts ||
+            data?.data?.comments_pedagogical_category_counts) && (
             <section className="border-border bg-background rounded-md border">
               <div className="border-border border-b px-6 py-4">
                 <h2 className="text-sm font-medium">Comentarios de la heteroevaluación</h2>
+
                 <p className="text-muted-foreground mt-0.5 text-xs">
                   Clasificación de los comentarios que los estudiantes dejaron en las evaluaciones
                   del departamento durante el rango seleccionado.
@@ -199,24 +206,24 @@ export function DepartmentPeriodRangeSummary({
               </div>
 
               <div className="divide-border grid divide-y sm:grid-cols-2 sm:divide-x sm:divide-y-0">
-                {stats.comments_risk_counts && (
+                {data?.data?.comments_risk_counts && (
                   <div className="px-6 py-4">
                     <h3 className="text-muted-foreground mb-3 text-xs font-medium tracking-wide uppercase">
                       Por nivel de riesgo
                     </h3>
 
-                    <DepartmentCommentRiskChart counts={stats.comments_risk_counts} />
+                    <DepartmentCommentRiskChart counts={data?.data?.comments_risk_counts} />
                   </div>
                 )}
 
-                {stats.comments_pedagogical_category_counts && (
+                {data?.data?.comments_pedagogical_category_counts && (
                   <div className="px-6 py-4">
                     <h3 className="text-muted-foreground mb-3 text-xs font-medium tracking-wide uppercase">
                       Por categoría pedagógica
                     </h3>
 
                     <DepartmentCommentCategoriesChart
-                      counts={stats.comments_pedagogical_category_counts}
+                      counts={data?.data?.comments_pedagogical_category_counts}
                     />
                   </div>
                 )}
@@ -229,7 +236,7 @@ export function DepartmentPeriodRangeSummary({
         </div>
       )}
 
-      {!isPending && !stats && !error && (
+      {!isPending && !data?.data && !error && (
         <p className="text-muted-foreground py-10 text-center text-sm">
           No hay datos para el rango de periodos seleccionado.
         </p>
