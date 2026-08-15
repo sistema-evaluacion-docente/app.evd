@@ -22,6 +22,7 @@ import {
   PeriodCourseDetailPage,
   PeriodDetailPage,
   PeriodsPage,
+  TeacherMateriasPage,
 } from '@/features/periods'
 import { SubjectComparisonPage, SubjectsPage, SubjectTeacherDetailPage } from '@/features/subjects'
 import { TeacherDetailPage, TeachersPage, TeacherUploadPage } from '@/features/teachers'
@@ -42,6 +43,12 @@ function App() {
         <Route path="/periodos">
           <AppLayout>
             <PeriodsPage />
+          </AppLayout>
+        </Route>
+
+        <Route path="/periodos/materias">
+          <AppLayout>
+            <TeacherMateriasPage />
           </AppLayout>
         </Route>
 

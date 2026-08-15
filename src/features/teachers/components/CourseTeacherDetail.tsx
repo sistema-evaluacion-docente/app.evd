@@ -1,11 +1,13 @@
 import { TrendingDown, TrendingUp } from 'lucide-react'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 
 import { PeriodSelect, type PeriodSelectOption } from '@/components/common/PeriodSelect'
 import { ScoreBadge } from '@/components/common/ScoreBadge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
+import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Switch } from '@/components/ui/switch'
 import { AI_STATUS_DISPLAY, type AiStatus } from '@/features/evaluations'
 import { dimensionColor } from '@/lib/dimensionLabel'
 import { cn } from '@/lib/utils'
@@ -57,6 +59,8 @@ export function CourseTeacherDetail({
   showTeacherIdentity = false,
   className,
 }: CourseTeacherDetailProps) {
+  const comparisonToggleId = useId()
+
   const { data, isLoading } = useGetTeacherDetail({ teacherId, periodName: period })
   const teacher = data?.data
   const course = teacher?.courses.find(
@@ -71,10 +75,12 @@ export function CourseTeacherDetail({
   const comparisonOptions = (historyData?.data.items ?? []).filter(
     (item) => item.period_code !== period,
   )
+  const [comparisonEnabled, setComparisonEnabled] = useState(false)
   const [comparisonPeriodId, setComparisonPeriodId] = useState<number>()
-  const selectedComparison =
-    comparisonOptions.find((item) => item.academic_period_id === comparisonPeriodId) ??
-    comparisonOptions[0]
+  const selectedComparison = comparisonEnabled
+    ? (comparisonOptions.find((item) => item.academic_period_id === comparisonPeriodId) ??
+      comparisonOptions[0])
+    : undefined
 
   const {
     data: commentsData,
@@ -190,18 +196,33 @@ export function CourseTeacherDetail({
             <Skeleton className="mt-3 h-8 w-64" />
           ) : (
             comparisonSelectOptions.length > 0 && (
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className="text-muted-foreground text-xs">
-                  Comparar la misma materia respecto al periodo:
-                </span>
+              <div className="mt-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id={comparisonToggleId}
+                    checked={comparisonEnabled}
+                    onCheckedChange={(checked) => {
+                      setComparisonEnabled(checked)
+                      if (!checked) setComparisonPeriodId(undefined)
+                    }}
+                  />
+                  <Label
+                    htmlFor={comparisonToggleId}
+                    className="text-muted-foreground text-sm font-normal"
+                  >
+                    Comparar con otro periodo
+                  </Label>
+                </div>
 
-                <PeriodSelect
-                  options={comparisonSelectOptions}
-                  value={selectedComparison?.academic_period_id}
-                  onValueChange={setComparisonPeriodId}
-                  size="sm"
-                  ariaLabel="Periodo de comparación"
-                />
+                {comparisonEnabled && (
+                  <PeriodSelect
+                    options={comparisonSelectOptions}
+                    value={selectedComparison?.academic_period_id}
+                    onValueChange={setComparisonPeriodId}
+                    size="sm"
+                    ariaLabel="Periodo de comparación"
+                  />
+                )}
               </div>
             )
           )}

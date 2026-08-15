@@ -1,7 +1,8 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { Link, useRoute } from 'wouter'
+import { useRoute } from 'wouter'
 
 import { BackButton } from '@/components/common/BackButton'
+import { TransitionLink } from '@/components/common/TransitionLink'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/features/auth'
 import { CourseTeacherDetail, useGetTeacherDetail } from '@/features/teachers'
@@ -36,12 +37,10 @@ export default function PeriodCourseDetailPage() {
       ? periodCourses[courseIndex + 1]
       : undefined
 
-  const backHref = period ? `/periodos/${encodeURIComponent(period)}` : '/periodos'
-
   if (isLoading) {
     return (
       <>
-        <BackButton href={backHref} label="Volver al periodo" className="mb-4" />
+        <BackButton fallbackHref="/periodos" label="Volver al periodo" className="mb-4" />
         <p className="text-muted-foreground py-10 text-center text-sm">Cargando…</p>
       </>
     )
@@ -50,7 +49,7 @@ export default function PeriodCourseDetailPage() {
   if (courseIndex < 0 || !teacherId || !period || !courseCode || !groupName) {
     return (
       <>
-        <BackButton href={backHref} label="Volver al periodo" className="mb-4" />
+        <BackButton fallbackHref="/periodos" label="Volver al periodo" className="mb-4" />
         <p className="text-muted-foreground py-10 text-center text-sm">
           No se encontró información para esta materia en el periodo indicado.
         </p>
@@ -60,7 +59,7 @@ export default function PeriodCourseDetailPage() {
 
   return (
     <div className="space-y-6">
-      <BackButton href={backHref} label="Volver al periodo" className="mb-4" />
+      <BackButton fallbackHref="/periodos" label="Volver al periodo" className="mb-4" />
 
       {(prevCourseInPeriod || nextCourseInPeriod) && (
         <nav
@@ -74,7 +73,7 @@ export default function PeriodCourseDetailPage() {
               nativeButton={false}
               className="text-muted-foreground hover:text-foreground h-auto min-w-0 gap-1.5 px-2 py-1"
               render={
-                <Link
+                <TransitionLink
                   href={courseHref(
                     period,
                     prevCourseInPeriod.course_code,
@@ -104,7 +103,7 @@ export default function PeriodCourseDetailPage() {
               nativeButton={false}
               className="text-muted-foreground hover:text-foreground h-auto min-w-0 gap-1.5 px-2 py-1"
               render={
-                <Link
+                <TransitionLink
                   href={courseHref(
                     period,
                     nextCourseInPeriod.course_code,
