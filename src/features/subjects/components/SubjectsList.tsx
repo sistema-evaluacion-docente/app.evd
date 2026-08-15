@@ -1,11 +1,13 @@
-import { ArrowUpRight, ChevronRight, Search, Users } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
+import { ArrowUpRight, ChevronRight, Pencil, Search, Users } from 'lucide-react'
 import { useState } from 'react'
-import { Link } from 'wouter'
+import { toast } from 'sonner'
 import { useDebounce, useDebouncedCallback } from 'use-debounce'
+import { Link } from 'wouter'
 
 import { DataTableFilters, type SortField } from '@/components/common/DataTableFilters'
+import { DynamicFormDrawer, type FieldConfig } from '@/components/common/DynamicFormDrawer'
 import { InlineError } from '@/components/common/InlineError'
-import { PeriodBanner } from '@/components/common/PeriodBanner'
 import { PeriodSelect } from '@/components/common/PeriodSelect'
 import { ScoreBadge } from '@/components/common/ScoreBadge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -14,12 +16,19 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
+import { useUpdateCourse } from '@/features/courses'
 import { useGetAcademicPeriods } from '@/features/periods'
-import { useGetDepartmentPeriodRangeSubjects } from '@/features/stats'
 import type { DepartmentSubjectAverage, DepartmentSubjectGroup } from '@/features/stats'
+import { statsKeys, useGetDepartmentPeriodRangeSubjects } from '@/features/stats'
 import { courseTeacherHref } from '@/features/teachers'
 import { cn } from '@/lib/utils'
 import { subjectComparisonHref } from '../config'
+
+/** The materia currently open in the rename drawer. */
+interface EditCourseTarget {
+  id: number
+  name: string
+}
 
 const SORT_FIELDS: SortField[] = [
   { value: 'overall_average', label: 'Promedio' },
@@ -42,6 +51,7 @@ const SORT_FIELDS: SortField[] = [
  */
 export function SubjectsList({ className }: { className?: string }) {
   const { data: periodsData, isPending: isPeriodsPending } = useGetAcademicPeriods()
+
   const periods = periodsData?.data ?? []
 
   const [periodId, setPeriodId] = useState<number | undefined>(undefined)
@@ -49,8 +59,38 @@ export function SubjectsList({ className }: { className?: string }) {
   const [search, setSearch] = useState('')
   const [debouncedSearch] = useDebounce(search, 400)
   const [sortBy, setSortBy] = useState<string | undefined>(undefined)
+  const [editTarget, setEditTarget] = useState<EditCourseTarget | null>(null)
 
   const resetPage = useDebouncedCallback(() => setPage(1), 400)
+
+  const queryClient = useQueryClient()
+  const { mutate: updateCourse, isPending: isUpdating } = useUpdateCourse()
+
+  const editFields: FieldConfig[] = editTarget
+    ? [
+        {
+          name: 'name',
+          label: 'Nombre de la materia',
+          required: true,
+          defaultValue: editTarget.name,
+        },
+      ]
+    : []
+
+  const handleUpdateSubmit = (values: Record<string, string>) => {
+    if (!editTarget) return
+
+    updateCourse(
+      { courseId: editTarget.id, payload: { name: values.name } },
+      {
+        onSuccess: () => {
+          toast.success('Materia actualizada exitosamente')
+          queryClient.invalidateQueries({ queryKey: statsKeys.all })
+          setEditTarget(null)
+        },
+      },
+    )
+  }
 
   const selectedPeriod = periods.find((period) => period.id === periodId)
   const periodCode = selectedPeriod?.code
@@ -77,12 +117,6 @@ export function SubjectsList({ className }: { className?: string }) {
 
   return (
     <div className={className}>
-      <PeriodBanner
-        label="Periodo seleccionado"
-        period={selectedPeriod?.name}
-        className="mb-3"
-      />
-
       <div className="mb-3 flex flex-wrap items-center gap-3">
         <PeriodSelect
           value={periodId}
@@ -146,7 +180,7 @@ export function SubjectsList({ className }: { className?: string }) {
             )}
           >
             {subjects.map((subject) => (
-              <SubjectRow key={subject.course_name} subject={subject} />
+              <SubjectRow key={subject.course_name} subject={subject} onEdit={setEditTarget} />
             ))}
           </div>
         )}
@@ -181,6 +215,22 @@ export function SubjectsList({ className }: { className?: string }) {
           </div>
         </div>
       )}
+
+      {editTarget && (
+        <DynamicFormDrawer
+          key={editTarget.id}
+          title={`Editar materia: ${editTarget.name}`}
+          hideTrigger
+          open
+          onOpenChange={(open) => {
+            if (!open) setEditTarget(null)
+          }}
+          fields={editFields}
+          onSubmit={handleUpdateSubmit}
+          isSubmitting={isUpdating}
+          submitLabel="Guardar"
+        />
+      )}
     </div>
   )
 }
@@ -210,7 +260,13 @@ function groupByCourseCode(groups: DepartmentSubjectGroup[]): CourseCodeGroup[] 
   return [...byCode.entries()].map(([code, codeGroups]) => ({ code, groups: codeGroups }))
 }
 
-function SubjectRow({ subject }: { subject: DepartmentSubjectAverage }) {
+function SubjectRow({
+  subject,
+  onEdit,
+}: {
+  subject: DepartmentSubjectAverage
+  onEdit: (target: EditCourseTarget) => void
+}) {
   const groups = subject.groups ?? []
 
   // Always drill down through the real course code — even when there's a
@@ -218,10 +274,15 @@ function SubjectRow({ subject }: { subject: DepartmentSubjectAverage }) {
   // would skip the level that actually disambiguates this materia name.
   const codeGroups = groupByCourseCode(groups)
 
+  // A materia name only maps to one real course_id when it rolls up a
+  // single course code — with several codes underneath, editing "the" name
+  // here would be ambiguous, so the button only shows in the safe case.
+  const soleCourseId = codeGroups.length === 1 ? codeGroups[0].groups[0]?.course_id : undefined
+
   return (
     <Collapsible className="group/row">
-      <CollapsibleTrigger className="hover:bg-muted/40 group flex w-full cursor-pointer items-center justify-between gap-4 px-6 py-4 text-left transition-colors">
-        <div className="flex min-w-0 items-center gap-3">
+      <div className="hover:bg-muted/40 group flex w-full items-center justify-between gap-4 px-6 py-4 transition-colors">
+        <CollapsibleTrigger className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 text-left">
           <ChevronRight
             aria-hidden="true"
             className="text-muted-foreground size-4 shrink-0 transition-transform group-data-panel-open:rotate-90"
@@ -229,14 +290,21 @@ function SubjectRow({ subject }: { subject: DepartmentSubjectAverage }) {
 
           <div className="min-w-0">
             <p className="truncate text-sm font-medium">{subject.course_name}</p>
-            <p className="text-muted-foreground text-xs">
-              {codeGroups.length === 1
-                ? '1 código de materia'
-                : `${codeGroups.length} códigos`}
-            </p>
           </div>
-        </div>
-      </CollapsibleTrigger>
+        </CollapsibleTrigger>
+
+        {soleCourseId != null && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => onEdit({ id: soleCourseId, name: subject.course_name })}
+            aria-label={`Editar materia ${subject.course_name}`}
+          >
+            <Pencil className="text-muted-foreground size-4" aria-hidden="true" />
+          </Button>
+        )}
+      </div>
 
       <CollapsibleContent>
         <div className="divide-border divide-y pb-1">
@@ -278,9 +346,8 @@ function CourseCodeRow({
       >
         <div className="min-w-0">
           <p className="group-hover:text-primary truncate text-sm font-medium transition-colors">
-            Código {code}
+            {code} - {soleGroup.group_name}
           </p>
-          <p className="text-muted-foreground text-xs">1 docente</p>
         </div>
 
         <div className="flex shrink-0 items-center gap-4">
@@ -305,8 +372,8 @@ function CourseCodeRow({
           />
 
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium">Código {code}</p>
-            <p className="text-muted-foreground text-xs">{groups.length} docentes</p>
+            <p className="truncate text-sm font-medium">s{code}</p>
+            {/* <p className="text-muted-foreground text-xs">{groups.length} docentes</p> */}
           </div>
         </div>
       </CollapsibleTrigger>
