@@ -14,6 +14,7 @@ import { PlanDocuments } from '../components/PlanDocuments'
 import { PlanEvidences } from '../components/PlanEvidences'
 import { ActaStatusBadge, PlanStatusBadge } from '../components/PlanStatusBadge'
 import { isPlanClosed } from '../lib/planStatus'
+import type { PlanItem } from '../types'
 
 /**
  * Full detail of an improvement plan: commitments grouped by the five aspects
@@ -37,6 +38,13 @@ export default function PlanDetailPage() {
 
   const plan = data?.data
   const aspects = indicatorsResponse?.data?.aspects ?? []
+
+  // The plan only talks about what was actually agreed: an aspect nobody
+  // committed to is left out instead of printing an empty placeholder.
+  const committedAspects = aspects.filter((aspect) =>
+    plan?.items.some((item) => item.aspect === aspect.aspect),
+  )
+  const unassignedItems = plan?.items.filter((item) => item.aspect == null) ?? []
 
   if (isPending) {
     return (
@@ -79,18 +87,14 @@ export default function PlanDetailPage() {
                   <Badge variant="outline">Origen {plan.origin_period_code}</Badge>
                 )}
                 {plan.verification_period_code && (
-                  <Badge variant="outline">
-                    Verificación {plan.verification_period_code}
-                  </Badge>
+                  <Badge variant="outline">Verificación {plan.verification_period_code}</Badge>
                 )}
               </div>
             </div>
           </div>
 
           <div className="min-w-48">
-            <p className="text-muted-foreground mb-1 text-xs tracking-wide uppercase">
-              Avance
-            </p>
+            <p className="text-muted-foreground mb-1 text-xs tracking-wide uppercase">Avance</p>
             <ScoreProgress
               value={plan.progress}
               max={100}
@@ -117,72 +121,48 @@ export default function PlanDetailPage() {
         <header className="border-b px-6 py-4">
           <h2 className="font-semibold">Compromisos</h2>
           <p className="text-muted-foreground text-sm">
-            Agrupados por los cinco aspectos de los formatos oficiales.
+            {plan.items.length === 0
+              ? 'Agrupados por los cinco aspectos de los formatos oficiales.'
+              : `${committedAspects.length} de ${aspects.length} aspectos con compromisos.`}
           </p>
         </header>
 
+        {plan.items.length === 0 && (
+          <p className="text-muted-foreground px-6 py-4 text-sm">
+            Este plan todavía no tiene compromisos registrados.
+          </p>
+        )}
+
         <div className="divide-border divide-y">
-          {aspects.map((aspect) => {
-            const items = plan.items.filter((item) => item.aspect === aspect.aspect)
+          {committedAspects.map((aspect) => (
+            <div key={aspect.aspect} className="px-6 py-4">
+              <h3 className="mb-2 text-sm font-semibold">
+                <span className="text-muted-foreground num mr-1.5">{aspect.aspect}.</span>
+                {aspect.label}
+              </h3>
 
-            return (
-              <div key={aspect.aspect} className="px-6 py-4">
-                <h3 className="mb-2 text-sm font-semibold">
-                  <span className="text-muted-foreground num mr-1.5">{aspect.aspect}.</span>
-                  {aspect.label}
-                </h3>
+              <ul className="space-y-3">
+                {plan.items
+                  .filter((item) => item.aspect === aspect.aspect)
+                  .map((item) => (
+                    <CommitmentCard key={item.id} item={item} />
+                  ))}
+              </ul>
+            </div>
+          ))}
 
-                {items.length === 0 ? (
-                  <p className="text-muted-foreground text-sm italic">Sin compromisos.</p>
-                ) : (
-                  <ul className="space-y-3">
-                    {items.map((item) => (
-                      <li key={item.id} className="border-border rounded-md border p-3">
-                        <p className="text-sm">{item.description}</p>
-                        {item.commitment && (
-                          <p className="mt-1 text-sm">
-                            <span className="text-muted-foreground">Compromiso:</span>{' '}
-                            {item.commitment}
-                          </p>
-                        )}
-
-                        <div className="text-muted-foreground mt-1.5 flex flex-wrap gap-3 text-xs">
-                          {item.baseline_value != null && (
-                            <span>
-                              Base: <span className="num">{item.baseline_value.toFixed(2)}</span>
-                            </span>
-                          )}
-                          {item.target_value != null && (
-                            <span>
-                              Meta: <span className="num">{item.target_value.toFixed(2)}</span>
-                            </span>
-                          )}
-                          {item.result_value != null && (
-                            <span>
-                              Resultado:{' '}
-                              <span className="num">{item.result_value.toFixed(2)}</span>
-                            </span>
-                          )}
-                          <Badge variant="outline">{item.status}</Badge>
-                        </div>
-
-                        {item.comments.length > 0 && (
-                          <ul className="text-muted-foreground mt-2 space-y-1 text-xs">
-                            {item.comments.map((comment) => (
-                              <li key={comment.comment_id} className="italic">
-                                “{comment.original_text}”
-                                {comment.risk_level_name && ` · riesgo ${comment.risk_level_name}`}
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )
-          })}
+          {/* Commitments the director never filed under an aspect. They don't
+              reach the official forms, so they are called out here. */}
+          {unassignedItems.length > 0 && (
+            <div className="px-6 py-4">
+              <h3 className="mb-2 text-sm font-semibold">Sin aspecto asignado</h3>
+              <ul className="space-y-3">
+                {unassignedItems.map((item) => (
+                  <CommitmentCard key={item.id} item={item} />
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </section>
 
@@ -217,5 +197,49 @@ export default function PlanDetailPage() {
 
       <PlanDocuments plan={plan} canManage={canManage} isAdmin={isAdmin} />
     </div>
+  )
+}
+
+/** One agreed commitment: what was detected, what was promised, how it stands. */
+function CommitmentCard({ item }: { item: PlanItem }) {
+  return (
+    <li className="border-border rounded-md border p-3">
+      <p className="text-sm">{item.description}</p>
+      {item.commitment && (
+        <p className="mt-1 text-sm">
+          <span className="text-muted-foreground">Compromiso:</span> {item.commitment}
+        </p>
+      )}
+
+      <div className="text-muted-foreground mt-1.5 flex flex-wrap gap-3 text-xs">
+        {item.baseline_value != null && (
+          <span>
+            Base: <span className="num">{item.baseline_value.toFixed(2)}</span>
+          </span>
+        )}
+        {item.target_value != null && (
+          <span>
+            Meta: <span className="num">{item.target_value.toFixed(2)}</span>
+          </span>
+        )}
+        {item.result_value != null && (
+          <span>
+            Resultado: <span className="num">{item.result_value.toFixed(2)}</span>
+          </span>
+        )}
+        <Badge variant="outline">{item.status}</Badge>
+      </div>
+
+      {item.comments.length > 0 && (
+        <ul className="text-muted-foreground mt-2 space-y-1 text-xs">
+          {item.comments.map((comment) => (
+            <li key={comment.comment_id} className="italic">
+              “{comment.original_text}”
+              {comment.risk_level_name && ` · riesgo ${comment.risk_level_name}`}
+            </li>
+          ))}
+        </ul>
+      )}
+    </li>
   )
 }
