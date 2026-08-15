@@ -23,7 +23,10 @@ export {
   useGetPlanIndicators,
   useGetPlanPeriods,
   useGetPlans,
+  useGetTeacherCourses,
   useGetTeacherPlanHistory,
 } from './api'
+
+export { ACADEMIC_FACULTIES, FACULTY_NAMES, PROGRAM_NAMES } from './config/academicCatalog'
 
 export * from './types'
