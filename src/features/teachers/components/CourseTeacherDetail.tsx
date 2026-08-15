@@ -3,6 +3,7 @@ import { useId, useState } from 'react'
 
 import { PeriodSelect, type PeriodSelectOption } from '@/components/common/PeriodSelect'
 import { ScoreBadge } from '@/components/common/ScoreBadge'
+import { TransitionLink } from '@/components/common/TransitionLink'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
@@ -146,22 +147,41 @@ export function CourseTeacherDetail({
 
   return (
     <div className={cn('space-y-6', className)}>
-      <div>
+      <div
+        id="course-teacher-detail-header"
+        className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3"
+      >
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{course.course_name}</h1>
+            <Badge className="shrink-0">{period}</Badge>
+          </div>
+
+          <p className="text-muted-foreground mt-1.5 flex flex-wrap items-center gap-x-1.5 text-sm">
+            <span className="num font-medium">{course.course_code}</span>
+            <span aria-hidden="true">·</span>
+            <span>Grupo {course.group_name}</span>
+          </p>
+        </div>
+
         {showTeacherIdentity && teacher && (
-          <div className="mb-2 flex items-center gap-2">
-            <Avatar size="sm">
+          <TransitionLink
+            href={`/docentes/${teacher.teacher_id}`}
+            className="group inline-flex w-fit shrink-0 items-center gap-3 lg:flex-row-reverse"
+          >
+            <Avatar className="ring-border ring-offset-background group-hover:ring-primary/40 size-11 ring-2 ring-offset-2 transition-colors">
               <AvatarFallback className="uppercase">{teacher.name.at(0) ?? '?'}</AvatarFallback>
               <AvatarImage src={teacher.avatar_url} alt={teacher.name} />
             </Avatar>
-            <span className="text-muted-foreground text-sm">{teacher.name}</span>
-          </div>
-        )}
 
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{course.course_name}</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Grupo {course.group_name} · {period} · {course.respondent_count} estudiantes
-          respondieron
-        </p>
+            <div className="min-w-0 lg:text-right">
+              <p className="group-hover:text-primary text-sm font-medium transition-colors">
+                {teacher.name}
+              </p>
+              <p className="text-muted-foreground text-xs">{teacher.institutional_code}</p>
+            </div>
+          </TransitionLink>
+        )}
       </div>
 
       <div className="flex flex-wrap items-stretch gap-6">
