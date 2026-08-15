@@ -1,8 +1,18 @@
 import { useState } from 'react'
-import { Download, FileCheck2, FileText, Lock, LockOpen, RefreshCw, Upload } from 'lucide-react'
+import {
+  Download,
+  FileCheck2,
+  FileText,
+  FileType2,
+  Lock,
+  LockOpen,
+  RefreshCw,
+  Upload,
+} from 'lucide-react'
 
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { FileDropzone } from '@/components/common/FileDropzone'
+import { LoadingButton } from '@/components/common/LoadingButton'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -17,6 +27,7 @@ import formatDate from '@/lib/formatDate'
 import {
   useCloseActa,
   useDownloadDocument,
+  useDownloadDocumentWord,
   useGenerateDocument,
   useReopenActa,
   useUploadSignedDocument,
@@ -51,6 +62,7 @@ export function PlanDocuments({ plan, canManage, isAdmin = false }: PlanDocument
 
   const generate = useGenerateDocument(plan.id)
   const download = useDownloadDocument(plan.id)
+  const downloadWord = useDownloadDocumentWord(plan.id)
   const uploadSigned = useUploadSignedDocument(plan.id)
   const closeActa = useCloseActa(plan.id)
   const reopenActa = useReopenActa(plan.id)
@@ -137,27 +149,48 @@ export function PlanDocuments({ plan, canManage, isAdmin = false }: PlanDocument
               </div>
 
               <div className="flex shrink-0 flex-wrap items-center gap-2">
+                {/* All three are scoped to their own row: acting on one format
+                    must not put the other two rows in a pending state. */}
                 {canManage && (
-                  <Button
+                  <LoadingButton
                     size="sm"
                     variant="outline"
                     onClick={() => generate.mutate(format.slug)}
                     disabled={generate.isPending}
+                    pending={generate.isPending && generate.variables === format.slug}
+                    pendingLabel="Generando…"
                   >
                     <RefreshCw className="size-4" aria-hidden="true" />
                     {document?.has_generated ? 'Regenerar' : 'Generar'}
-                  </Button>
+                  </LoadingButton>
                 )}
 
-                <Button
+                <LoadingButton
                   size="sm"
                   variant="secondary"
                   onClick={() => download.mutate(format.slug)}
-                  disabled={!document?.has_generated || download.isPending}
+                  disabled={!document?.has_generated}
+                  pending={download.isPending && download.variables === format.slug}
+                  pendingLabel="Descargando…"
                 >
                   <Download className="size-4" aria-hidden="true" />
                   Descargar
-                </Button>
+                </LoadingButton>
+
+                {/* Rendered on the fly, so it works before the PDF exists. */}
+                {canManage && (
+                  <LoadingButton
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => downloadWord.mutate(format.slug)}
+                    pending={downloadWord.isPending && downloadWord.variables === format.slug}
+                    pendingLabel="Generando…"
+                    title="Descarga una copia editable para corregirla antes de firmarla"
+                  >
+                    <FileType2 className="size-4" aria-hidden="true" />
+                    Word
+                  </LoadingButton>
+                )}
 
                 {canManage && (
                   <Button
@@ -194,20 +227,28 @@ export function PlanDocuments({ plan, canManage, isAdmin = false }: PlanDocument
           <DialogHeader>
             <DialogTitle>Subir formato firmado</DialogTitle>
             <DialogDescription>
-              Adjunta el PDF escaneado con las firmas. Reemplaza cualquier versión firmada
-              anterior.
+              Adjunta el PDF escaneado con las firmas. Reemplaza cualquier versión firmada anterior.
             </DialogDescription>
           </DialogHeader>
 
           <FileDropzone file={file} onFileChange={setFile} isUploading={uploadSigned.isPending} />
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setUploadFor(null)}>
+            <Button
+              variant="outline"
+              onClick={() => setUploadFor(null)}
+              disabled={uploadSigned.isPending}
+            >
               Cancelar
             </Button>
-            <Button onClick={submitSigned} disabled={!file || uploadSigned.isPending}>
-              {uploadSigned.isPending ? 'Subiendo…' : 'Subir'}
-            </Button>
+            <LoadingButton
+              onClick={submitSigned}
+              disabled={!file}
+              pending={uploadSigned.isPending}
+              pendingLabel="Subiendo…"
+            >
+              Subir
+            </LoadingButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -218,6 +259,8 @@ export function PlanDocuments({ plan, canManage, isAdmin = false }: PlanDocument
         title="¿Cerrar el acta?"
         description="Se congelará el contenido del acta (compromisos, asignaturas, número y fecha) para poder imprimirla y firmarla. El resto del plan seguirá editable."
         confirmLabel="Cerrar acta"
+        pendingLabel="Cerrando…"
+        confirmVariant="default"
         isPending={closeActa.isPending}
         onConfirm={() => closeActa.mutate(undefined, { onSuccess: () => setConfirmClose(false) })}
       />
@@ -228,6 +271,7 @@ export function PlanDocuments({ plan, canManage, isAdmin = false }: PlanDocument
         title="¿Reabrir el acta?"
         description="El acta volverá a estado borrador y su contenido podrá modificarse de nuevo."
         confirmLabel="Reabrir"
+        pendingLabel="Reabriendo…"
         confirmVariant="destructive"
         isPending={reopenActa.isPending}
         onConfirm={() => reopenActa.mutate(undefined, { onSuccess: () => setConfirmReopen(false) })}

@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { CalendarCheck } from 'lucide-react'
 
+import { DatePicker } from '@/components/common/DatePicker'
+import { LoadingButton } from '@/components/common/LoadingButton'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useUpdateCheckpoint } from '../api'
@@ -27,6 +28,19 @@ export function PlanCheckpoints({ plan, aspects, canManage }: PlanCheckpointsPro
     plan.checkpoints.find((checkpoint) => checkpoint.stage === stage),
   ).filter((checkpoint): checkpoint is PlanCheckpoint => Boolean(checkpoint))
 
+  /**
+   * Only the aspects the plan actually commits to are followed up — plus any
+   * that already carry a note, so nothing recorded earlier disappears from
+   * view (or from the payload) when the commitments change.
+   */
+  const tracked = aspects.filter(
+    (aspect) =>
+      plan.items.some((item) => item.aspect === aspect.aspect) ||
+      plan.checkpoints.some((checkpoint) =>
+        checkpoint.aspect_notes.some((note) => note.aspect === aspect.aspect && note.note?.trim()),
+      ),
+  )
+
   return (
     <section className="border-border bg-background overflow-hidden rounded-md border">
       <header className="border-b px-6 py-4">
@@ -36,17 +50,23 @@ export function PlanCheckpoints({ plan, aspects, canManage }: PlanCheckpointsPro
         </p>
       </header>
 
-      <div className="divide-border divide-y">
-        {ordered.map((checkpoint) => (
-          <CheckpointBlock
-            key={checkpoint.id}
-            planId={plan.id}
-            checkpoint={checkpoint}
-            aspects={aspects}
-            canManage={canManage}
-          />
-        ))}
-      </div>
+      {tracked.length === 0 ? (
+        <p className="text-muted-foreground px-6 py-4 text-sm">
+          No hay compromisos a los que hacer seguimiento todavía.
+        </p>
+      ) : (
+        <div className="divide-border divide-y">
+          {ordered.map((checkpoint) => (
+            <CheckpointBlock
+              key={checkpoint.id}
+              planId={plan.id}
+              checkpoint={checkpoint}
+              aspects={tracked}
+              canManage={canManage}
+            />
+          ))}
+        </div>
+      )}
     </section>
   )
 }
@@ -124,12 +144,7 @@ function CheckpointBlock({
             <Label htmlFor={`date-${checkpoint.id}`} className="text-xs">
               Fecha del seguimiento
             </Label>
-            <Input
-              id={`date-${checkpoint.id}`}
-              type="date"
-              value={date}
-              onChange={(event) => setDate(event.target.value)}
-            />
+            <DatePicker id={`date-${checkpoint.id}`} value={date} onChange={setDate} />
           </div>
 
           {aspects.map((aspect) => (
@@ -150,12 +165,23 @@ function CheckpointBlock({
           ))}
 
           <div className="flex justify-end gap-2">
-            <Button variant="outline" size="sm" onClick={() => setEditing(false)}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setEditing(false)}
+              disabled={update.isPending}
+            >
               Cancelar
             </Button>
-            <Button size="sm" onClick={save} disabled={update.isPending}>
-              {update.isPending ? 'Guardando…' : 'Guardar'}
-            </Button>
+            {/* Stays open and spinning until the refreshed plan is on screen. */}
+            <LoadingButton
+              size="sm"
+              onClick={save}
+              pending={update.isPending}
+              pendingLabel="Guardando…"
+            >
+              Guardar
+            </LoadingButton>
           </div>
         </div>
       ) : (

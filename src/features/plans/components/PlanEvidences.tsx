@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { Check, Download, MessageSquare, Paperclip, Plus, Send, X } from 'lucide-react'
 
+import { DatePicker } from '@/components/common/DatePicker'
 import { FileDropzone } from '@/components/common/FileDropzone'
+import { LoadingButton } from '@/components/common/LoadingButton'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -90,12 +92,7 @@ export function PlanEvidences({ plan, canManage }: PlanEvidencesProps) {
         </ul>
       )}
 
-      <NewRequestDialog
-        planId={plan.id}
-        plan={plan}
-        open={creating}
-        onOpenChange={setCreating}
-      />
+      <NewRequestDialog planId={plan.id} plan={plan} open={creating} onOpenChange={setCreating} />
     </section>
   )
 }
@@ -172,19 +169,20 @@ function RequestBlock({
 
               <EvidenceStatusBadge status={evidence.status} />
 
-              <Button
+              {/* Scoped to this row: one download must not spin every button. */}
+              <LoadingButton
                 size="icon"
                 variant="ghost"
                 aria-label="Descargar evidencia"
                 onClick={() => download.mutate(evidence.id)}
-                disabled={download.isPending}
+                pending={download.isPending && download.variables === evidence.id}
               >
                 <Download className="size-4" aria-hidden="true" />
-              </Button>
+              </LoadingButton>
 
               {canManage && evidence.status === 'PENDIENTE' && (
                 <div className="flex gap-1">
-                  <Button
+                  <LoadingButton
                     size="sm"
                     variant="outline"
                     onClick={() =>
@@ -194,11 +192,17 @@ function RequestBlock({
                       })
                     }
                     disabled={review.isPending}
+                    pending={
+                      review.isPending &&
+                      review.variables?.evidenceId === evidence.id &&
+                      review.variables.payload.status === 'APROBADA'
+                    }
+                    pendingLabel="Aprobando…"
                   >
                     <Check className="size-3.5" aria-hidden="true" />
                     Aprobar
-                  </Button>
-                  <Button
+                  </LoadingButton>
+                  <LoadingButton
                     size="sm"
                     variant="ghost"
                     onClick={() =>
@@ -211,10 +215,16 @@ function RequestBlock({
                       })
                     }
                     disabled={review.isPending}
+                    pending={
+                      review.isPending &&
+                      review.variables?.evidenceId === evidence.id &&
+                      review.variables.payload.status === 'RECHAZADA'
+                    }
+                    pendingLabel="Rechazando…"
                   >
                     <X className="size-3.5" aria-hidden="true" />
                     Rechazar
-                  </Button>
+                  </LoadingButton>
                 </div>
               )}
             </li>
@@ -227,10 +237,7 @@ function RequestBlock({
           {request.comments.map((entry) => (
             <li
               key={entry.id}
-              className={cn(
-                'text-sm',
-                entry.is_system && 'text-muted-foreground italic',
-              )}
+              className={cn('text-sm', entry.is_system && 'text-muted-foreground italic')}
             >
               <span className="font-medium">
                 {entry.is_system ? 'Sistema' : (entry.author_name ?? 'Usuario')}:
@@ -256,11 +263,12 @@ function RequestBlock({
             }
           }}
         />
-        <Button
+        <LoadingButton
           size="icon"
           variant="ghost"
           aria-label="Enviar comentario"
-          disabled={!comment.trim() || addComment.isPending}
+          disabled={!comment.trim()}
+          pending={addComment.isPending}
           onClick={() =>
             addComment.mutate(
               { requestId: request.id, body: comment.trim() },
@@ -269,7 +277,7 @@ function RequestBlock({
           }
         >
           <Send className="size-4" aria-hidden="true" />
-        </Button>
+        </LoadingButton>
       </div>
 
       <Dialog
@@ -288,12 +296,21 @@ function RequestBlock({
           <FileDropzone file={file} onFileChange={setFile} isUploading={upload.isPending} />
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setUploading(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setUploading(false)}
+              disabled={upload.isPending}
+            >
               Cancelar
             </Button>
-            <Button onClick={submitFile} disabled={!file || upload.isPending}>
-              {upload.isPending ? 'Subiendo…' : 'Adjuntar'}
-            </Button>
+            <LoadingButton
+              onClick={submitFile}
+              disabled={!file}
+              pending={upload.isPending}
+              pendingLabel="Subiendo…"
+            >
+              Adjuntar
+            </LoadingButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -375,23 +392,15 @@ function NewRequestDialog({
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <div className="space-y-1.5">
+            <div className="min-w-56 space-y-1.5">
               <Label htmlFor="req-due">Fecha límite</Label>
-              <Input
-                id="req-due"
-                type="date"
-                value={dueDate}
-                onChange={(event) => setDueDate(event.target.value)}
-              />
+              <DatePicker id="req-due" value={dueDate} onChange={setDueDate} />
             </div>
 
             {plan.items.length > 0 && (
               <div className="min-w-56 flex-1 space-y-1.5">
                 <Label htmlFor="req-item">Compromiso relacionado</Label>
-                <Select
-                  value={itemId}
-                  onValueChange={(value) => setItemId(value as number | null)}
-                >
+                <Select value={itemId} onValueChange={(value) => setItemId(value as number | null)}>
                   <SelectTrigger id="req-item" className="w-full">
                     <SelectValue placeholder="Sin relacionar">
                       {itemId != null
@@ -415,12 +424,18 @@ function NewRequestDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={create.isPending}>
             Cancelar
           </Button>
-          <Button onClick={submit} disabled={!title.trim() || create.isPending}>
-            {create.isPending ? 'Solicitando…' : 'Solicitar'}
-          </Button>
+          {/* The dialog closes only once the list already shows the request. */}
+          <LoadingButton
+            onClick={submit}
+            disabled={!title.trim()}
+            pending={create.isPending}
+            pendingLabel="Solicitando…"
+          >
+            Solicitar
+          </LoadingButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>
