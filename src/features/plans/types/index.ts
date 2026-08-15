@@ -7,11 +7,7 @@
  */
 
 export type TargetType =
-  | 'DIMENSION'
-  | 'QUESTION'
-  | 'PEDAGOGICAL_CATEGORY'
-  | 'OVERALL_AVERAGE'
-  | 'QUALITATIVE'
+  'DIMENSION' | 'QUESTION' | 'PEDAGOGICAL_CATEGORY' | 'OVERALL_AVERAGE' | 'QUALITATIVE'
 
 export type PlanStatus =
   | 'BORRADOR'
@@ -171,6 +167,9 @@ export interface Plan {
   title: string
   description: string | null
   program_name: string | null
+  /** Header of the official forms, frozen on the plan so it survives org changes. */
+  faculty_name: string | null
+  department_name: string | null
   status: PlanStatus
   close_reason: string | null
   start_date: string | null
@@ -235,8 +234,13 @@ export interface CreatePlanInput {
   title: string
   description?: string
   program_name?: string
+  faculty_name?: string
+  department_name?: string
   start_date?: string
   end_date?: string
+  council_observations?: string
+  department_director_observations?: string
+  program_director_observations?: string
   items: PlanItemInput[]
   courses?: PlanCourseInput[]
 }
@@ -246,6 +250,8 @@ export interface UpdatePlanInput {
   description?: string
   verification_period_id?: number | null
   program_name?: string
+  faculty_name?: string
+  department_name?: string
   start_date?: string
   end_date?: string
   acta_number?: string
@@ -412,4 +418,52 @@ export interface PlanIndicators {
       suggestions: string[]
     }[]
   }[]
+}
+
+/* -------------------------------------------------------------------------- */
+/* Creation workbench (client-side only)                                       */
+/* -------------------------------------------------------------------------- */
+
+/** One subject (course + group) of a teacher, as offered by the filter. */
+export interface PlanSubjectOption {
+  /** `courseKey(course)` — stable identity of the course+group pair. */
+  key: string
+  label: string
+  course_name: string
+  course_code: string | null
+  group_name: string | null
+  academic_group_id: number | null
+}
+
+/** A commitment being drafted before the plan is saved. */
+export interface DraftItem {
+  /** Client-side id so React can key rows that have no server id yet. */
+  key: string
+  /**
+   * Identity of what was picked, so the picker can toggle it back off. The
+   * same indicator picked under two subjects yields two different ids.
+   */
+  selection_id: string
+  id?: number
+  description: string
+  commitment: string
+  aspect: number | null
+  target_type: TargetType
+  target_ref: string | null
+  baseline_value: number | null
+  target_value: number | null
+  suggestions: string[]
+  comment_ids: number[]
+  /** Verbatim comments cited by this commitment, to show them while drafting. */
+  comment_previews: { id: number; text: string; risk_level_name: string | null }[]
+  /** Subject the indicator was read from; `null` when picked at teacher level. */
+  source_subject_key: string | null
+  source_subject_label: string | null
+}
+
+/** An asignatura row of the plan, tracking whether the picker put it there. */
+export interface DraftCourse extends PlanCourseInput {
+  key: string
+  /** `auto` rows follow the picking; `manual` ones are the director's own. */
+  origin: 'auto' | 'manual'
 }
