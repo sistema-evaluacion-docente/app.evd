@@ -1,27 +1,27 @@
-import { useQueryClient } from '@tanstack/react-query'
-import { ArrowUpRight, ChevronRight, Pencil, Search, Users } from 'lucide-react'
-import { useState } from 'react'
-import { toast } from 'sonner'
-import { useDebounce, useDebouncedCallback } from 'use-debounce'
-import { Link } from 'wouter'
-
-import { DataTableFilters, type SortField } from '@/components/common/DataTableFilters'
-import { DynamicFormDrawer, type FieldConfig } from '@/components/common/DynamicFormDrawer'
-import { InlineError } from '@/components/common/InlineError'
-import { PeriodSelect } from '@/components/common/PeriodSelect'
-import { ScoreBadge } from '@/components/common/ScoreBadge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
+import { cn } from '@/lib/utils'
+import { useQueryClient } from '@tanstack/react-query'
+import { ArrowUpRight, ChevronRight, Pencil, Search, Users } from 'lucide-react'
+import { useState } from 'react'
+import { toast } from 'sonner'
+import { useDebounce, useDebouncedCallback } from 'use-debounce'
+
+import { DataTableFilters, type SortField } from '@/components/common/DataTableFilters'
+import { DynamicFormDrawer, type FieldConfig } from '@/components/common/DynamicFormDrawer'
+import { InlineError } from '@/components/common/InlineError'
+import { PeriodSelect } from '@/components/common/PeriodSelect'
+import { ScoreBadge } from '@/components/common/ScoreBadge'
+import { TransitionLink } from '@/components/common/TransitionLink'
 import { useUpdateCourse } from '@/features/courses'
 import { useGetAcademicPeriods } from '@/features/periods'
 import type { DepartmentSubjectAverage, DepartmentSubjectGroup } from '@/features/stats'
 import { statsKeys, useGetDepartmentPeriodRangeSubjects } from '@/features/stats'
 import { courseTeacherHref } from '@/features/teachers'
-import { cn } from '@/lib/utils'
 import { subjectComparisonHref } from '../config'
 
 /** The materia currently open in the rename drawer. */
@@ -281,8 +281,8 @@ function SubjectRow({
 
   return (
     <Collapsible className="group/row">
-      <div className="hover:bg-muted/40 group flex w-full items-center justify-between gap-4 px-6 py-4 transition-colors">
-        <CollapsibleTrigger className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 text-left">
+      <div className="hover:bg-muted/40 muted group flex w-full items-center justify-between gap-4 px-6 transition-colors">
+        <CollapsibleTrigger className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 py-4 text-left">
           <ChevronRight
             aria-hidden="true"
             className="text-muted-foreground size-4 shrink-0 transition-transform group-data-panel-open:rotate-90"
@@ -335,7 +335,7 @@ function CourseCodeRow({
 
   if (soleGroup) {
     return (
-      <Link
+      <TransitionLink
         href={courseTeacherHref(
           soleGroup.course_code,
           soleGroup.teacher_id,
@@ -358,7 +358,7 @@ function CourseCodeRow({
             <ArrowUpRight aria-hidden="true" className="size-3.5" />
           </span>
         </div>
-      </Link>
+      </TransitionLink>
     )
   }
 
@@ -372,7 +372,7 @@ function CourseCodeRow({
           />
 
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium">s{code}</p>
+            <p className="truncate text-sm font-medium">{code}</p>
             {/* <p className="text-muted-foreground text-xs">{groups.length} docentes</p> */}
           </div>
         </div>
@@ -384,16 +384,15 @@ function CourseCodeRow({
             <Button
               type="button"
               variant="outline"
-              size="sm"
+              size="xs"
               nativeButton={false}
-              className="hover:text-primary hover:border-primary/40 hover:bg-primary/5"
               render={
-                <Link
+                <TransitionLink
                   href={subjectComparisonHref(code, groups[0].academic_period_code, courseName)}
                 />
               }
             >
-              <Users className="size-4" aria-hidden="true" />
+              <Users aria-hidden="true" />
               Comparar
             </Button>
           </div>
@@ -430,24 +429,19 @@ function TeacherGroupRow({ group }: { group: DepartmentSubjectGroup }) {
       <div className="flex shrink-0 items-center gap-3">
         <ScoreBadge value={group.overall_average} />
 
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          nativeButton={false}
-          render={
-            <Link
-              href={courseTeacherHref(
-                group.course_code,
-                group.teacher_id,
-                group.academic_period_code,
-                group.group_name,
-              )}
-            />
-          }
+        <TransitionLink
+          href={courseTeacherHref(
+            group.course_code,
+            group.teacher_id,
+            group.academic_period_code,
+            group.group_name,
+          )}
         >
-          Ver detalle
-        </Button>
+          <span className="text-muted-foreground group-hover:text-primary flex items-center gap-1 text-xs transition-colors">
+            Ver detalle
+            <ArrowUpRight aria-hidden="true" className="size-3.5" />
+          </span>
+        </TransitionLink>
       </div>
     </div>
   )
