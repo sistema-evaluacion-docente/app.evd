@@ -71,9 +71,7 @@ async function getTeacherCourses(
   })
 }
 
-async function getTeacherPlanHistory(
-  teacherId: number,
-): Promise<ResponseAPI<TeacherPlanHistory>> {
+async function getTeacherPlanHistory(teacherId: number): Promise<ResponseAPI<TeacherPlanHistory>> {
   return api.get(`/improvement-plans/teacher/${teacherId}/history`)
 }
 
@@ -81,10 +79,7 @@ async function createPlan(payload: CreatePlanInput): Promise<ResponseAPI<Plan>> 
   return api.post('/improvement-plans/', payload)
 }
 
-async function updatePlan(
-  planId: number,
-  payload: UpdatePlanInput,
-): Promise<ResponseAPI<Plan>> {
+async function updatePlan(planId: number, payload: UpdatePlanInput): Promise<ResponseAPI<Plan>> {
   return api.put(`/improvement-plans/${planId}`, payload)
 }
 
@@ -111,10 +106,7 @@ async function reopenActa(planId: number): Promise<ResponseAPI<Plan>> {
   return api.post(`/improvement-plans/${planId}/acta/reopen`)
 }
 
-async function closePlan(
-  planId: number,
-  payload: ClosePlanInput,
-): Promise<ResponseAPI<Plan>> {
+async function closePlan(planId: number, payload: ClosePlanInput): Promise<ResponseAPI<Plan>> {
   return api.post(`/improvement-plans/${planId}/close`, payload)
 }
 
@@ -142,9 +134,7 @@ async function uploadSignedDocument(
   })
 }
 
-async function getEvidenceRequests(
-  planId: number,
-): Promise<ResponseAPI<PlanEvidenceRequest[]>> {
+async function getEvidenceRequests(planId: number): Promise<ResponseAPI<PlanEvidenceRequest[]>> {
   return api.get(`/improvement-plans/${planId}/evidence-requests`)
 }
 
@@ -202,6 +192,16 @@ async function getDocumentBlob(planId: number, format: PlanFormatSlug): Promise<
   }) as unknown as Promise<Blob>
 }
 
+/**
+ * Editable Word copy of a form. Rendered on the fly from the plan as it stands,
+ * so — unlike the PDF — it doesn't need the document to have been generated.
+ */
+async function getDocumentWordBlob(planId: number, format: PlanFormatSlug): Promise<Blob> {
+  return api.get(`/improvement-plans/${planId}/documents/${format}/word`, {
+    responseType: 'blob',
+  }) as unknown as Promise<Blob>
+}
+
 async function getEvidenceBlob(planId: number, evidenceId: number): Promise<Blob> {
   return api.get(`/improvement-plans/${planId}/evidences/${evidenceId}`, {
     responseType: 'blob',
@@ -234,8 +234,7 @@ export const plansKeys = {
   courses: (teacherId?: number, periodId?: number) =>
     [...plansKeys.all, 'courses', teacherId, periodId] as const,
   history: (teacherId: number) => [...plansKeys.all, 'history', teacherId] as const,
-  evidenceRequests: (planId: number) =>
-    [...plansKeys.all, 'evidence-requests', planId] as const,
+  evidenceRequests: (planId: number) => [...plansKeys.all, 'evidence-requests', planId] as const,
 }
 
 /**
@@ -351,16 +350,46 @@ export function useGetEvidenceRequests(planId?: number) {
   })
 }
 
-/** Invalidates everything that can change when a plan is mutated. */
+/**
+ * Invalidates everything that can change when a plan is mutated.
+ *
+ * The returned promise is handed back from `onSuccess` on purpose: TanStack
+ * awaits it, so `isPending` stays true until the refetched data is on screen.
+ * That keeps a dialog open — with its button spinning — instead of closing it
+ * over stale content that silently changes a second later.
+ */
 function usePlanInvalidation(planId?: number) {
   const queryClient = useQueryClient()
 
-  return () => {
-    queryClient.invalidateQueries({ queryKey: plansKeys.lists() })
-    if (planId != null) {
-      queryClient.invalidateQueries({ queryKey: plansKeys.detail(planId) })
-      queryClient.invalidateQueries({ queryKey: plansKeys.evidenceRequests(planId) })
+  return () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: plansKeys.lists() }),
+      ...(planId != null
+        ? [
+            queryClient.invalidateQueries({ queryKey: plansKeys.detail(planId) }),
+            queryClient.invalidateQueries({
+              queryKey: plansKeys.evidenceRequests(planId),
+            }),
+          ]
+        : []),
+    ])
+}
+
+/**
+ * Same, for the mutations that answer with the whole updated plan: its own
+ * answer is written into the cache first, so the screen changes at once and the
+ * refetch only confirms it.
+ */
+function usePlanRefresh(planId: number) {
+  const queryClient = useQueryClient()
+  const invalidate = usePlanInvalidation(planId)
+
+  return (response: ResponseAPI<Plan>) => {
+    if (response?.data) {
+      queryClient.setQueryData(plansKeys.detail(planId), response)
     }
+
+    return invalidate()
   }
 }
 
@@ -377,81 +406,76 @@ export function useCreatePlan() {
 }
 
 export function useUpdatePlan(planId: number) {
-  const invalidate = usePlanInvalidation(planId)
+  const refresh = usePlanRefresh(planId)
 
   return useMutation({
     mutationFn: (payload: UpdatePlanInput) => updatePlan(planId, payload),
-    onSuccess: invalidate,
+    onSuccess: refresh,
   })
 }
 
 export function useUpsertCaseReport(planId: number) {
-  const invalidate = usePlanInvalidation(planId)
+  const refresh = usePlanRefresh(planId)
 
   return useMutation({
     mutationFn: (payload: CaseReportInput) => upsertCaseReport(planId, payload),
-    onSuccess: invalidate,
+    onSuccess: refresh,
   })
 }
 
 export function useUpdateCheckpoint(planId: number) {
-  const invalidate = usePlanInvalidation(planId)
+  const refresh = usePlanRefresh(planId)
 
   return useMutation({
-    mutationFn: ({
-      checkpointId,
-      payload,
-    }: {
-      checkpointId: number
-      payload: CheckpointInput
-    }) => updateCheckpoint(planId, checkpointId, payload),
-    onSuccess: invalidate,
+    mutationFn: ({ checkpointId, payload }: { checkpointId: number; payload: CheckpointInput }) =>
+      updateCheckpoint(planId, checkpointId, payload),
+    onSuccess: refresh,
   })
 }
 
 export function useCloseActa(planId: number) {
-  const invalidate = usePlanInvalidation(planId)
+  const refresh = usePlanRefresh(planId)
 
-  return useMutation({ mutationFn: () => closeActa(planId), onSuccess: invalidate })
+  return useMutation({ mutationFn: () => closeActa(planId), onSuccess: refresh })
 }
 
 export function useReopenActa(planId: number) {
-  const invalidate = usePlanInvalidation(planId)
+  const refresh = usePlanRefresh(planId)
 
-  return useMutation({ mutationFn: () => reopenActa(planId), onSuccess: invalidate })
+  return useMutation({ mutationFn: () => reopenActa(planId), onSuccess: refresh })
 }
 
 export function useClosePlan(planId: number) {
-  const invalidate = usePlanInvalidation(planId)
+  const refresh = usePlanRefresh(planId)
 
   return useMutation({
     mutationFn: (payload: ClosePlanInput) => closePlan(planId, payload),
-    onSuccess: invalidate,
+    onSuccess: refresh,
   })
 }
 
 export function useEvaluatePlan(planId: number) {
-  const invalidate = usePlanInvalidation(planId)
+  const refresh = usePlanRefresh(planId)
 
-  return useMutation({ mutationFn: () => evaluatePlan(planId), onSuccess: invalidate })
+  return useMutation({ mutationFn: () => evaluatePlan(planId), onSuccess: refresh })
 }
 
 export function useGenerateDocument(planId: number) {
-  const invalidate = usePlanInvalidation(planId)
+  const refresh = usePlanRefresh(planId)
 
   return useMutation({
     mutationFn: (format: PlanFormatSlug) => generateDocument(planId, format),
-    onSuccess: invalidate,
+    onSuccess: refresh,
   })
 }
 
 export function useUploadSignedDocument(planId: number) {
-  const invalidate = usePlanInvalidation(planId)
+  const refresh = usePlanRefresh(planId)
 
   return useMutation({
     mutationFn: ({ format, file }: { format: PlanFormatSlug; file: File }) =>
       uploadSignedDocument(planId, format, file),
-    onSuccess: invalidate,
+    onSuccess: refresh,
   })
 }
 
@@ -492,13 +516,8 @@ export function useReviewEvidence(planId: number) {
   const invalidate = usePlanInvalidation(planId)
 
   return useMutation({
-    mutationFn: ({
-      evidenceId,
-      payload,
-    }: {
-      evidenceId: number
-      payload: EvidenceReviewInput
-    }) => reviewEvidence(planId, evidenceId, payload),
+    mutationFn: ({ evidenceId, payload }: { evidenceId: number; payload: EvidenceReviewInput }) =>
+      reviewEvidence(planId, evidenceId, payload),
     onSuccess: invalidate,
   })
 }
@@ -526,6 +545,24 @@ export function useDownloadDocument(planId: number) {
       const blob = await getDocumentBlob(planId, format)
 
       await saveBlob(blob, `${format}_plan_${planId}.pdf`)
+    },
+  })
+}
+
+/**
+ * Downloads the editable Word copy of a form, for the corrections the director
+ * makes before printing it for signature.
+ *
+ * @example
+ * const downloadWord = useDownloadDocumentWord(plan.id)
+ * downloadWord.mutate('formato-2')
+ */
+export function useDownloadDocumentWord(planId: number) {
+  return useMutation({
+    mutationFn: async (format: PlanFormatSlug) => {
+      const blob = await getDocumentWordBlob(planId, format)
+
+      await saveBlob(blob, `${format}_plan_${planId}.doc`)
     },
   })
 }
