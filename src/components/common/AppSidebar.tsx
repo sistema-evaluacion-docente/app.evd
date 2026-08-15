@@ -27,7 +27,7 @@ import {
 } from 'lucide-react'
 import { useLocation } from 'wouter'
 
-import { getMenus } from '@/config/security'
+import { getMenus, type SecurityConfig } from '@/config/security'
 import useAuth from '@/hooks/useAuth'
 import { useNavigate } from '@/hooks/useNavigate'
 import Logo from './Logo'
@@ -51,6 +51,27 @@ const MENU_ICON_BY_PATH: Record<string, typeof DEFAULT_ICON> = {
   '/admin/logs': Logs,
 }
 
+/**
+ * Picks the single most specific menu item for the current location — the
+ * longest path that either matches exactly or is a real parent segment of
+ * it (`/periodos` matches `/periodos/1`, but not `/periodos-x`). Without
+ * this, a naive "does it start with" check marks every ancestor route
+ * active alongside the actual current page (e.g. both "Periodos" and
+ * "Materias" light up while on `/periodos/materias`).
+ */
+function getActivePath(items: SecurityConfig['pages'], location: string): string | undefined {
+  return items
+    .map((item) => item.path)
+    .filter(
+      (path) =>
+        path !== '#' && (path === location || (path !== '/' && location.startsWith(`${path}/`))),
+    )
+    .reduce<string | undefined>(
+      (longest, path) => (longest === undefined || path.length > longest.length ? path : longest),
+      undefined,
+    )
+}
+
 export function AppSidebar() {
   const [location] = useLocation()
   const { setOpenMobile } = useSidebar()
@@ -62,6 +83,7 @@ export function AppSidebar() {
   }
 
   const items = getMenus(selectedRole)
+  const activePath = getActivePath(items, location)
 
   return (
     <Sidebar collapsible="offcanvas" side="left" variant="sidebar">
@@ -80,14 +102,11 @@ export function AppSidebar() {
             <SidebarMenu>
               {items.map((item) => {
                 const Icon = MENU_ICON_BY_PATH[item.path] ?? DEFAULT_ICON
-                const active =
-                  item.path !== '#' &&
-                  (location === item.path || location.startsWith(`${item.path}/`))
 
                 return (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton
-                      isActive={active}
+                      isActive={item.path === activePath}
                       className={'cursor-pointer'}
                       onClick={() => {
                         setOpenMobile(false)
