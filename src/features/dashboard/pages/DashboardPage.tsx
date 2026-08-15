@@ -22,8 +22,6 @@ export default function DashboardPage() {
   if (selectedRole === 'DIRECTOR DE DEPARTAMENTO') {
     return (
       <section className="mb-20">
-        <PageTitle>Resumen del departamento</PageTitle>
-
         <DepartmentPeriodRangeSummary />
       </section>
     )

@@ -1,5 +1,8 @@
 import { useId, useState } from 'react'
 
+import { AverageTrendChart } from '@/components/common/AverageTrendChart'
+import { InlineError } from '@/components/common/InlineError'
+import { PageTitle } from '@/components/common/PageTitle'
 import { PeriodSelect } from '@/components/common/PeriodSelect'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -8,12 +11,10 @@ import { Switch } from '@/components/ui/switch'
 import { useGetAcademicPeriods } from '@/features/periods'
 import { cn } from '@/lib/utils'
 import { useGetDepartmentPeriodRangeStats } from '../api'
-import { InlineError } from '@/components/common/InlineError'
-import { DepartmentStatsHero } from './DepartmentStatsHero'
-import { AverageTrendChart } from '@/components/common/AverageTrendChart'
-import { DepartmentDimensionsChart } from './DepartmentDimensionsChart'
-import { DepartmentCommentRiskChart } from './DepartmentCommentRiskChart'
 import { DepartmentCommentCategoriesChart } from './DepartmentCommentCategoriesChart'
+import { DepartmentCommentRiskChart } from './DepartmentCommentRiskChart'
+import { DepartmentDimensionsChart } from './DepartmentDimensionsChart'
+import { DepartmentStatsHero } from './DepartmentStatsHero'
 
 export interface DepartmentPeriodRangeSummaryProps {
   /** How many trailing periods to preselect once "comparar un rango" is turned on. Defaults to 2. */
@@ -91,8 +92,10 @@ export function DepartmentPeriodRangeSummary({
 
   return (
     <div className={cn('space-y-6', className)}>
-      <div className="space-y-3">
-        <div className="flex flex-wrap items-center gap-3">
+      <PageTitle className="flex w-full flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>Resumen del departamento</div>
+
+        <div className="flex flex-wrap items-center gap-3 font-normal">
           {compareRange ? (
             <>
               <PeriodSelect
@@ -122,7 +125,9 @@ export function DepartmentPeriodRangeSummary({
 
           {isFetching && <Spinner className="text-muted-foreground size-4" />}
         </div>
+      </PageTitle>
 
+      <div className="space-y-3">
         <div className="flex items-center gap-2">
           <Switch id={compareRangeId} checked={compareRange} onCheckedChange={setCompareRange} />
           <Label htmlFor={compareRangeId} className="text-muted-foreground text-sm font-normal">
