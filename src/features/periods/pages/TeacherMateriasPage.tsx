@@ -62,8 +62,6 @@ export default function TeacherMateriasPage() {
 
   return (
     <>
-      <PageTitle>Materias</PageTitle>
-
       {isHistoryPending ? (
         <Skeleton className="h-9 w-48" />
       ) : periods.length === 0 ? (
@@ -72,13 +70,18 @@ export default function TeacherMateriasPage() {
         </p>
       ) : (
         <div className="space-y-6">
-          <PeriodSelect
-            options={periodOptions}
-            value={selectedOption?.id}
-            onValueChange={setPeriodId}
-            searchParam="period"
-            ariaLabel="Periodo"
-          />
+          <PageTitle className="flex w-full flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <p>Mis materias</p>
+
+            <PeriodSelect
+              className="font-normal"
+              options={periodOptions}
+              value={selectedOption?.id}
+              onValueChange={setPeriodId}
+              searchParam="period"
+              ariaLabel="Periodo"
+            />
+          </PageTitle>
 
           {isLoading ? (
             <Skeleton className="h-64 w-full rounded-md" />
