@@ -78,7 +78,12 @@ export function EvaluationUploadForm() {
         />
 
         <div className="flex items-center justify-end gap-3">
-          <Button type="button" variant="ghost" onClick={() => navigate('/evaluations')}>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => navigate('/evaluaciones')}
+            disabled={upload.isPending}
+          >
             Cancelar
           </Button>
 
