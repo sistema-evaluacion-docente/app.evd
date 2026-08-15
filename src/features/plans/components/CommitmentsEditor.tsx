@@ -1,5 +1,6 @@
 import { ChevronRight, Lightbulb, Trash2 } from 'lucide-react'
 
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Input } from '@/components/ui/input'
@@ -12,23 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import type { PlanAspect } from '../types'
-
-/** A commitment being drafted before the plan is saved. */
-export interface DraftItem {
-  /** Client-side id so React can key rows that have no server id yet. */
-  key: string
-  id?: number
-  description: string
-  commitment: string
-  aspect: number | null
-  target_type: 'DIMENSION' | 'QUESTION' | 'OVERALL_AVERAGE' | 'QUALITATIVE'
-  target_ref: string | null
-  baseline_value: number | null
-  target_value: number | null
-  suggestions: string[]
-  comment_ids: number[]
-}
+import type { DraftItem, PlanAspect } from '../types'
 
 interface CommitmentsEditorProps {
   items: DraftItem[]
@@ -153,9 +138,16 @@ function CommitmentRow({
     <li className="space-y-3 px-4 py-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1 space-y-1.5">
-          <Label htmlFor={`desc-${item.key}`} className="text-xs">
-            Descripción del indicador comprometido
-          </Label>
+          <div className="flex flex-wrap items-center gap-2">
+            <Label htmlFor={`desc-${item.key}`} className="text-xs">
+              Descripción del indicador comprometido
+            </Label>
+            {item.source_subject_label && (
+              <Badge variant="outline" className="font-normal">
+                {item.source_subject_label}
+              </Badge>
+            )}
+          </div>
           <Textarea
             id={`desc-${item.key}`}
             value={item.description}
@@ -219,7 +211,8 @@ function CommitmentRow({
 
         {item.baseline_value != null && (
           <p className="text-muted-foreground pb-2 text-xs">
-            Valor actual: <span className="num font-semibold">{item.baseline_value.toFixed(2)}</span>
+            Valor actual:{' '}
+            <span className="num font-semibold">{item.baseline_value.toFixed(2)}</span>
           </p>
         )}
 
@@ -288,11 +281,23 @@ function CommitmentRow({
         </Collapsible>
       )}
 
-      {item.comment_ids.length > 0 && (
-        <p className="text-muted-foreground text-xs">
-          <span className="num font-semibold">{item.comment_ids.length}</span> comentario(s) de
-          estudiantes citados
-        </p>
+      {item.comment_previews.length > 0 && (
+        <div className="border-border space-y-1 border-l-2 pl-3">
+          <p className="text-muted-foreground text-xs font-medium">
+            Comentarios citados <span className="num">({item.comment_previews.length})</span>
+          </p>
+          {item.comment_previews.map((preview) => (
+            <p key={preview.id} className="text-muted-foreground text-xs italic">
+              “{preview.text}”
+              {preview.risk_level_name && (
+                <span className="not-italic">
+                  {' '}
+                  · riesgo {preview.risk_level_name.toLowerCase()}
+                </span>
+              )}
+            </p>
+          ))}
+        </div>
       )}
     </li>
   )
