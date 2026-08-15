@@ -1,1 +1,1 @@
-export type { CourseRecord } from './course.types'
+export type { CourseRecord, UpdateCoursePayload } from './course.types'
