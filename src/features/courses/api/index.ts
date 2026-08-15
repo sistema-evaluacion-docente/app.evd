@@ -1,9 +1,9 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import type { ResponseAPI } from '@/@types/Response'
 import api from '@/config/axios'
 import { useAuthStore } from '@/features/auth'
-import type { CourseRecord } from '../types'
+import type { CourseRecord, UpdateCoursePayload } from '../types'
 
 interface CourseListParams {
   page: number
@@ -21,6 +21,13 @@ async function getCourses(params: CourseListParams): Promise<ResponseAPI<CourseR
   if (params.department_id) query['department_id'] = params.department_id
 
   return api.get('/courses/', { params: query })
+}
+
+async function updateCourse(
+  courseId: number,
+  payload: UpdateCoursePayload,
+): Promise<ResponseAPI<CourseRecord>> {
+  return api.put(`/courses/${courseId}`, payload)
 }
 
 /** Query-key factory so list invalidations stay consistent. */
@@ -60,5 +67,24 @@ export function useListCourses({
       getCourses({ page, limit, search, department_id: resolvedDepartmentId ?? undefined }),
     staleTime: 60_000,
     placeholderData: keepPreviousData,
+  })
+}
+
+/**
+ * Updates a course's name (`PUT /courses/{course_id}`).
+ *
+ * @example
+ * const { mutate } = useUpdateCourse();
+ * mutate({ courseId: 12, payload: { name: 'Cálculo Diferencial' } });
+ */
+export function useUpdateCourse() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ courseId, payload }: { courseId: number; payload: UpdateCoursePayload }) =>
+      updateCourse(courseId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: coursesKeys.lists() })
+    },
   })
 }
