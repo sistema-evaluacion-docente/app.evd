@@ -1,7 +1,5 @@
 import { useId, useState } from 'react'
 
-import { AverageTrendChart } from '@/components/common/AverageTrendChart'
-import { InlineError } from '@/components/common/InlineError'
 import { PeriodSelect } from '@/components/common/PeriodSelect'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -10,10 +8,7 @@ import { Switch } from '@/components/ui/switch'
 import { useGetAcademicPeriods } from '@/features/periods'
 import { cn } from '@/lib/utils'
 import { useGetDepartmentPeriodRangeStats } from '../api'
-import { DepartmentCommentCategoriesChart } from './DepartmentCommentCategoriesChart'
-import { DepartmentCommentRiskChart } from './DepartmentCommentRiskChart'
-import { DepartmentDimensionsChart } from './DepartmentDimensionsChart'
-import { DepartmentStatsHero } from './DepartmentStatsHero'
+import { DepartmentPeriodRangeSummaryLayout } from './DepartmentPeriodRangeSummaryLayout'
 
 export interface DepartmentPeriodRangeSummaryProps {
   /** How many trailing periods to preselect once "comparar un rango" is turned on. Defaults to 2. */
@@ -80,8 +75,6 @@ export function DepartmentPeriodRangeSummary({
     startPeriod: startPeriod?.code,
     endPeriod: endPeriod?.code,
   })
-
-  const stats = data?.data
 
   if (!isPeriodsPending && sortedPeriods.length === 0) {
     return (

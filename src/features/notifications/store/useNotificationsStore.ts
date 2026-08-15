@@ -111,6 +111,8 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
 
     connectingRef = true
 
+    void get().fetchNotifications()
+
     try {
       const firebaseToken = await getToken()
 

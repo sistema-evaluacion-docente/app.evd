@@ -3,8 +3,9 @@ import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AlertTriangle, Bell, CheckCheck, CheckCircle, Info, XCircle } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
+import { TransitionLink } from '@/components/common/TransitionLink'
 import formatDate from '@/lib/formatDate'
 import { useNotifications } from '../hooks/useNotifications'
 import type { Notification, NotificationType } from '../types/Notification'
@@ -27,10 +28,25 @@ function getNotificationIcon(type: NotificationType) {
 function NotificationItem({
   notification,
   onMarkAsRead,
+  onNavigate,
 }: {
   notification: Notification
   onMarkAsRead: (id: number) => void
+  /** Called after following the notification's link, e.g. to close the popover. */
+  onNavigate: () => void
 }) {
+  const body = (
+    <>
+      <div className="flex-shrink-0 pt-0.5">{getNotificationIcon(notification.type)}</div>
+
+      <div className="min-w-0 flex-1 space-y-1">
+        <p className="text-sm leading-tight font-medium">{notification.title}</p>
+        <p className="text-muted-foreground line-clamp-2 text-xs">{notification.message}</p>
+        <p className="text-muted-foreground text-xs">{formatDate(notification.created_at)}</p>
+      </div>
+    </>
+  )
+
   return (
     <div
       className={`flex gap-3 rounded border-b p-3 transition-colors ${
@@ -39,29 +55,29 @@ function NotificationItem({
           : 'bg-background border-border'
       }`}
     >
-      <div className="flex-shrink-0 pt-0.5">{getNotificationIcon(notification.type)}</div>
+      {notification.link ? (
+        <TransitionLink
+          href={notification.link}
+          className="flex min-w-0 flex-1 gap-3"
+          onClick={onNavigate}
+        >
+          {body}
+        </TransitionLink>
+      ) : (
+        <div className="flex min-w-0 flex-1 gap-3">{body}</div>
+      )}
 
-      <div className="min-w-0 flex-1 space-y-1">
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-sm leading-tight font-medium">{notification.title}</p>
-
-          {!notification.read && (
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              onClick={() => onMarkAsRead(notification.id)}
-              className="flex-shrink-0"
-              aria-label="Marcar como leída"
-            >
-              <CheckCheck className="size-3.5" />
-            </Button>
-          )}
-        </div>
-
-        <p className="text-muted-foreground line-clamp-2 text-xs">{notification.message}</p>
-
-        <p className="text-muted-foreground text-xs">{formatDate(notification.created_at)}</p>
-      </div>
+      {!notification.read && (
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          onClick={() => onMarkAsRead(notification.id)}
+          className="flex-shrink-0"
+          aria-label="Marcar como leída"
+        >
+          <CheckCheck className="size-3.5" />
+        </Button>
+      )}
     </div>
   )
 }
@@ -74,12 +90,7 @@ function NotificationItem({
  */
 export function NotificationsBell() {
   const [open, setOpen] = useState(false)
-  const { notifications, unreadCount, isLoading, refetch, markAsRead, markAllAsRead } =
-    useNotifications()
-
-  useEffect(() => {
-    if (open) void refetch()
-  }, [open, refetch])
+  const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead } = useNotifications()
 
   const handleMarkAsRead = (id: number) => {
     markAsRead([id])
@@ -137,6 +148,7 @@ export function NotificationsBell() {
                     key={notification.id}
                     notification={notification}
                     onMarkAsRead={handleMarkAsRead}
+                    onNavigate={() => setOpen(false)}
                   />
                 ))}
               </div>

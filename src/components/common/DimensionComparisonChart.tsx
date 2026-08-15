@@ -1,5 +1,6 @@
-import { Settings2 } from 'lucide-react'
 import { useId, useState } from 'react'
+
+import { Settings2 } from 'lucide-react'
 import {
   Bar,
   BarChart,
@@ -79,6 +80,13 @@ export interface DimensionComparisonChartProps {
   isLoading?: boolean
   error?: string | null
   emptyMessage?: string
+  /**
+   * Shows a button that opens a popover to override the axis min/max on the
+   * fly, e.g. to zoom into a narrow band of scores. Purely a display
+   * preference — kept as local UI state, never reported back to the caller.
+   * Defaults to `true`.
+   */
+  customizable?: boolean
   /** Dashed marker, e.g. the institutional target or the overall average. */
   referenceValue?: number
   referenceLabel?: string
@@ -150,6 +158,7 @@ export function DimensionComparisonChart({
   isLoading = false,
   error = null,
   emptyMessage = 'No hay dimensiones para comparar.',
+  customizable = true,
   referenceValue,
   referenceLabel,
   showLegend,
@@ -229,10 +238,10 @@ export function DimensionComparisonChart({
     )
   }
 
-  const boxClass = cn('h-64 w-full', chartClassName, customizable && 'pt-6')
+  const boxClass = cn('h-64 w-full pt-6', chartClassName)
   const tickStyle = { fontSize: 11, fill: 'var(--color-muted-foreground)' }
 
-  const customizePopover = customizable && (
+  const rangeControl = customizable && (
     <Popover>
       <PopoverTrigger
         render={
@@ -275,13 +284,11 @@ export function DimensionComparisonChart({
               id={minInputId}
               type="number"
               step={0.1}
-              min={0}
+              max={effectiveMax}
               value={effectiveMin}
               onChange={(event) => {
                 const raw = event.target.value
-                if (raw === '') return setMinOverride(undefined)
-                const parsed = Number(raw)
-                if (!Number.isNaN(parsed)) setMinOverride(Math.max(0, parsed))
+                setMinOverride(raw === '' ? undefined : Number(raw))
               }}
             />
           </div>
@@ -295,13 +302,11 @@ export function DimensionComparisonChart({
               id={maxInputId}
               type="number"
               step={0.1}
-              min={0}
+              min={effectiveMin}
               value={effectiveMax}
               onChange={(event) => {
                 const raw = event.target.value
-                if (raw === '') return setMaxOverride(undefined)
-                const parsed = Number(raw)
-                if (!Number.isNaN(parsed)) setMaxOverride(Math.max(0, parsed))
+                setMaxOverride(raw === '' ? undefined : Number(raw))
               }}
             />
           </div>
@@ -313,7 +318,7 @@ export function DimensionComparisonChart({
   if (variant === 'radar') {
     return (
       <div className={cn('relative', className)}>
-        {customizePopover}
+        {rangeControl}
 
         <ChartContainer config={chartConfig} className={boxClass}>
           <RadarChart data={rows} outerRadius="72%">
@@ -361,18 +366,13 @@ export function DimensionComparisonChart({
 
   return (
     <div className={cn('relative', className)}>
-      {customizePopover}
+      {rangeControl}
 
       <ChartContainer config={chartConfig} className={boxClass}>
         <BarChart
           data={rows}
           layout={isHorizontal ? 'vertical' : 'horizontal'}
-          margin={{
-            top: (withValues && !isHorizontal) || (referenceLabel && isHorizontal) ? 24 : 8,
-            right: withValues ? 40 : 12,
-            left: isHorizontal ? 8 : -16,
-            bottom: 8,
-          }}
+          margin={{ top: 8, right: withValues ? 40 : 12, left: isHorizontal ? 8 : -16, bottom: 8 }}
           barGap={2}
         >
           {showGrid && (
@@ -430,7 +430,7 @@ export function DimensionComparisonChart({
                 referenceLabel
                   ? {
                       value: referenceLabel,
-                      position: isHorizontal ? 'top' : 'insideTopLeft',
+                      position: isHorizontal ? 'insideTopRight' : 'insideTopLeft',
                       fontSize: 10,
                       fill: 'var(--color-muted-foreground)',
                     }

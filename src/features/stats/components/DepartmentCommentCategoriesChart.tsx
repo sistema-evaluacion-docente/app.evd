@@ -46,7 +46,7 @@ export function DepartmentCommentCategoriesChart({
       labelFormatter={categoryShortLabel}
       orientation="vertical"
       min={0}
-      max={max}
+      max={max + 20}
       decimals={0}
       showLegend={false}
       emptyMessage="No hay comentarios clasificados por categoría en este rango de periodos."

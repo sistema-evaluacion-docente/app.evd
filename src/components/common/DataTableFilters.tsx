@@ -262,7 +262,9 @@ function SelectFilter({
         onValueChange={(val) => onChange(val === '' || val == null ? undefined : val)}
       >
         <SelectTrigger className="w-full">
-          <SelectValue placeholder={config.placeholder || 'Seleccionar...'} />
+          <SelectValue placeholder={config.placeholder || 'Seleccionar...'}>
+            {config.options.find((option) => String(option.value) === String(value))?.label}
+          </SelectValue>
         </SelectTrigger>
 
         <SelectContent>

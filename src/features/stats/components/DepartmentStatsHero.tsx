@@ -37,8 +37,6 @@ export function DepartmentStatsHero({ stats, commentsHref, className }: Departme
       ? stats.start_period_code
       : `${stats.start_period_code} — ${stats.end_period_code}`
 
-  console.log('stats', stats)
-
   return (
     <section
       className={cn(

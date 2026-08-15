@@ -43,7 +43,7 @@ export function DepartmentCommentRiskChart({ counts, className }: DepartmentComm
       dimensions={entries.map((entry) => ({ key: entry.key, label: entry.label }))}
       orientation="vertical"
       min={0}
-      max={max}
+      max={max + 20}
       decimals={0}
       showLegend={false}
       emptyMessage="No hay comentarios clasificados por nivel de riesgo en este rango de periodos."

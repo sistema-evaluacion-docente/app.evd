@@ -10,6 +10,8 @@ export interface Notification {
   read: boolean
   created_at: string
   updated_at: string
+  /** Route to navigate to when the notification is clicked, if any. */
+  link?: string
 }
 
 /** Filters applied to the notifications list request. */
