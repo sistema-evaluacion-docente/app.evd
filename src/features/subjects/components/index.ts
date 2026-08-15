@@ -1,1 +1,7 @@
 export { SubjectsList } from './SubjectsList'
+export { TeacherCommentsComparison } from './TeacherCommentsComparison'
+export type { TeacherCommentsComparisonProps } from './TeacherCommentsComparison'
+export { TeacherComparisonRanking } from './TeacherComparisonRanking'
+export type { TeacherComparisonRankingProps } from './TeacherComparisonRanking'
+export { TeacherDimensionComparison } from './TeacherDimensionComparison'
+export type { TeacherDimensionComparisonProps } from './TeacherDimensionComparison'

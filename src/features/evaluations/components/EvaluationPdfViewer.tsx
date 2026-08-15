@@ -80,7 +80,7 @@ export function EvaluationPdfViewer({
             <div className="text-muted-foreground flex size-full flex-col items-center justify-center gap-3 px-6 text-center">
               <p className="text-sm">Su navegador no puede mostrar el PDF incrustado.</p>
 
-              <Button size="sm" render={<a href={url} download={fileName} />}>
+              <Button size="sm" nativeButton={false} render={<a href={url} download={fileName} />}>
                 <Download className="size-4" aria-hidden="true" />
                 Descargar el documento
               </Button>

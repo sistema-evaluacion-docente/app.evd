@@ -21,15 +21,10 @@ export default function SubjectTeacherDetailPage() {
   const period = searchParams.get('period') ?? undefined
   const groupName = searchParams.get('group') ?? undefined
 
-  const backHref =
-    teacherId != null && period
-      ? `/docentes/${teacherId}?period=${encodeURIComponent(period)}`
-      : '/materias'
-
   if (!courseCode || teacherId == null || !period || !groupName) {
     return (
       <>
-        <BackButton href={backHref} label="Volver al docente" className="mb-4" />
+        <BackButton fallbackHref="/materias" label="Volver" className="mb-4" />
         <p className="text-muted-foreground py-10 text-center text-sm">
           No se encontró información para esta materia.
         </p>
@@ -39,7 +34,7 @@ export default function SubjectTeacherDetailPage() {
 
   return (
     <div className="space-y-6">
-      <BackButton href={backHref} label="Volver al docente" className="mb-4" />
+      <BackButton fallbackHref="/materias" label="Volver" className="mb-4" />
 
       <CourseTeacherDetail
         teacherId={teacherId}

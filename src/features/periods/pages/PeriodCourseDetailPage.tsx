@@ -71,6 +71,7 @@ export default function PeriodCourseDetailPage() {
             <Button
               variant="ghost"
               size="sm"
+              nativeButton={false}
               className="text-muted-foreground hover:text-foreground h-auto min-w-0 gap-1.5 px-2 py-1"
               render={
                 <Link
@@ -100,6 +101,7 @@ export default function PeriodCourseDetailPage() {
             <Button
               variant="ghost"
               size="sm"
+              nativeButton={false}
               className="text-muted-foreground hover:text-foreground h-auto min-w-0 gap-1.5 px-2 py-1"
               render={
                 <Link

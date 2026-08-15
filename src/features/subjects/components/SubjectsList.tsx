@@ -1,10 +1,11 @@
-import { ChevronRight, Search, Users } from 'lucide-react'
+import { ArrowUpRight, ChevronRight, Search, Users } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'wouter'
 import { useDebounce, useDebouncedCallback } from 'use-debounce'
 
 import { DataTableFilters, type SortField } from '@/components/common/DataTableFilters'
 import { InlineError } from '@/components/common/InlineError'
+import { PeriodBanner } from '@/components/common/PeriodBanner'
 import { PeriodSelect } from '@/components/common/PeriodSelect'
 import { ScoreBadge } from '@/components/common/ScoreBadge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -13,12 +14,12 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { useGetAcademicPeriods } from '@/features/periods'
 import { useGetDepartmentPeriodRangeSubjects } from '@/features/stats'
 import type { DepartmentSubjectAverage, DepartmentSubjectGroup } from '@/features/stats'
 import { courseTeacherHref } from '@/features/teachers'
 import { cn } from '@/lib/utils'
+import { subjectComparisonHref } from '../config'
 
 const SORT_FIELDS: SortField[] = [
   { value: 'overall_average', label: 'Promedio' },
@@ -28,11 +29,13 @@ const SORT_FIELDS: SortField[] = [
 
 /**
  * Paginated list of the director's own department's subjects ("materias")
- * for a single selected academic period, with the teachers who taught each
- * one. A subject taught by one teacher links straight to that teacher's
- * materia report; one taught by several expands in place to show each
- * teacher individually — "Comparar" (side-by-side comparison) is shown but
- * disabled until that flow is built.
+ * for a single selected academic period. Rows are grouped by materia name —
+ * free text extracted from the uploaded PDF, so it can't be trusted as a
+ * single identity (two different materias can end up sharing a truncated
+ * name). Expanding a name reveals the real course codes underneath it, and
+ * only within one code — its teachers are genuinely comparable — does
+ * "Ver detalle" (one teacher) or "Comparar" (two or more) show up. A materia
+ * with a single teacher overall skips straight to their materia report.
  *
  * @example
  * <SubjectsList />
@@ -74,6 +77,12 @@ export function SubjectsList({ className }: { className?: string }) {
 
   return (
     <div className={className}>
+      <PeriodBanner
+        label="Periodo seleccionado"
+        period={selectedPeriod?.name}
+        className="mb-3"
+      />
+
       <div className="mb-3 flex flex-wrap items-center gap-3">
         <PeriodSelect
           value={periodId}
@@ -176,30 +185,38 @@ export function SubjectsList({ className }: { className?: string }) {
   )
 }
 
+/** Groups within a materia name, partitioned by their real course code. */
+interface CourseCodeGroup {
+  code: string
+  groups: DepartmentSubjectGroup[]
+}
+
+/**
+ * Splits a materia name's groups by `course_code` — the name comes from
+ * free-text extracted from the uploaded PDF (prone to truncation/typos, so
+ * two genuinely different materias can share a name), but `course_code` is
+ * a structured field, so it's the identity that's actually safe to compare
+ * or link by. Never trust "the groups under one name" as one materia.
+ */
+function groupByCourseCode(groups: DepartmentSubjectGroup[]): CourseCodeGroup[] {
+  const byCode = new Map<string, DepartmentSubjectGroup[]>()
+
+  for (const group of groups) {
+    const list = byCode.get(group.course_code) ?? []
+    list.push(group)
+    byCode.set(group.course_code, list)
+  }
+
+  return [...byCode.entries()].map(([code, codeGroups]) => ({ code, groups: codeGroups }))
+}
+
 function SubjectRow({ subject }: { subject: DepartmentSubjectAverage }) {
   const groups = subject.groups ?? []
-  const soleGroup = subject.teacher_count === 1 ? groups[0] : undefined
 
-  if (soleGroup) {
-    return (
-      <Link
-        href={courseTeacherHref(
-          soleGroup.course_code,
-          soleGroup.teacher_id,
-          soleGroup.academic_period_code,
-          soleGroup.group_name,
-        )}
-        className="hover:bg-muted/40 flex w-full items-center justify-between gap-4 px-6 py-4 text-left transition-colors"
-      >
-        <p className="min-w-0 truncate text-sm font-medium">{subject.course_name}</p>
-
-        <div className="flex shrink-0 items-center gap-4">
-          <ScoreBadge size="lg" value={subject.overall_average} />
-          <span className="text-muted-foreground text-xs">Ver detalle</span>
-        </div>
-      </Link>
-    )
-  }
+  // Always drill down through the real course code — even when there's a
+  // single teacher/code overall, jumping straight to their materia report
+  // would skip the level that actually disambiguates this materia name.
+  const codeGroups = groupByCourseCode(groups)
 
   return (
     <Collapsible className="group/row">
@@ -212,33 +229,109 @@ function SubjectRow({ subject }: { subject: DepartmentSubjectAverage }) {
 
           <div className="min-w-0">
             <p className="truncate text-sm font-medium">{subject.course_name}</p>
-            <p className="text-muted-foreground text-xs">{subject.teacher_count} docentes</p>
+            <p className="text-muted-foreground text-xs">
+              {codeGroups.length === 1
+                ? '1 código de materia'
+                : `${codeGroups.length} códigos`}
+            </p>
           </div>
         </div>
-
-        <ScoreBadge size="lg" value={subject.overall_average} />
       </CollapsibleTrigger>
 
       <CollapsibleContent>
-        <div className="px-6 pb-4">
-          <div className="mb-2 flex justify-end">
-            <TooltipProvider delay={150}>
-              <Tooltip>
-                <TooltipTrigger render={<span tabIndex={0} className="inline-flex" />}>
-                  <Button type="button" variant="outline" size="sm" disabled>
-                    <Users className="size-4" aria-hidden="true" />
-                    Comparar
-                  </Button>
-                </TooltipTrigger>
+        <div className="divide-border divide-y pb-1">
+          {codeGroups.map(({ code, groups: groupsForCode }) => (
+            <CourseCodeRow
+              key={code}
+              code={code}
+              groups={groupsForCode}
+              courseName={subject.course_name}
+            />
+          ))}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  )
+}
 
-                <TooltipContent>
-                  La comparación entre docentes estará disponible próximamente.
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+function CourseCodeRow({
+  code,
+  groups,
+  courseName,
+}: {
+  code: string
+  groups: DepartmentSubjectGroup[]
+  courseName: string
+}) {
+  const soleGroup = groups.length === 1 ? groups[0] : undefined
+
+  if (soleGroup) {
+    return (
+      <Link
+        href={courseTeacherHref(
+          soleGroup.course_code,
+          soleGroup.teacher_id,
+          soleGroup.academic_period_code,
+          soleGroup.group_name,
+        )}
+        className="hover:bg-muted/40 group flex w-full items-center justify-between gap-4 py-3 pr-6 pl-12 text-left transition-colors"
+      >
+        <div className="min-w-0">
+          <p className="group-hover:text-primary truncate text-sm font-medium transition-colors">
+            Código {code}
+          </p>
+          <p className="text-muted-foreground text-xs">1 docente</p>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-4">
+          <ScoreBadge value={soleGroup.overall_average} />
+
+          <span className="text-muted-foreground group-hover:text-primary flex items-center gap-1 text-xs transition-colors">
+            Ver detalle
+            <ArrowUpRight aria-hidden="true" className="size-3.5" />
+          </span>
+        </div>
+      </Link>
+    )
+  }
+
+  return (
+    <Collapsible>
+      <CollapsibleTrigger className="hover:bg-muted/40 group flex w-full cursor-pointer items-center justify-between gap-4 py-3 pr-6 pl-12 text-left transition-colors">
+        <div className="flex min-w-0 items-center gap-3">
+          <ChevronRight
+            aria-hidden="true"
+            className="text-muted-foreground size-3.5 shrink-0 transition-transform group-data-panel-open:rotate-90"
+          />
+
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium">Código {code}</p>
+            <p className="text-muted-foreground text-xs">{groups.length} docentes</p>
+          </div>
+        </div>
+      </CollapsibleTrigger>
+
+      <CollapsibleContent>
+        <div className="pb-3 pl-12">
+          <div className="mb-2 flex justify-end pr-6">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              nativeButton={false}
+              className="hover:text-primary hover:border-primary/40 hover:bg-primary/5"
+              render={
+                <Link
+                  href={subjectComparisonHref(code, groups[0].academic_period_code, courseName)}
+                />
+              }
+            >
+              <Users className="size-4" aria-hidden="true" />
+              Comparar
+            </Button>
           </div>
 
-          <div className="divide-border divide-y">
+          <div className="divide-border divide-y pr-6">
             {groups.map((group) => (
               <TeacherGroupRow key={group.academic_group_id} group={group} />
             ))}
@@ -274,6 +367,7 @@ function TeacherGroupRow({ group }: { group: DepartmentSubjectGroup }) {
           type="button"
           variant="outline"
           size="sm"
+          nativeButton={false}
           render={
             <Link
               href={courseTeacherHref(

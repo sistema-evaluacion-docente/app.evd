@@ -110,6 +110,7 @@ export function DepartmentStatsHero({ stats, commentsHref, className }: Departme
               <Button
                 variant="outline"
                 size="sm"
+                nativeButton={false}
                 render={<TransitionLink href={commentsHref} />}
                 className="bg-background"
               >
