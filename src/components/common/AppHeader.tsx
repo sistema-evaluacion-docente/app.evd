@@ -5,6 +5,7 @@ import type { ReactNode } from 'react'
 import { useSidebar } from '@/components/ui/sidebar'
 import { Avatar } from '@/features/auth'
 import { NotificationsBell } from '@/features/notifications'
+import { ThemeToggle } from './ThemeToggle'
 
 export interface AppHeaderProps {
   showBreadcrumb?: boolean
@@ -66,6 +67,7 @@ export function AppHeader({
 
           <NotificationsBell />
           <Avatar />
+          <ThemeToggle />
         </div>
       </div>
     </header>

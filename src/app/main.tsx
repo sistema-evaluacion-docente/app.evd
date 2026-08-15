@@ -4,6 +4,7 @@ import { AuthInitializer } from '@/features/auth/components/AuthInitializer'
 import '@fontsource-variable/figtree/wght.css'
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { ThemeProvider } from 'next-themes'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
@@ -20,13 +21,15 @@ const queryClient = new QueryClient({
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <AuthInitializer>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <App />
-          <Toaster position="bottom-left" />
-        </TooltipProvider>
-      </QueryClientProvider>
-    </AuthInitializer>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <AuthInitializer>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <App />
+            <Toaster position="bottom-left" />
+          </TooltipProvider>
+        </QueryClientProvider>
+      </AuthInitializer>
+    </ThemeProvider>
   </StrictMode>,
 )
