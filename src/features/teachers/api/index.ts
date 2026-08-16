@@ -8,6 +8,7 @@ import type {
   TeacherComment,
   TeacherCommentsData,
   TeacherDetail,
+  TeacherMatrix,
   TeacherRecord,
   TeacherUploadData,
 } from '../types'
@@ -79,6 +80,15 @@ async function getTeacherCourseHistory(
   })
 }
 
+async function getTeacherMatrix(
+  teacherId: number,
+  evaluationId: number,
+): Promise<ResponseAPI<TeacherMatrix>> {
+  return api.get(`/stats/teachers/${teacherId}/matrix`, {
+    params: { evaluation_id: evaluationId },
+  })
+}
+
 async function uploadTeachers(file: File): Promise<ResponseAPI<TeacherUploadData>> {
   const formData = new FormData()
   formData.append('file', file)
@@ -143,6 +153,8 @@ export const teachersKeys = {
     [...teachersKeys.all, 'comments', evaluationId, teacherId] as const,
   courseHistory: (teacherId: number, courseCode: string, limit?: number) =>
     [...teachersKeys.all, 'course-history', teacherId, courseCode, limit] as const,
+  matrix: (teacherId: number, evaluationId: number) =>
+    [...teachersKeys.all, 'matrix', teacherId, evaluationId] as const,
 }
 
 /**
@@ -329,6 +341,33 @@ export function useGetTeacherCourseHistory({
     queryKey: teachersKeys.courseHistory(teacherId ?? 0, courseCode ?? '', limit),
     queryFn: () => getTeacherCourseHistory(teacherId!, courseCode!, { limit }),
     enabled: teacherId != null && teacherId > 0 && Boolean(courseCode),
+    staleTime: 60_000,
+  })
+}
+
+/**
+ * Fetches a teacher's per-course, per-question average matrix for one
+ * evaluation (`GET /stats/teachers/{teacher_id}/matrix`) — one row per
+ * question, one column per course the teacher taught that period, plus the
+ * per-question average across all their courses. Lives here (not `stats/api`)
+ * despite the `/stats/...` path: it's single-teacher data, not a cross-teacher
+ * aggregate, and `stats` already imports types from `teachers`, so a hook
+ * here avoids a circular feature dependency.
+ *
+ * @example
+ * const { data } = useGetTeacherMatrix({ teacherId: 12, evaluationId: 5 });
+ */
+export function useGetTeacherMatrix({
+  teacherId,
+  evaluationId,
+}: {
+  teacherId?: number
+  evaluationId?: number
+}) {
+  return useQuery({
+    queryKey: teachersKeys.matrix(teacherId ?? 0, evaluationId ?? 0),
+    queryFn: () => getTeacherMatrix(teacherId!, evaluationId!),
+    enabled: teacherId != null && evaluationId != null,
     staleTime: 60_000,
   })
 }

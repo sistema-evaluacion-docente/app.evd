@@ -21,3 +21,4 @@ export type {
   TeacherUploadData,
   TeacherUser,
 } from './teacher.types'
+export type { TeacherMatrix, TeacherMatrixCourse } from './matrix.types'
