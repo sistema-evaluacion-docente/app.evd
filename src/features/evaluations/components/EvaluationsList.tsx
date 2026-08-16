@@ -6,6 +6,7 @@ import { useDebounce, useDebouncedCallback } from 'use-debounce'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { DataTable, type DataTableAction } from '@/components/common/DataTable'
 import { DataTableFilters, type FilterConfig } from '@/components/common/DataTableFilters'
+import { useAuthStore } from '@/features/auth'
 import { useNavigate } from '@/hooks/useNavigate'
 import { useTableFilters } from '@/hooks/useTableFilters'
 import {
@@ -63,6 +64,7 @@ const filterConfig: FilterConfig[] = [
  */
 export function EvaluationsList() {
   const navigate = useNavigate()
+  const departmentId = useAuthStore((state) => state.user?.department_id)
 
   const [search, setSearch] = useState('')
   const [debouncedSearch] = useDebounce(search, 400)
@@ -103,6 +105,14 @@ export function EvaluationsList() {
   const handleFiltersChange = (newFilters: Record<string, unknown>) => {
     setFilters(newFilters)
     resetPage()
+  }
+
+  if (!departmentId) {
+    return (
+      <div className="text-muted-foreground py-10 text-center text-sm">
+        Su usuario no está vinculado a un departamento. Contacte al administrador del sistema.
+      </div>
+    )
   }
 
   const rowActions: DataTableAction<EvaluationRecord>[] = [

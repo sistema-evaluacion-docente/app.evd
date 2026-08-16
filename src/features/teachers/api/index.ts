@@ -241,7 +241,11 @@ export function useGetTeachers({
  * attached (`GET /teachers/`) — e.g. to populate a teacher picker. By
  * default the department id is read from the authenticated director's
  * store; pass `departmentId` explicitly to override it, or `null` to span
- * every department.
+ * every department. Stays disabled (no request sent) for a director with no
+ * department and no explicit override — `GET /teachers/` accepts
+ * `department_id` as a plain query param rather than deriving it from the
+ * caller's session, so an unscoped request here would return every
+ * department's teachers.
  *
  * @example
  * const { data, isPending } = useListTeachers({ page: 1, limit: 50 });
@@ -258,6 +262,7 @@ export function useListTeachers({
 } = {}) {
   const authDepartmentId = useAuthStore((state) => state.user?.department_id) ?? undefined
   const resolvedDepartmentId = departmentId === undefined ? authDepartmentId : departmentId
+  const departmentResolved = departmentId !== undefined || authDepartmentId != null
 
   return useQuery({
     queryKey: [
@@ -266,6 +271,7 @@ export function useListTeachers({
       { page, limit, department_id: resolvedDepartmentId },
     ],
     queryFn: () => getTeachers({ page, limit, department_id: resolvedDepartmentId }),
+    enabled: departmentResolved,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
   })
