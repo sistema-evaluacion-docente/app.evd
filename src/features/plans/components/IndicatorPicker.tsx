@@ -1,10 +1,11 @@
-import { AlertTriangle, Check, ChevronRight, HelpCircle, Plus, X } from 'lucide-react'
+import { AlertTriangle, Check, ChevronRight, CircleCheck, HelpCircle, Plus, X } from 'lucide-react'
 
 import { ScoreBadge } from '@/components/common/ScoreBadge'
 import {
   SelectLoadingLabel,
   selectLoadingTriggerClass,
 } from '@/components/common/SelectLoadingLabel'
+import { IndicatorMatrixSkeleton } from '@/components/skeletons/IndicatorMatrixSkeleton'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -16,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 // From the sub-barrels, not `@/features/teachers`: the teachers feature imports
@@ -34,7 +36,7 @@ import {
   questionPickOf,
   type IndicatorPick,
 } from '../lib/planDraft'
-import type { IndicatorDimension, PlanSubjectOption } from '../types'
+import type { IndicatorDimension, IndicatorQuestion, PlanSubjectOption } from '../types'
 
 interface IndicatorPickerProps {
   /** Matrix of the teacher, or of the subject in the filter. */
@@ -54,8 +56,12 @@ interface IndicatorPickerProps {
   subjectOptions: PlanSubjectOption[]
   subjectKey: string
   onSubjectChange: (value: string) => void
-  /** Whether the subjects of the teacher are still being fetched. */
-  subjectsLoading?: boolean
+  /**
+   * Whether the subjects, the scores and the comments of the teacher are still
+   * being fetched. Half-loaded, the matrix looks exactly like a teacher with
+   * nothing below the threshold, so the picker waits before saying so.
+   */
+  isLoading?: boolean
   weakCount: number
   riskyCount: number
   /** Analysis state of the comments; they are only shown once `ANALYZED`. */
@@ -87,7 +93,7 @@ export function IndicatorPicker({
   subjectOptions,
   subjectKey,
   onSubjectChange,
-  subjectsLoading = false,
+  isLoading = false,
   weakCount,
   riskyCount,
   aiStatus,
@@ -98,38 +104,63 @@ export function IndicatorPicker({
 
   const uncategorized = visibleComments(comments.uncategorized, onlyWeak)
 
+  // With the filter on, a dimension survives when its own score is low, when it
+  // has questions below the threshold, or when its students commented on it
+  // with medium/high risk — nothing else is worth showing.
+  const blocks = dimensions
+    .map((dimension) => ({
+      dimension,
+      questions: onlyWeak
+        ? dimension.questions.filter((question) => question.below_threshold)
+        : dimension.questions,
+      comments: visibleComments(comments.byDimension[dimension.dimension], onlyWeak),
+    }))
+    .filter(
+      (block) =>
+        !onlyWeak ||
+        block.dimension.below_threshold ||
+        block.questions.length > 0 ||
+        block.comments.length > 0,
+    )
+
+  const isEmpty = blocks.length === 0 && uncategorized.length === 0
+
   return (
     <div className="space-y-4">
       <div className="border-border flex flex-wrap items-center justify-between gap-3 rounded-md border p-3">
         <div className="flex items-center gap-2">
           <AlertTriangle className="size-4 text-amber-500" aria-hidden="true" />
-          <p className="text-sm">
-            <span className="num font-semibold">{weakCount}</span>{' '}
-            {weakCount === 1 ? 'indicador' : 'indicadores'} por debajo de{' '}
-            <span className="num font-semibold">{threshold.toFixed(1)}</span>
-            {riskyCount > 0 && (
-              <>
-                {' · '}
-                <span className="num font-semibold">{riskyCount}</span>{' '}
-                {riskyCount === 1 ? 'comentario' : 'comentarios'} en riesgo
-              </>
-            )}
-          </p>
+          {isLoading ? (
+            <Skeleton className="h-3.5 w-56" />
+          ) : (
+            <p className="text-sm">
+              <span className="num font-semibold">{weakCount}</span>{' '}
+              {weakCount === 1 ? 'indicador' : 'indicadores'} por debajo de{' '}
+              <span className="num font-semibold">{threshold.toFixed(1)}</span>
+              {riskyCount > 0 && (
+                <>
+                  {' · '}
+                  <span className="num font-semibold">{riskyCount}</span>{' '}
+                  {riskyCount === 1 ? 'comentario' : 'comentarios'} en riesgo
+                </>
+              )}
+            </p>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-4">
           <Select
             value={subjectKey}
             onValueChange={(value) => onSubjectChange(value as string)}
-            disabled={subjectsLoading || subjectOptions.length === 0}
+            disabled={isLoading || subjectOptions.length === 0}
           >
             <SelectTrigger
               size="sm"
               aria-label="Asignatura"
-              aria-busy={subjectsLoading}
-              className={cn('w-64', subjectsLoading && selectLoadingTriggerClass)}
+              aria-busy={isLoading}
+              className={cn('w-64', isLoading && selectLoadingTriggerClass)}
             >
-              {subjectsLoading ? (
+              {isLoading ? (
                 <SelectLoadingLabel>Cargando asignaturas…</SelectLoadingLabel>
               ) : (
                 <SelectValue>{subjectLabel}</SelectValue>
@@ -164,52 +195,96 @@ export function IndicatorPicker({
         </p>
       )}
 
-      {dimensions.map((dimension) => (
-        <DimensionBlock
-          key={dimension.target_ref}
-          dimension={dimension}
-          onlyWeak={onlyWeak}
-          comments={visibleComments(comments.byDimension[dimension.dimension], onlyWeak)}
-          selectedIds={selectedIds}
-          onToggleIndicator={onToggleIndicator}
-          onToggleComment={onToggleComment}
-          aspect={aspectByDimension[dimension.dimension] ?? null}
-          subjectKey={subjectKey}
-          showCourse={subjectKey === SUBJECT_ALL}
-        />
-      ))}
+      {isLoading ? (
+        <div role="status" aria-busy="true">
+          <span className="sr-only">Cargando los indicadores y comentarios del docente…</span>
+          <IndicatorMatrixSkeleton />
+        </div>
+      ) : (
+        <>
+          {isEmpty && onlyWeak && (
+            <div className="border-border flex flex-col items-center gap-3 rounded-md border border-dashed px-6 py-8 text-center">
+              <CircleCheck className="size-8 text-emerald-500" aria-hidden="true" />
 
-      {uncategorized.length > 0 && (
-        <Collapsible className="border-border rounded-md border border-dashed">
-          <CollapsibleTrigger className="group flex w-full cursor-pointer items-center gap-2 px-4 py-3 text-left">
-            <ChevronRight
-              className="text-muted-foreground size-4 shrink-0 transition-transform group-data-panel-open:rotate-90"
-              aria-hidden="true"
-            />
-            <span className="text-sm font-medium">Sin categoría</span>
-            <span className="text-muted-foreground num text-xs">
-              {uncategorized.length} comentario{uncategorized.length === 1 ? '' : 's'}
-            </span>
-          </CollapsibleTrigger>
+              <div className="space-y-1">
+                <p className="text-sm font-medium">
+                  {subjectKey === SUBJECT_ALL
+                    ? 'Este docente no tiene calificaciones bajas'
+                    : `Esta asignatura no tiene calificaciones bajas`}
+                </p>
+                <p className="text-muted-foreground mx-auto max-w-lg text-sm">
+                  Ningún indicador quedó por debajo de{' '}
+                  <span className="num">{threshold.toFixed(1)}</span> y no hay comentarios en
+                  riesgo. Desactiva «Solo indicadores bajos» para ver todas las calificaciones y
+                  elegir sobre cuáles construir el plan.
+                </p>
+              </div>
 
-          <CollapsibleContent>
-            <p className="text-muted-foreground border-border border-t px-4 py-2 pl-10 text-xs">
-              Comentarios que el análisis no pudo ubicar en ninguna de las cuatro dimensiones.
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => onOnlyWeakChange(false)}
+              >
+                Mostrar todas las calificaciones
+              </Button>
+            </div>
+          )}
+
+          {isEmpty && !onlyWeak && (
+            <p className="text-muted-foreground border-border rounded-md border border-dashed px-3 py-4 text-sm">
+              No hay calificaciones registradas para mostrar.
             </p>
+          )}
 
-            <ul className="divide-border divide-y">
-              {uncategorized.map((comment) => (
-                <CommentRow
-                  key={comment.id}
-                  comment={comment}
-                  picked={selectedIds.has(commentSelectionId(comment.id))}
-                  onToggle={onToggleComment}
-                  showCourse={subjectKey === SUBJECT_ALL}
+          {blocks.map((block) => (
+            <DimensionBlock
+              key={block.dimension.target_ref}
+              dimension={block.dimension}
+              questions={block.questions}
+              comments={block.comments}
+              selectedIds={selectedIds}
+              onToggleIndicator={onToggleIndicator}
+              onToggleComment={onToggleComment}
+              aspect={aspectByDimension[block.dimension.dimension] ?? null}
+              subjectKey={subjectKey}
+              showCourse={subjectKey === SUBJECT_ALL}
+            />
+          ))}
+
+          {uncategorized.length > 0 && (
+            <Collapsible className="border-border rounded-md border border-dashed">
+              <CollapsibleTrigger className="group flex w-full cursor-pointer items-center gap-2 px-4 py-3 text-left">
+                <ChevronRight
+                  className="text-muted-foreground size-4 shrink-0 transition-transform group-data-panel-open:rotate-90"
+                  aria-hidden="true"
                 />
-              ))}
-            </ul>
-          </CollapsibleContent>
-        </Collapsible>
+                <span className="text-sm font-medium">Sin categoría</span>
+                <span className="text-muted-foreground num text-xs">
+                  {uncategorized.length} comentario{uncategorized.length === 1 ? '' : 's'}
+                </span>
+              </CollapsibleTrigger>
+
+              <CollapsibleContent>
+                <p className="text-muted-foreground border-border border-t px-4 py-2 pl-10 text-xs">
+                  Comentarios que el análisis no pudo ubicar en ninguna de las cuatro dimensiones.
+                </p>
+
+                <ul className="divide-border divide-y">
+                  {uncategorized.map((comment) => (
+                    <CommentRow
+                      key={comment.id}
+                      comment={comment}
+                      picked={selectedIds.has(commentSelectionId(comment.id))}
+                      onToggle={onToggleComment}
+                      showCourse={subjectKey === SUBJECT_ALL}
+                    />
+                  ))}
+                </ul>
+              </CollapsibleContent>
+            </Collapsible>
+          )}
+        </>
       )}
     </div>
   )
@@ -248,7 +323,7 @@ function WeakFilterHelp({ threshold }: { threshold: number }) {
 
 function DimensionBlock({
   dimension,
-  onlyWeak,
+  questions,
   comments,
   selectedIds,
   onToggleIndicator,
@@ -258,7 +333,8 @@ function DimensionBlock({
   showCourse,
 }: {
   dimension: IndicatorDimension
-  onlyWeak: boolean
+  /** Already narrowed by the filter, so the block only lays them out. */
+  questions: IndicatorQuestion[]
   comments: TeacherComment[]
   selectedIds: Set<string>
   onToggleIndicator: (pick: IndicatorPick) => void
@@ -267,16 +343,6 @@ function DimensionBlock({
   subjectKey: string
   showCourse: boolean
 }) {
-  const questions = onlyWeak
-    ? dimension.questions.filter((question) => question.below_threshold)
-    : dimension.questions
-
-  // With the filter on, keep a dimension whose scores are fine but whose
-  // students did comment on it with medium/high risk.
-  if (onlyWeak && !dimension.below_threshold && questions.length === 0 && comments.length === 0) {
-    return null
-  }
-
   const scope = subjectKey === SUBJECT_ALL ? null : subjectKey
 
   return (
