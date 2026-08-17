@@ -28,6 +28,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { useAuthStore } from '@/features/auth'
 import type { TeacherComment } from '@/features/teachers/types'
+import { todayISO } from '@/lib/formatDate'
 import { cn } from '@/lib/utils'
 import {
   useCreatePlan,
@@ -50,6 +51,8 @@ import {
   buildCommentDraft,
   buildIndicatorDraft,
   commentSelectionId,
+  courseOfSubject,
+  courseRowKey,
   coursesOfSubject,
   indicatorSelectionId,
   mergeCourses,
@@ -57,7 +60,10 @@ import {
   subjectOfComment,
   type IndicatorPick,
 } from '../lib/planDraft'
-import type { DraftCourse, DraftItem } from '../types'
+import type { DraftCourse, DraftItem, PlanSubjectOption } from '../types'
+
+/** Sentinel of the "añadir asignatura" select: an empty row to type by hand. */
+const MANUAL_COURSE = 'MANUAL'
 
 /**
  * Creation flow of an improvement plan.
@@ -86,8 +92,8 @@ export default function CreatePlanPage() {
   const [description, setDescription] = useState('')
   const [facultyOverride, setFacultyOverride] = useState<string | null>(null)
   const [departmentOverride, setDepartmentOverride] = useState<string | null>(null)
-  const [programOverride, setProgramOverride] = useState<string | null>(null)
-  const [startDate, setStartDate] = useState('')
+  /** The plan starts the day it is drawn up unless the director says otherwise. */
+  const [startDate, setStartDate] = useState(todayISO)
   const [councilObservations, setCouncilObservations] = useState('')
   const [departmentObservations, setDepartmentObservations] = useState('')
   const [programObservations, setProgramObservations] = useState('')
@@ -158,13 +164,15 @@ export default function CreatePlanPage() {
 
   const title = titleOverride ?? defaultTitle
 
-  // The director's own department names the program the plan belongs to.
+  // The director's own department names the program the plan belongs to: at
+  // UFPS a department is named after the program it serves, so the "PROGRAMA
+  // ACADÉMICO" column of the forms is filled from it instead of asked twice.
   const authDepartment = useAuthStore((state) => state.user?.department_name) ?? ''
   const departmentName = departmentOverride ?? authDepartment
   const facultyName = facultyOverride ?? facultyOfProgram(authDepartment)?.name ?? ''
-  const programName = programOverride ?? authDepartment
+  const programName = departmentName
 
-  const programOptions = useMemo(
+  const departmentOptions = useMemo(
     () => (facultyName ? programsOfFaculty(facultyName) : PROGRAM_NAMES),
     [facultyName],
   )
@@ -200,9 +208,9 @@ export default function CreatePlanPage() {
     }
 
     setItems((current) => [...current, buildIndicatorDraft(pick, subject, threshold)])
-    setCourses((current) =>
-      mergeCourses(current, coursesOfSubject(subject, workbench.subjectOptions)),
-    )
+    // Picked at teacher level, the commitment covers every asignatura he taught
+    // — not only the ones the "solo indicadores bajos" filter left standing.
+    setCourses((current) => mergeCourses(current, coursesOfSubject(subject, workbench.allSubjects)))
   }
 
   function toggleComment(comment: TeacherComment) {
@@ -216,7 +224,7 @@ export default function CreatePlanPage() {
       return
     }
 
-    const subject = subjectOfComment(comment, workbench.subjectOptions)
+    const subject = subjectOfComment(comment, workbench.allSubjects)
 
     setItems((current) => [...current, buildCommentDraft(comment, subject)])
     setCourses((current) => mergeCourses(current, coursesOfSubject(subject, [])))
@@ -244,6 +252,43 @@ export default function CreatePlanPage() {
       ),
     )
   }
+
+  /**
+   * Adds one of the asignaturas the teacher actually taught, code and group
+   * included. Marked `manual` so the picking never takes it back out — the
+   * director put it there on purpose.
+   */
+  function addSubjectCourse(subject: PlanSubjectOption) {
+    const row = courseOfSubject(subject)
+
+    setCourses((current) =>
+      current.some((course) => course.key === courseRowKey(row))
+        ? current
+        : [...current, { ...row, key: courseRowKey(row), origin: 'manual', order: current.length }],
+    )
+  }
+
+  /** An asignatura the app doesn't know about, typed from scratch. */
+  function addBlankCourse() {
+    setCourses((current) => [
+      ...current,
+      {
+        key: `manual-${current.length}-${Date.now()}`,
+        origin: 'manual',
+        course_name: '',
+        order: current.length,
+      },
+    ])
+  }
+
+  /** Subjects of the teacher that aren't already listed in the plan. */
+  const addableSubjects = useMemo(() => {
+    const listed = new Set(courses.map((course) => course.key))
+
+    return workbench.allSubjects.filter(
+      (subject) => !listed.has(courseRowKey(courseOfSubject(subject))),
+    )
+  }, [courses, workbench.allSubjects])
 
   const blockers = [
     teacherId == null && 'Selecciona un docente.',
@@ -471,7 +516,7 @@ export default function CreatePlanPage() {
             subjectOptions={workbench.subjectOptions}
             subjectKey={workbench.effectiveSubjectKey}
             onSubjectChange={setSubjectKey}
-            subjectsLoading={workbench.isLoading}
+            isLoading={workbench.isLoading}
             weakCount={workbench.weakCount}
             riskyCount={workbench.riskyCount}
             aiStatus={workbench.aiStatus}
@@ -539,30 +584,79 @@ export default function CreatePlanPage() {
               <h2 className="font-semibold">4. Asignaturas</h2>
               <p className="text-muted-foreground text-sm">
                 Se van agregando solas con lo que marcas arriba: en «General» entran todas las del
-                docente; con una asignatura filtrada, sólo esa.
+                docente; con una asignatura filtrada, sólo esa. También puedes añadir cualquier otra
+                que haya dictado y corregir su nombre.
               </p>
             </div>
 
-            {workbench.subjectOptions.length > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setCourses((current) =>
-                    mergeCourses(current, coursesOfSubject(null, workbench.subjectOptions)),
-                  )
-                }
-              >
-                <Layers className="size-4" aria-hidden="true" />
-                Añadir todas las del docente
-              </Button>
+            {workbench.allSubjects.length > 0 && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setCourses((current) =>
+                      mergeCourses(current, coursesOfSubject(null, workbench.allSubjects)),
+                    )
+                  }
+                >
+                  <Layers className="size-4" aria-hidden="true" />
+                  Añadir todas las del docente
+                </Button>
+                <Select
+                  value={null}
+                  onValueChange={(value) => {
+                    if (value === MANUAL_COURSE) {
+                      addBlankCourse()
+                      return
+                    }
+                    const subject = addableSubjects.find((option) => option.key === value)
+
+                    if (subject) addSubjectCourse(subject)
+                  }}
+                  disabled={workbench.isLoading}
+                >
+                  <SelectTrigger
+                    aria-label="Añadir asignatura"
+                    aria-busy={workbench.isLoading}
+                    className={cn('w-80', workbench.isLoading && selectLoadingTriggerClass)}
+                  >
+                    {workbench.isLoading ? (
+                      <SelectLoadingLabel>Cargando asignaturas…</SelectLoadingLabel>
+                    ) : (
+                      <SelectValue placeholder="Añadir asignatura…" />
+                    )}
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    {addableSubjects.length === 0 ? (
+                      <p className="text-muted-foreground px-2 py-1.5 text-sm">
+                        {workbench.allSubjects.length === 0
+                          ? 'Sin asignaturas registradas para este docente.'
+                          : 'Ya están todas las asignaturas del docente.'}
+                      </p>
+                    ) : (
+                      addableSubjects.map((subject) => (
+                        <SelectItem key={subject.key} value={subject.key}>
+                          {subject.label}
+                        </SelectItem>
+                      ))
+                    )}
+
+                    <SelectItem value={MANUAL_COURSE}>Otra asignatura…</SelectItem>
+                  </SelectContent>
+                </Select>
+              </>
             )}
           </div>
 
           {courses.length === 0 ? (
-            <p className="text-muted-foreground border-border rounded-md border border-dashed px-3 py-4 text-sm">
-              Todavía no hay asignaturas: marca un indicador o un comentario y aparecerán aquí.
-            </p>
+            <div className="flex flex-col items-center justify-center">
+              <p className="text-muted-foreground px-3 py-4 text-sm">
+                Todavía no hay asignaturas: marca un indicador o un comentario y aparecerán aquí, o
+                añádelas con el selector de abajo.
+              </p>
+            </div>
           ) : (
             <ul className="space-y-2">
               {courses.map((course) => (
@@ -604,24 +698,6 @@ export default function CreatePlanPage() {
               ))}
             </ul>
           )}
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              setCourses((current) => [
-                ...current,
-                {
-                  key: `manual-${current.length}-${Date.now()}`,
-                  origin: 'manual',
-                  course_name: '',
-                  order: current.length,
-                },
-              ])
-            }
-          >
-            Añadir asignatura
-          </Button>
         </section>
       )}
 
@@ -665,26 +741,18 @@ export default function CreatePlanPage() {
               id="department"
               value={departmentName}
               onValueChange={setDepartmentOverride}
-              options={programOptions}
+              options={departmentOptions}
               placeholder="Departamento"
             />
+            <p className="text-muted-foreground text-xs">
+              También es el programa académico que se imprime en los formatos.
+            </p>
           </div>
 
           <div className="min-w-56 flex-1 space-y-1.5">
-            <Label htmlFor="program">Programa académico</Label>
-            <Combobox
-              id="program"
-              value={programName}
-              onValueChange={setProgramOverride}
-              options={programOptions}
-              placeholder="Programa"
-            />
+            <Label htmlFor="start">Fecha de inicio</Label>
+            <DatePicker id="start" value={startDate} onChange={setStartDate} />
           </div>
-        </div>
-
-        <div className="max-w-64 space-y-1.5">
-          <Label htmlFor="start">Fecha de inicio</Label>
-          <DatePicker id="start" value={startDate} onChange={setStartDate} />
         </div>
       </section>
 

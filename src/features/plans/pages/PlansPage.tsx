@@ -6,6 +6,10 @@ import { Plus } from 'lucide-react'
 import { DataTable } from '@/components/common/DataTable'
 import { PageTitle } from '@/components/common/PageTitle'
 import { ScoreProgress } from '@/components/common/ScoreProgress'
+import {
+  SelectLoadingLabel,
+  selectLoadingTriggerClass,
+} from '@/components/common/SelectLoadingLabel'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
@@ -15,7 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useGetPlans } from '../api'
+import { cn } from '@/lib/utils'
+import { useGetPlans, useGetPlanPeriods } from '../api'
 import { PLAN_STATUS_LABEL } from '../lib/planStatus'
 import type { Plan, PlanStatus } from '../types'
 import { ActaStatusBadge, PlanStatusBadge } from '../components/PlanStatusBadge'
@@ -29,17 +34,34 @@ export default function PlansPage() {
   const [search, setSearch] = useState('')
   /** `''` means every status. */
   const [status, setStatus] = useState<PlanStatus | ''>('')
+  /**
+   * `undefined` while the director hasn't touched the filter — the most recent
+   * semester leads then; `null` is the explicit "todos los periodos".
+   */
+  const [periodOverride, setPeriodOverride] = useState<number | null | undefined>(undefined)
   const [sorting, setSorting] = useState<SortingState>([])
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
   })
 
+  // The API returns the periods newest first, so the first one is the semester
+  // the director is most likely working on.
+  const { data: periodsResponse, isLoading: periodsLoading } = useGetPlanPeriods()
+  const periods = useMemo(() => periodsResponse?.data ?? [], [periodsResponse])
+
+  const periodId = periodOverride === undefined ? periods[0]?.id : (periodOverride ?? undefined)
+  const period = periods.find((entry) => entry.id === periodId)
+
+  // Waits for the periods so the first list already comes filtered, instead of
+  // painting every plan and swapping it a moment later.
   const { data, isPending, isFetching } = useGetPlans({
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     search,
     status,
+    periodId,
+    enabled: !periodsLoading,
   })
 
   const plans = data?.data ?? []
@@ -101,7 +123,7 @@ export default function PlansPage() {
 
   return (
     <>
-      <div className="flex flex-wrap items-center justify-between mb-0">
+      <div className="mb-0 flex flex-wrap items-center justify-between">
         <PageTitle>Planes de mejoramiento</PageTitle>
         <Button onClick={() => navigate('/planes/nuevo')}>
           <Plus className="size-4" aria-hidden="true" />
@@ -128,28 +150,64 @@ export default function PlansPage() {
         emptyMessage="No hay planes de mejoramiento que coincidan."
         onRowClick={(row) => navigate(`/planes/${row.id}`)}
         toolbar={
-          <Select
-            value={status}
-            onValueChange={(value) => {
-              setStatus(value as PlanStatus | '')
-              resetPage()
-            }}
-          >
-            <SelectTrigger aria-label="Estado del plan" className="w-52">
-              <SelectValue>{status ? PLAN_STATUS_LABEL[status] : 'Todos los estados'}</SelectValue>
-            </SelectTrigger>
+          <>
+            <Select
+              value={periodId ?? null}
+              onValueChange={(value) => {
+                setPeriodOverride(value as number | null)
+                resetPage()
+              }}
+              disabled={periodsLoading || periods.length === 0}
+            >
+              <SelectTrigger
+                aria-label="Periodo"
+                aria-busy={periodsLoading}
+                className={cn('w-44', periodsLoading && selectLoadingTriggerClass)}
+              >
+                {periodsLoading ? (
+                  <SelectLoadingLabel>Cargando periodos…</SelectLoadingLabel>
+                ) : (
+                  <SelectValue placeholder="Todos los periodos">
+                    {period?.code ?? 'Todos los periodos'}
+                  </SelectValue>
+                )}
+              </SelectTrigger>
 
-            <SelectContent>
-              <SelectItem value="">Todos los estados</SelectItem>
-              {(Object.entries(PLAN_STATUS_LABEL) as [PlanStatus, string][]).map(
-                ([value, label]) => (
-                  <SelectItem key={value} value={value}>
-                    {label}
+              <SelectContent>
+                <SelectItem value={null}>Todos los periodos</SelectItem>
+                {periods.map((entry) => (
+                  <SelectItem key={entry.id} value={entry.id}>
+                    {entry.code}
                   </SelectItem>
-                ),
-              )}
-            </SelectContent>
-          </Select>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={status}
+              onValueChange={(value) => {
+                setStatus(value as PlanStatus | '')
+                resetPage()
+              }}
+            >
+              <SelectTrigger aria-label="Estado del plan" className="w-52">
+                <SelectValue>
+                  {status ? PLAN_STATUS_LABEL[status] : 'Todos los estados'}
+                </SelectValue>
+              </SelectTrigger>
+
+              <SelectContent>
+                <SelectItem value="">Todos los estados</SelectItem>
+                {(Object.entries(PLAN_STATUS_LABEL) as [PlanStatus, string][]).map(
+                  ([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ),
+                )}
+              </SelectContent>
+            </Select>
+          </>
         }
       />
     </>

@@ -7,8 +7,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuthStore } from '@/features/auth'
-import formatDate from '@/lib/formatDate'
 import { useGetPlan, useGetPlanIndicators } from '../api'
+import { PlanActa } from '../components/PlanActa'
 import { PlanCheckpoints } from '../components/PlanCheckpoints'
 import { PlanDocuments } from '../components/PlanDocuments'
 import { PlanEvidences } from '../components/PlanEvidences'
@@ -108,13 +108,6 @@ export default function PlanDetailPage() {
         {plan.description && (
           <p className="text-muted-foreground border-t px-6 py-3 text-sm">{plan.description}</p>
         )}
-
-        {(plan.acta_number || plan.acta_date) && (
-          <p className="text-muted-foreground border-t px-6 py-3 text-sm">
-            Acta N.º <span className="num font-semibold">{plan.acta_number ?? '—'}</span>
-            {plan.acta_date && ` · ${formatDate(plan.acta_date)}`}
-          </p>
-        )}
       </section>
 
       <section className="border-border bg-background overflow-hidden rounded-md border">
@@ -194,6 +187,8 @@ export default function PlanDetailPage() {
       />
 
       <PlanEvidences plan={plan} canManage={canManage} />
+
+      <PlanActa plan={plan} canManage={canManage} />
 
       <PlanDocuments plan={plan} canManage={canManage} isAdmin={isAdmin} />
     </div>
