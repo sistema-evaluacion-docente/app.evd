@@ -114,13 +114,6 @@ async function evaluatePlan(planId: number): Promise<ResponseAPI<Plan>> {
   return api.post(`/improvement-plans/${planId}/evaluate`)
 }
 
-async function generateDocument(
-  planId: number,
-  format: PlanFormatSlug,
-): Promise<ResponseAPI<Plan>> {
-  return api.post(`/improvement-plans/${planId}/documents/${format}/generate`)
-}
-
 async function uploadSignedDocument(
   planId: number,
   format: PlanFormatSlug,
@@ -182,13 +175,28 @@ async function deleteEvidence(planId: number, evidenceId: number): Promise<void>
   return api.delete(`/improvement-plans/${planId}/evidences/${evidenceId}`)
 }
 
+async function deleteSignedDocument(
+  planId: number,
+  format: PlanFormatSlug,
+): Promise<ResponseAPI<Plan>> {
+  return api.delete(`/improvement-plans/${planId}/documents/${format}/signed`)
+}
+
 /**
  * Plan files sit behind the Bearer token, so they can't be linked to directly:
  * they are fetched as a `Blob` and handed to the browser as an object URL.
+ *
+ * `generated` asks for the form as the system renders it; without it the API
+ * answers with the signed scan whenever there is one.
  */
-async function getDocumentBlob(planId: number, format: PlanFormatSlug): Promise<Blob> {
+async function getDocumentBlob(
+  planId: number,
+  format: PlanFormatSlug,
+  generated = false,
+): Promise<Blob> {
   return api.get(`/improvement-plans/${planId}/documents/${format}`, {
     responseType: 'blob',
+    params: generated ? { generated: true } : undefined,
   }) as unknown as Promise<Blob>
 }
 
@@ -464,21 +472,25 @@ export function useEvaluatePlan(planId: number) {
   return useMutation({ mutationFn: () => evaluatePlan(planId), onSuccess: refresh })
 }
 
-export function useGenerateDocument(planId: number) {
-  const refresh = usePlanRefresh(planId)
-
-  return useMutation({
-    mutationFn: (format: PlanFormatSlug) => generateDocument(planId, format),
-    onSuccess: refresh,
-  })
-}
-
 export function useUploadSignedDocument(planId: number) {
   const refresh = usePlanRefresh(planId)
 
   return useMutation({
     mutationFn: ({ format, file }: { format: PlanFormatSlug; file: File }) =>
       uploadSignedDocument(planId, format, file),
+    onSuccess: refresh,
+  })
+}
+
+/**
+ * Detaches a signed scan attached by mistake. The generated form stays in
+ * place, so the row simply goes back to asking for a signature.
+ */
+export function useDeleteSignedDocument(planId: number) {
+  const refresh = usePlanRefresh(planId)
+
+  return useMutation({
+    mutationFn: (format: PlanFormatSlug) => deleteSignedDocument(planId, format),
     onSuccess: refresh,
   })
 }
@@ -536,8 +548,10 @@ export function useDeleteEvidence(planId: number) {
 }
 
 /**
- * Downloads one of the official forms. The file is behind the Bearer token, so
- * it is fetched as a blob and saved from memory instead of linked to.
+ * Downloads one of the official forms as the system renders it — the copy the
+ * director prints to collect the signatures. The file is behind the Bearer
+ * token, so it is fetched as a blob and saved from memory instead of linked to.
+ * The API renders it on the spot when it was never generated.
  *
  * @example
  * const download = useDownloadDocument(plan.id)
@@ -546,9 +560,34 @@ export function useDeleteEvidence(planId: number) {
 export function useDownloadDocument(planId: number) {
   return useMutation({
     mutationFn: async (format: PlanFormatSlug) => {
-      const blob = await getDocumentBlob(planId, format)
+      const blob = await getDocumentBlob(planId, format, true)
 
       await saveBlob(blob, `${format}_plan_${planId}.pdf`)
+    },
+  })
+}
+
+/** The signed scan itself, saved under the name it was uploaded with. */
+export function useDownloadSignedDocument(planId: number) {
+  return useMutation({
+    mutationFn: async ({ format, filename }: { format: PlanFormatSlug; filename: string }) => {
+      const blob = await getDocumentBlob(planId, format)
+
+      await saveBlob(blob, filename)
+    },
+  })
+}
+
+/**
+ * Object URL of the signed scan, for previewing it in a new tab. The caller
+ * owns the URL: it opens the tab and revokes it afterwards.
+ */
+export function usePreviewSignedDocument(planId: number) {
+  return useMutation({
+    mutationFn: async (format: PlanFormatSlug) => {
+      const blob = await getDocumentBlob(planId, format)
+
+      return URL.createObjectURL(blob)
     },
   })
 }
