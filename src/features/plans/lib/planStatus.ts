@@ -3,6 +3,8 @@ import type {
   CheckpointStage,
   EvidenceRequestStatus,
   EvidenceStatus,
+  Plan,
+  PlanCheckpoint,
   PlanStatus,
 } from '../types'
 
@@ -90,6 +92,39 @@ export const CHECKPOINT_ORDER: CheckpointStage[] = [
   'PRIMER_SEGUIMIENTO',
   'SEGUNDO_SEGUIMIENTO',
 ]
+
+/** How far Formato 3 has been carried, said the way the form names its columns. */
+const CHECKPOINT_SHORT_LABEL: Record<CheckpointStage, string> = {
+  PRIMER_SEGUIMIENTO: 'Semana 8',
+  SEGUNDO_SEGUIMIENTO: 'Semanas 15/16',
+}
+
+/** A seguimiento counts as recorded once it carries a date or any observation. */
+function isCheckpointRecorded(checkpoint: PlanCheckpoint): boolean {
+  return (
+    Boolean(checkpoint.scheduled_date) ||
+    checkpoint.aspect_notes.some((note) => Boolean(note.note?.trim()))
+  )
+}
+
+/**
+ * The cut Formato 3 currently reflects, or `null` while no seguimiento has been
+ * recorded. The API re-renders the form every time one is saved, so this is
+ * read backwards: the form prints both columns, and the later stage is the one
+ * that describes what the PDF now says.
+ *
+ * @example
+ * followupFormatStage(plan) // → 'Semanas 15/16'
+ */
+export function followupFormatStage(plan: Plan): string | null {
+  for (const stage of [...CHECKPOINT_ORDER].reverse()) {
+    const checkpoint = plan.checkpoints.find((entry) => entry.stage === stage)
+
+    if (checkpoint && isCheckpointRecorded(checkpoint)) return CHECKPOINT_SHORT_LABEL[stage]
+  }
+
+  return null
+}
 
 /** A plan is closed when its status is any of the terminal ones. */
 export function isPlanClosed(status: PlanStatus): boolean {

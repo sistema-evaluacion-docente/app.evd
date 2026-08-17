@@ -46,7 +46,8 @@ export function PlanCheckpoints({ plan, aspects, canManage }: PlanCheckpointsPro
       <header className="border-b px-6 py-4">
         <h2 className="font-semibold">Seguimientos</h2>
         <p className="text-muted-foreground text-sm">
-          El plan tiene dos cortes de seguimiento durante el semestre.
+          El plan tiene dos cortes de seguimiento durante el semestre. Al guardar uno, el Formato 3
+          se actualiza solo; si ya lo habías subido firmado, tendrás que firmarlo de nuevo.
         </p>
       </header>
 
