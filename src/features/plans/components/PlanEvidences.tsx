@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import formatDate from '@/lib/formatDate'
+import formatDate, { isPastDate, todayISO } from '@/lib/formatDate'
 import { cn } from '@/lib/utils'
 import {
   useAddEvidenceComment,
@@ -337,8 +337,13 @@ function NewRequestDialog({
 
   const create = useCreateEvidenceRequest(planId)
 
+  // A deliverable can't be due before it is asked for: the calendar greys out
+  // the past, and the check below covers a date left over from another day.
+  const today = todayISO()
+  const dueDateIsPast = isPastDate(dueDate)
+
   function submit() {
-    if (!title.trim()) return
+    if (!title.trim() || dueDateIsPast) return
 
     create.mutate(
       {
@@ -394,7 +399,12 @@ function NewRequestDialog({
           <div className="flex flex-wrap gap-3">
             <div className="min-w-56 space-y-1.5">
               <Label htmlFor="req-due">Fecha límite</Label>
-              <DatePicker id="req-due" value={dueDate} onChange={setDueDate} />
+              <DatePicker id="req-due" value={dueDate} onChange={setDueDate} minDate={today} />
+              {dueDateIsPast && (
+                <p className="text-destructive text-xs">
+                  La fecha límite no puede ser anterior a hoy.
+                </p>
+              )}
             </div>
 
             {plan.items.length > 0 && (
@@ -430,7 +440,7 @@ function NewRequestDialog({
           {/* The dialog closes only once the list already shows the request. */}
           <LoadingButton
             onClick={submit}
-            disabled={!title.trim()}
+            disabled={!title.trim() || dueDateIsPast}
             pending={create.isPending}
             pendingLabel="Solicitando…"
           >
