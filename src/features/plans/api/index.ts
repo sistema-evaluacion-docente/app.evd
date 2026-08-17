@@ -252,6 +252,7 @@ export function useGetPlans({
   status,
   search,
   teacherId,
+  enabled = true,
 }: {
   page?: number
   limit?: number
@@ -260,6 +261,8 @@ export function useGetPlans({
   status?: string
   search?: string
   teacherId?: number
+  /** Held back while the caller resolves a filter, to avoid a throwaway fetch. */
+  enabled?: boolean
 } = {}) {
   const authDepartmentId = useAuthStore((state) => state.user?.department_id) ?? undefined
   const resolved = (departmentId === undefined ? authDepartmentId : departmentId) ?? undefined
@@ -279,6 +282,7 @@ export function useGetPlans({
         search: search || undefined,
         teacher_id: teacherId,
       }),
+    enabled,
   })
 }
 
