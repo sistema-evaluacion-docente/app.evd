@@ -70,7 +70,7 @@ function AppLayoutSkeleton() {
           </div>
         </header>
 
-        <div className="bg-ink-50 min-h-0 flex-1 overflow-hidden">
+        <div className="min-h-0 flex-1 overflow-hidden">
           <main className="mx-auto w-full max-w-6xl space-y-5 px-4 py-6 lg:px-8 lg:py-8">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <Skeleton className="h-8 w-56" />
