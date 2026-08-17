@@ -25,11 +25,6 @@ function CreatePlanSkeleton({ withTeacher = false }: { withTeacher?: boolean }) 
     <div className="space-y-6" role="status" aria-busy="true">
       <span className="sr-only">Cargando el formulario del plan de mejoramiento…</span>
 
-      <header className="mb-6 space-y-3">
-        <Skeleton className="h-8 w-20" />
-        <Skeleton className="h-9 w-80 max-w-full" />
-      </header>
-
       <Panel headingWidth="w-48">
         <div className="flex flex-wrap gap-4">
           <Field labelWidth="w-32" className="w-40" />
