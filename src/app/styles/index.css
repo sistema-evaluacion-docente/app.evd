@@ -232,7 +232,7 @@ body {
   --chart-4: #f39c12;
   --chart-5: #605ca8;
   --radius: 0.625rem;
-  --sidebar: #ffffff;
+  --sidebar: #fcfcfc;
   --sidebar-foreground: #333333;
   --sidebar-primary: var(--color-brand-600);
   --sidebar-primary-foreground: #fff;
