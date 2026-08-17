@@ -32,6 +32,8 @@ interface PlanWorkbenchArgs {
 }
 
 export interface PlanWorkbench {
+  /** Every subject the teacher taught in the period, filter aside. */
+  allSubjects: PlanSubjectOption[]
   /** "General" is not part of this list; the picker renders it apart. */
   subjectOptions: PlanSubjectOption[]
   /** The subject in use, or `null` while looking at the teacher as a whole. */
@@ -160,6 +162,7 @@ export function usePlanWorkbench({
   )
 
   return {
+    allSubjects,
     subjectOptions,
     activeSubject,
     effectiveSubjectKey,
