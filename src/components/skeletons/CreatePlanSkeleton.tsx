@@ -1,3 +1,4 @@
+import { IndicatorMatrixSkeleton } from '@/components/skeletons/IndicatorMatrixSkeleton'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 
@@ -60,24 +61,7 @@ function CreatePlanSkeleton({ withTeacher = false }: { withTeacher?: boolean }) 
             </div>
           </div>
 
-          {[0, 1].map((index) => (
-            <div key={index} className="border-border rounded-md border">
-              <div className="bg-muted/40 flex items-center justify-between gap-3 border-b px-4 py-2.5">
-                <Skeleton className="h-3.5 w-40" />
-                <Skeleton className="h-3.5 w-12" />
-              </div>
-
-              <div className="divide-border divide-y">
-                {INDICATOR_LINES.slice(0, 3).map((width, line) => (
-                  <div key={line} className="flex items-center gap-3 px-4 py-3">
-                    <Skeleton className="size-4 shrink-0 rounded-sm" />
-                    <Skeleton className={cn('h-3.5', width)} />
-                    <Skeleton className="ml-auto h-6 w-12 shrink-0" />
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
+          <IndicatorMatrixSkeleton />
         </Panel>
       )}
 
