@@ -94,6 +94,11 @@ export default function CreatePlanPage() {
   const [departmentOverride, setDepartmentOverride] = useState<string | null>(null)
   /** The plan starts the day it is drawn up unless the director says otherwise. */
   const [startDate, setStartDate] = useState(todayISO)
+  // The acto administrativo comes from the Consejo de Departamento session that
+  // approves the plan, so it is known by the time the plan is written down —
+  // and the acta can't be closed without it.
+  const [actaNumber, setActaNumber] = useState('')
+  const [actaDate, setActaDate] = useState('')
   const [councilObservations, setCouncilObservations] = useState('')
   const [departmentObservations, setDepartmentObservations] = useState('')
   const [programObservations, setProgramObservations] = useState('')
@@ -323,6 +328,8 @@ export default function CreatePlanPage() {
         faculty_name: facultyName.trim() || undefined,
         department_name: departmentName.trim() || undefined,
         start_date: startDate || undefined,
+        acta_number: actaNumber.trim() || undefined,
+        acta_date: actaDate || undefined,
         council_observations: councilObservations.trim() || undefined,
         department_director_observations: departmentObservations.trim() || undefined,
         program_director_observations: programObservations.trim() || undefined,
@@ -753,6 +760,32 @@ export default function CreatePlanPage() {
             <Label htmlFor="start">Fecha de inicio</Label>
             <DatePicker id="start" value={startDate} onChange={setStartDate} />
           </div>
+        </div>
+
+        {/* "ACTO ADMINISTRATIVO: ACTA No. ___ FECHA: ___" — the foot of the
+            Ficha de acuerdo. It comes from the Consejo de Departamento session
+            that approves the plan, and the acta can't be closed without it. */}
+        <div className="flex flex-wrap gap-4 border-t pt-4">
+          <div className="min-w-40 space-y-1.5">
+            <Label htmlFor="acta-number">Acta N.º</Label>
+            <Input
+              id="acta-number"
+              value={actaNumber}
+              onChange={(event) => setActaNumber(event.target.value)}
+              placeholder="Ej. 012"
+              className="num"
+            />
+          </div>
+
+          <div className="min-w-56 space-y-1.5">
+            <Label htmlFor="acta-date">Fecha del acta</Label>
+            <DatePicker id="acta-date" value={actaDate} onChange={setActaDate} />
+          </div>
+
+          <p className="text-muted-foreground w-full text-xs">
+            Del Consejo de Departamento que respalda el acuerdo. Se imprimen en la Ficha de acuerdo
+            (Formato 2) y hacen falta para poder cerrar el acta.
+          </p>
         </div>
       </section>
 

@@ -109,6 +109,8 @@ export interface PlanDocument {
   generated_by: number | null
   signed_at: string | null
   signed_by: number | null
+  /** Name the uploaded scan had on disk. Null on copies signed before it was kept. */
+  signed_filename: string | null
   has_generated: boolean
   has_signed: boolean
 }
@@ -238,6 +240,9 @@ export interface CreatePlanInput {
   department_name?: string
   start_date?: string
   end_date?: string
+  /** Acto administrativo backing the agreement, recorded up front. */
+  acta_number?: string
+  acta_date?: string
   council_observations?: string
   department_director_observations?: string
   program_director_observations?: string
