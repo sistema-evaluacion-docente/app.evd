@@ -77,19 +77,22 @@ function reorder(courses: DraftCourse[]): DraftCourse[] {
   return courses.map((course, index) => ({ ...course, order: index }))
 }
 
+/** The asignatura row a subject of the teacher becomes. */
+export function courseOfSubject(option: PlanSubjectOption): PlanCourseInput {
+  return {
+    academic_group_id: option.academic_group_id,
+    course_name: option.course_name,
+    course_code: option.course_code,
+    group_name: option.group_name,
+  }
+}
+
 /** The subjects an `option` contributes to the plan when something is picked. */
 export function coursesOfSubject(
   subject: PlanSubjectOption | null,
   all: PlanSubjectOption[],
 ): PlanCourseInput[] {
-  const source = subject ? [subject] : all
-
-  return source.map((option) => ({
-    academic_group_id: option.academic_group_id,
-    course_name: option.course_name,
-    course_code: option.course_code,
-    group_name: option.group_name,
-  }))
+  return (subject ? [subject] : all).map(courseOfSubject)
 }
 
 /** The subject a comment came from, so citing it also lists its asignatura. */
