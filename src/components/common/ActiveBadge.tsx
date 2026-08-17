@@ -23,7 +23,13 @@ export function ActiveBadge({
   inactiveLabel = 'Desactivado',
 }: ActiveBadgeProps) {
   return (
-    <Badge className={active ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}>
+    <Badge
+      className={
+        active
+          ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+          : 'bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300'
+      }
+    >
       {active ? activeLabel : inactiveLabel}
     </Badge>
   )
