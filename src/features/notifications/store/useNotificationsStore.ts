@@ -142,6 +142,7 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
               read: false,
               created_at: data.timestamp,
               updated_at: data.timestamp,
+              link: data.link ?? undefined,
             }
 
             set((state) => {

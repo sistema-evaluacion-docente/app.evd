@@ -1,6 +1,6 @@
-import { Layers, Save } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useLocation, useRoute, useSearchParams } from 'wouter'
+import { AlertTriangle, Layers, Save } from 'lucide-react'
 
 import { Combobox } from '@/components/common/Combobox'
 import { DatePicker } from '@/components/common/DatePicker'
@@ -65,6 +65,7 @@ import {
   type IndicatorPick,
 } from '../lib/planDraft'
 import { indicatorKey } from '../lib/planStatus'
+import { isPlanSuggested, planSuggestionReason } from '../lib/planSuggestion'
 import type {
   DraftCourse,
   DraftItem,
@@ -298,6 +299,11 @@ function PlanForm({
   const threshold = indicators.threshold ?? 3.5
 
   const candidate = candidates.find((entry) => entry.teacher_id === teacherId)
+
+  /** Drives the legend: without it the icon on the options says nothing. */
+  const suggestedCount = candidates.filter(
+    (entry) => !entry.has_plan && isPlanSuggested(entry),
+  ).length
 
   const workbench = usePlanWorkbench({
     teacherId,
@@ -668,22 +674,55 @@ function PlanForm({
                       Sin docentes evaluados en este periodo.
                     </p>
                   ) : (
-                    candidates.map((entry) => (
-                      <SelectItem
-                        key={entry.teacher_id}
-                        value={entry.teacher_id}
-                        disabled={entry.has_plan}
-                      >
-                        {entry.name}
-                        <span className="text-muted-foreground num">
-                          · {entry.overall_average.toFixed(2)}
-                          {entry.has_plan ? ' (ya tiene plan)' : ''}
-                        </span>
-                      </SelectItem>
-                    ))
+                    candidates.map((entry) => {
+                      // A teacher who already has one is past the suggestion.
+                      const suggested = !entry.has_plan && isPlanSuggested(entry)
+
+                      return (
+                        <SelectItem
+                          key={entry.teacher_id}
+                          value={entry.teacher_id}
+                          disabled={entry.has_plan}
+                        >
+                          {suggested && (
+                            <>
+                              <AlertTriangle
+                                className="text-amber-600 dark:text-amber-500"
+                                aria-hidden="true"
+                              />
+                              {/* The icon alone says nothing to a screen reader,
+                                  and the colour alone nothing to a director who
+                                  can't tell it apart. */}
+                              <span className="sr-only">
+                                Plan sugerido: {planSuggestionReason(entry)}.
+                              </span>
+                            </>
+                          )}
+                          {entry.name}
+                          <span className="text-muted-foreground num">
+                            · {entry.overall_average.toFixed(2)}
+                            {entry.has_plan ? ' (ya tiene plan)' : ''}
+                          </span>
+                        </SelectItem>
+                      )
+                    })
                   )}
                 </SelectContent>
               </Select>
+
+              {suggestedCount > 0 && (
+                <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
+                  <AlertTriangle
+                    className="size-3.5 shrink-0 text-amber-600 dark:text-amber-500"
+                    aria-hidden="true"
+                  />
+                  <span>
+                    <span className="num">{suggestedCount}</span>{' '}
+                    {suggestedCount === 1 ? 'docente' : 'docentes'} con plan sugerido por sus
+                    resultados.
+                  </span>
+                </p>
+              )}
             </div>
           </div>
         )}

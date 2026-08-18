@@ -337,8 +337,14 @@ export interface PlanCandidate {
   avatar_url: string | null
   institutional_code: string | null
   overall_average: number
+  /** Whether the *overall* average sits under the institutional threshold. */
   below_threshold: boolean
   has_plan: boolean
+  /**
+   * Comments of this teacher classified as high risk. Optional until the API
+   * ships it: without it the suggestion falls back to the scores alone.
+   */
+  high_risk_comment_count?: number
   dimensions: IndicatorDimension[]
   weak_dimensions: IndicatorDimension[]
   weak_questions: WeakQuestion[]

@@ -35,4 +35,10 @@ export interface WebSocketNotificationEvent {
   title: string
   message: string
   notification_type: NotificationType
+  /**
+   * Same as `Notification.link`. Optional because the channel did not carry it
+   * at first: without it a notification arriving live is not clickable until
+   * the list is fetched again.
+   */
+  link?: string | null
 }
