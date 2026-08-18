@@ -36,7 +36,11 @@ export default function TeacherDetailPage() {
     <div className="space-y-6">
       <BackButton href={`/docentes?period=${teacher.period_name}`} className="mb-4" />
       <TeacherEvaluationDetail teacher={teacher} />
-      <TeacherPlanAction teacherId={teacher.teacher_id} periodCode={teacher.period_code} />
+      <TeacherPlanAction
+        teacherId={teacher.teacher_id}
+        teacherName={teacher.name}
+        periodCode={teacher.period_code}
+      />
     </div>
   )
 }
