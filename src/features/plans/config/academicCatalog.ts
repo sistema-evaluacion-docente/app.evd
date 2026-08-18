@@ -5,8 +5,11 @@
  *
  * It is a catalogue, not a constraint: the three fields are free text on the
  * API, so a director can always type a program that isn't listed here yet.
- * Departments are not modelled apart because at UFPS the department of a
- * teacher is named after the program it serves ("Ingeniería de Sistemas").
+ *
+ * Only faculties and programs are listed. The academic departments are a
+ * separate list the university hasn't handed over yet, so that field is typed
+ * by hand meanwhile — it is *not* the same thing as the program, even though
+ * the app's own "department" of a director is named after the one it serves.
  */
 
 export interface AcademicFaculty {
@@ -115,7 +118,7 @@ function normalize(value?: string | null): string {
 }
 
 /**
- * The faculty a program (or a department named after it) belongs to.
+ * The faculty an academic program belongs to.
  *
  * @example
  * facultyOfProgram('Ingeniería de Sistemas')?.name // 'Ingeniería'

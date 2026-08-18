@@ -58,7 +58,7 @@ export function buildDimensionsFromDetail(
         code: question.code,
         text: question.text,
         average,
-        below_threshold: average != null && average < threshold,
+        below_threshold: average != null && average <= threshold,
         suggestions: question.suggestions,
       }
     })
@@ -70,7 +70,7 @@ export function buildDimensionsFromDetail(
       target_type: 'DIMENSION',
       target_ref: entry.target_ref,
       average,
-      below_threshold: average != null && average < threshold,
+      below_threshold: average != null && average <= threshold,
       suggestions: entry.suggestions,
       questions,
     }
