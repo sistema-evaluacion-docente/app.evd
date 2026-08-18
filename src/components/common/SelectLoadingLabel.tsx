@@ -22,9 +22,12 @@ export function SelectLoadingLabel({
   className?: string
 }) {
   return (
-    <span className={cn('text-muted-foreground flex items-center gap-2', className)}>
-      <Spinner className="size-4" aria-hidden="true" />
-      {children}
+    // `min-w-0` + `truncate`: the trigger lays its children out in a nowrap
+    // row, so a label longer than the select would run over the chevron
+    // instead of being cut like a picked option is.
+    <span className={cn('text-muted-foreground flex min-w-0 items-center gap-2', className)}>
+      <Spinner className="size-4 shrink-0" aria-hidden="true" />
+      <span className="truncate">{children}</span>
     </span>
   )
 }
