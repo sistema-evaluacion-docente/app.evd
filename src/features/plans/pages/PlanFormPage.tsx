@@ -363,9 +363,8 @@ function PlanForm({
    * Without this an already-agreed indicator would show up unpicked and
    * clicking it would file a duplicate.
    */
-  const pickerScope = workbench.effectiveSubjectKey === SUBJECT_ALL
-    ? null
-    : workbench.effectiveSubjectKey
+  const pickerScope =
+    workbench.effectiveSubjectKey === SUBJECT_ALL ? null : workbench.effectiveSubjectKey
 
   const selectedIds = useMemo(
     () =>
@@ -492,9 +491,7 @@ function PlanForm({
     !isEdit && teacherId == null && 'Selecciona un docente.',
     !isEdit && periodId == null && 'Selecciona un periodo.',
     title.trim().length === 0 && 'El plan necesita un título.',
-    !actaLocked &&
-      items.length === 0 &&
-      'Agrega al menos un indicador, comentario o compromiso.',
+    !actaLocked && items.length === 0 && 'Agrega al menos un indicador, comentario o compromiso.',
     !actaLocked &&
       items.some((item) => item.description.trim().length === 0) &&
       'Hay compromisos sin descripción.',
@@ -1071,8 +1068,8 @@ function PlanForm({
 
           <p className="text-muted-foreground w-full text-xs">
             Del Consejo de Departamento que respalda el acuerdo. Es también la fecha de inicio del
-            plan: se imprime en la Ficha de acuerdo (Formato 2) y en el Plan de seguimiento
-            (Formato 3), y hace falta para poder firmar el acta.
+            plan: se imprime en la Ficha de acuerdo (Formato 2) y en el Plan de seguimiento (Formato
+            3), y hace falta para poder firmar el acta.
           </p>
         </div>
       </section>
