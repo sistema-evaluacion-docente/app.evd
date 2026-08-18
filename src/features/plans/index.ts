@@ -1,4 +1,4 @@
-export { default as CreatePlanPage } from './pages/CreatePlanPage'
+export { default as PlanFormPage } from './pages/PlanFormPage'
 export { default as MyPlansPage } from './pages/MyPlansPage'
 export { default as PlanDetailPage } from './pages/PlanDetailPage'
 export { default as PlansPage } from './pages/PlansPage'
@@ -8,6 +8,7 @@ export { PlanActa } from './components/PlanActa'
 export { PlanDocuments } from './components/PlanDocuments'
 export { PlanEvidences } from './components/PlanEvidences'
 export { PlanCheckpoints } from './components/PlanCheckpoints'
+export { PlanClosedSummary, PlanClosure } from './components/PlanClosure'
 export {
   ActaStatusBadge,
   EvidenceRequestBadge,

@@ -1,14 +1,5 @@
 import { useState } from 'react'
-import {
-  ChevronDown,
-  Download,
-  FileText,
-  FileType2,
-  Lock,
-  LockOpen,
-  Trash2,
-  Upload,
-} from 'lucide-react'
+import { ChevronDown, Download, FileText, FileType2, Trash2, Upload } from 'lucide-react'
 
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { FileDropzone } from '@/components/common/FileDropzone'
@@ -31,13 +22,11 @@ import {
 } from '@/components/ui/dropdown-menu'
 import formatDate from '@/lib/formatDate'
 import {
-  useCloseActa,
   useDeleteSignedDocument,
   useDownloadDocument,
   useDownloadDocumentWord,
   useDownloadSignedDocument,
   usePreviewSignedDocument,
-  useReopenActa,
   useUploadSignedDocument,
 } from '../api'
 import { followupFormatStage, PLAN_FORMATS } from '../lib/planStatus'
@@ -48,10 +37,12 @@ type PlanFormat = (typeof PLAN_FORMATS)[number]
 
 interface PlanDocumentsProps {
   plan: Plan
-  /** Only a manager of the plan uploads or removes signed copies. */
+  /**
+   * Whether the viewer is the director who owns the plan. Only they upload the
+   * signed copies — and only they take the signed acta back off, which is what
+   * reopens the agreement for editing.
+   */
   canManage: boolean
-  /** Reopening a closed acta is restricted to admins. */
-  isAdmin?: boolean
 }
 
 /**
@@ -62,16 +53,15 @@ interface PlanDocumentsProps {
  * plan as it stands the moment it is asked for, and re-renders Formato 3 every
  * time a seguimiento is recorded.
  *
+ * There is no separate "close the acta" step: the form always prints what the
+ * plan currently says, so freezing it before signing bought nothing. Uploading
+ * the signed Ficha de acuerdo is what settles the agreement and puts the plan
+ * into force, and removing that scan is what opens it back up.
+ *
  * @example
  * <PlanDocuments plan={plan} canManage={isDirector} />
  */
-export function PlanDocuments({ plan, canManage, isAdmin = false }: PlanDocumentsProps) {
-  const [confirmClose, setConfirmClose] = useState(false)
-  const [confirmReopen, setConfirmReopen] = useState(false)
-
-  const closeActa = useCloseActa(plan.id)
-  const reopenActa = useReopenActa(plan.id)
-
+export function PlanDocuments({ plan, canManage }: PlanDocumentsProps) {
   const followupStage = followupFormatStage(plan)
 
   return (
@@ -84,29 +74,13 @@ export function PlanDocuments({ plan, canManage, isAdmin = false }: PlanDocument
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <ActaStatusBadge status={plan.acta_status} />
-
-          {canManage && plan.acta_status === 'BORRADOR' && (
-            <Button size="sm" variant="outline" onClick={() => setConfirmClose(true)}>
-              <Lock className="size-4" aria-hidden="true" />
-              Cerrar acta
-            </Button>
-          )}
-
-          {isAdmin && plan.acta_status !== 'BORRADOR' && (
-            <Button size="sm" variant="ghost" onClick={() => setConfirmReopen(true)}>
-              <LockOpen className="size-4" aria-hidden="true" />
-              Reabrir acta
-            </Button>
-          )}
-        </div>
+        <ActaStatusBadge status={plan.acta_status} />
       </header>
 
       {plan.acta_locked && (
         <p className="bg-amber-50 px-6 py-2 text-sm text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
-          El acta está cerrada: su contenido ya no se puede modificar. El resto del plan sigue
-          editable.
+          Acuerdo firmado: el plan está en vigencia y el contenido del acta ya no se modifica. El
+          seguimiento sigue su curso.
         </p>
       )}
 
@@ -123,30 +97,6 @@ export function PlanDocuments({ plan, canManage, isAdmin = false }: PlanDocument
           />
         ))}
       </ul>
-
-      <ConfirmDialog
-        open={confirmClose}
-        onOpenChange={setConfirmClose}
-        title="¿Cerrar el acta?"
-        description="Se congelará el contenido del acta (compromisos, asignaturas, número y fecha) para poder imprimirla y firmarla. El resto del plan seguirá editable."
-        confirmLabel="Cerrar acta"
-        pendingLabel="Cerrando…"
-        confirmVariant="default"
-        isPending={closeActa.isPending}
-        onConfirm={() => closeActa.mutate(undefined, { onSuccess: () => setConfirmClose(false) })}
-      />
-
-      <ConfirmDialog
-        open={confirmReopen}
-        onOpenChange={setConfirmReopen}
-        title="¿Reabrir el acta?"
-        description="El acta volverá a estado borrador y su contenido podrá modificarse de nuevo."
-        confirmLabel="Reabrir"
-        pendingLabel="Reabriendo…"
-        confirmVariant="destructive"
-        isPending={reopenActa.isPending}
-        onConfirm={() => reopenActa.mutate(undefined, { onSuccess: () => setConfirmReopen(false) })}
-      />
     </section>
   )
 }
@@ -181,7 +131,20 @@ function FormatRow({
   const record = plan.documents.find((entry) => entry.format_type === format.key)
 
   const isActa = format.slug === 'formato-2'
-  const actaStillOpen = isActa && plan.acta_status === 'BORRADOR'
+
+  // Signing the Ficha de acuerdo is what turns it into the copy of record, so
+  // the acto administrativo backing it and at least one agreed commitment have
+  // to be there first — the API refuses the upload otherwise, and saying so
+  // here saves the director a round trip.
+  const missingActaData = isActa
+    ? [
+        !plan.acta_number && 'el número del acta',
+        !plan.acta_date && 'la fecha del acta',
+        !plan.items.some((item) => item.commitment) && 'al menos un compromiso',
+      ].filter((entry): entry is string => Boolean(entry))
+    : []
+
+  const actaIncomplete = missingActaData.length > 0
 
   // Copies signed before the API kept the uploaded name fall back to a generic
   // one, so the chip never renders an empty label.
@@ -319,10 +282,10 @@ function FormatRow({
               size="sm"
               variant="outline"
               onClick={() => setUploading(true)}
-              disabled={actaStillOpen}
+              disabled={actaIncomplete}
               title={
-                actaStillOpen
-                  ? 'Debes cerrar el acta antes de subir la versión firmada'
+                actaIncomplete
+                  ? `Antes de firmar el acta falta registrar ${missingActaData.join(', ')}`
                   : undefined
               }
             >
@@ -378,7 +341,7 @@ function FormatRow({
         title="¿Eliminar el PDF firmado?"
         description={
           isActa
-            ? 'El acta volverá a estado cerrada y se te pedirá de nuevo la versión firmada. El formato en blanco se conserva.'
+            ? 'El acuerdo volverá a estado borrador y podrás editar el plan de nuevo. El formato en blanco se conserva y se te pedirá otra vez la versión firmada.'
             : 'Se te pedirá de nuevo la versión firmada de este formato. El formato en blanco se conserva.'
         }
         confirmLabel="Eliminar"
