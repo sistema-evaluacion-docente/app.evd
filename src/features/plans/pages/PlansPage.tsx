@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useLocation } from 'wouter'
-import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-table'
-import { Plus } from 'lucide-react'
+import type { ColumnDef, SortingState } from '@tanstack/react-table'
+import { useDebounce } from 'use-debounce'
+import { History, Plus, X } from 'lucide-react'
 
 import { DataTable } from '@/components/common/DataTable'
 import { PageTitle } from '@/components/common/PageTitle'
@@ -21,53 +22,82 @@ import {
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import { useGetPlans, useGetPlanPeriods } from '../api'
+import { usePlansFilters } from '../hooks/usePlansFilters'
 import { PLAN_STATUS_LABEL } from '../lib/planStatus'
 import type { Plan, PlanStatus } from '../types'
 import { ActaStatusBadge, PlanStatusBadge } from '../components/PlanStatusBadge'
 
 /**
  * Directory of improvement plans of the department.
+ *
+ * Every filter lives in the query string (`usePlansFilters`), so the list is
+ * shareable and a teacher's profile can link straight to his whole history:
+ * `/planes?docente=42&nombre=Ana%20Ruiz&periodo=todos`.
+ *
  * Route: `/planes`
  */
 export default function PlansPage() {
   const [, navigate] = useLocation()
-  const [search, setSearch] = useState('')
-  /** `''` means every status. */
-  const [status, setStatus] = useState<PlanStatus | ''>('')
-  /**
-   * `undefined` while the director hasn't touched the filter — the most recent
-   * semester leads then; `null` is the explicit "todos los periodos".
-   */
-  const [periodOverride, setPeriodOverride] = useState<number | null | undefined>(undefined)
+  const {
+    search,
+    status,
+    periodCode,
+    teacherId,
+    teacherName,
+    pageIndex,
+    pageSize,
+    setSearch,
+    setStatus,
+    setPeriodCode,
+    setPagination,
+    clearTeacher,
+  } = usePlansFilters()
+
   const [sorting, setSorting] = useState<SortingState>([])
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 10,
-  })
+
+  // The box stays responsive while the list waits for the director to stop
+  // typing, instead of firing a request per keystroke.
+  const [debouncedSearch] = useDebounce(search, 400)
 
   // The API returns the periods newest first, so the first one is the semester
   // the director is most likely working on.
   const { data: periodsResponse, isLoading: periodsLoading } = useGetPlanPeriods()
   const periods = useMemo(() => periodsResponse?.data ?? [], [periodsResponse])
 
-  const periodId = periodOverride === undefined ? periods[0]?.id : (periodOverride ?? undefined)
+  const periodId = useMemo(() => {
+    // `null` is "todos los periodos": no period reaches the API at all.
+    if (periodCode === null) return undefined
+
+    // Nothing chosen — or a code that no longer has plans — leads with the
+    // most recent semester.
+    if (periodCode === undefined) return periods[0]?.id
+
+    return periods.find((entry) => entry.code === periodCode)?.id ?? periods[0]?.id
+  }, [periodCode, periods])
+
   const period = periods.find((entry) => entry.id === periodId)
+
+  const pagination = useMemo(() => ({ pageIndex, pageSize }), [pageIndex, pageSize])
 
   // Waits for the periods so the first list already comes filtered, instead of
   // painting every plan and swapping it a moment later.
   const { data, isPending, isFetching } = useGetPlans({
-    page: pagination.pageIndex + 1,
-    limit: pagination.pageSize,
-    search,
+    page: pageIndex + 1,
+    limit: pageSize,
+    // A pinned teacher is filtered by id: the box only *shows* his name, so a
+    // name spelled differently by the API can't empty his history.
+    search: teacherId ? '' : debouncedSearch,
     status,
     periodId,
+    teacherId,
     enabled: !periodsLoading,
   })
 
   const plans = data?.data ?? []
   const pageCount = data?.pagination?.pages ?? 0
 
-  const resetPage = () => setPagination((prev) => ({ ...prev, pageIndex: 0 }))
+  // Straight from the link; falling back to the list for a URL typed by hand.
+  const pinnedTeacher = teacherName ?? plans[0]?.teacher_name
 
   const columns = useMemo<ColumnDef<Plan>[]>(
     () => [
@@ -131,6 +161,22 @@ export default function PlansPage() {
         </Button>
       </div>
 
+      {teacherId && (
+        <div className="border-border bg-muted/30 mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border px-4 py-3">
+          <p className="flex items-center gap-2 text-sm">
+            <History className="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
+            Historial de planes de{' '}
+            <span className="font-medium">{pinnedTeacher ?? 'un docente'}</span>
+            {periodCode === null && ' en todos los periodos'}
+          </p>
+
+          <Button variant="outline" size="sm" onClick={clearTeacher}>
+            <X className="size-4" aria-hidden="true" />
+            Quitar filtro
+          </Button>
+        </div>
+      )}
+
       <DataTable
         columns={columns}
         data={plans}
@@ -140,12 +186,11 @@ export default function PlansPage() {
         sorting={sorting}
         onSortingChange={setSorting}
         pagination={pagination}
-        onPaginationChange={setPagination}
+        onPaginationChange={(updater) =>
+          setPagination(typeof updater === 'function' ? updater(pagination) : updater)
+        }
         search={search}
-        onSearchChange={(value) => {
-          setSearch(value)
-          resetPage()
-        }}
+        onSearchChange={setSearch}
         searchPlaceholder="Buscar por docente o título..."
         emptyMessage="No hay planes de mejoramiento que coincidan."
         onRowClick={(row) => navigate(`/planes/${row.id}`)}
@@ -154,15 +199,20 @@ export default function PlansPage() {
             <Select
               value={periodId ?? null}
               onValueChange={(value) => {
-                setPeriodOverride(value as number | null)
-                resetPage()
+                const id = value as number | null
+
+                setPeriodCode(
+                  id === null ? null : (periods.find((entry) => entry.id === id)?.code ?? null),
+                )
               }}
               disabled={periodsLoading || periods.length === 0}
             >
               <SelectTrigger
                 aria-label="Periodo"
                 aria-busy={periodsLoading}
-                className={cn('w-44', periodsLoading && selectLoadingTriggerClass)}
+                // Wide enough for "Cargando periodos…" too, so the filter
+                // doesn't resize the toolbar the moment the periods land.
+                className={cn('w-56', periodsLoading && selectLoadingTriggerClass)}
               >
                 {periodsLoading ? (
                   <SelectLoadingLabel>Cargando periodos…</SelectLoadingLabel>
@@ -183,13 +233,7 @@ export default function PlansPage() {
               </SelectContent>
             </Select>
 
-            <Select
-              value={status}
-              onValueChange={(value) => {
-                setStatus(value as PlanStatus | '')
-                resetPage()
-              }}
-            >
+            <Select value={status} onValueChange={(value) => setStatus(value as PlanStatus | '')}>
               <SelectTrigger aria-label="Estado del plan" className="w-52">
                 <SelectValue>
                   {status ? PLAN_STATUS_LABEL[status] : 'Todos los estados'}
