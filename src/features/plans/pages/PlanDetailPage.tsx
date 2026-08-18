@@ -1,15 +1,18 @@
-import { useRoute } from 'wouter'
+import { Link, useRoute } from 'wouter'
+import { Pencil } from 'lucide-react'
 
 import { BackButton } from '@/components/common/BackButton'
 import { PageTitle } from '@/components/common/PageTitle'
 import { ScoreProgress } from '@/components/common/ScoreProgress'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuthStore } from '@/features/auth'
 import { useGetPlan, useGetPlanIndicators } from '../api'
 import { PlanActa } from '../components/PlanActa'
 import { PlanCheckpoints } from '../components/PlanCheckpoints'
+import { PlanClosedSummary, PlanClosure } from '../components/PlanClosure'
 import { PlanDocuments } from '../components/PlanDocuments'
 import { PlanEvidences } from '../components/PlanEvidences'
 import { ActaStatusBadge, PlanStatusBadge } from '../components/PlanStatusBadge'
@@ -28,9 +31,8 @@ export default function PlanDetailPage() {
   const planId = params?.id ? Number(params.id) : undefined
 
   const roles = useAuthStore((state) => state.user?.roles) ?? []
-  const isAdmin = roles.includes('ADMIN')
-  // Improvement plans belong to the department director; an admin only keeps
-  // the escape hatch to reopen a closed acta.
+  // Improvement plans belong to the department director, start to finish: they
+  // agree them, sign them, follow them up and close them.
   const canManage = roles.includes('DIRECTOR DE DEPARTAMENTO')
 
   const { data, isPending } = useGetPlan(planId)
@@ -45,6 +47,15 @@ export default function PlanDetailPage() {
     plan?.items.some((item) => item.aspect === aspect.aspect),
   )
   const unassignedItems = plan?.items.filter((item) => item.aspect == null) ?? []
+
+  // Signing the Ficha de acuerdo settles what was agreed: from there the plan
+  // is in force and its content stops being editable, so the way back is to
+  // take the signed scan off in "Formatos oficiales".
+  const signedActa = plan?.documents.some(
+    (document) => document.format_type === 'FORMATO_2' && document.has_signed,
+  )
+  const closed = plan ? isPlanClosed(plan.status) : false
+  const canEdit = Boolean(canManage && plan && !closed && !signedActa)
 
   if (isPending) {
     return (
@@ -93,15 +104,24 @@ export default function PlanDetailPage() {
             </div>
           </div>
 
-          <div className="min-w-48">
-            <p className="text-muted-foreground mb-1 text-xs tracking-wide uppercase">Avance</p>
-            <ScoreProgress
-              value={plan.progress}
-              max={100}
-              decimals={0}
-              interactive={false}
-              label="Avance del plan"
-            />
+          <div className="flex flex-wrap items-start gap-4">
+            <div className="min-w-48">
+              <p className="text-muted-foreground mb-1 text-xs tracking-wide uppercase">Avance</p>
+              <ScoreProgress
+                value={plan.progress}
+                max={100}
+                decimals={0}
+                interactive={false}
+                label="Avance del plan"
+              />
+            </div>
+
+            {canEdit && (
+              <Button size="sm" variant="outline" render={<Link href={`/planes/${plan.id}/editar`} />}>
+                <Pencil className="size-4" aria-hidden="true" />
+                Editar
+              </Button>
+            )}
           </div>
         </div>
 
@@ -180,17 +200,19 @@ export default function PlanDetailPage() {
         </section>
       )}
 
-      <PlanCheckpoints
-        plan={plan}
-        aspects={aspects}
-        canManage={canManage && !isPlanClosed(plan.status)}
-      />
+      <PlanCheckpoints plan={plan} aspects={aspects} canManage={canManage && !closed} />
 
-      <PlanEvidences plan={plan} canManage={canManage} />
+      <PlanEvidences plan={plan} canManage={canManage && !closed} />
 
       <PlanActa plan={plan} canManage={canManage} />
 
-      <PlanDocuments plan={plan} canManage={canManage} isAdmin={isAdmin} />
+      <PlanDocuments plan={plan} canManage={canManage} />
+
+      {closed ? (
+        <PlanClosedSummary plan={plan} />
+      ) : (
+        <PlanClosure plan={plan} canManage={canManage} />
+      )}
     </div>
   )
 }

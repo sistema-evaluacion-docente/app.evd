@@ -457,6 +457,8 @@ export interface DraftItem {
   target_ref: string | null
   baseline_value: number | null
   target_value: number | null
+  /** Carried over when editing, so re-saving doesn't wipe a verified result. */
+  status?: ItemStatus
   suggestions: string[]
   comment_ids: number[]
   /** Verbatim comments cited by this commitment, to show them while drafting. */
