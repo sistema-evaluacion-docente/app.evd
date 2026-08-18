@@ -11,10 +11,16 @@ import { Switch } from '@/components/ui/switch'
 import { useGetAcademicPeriods } from '@/features/periods'
 import { cn } from '@/lib/utils'
 import { useGetDepartmentPeriodRangeStats } from '../api'
-import { DepartmentCommentCategoriesChart } from './DepartmentCommentCategoriesChart'
-import { DepartmentCommentRiskChart } from './DepartmentCommentRiskChart'
+import { DepartmentCommentsSummary } from './DepartmentCommentsSummary'
 import { DepartmentDimensionsChart } from './DepartmentDimensionsChart'
 import { DepartmentStatsHero } from './DepartmentStatsHero'
+// Materia/docente mover badges temporarily disabled — see the commented block
+// below (search "MOVER BADGES DISABLED"). Re-add these imports when re-enabling:
+//   import { TrendingDown, TrendingUp } from 'lucide-react'
+//   import { useGetTeachers, type TeacherRecord } from '@/features/teachers'
+//   import { findBestWorstMover, type MoverEntry } from '@/lib/bestWorstMover'
+//   import { useGetDepartmentPeriodRangeSubjects } from '../api'
+//   import type { DepartmentSubjectAverage } from '../types'
 
 export interface DepartmentPeriodRangeSummaryProps {
   /** How many trailing periods to preselect once "comparar un rango" is turned on. Defaults to 2. */
@@ -81,6 +87,106 @@ export function DepartmentPeriodRangeSummary({
     startPeriod: startPeriod?.code,
     endPeriod: endPeriod?.code,
   })
+
+  // Only fires while comparing a genuine range — feeds the "evolución" mode of
+  // the comments summary, comparing the range's first period against its last.
+  const rangeCompareActive =
+    compareRange &&
+    startPeriod !== undefined &&
+    endPeriod !== undefined &&
+    startPeriod !== endPeriod
+
+  const { data: startRangeStats } = useGetDepartmentPeriodRangeStats({
+    startPeriod: rangeCompareActive ? startPeriod?.code : undefined,
+    endPeriod: rangeCompareActive ? startPeriod?.code : undefined,
+  })
+  const { data: endRangeStats } = useGetDepartmentPeriodRangeStats({
+    startPeriod: rangeCompareActive ? endPeriod?.code : undefined,
+    endPeriod: rangeCompareActive ? endPeriod?.code : undefined,
+  })
+
+  /* MOVER BADGES DISABLED — pending fix: for a single period, the "previous
+     period" is picked purely by chronological code order, which can land on
+     an academic period with no evaluation data at all, silently yielding no
+     badges. Disabled for the university-server release; re-enable once that
+     baseline-period selection is fixed. Uncomment this block and the
+     matching imports above + JSX block below (search "MOVER BADGES
+     DISABLED") together — nothing else in this file depends on it.
+
+  // Baseline for the materia/docente mover badges: the range's start when
+  // comparing a range, otherwise the period immediately before the single
+  // selected one (chronologically, by code) — same "always the immediately
+  // previous period" rule already used for the teacher's own summary.
+  const currentMoverPeriod = endPeriod
+  const previousMoverPeriod = rangeCompareActive
+    ? startPeriod
+    : sortedPeriods[sortedPeriods.findIndex((period) => period.id === currentMoverPeriod?.id) - 1]
+  const moversActive =
+    currentMoverPeriod !== undefined &&
+    previousMoverPeriod !== undefined &&
+    currentMoverPeriod !== previousMoverPeriod
+
+  const { data: startSubjects, isPending: isStartSubjectsPending } =
+    useGetDepartmentPeriodRangeSubjects({
+      startPeriod: moversActive ? previousMoverPeriod?.code : undefined,
+      endPeriod: moversActive ? previousMoverPeriod?.code : undefined,
+      limit: 100,
+    })
+  const { data: endSubjects, isPending: isEndSubjectsPending } =
+    useGetDepartmentPeriodRangeSubjects({
+      startPeriod: moversActive ? currentMoverPeriod?.code : undefined,
+      endPeriod: moversActive ? currentMoverPeriod?.code : undefined,
+      limit: 100,
+    })
+
+  const { data: startTeachers, isPending: isStartTeachersPending } = useGetTeachers({
+    academicPeriodId: moversActive ? previousMoverPeriod?.id : undefined,
+    limit: 100,
+  })
+  const { data: endTeachers, isPending: isEndTeachersPending } = useGetTeachers({
+    academicPeriodId: moversActive ? currentMoverPeriod?.id : undefined,
+    limit: 100,
+  })
+
+  const isMoversPending =
+    moversActive &&
+    (isStartSubjectsPending ||
+      isEndSubjectsPending ||
+      isStartTeachersPending ||
+      isEndTeachersPending)
+
+  const startSubjectsByName = new Map(
+    (startSubjects?.data ?? []).map((subject) => [subject.course_name, subject]),
+  )
+  const subjectMovers = (endSubjects?.data ?? [])
+    .map((end) => {
+      const start = startSubjectsByName.get(end.course_name)
+      return start ? { item: end, delta: end.overall_average - start.overall_average } : null
+    })
+    .filter((entry): entry is MoverEntry<DepartmentSubjectAverage> => entry != null)
+  const { best: bestSubjectMover, worst: worstSubjectMover } = findBestWorstMover(subjectMovers)
+  const showBestSubject = bestSubjectMover != null && bestSubjectMover.delta > 0
+  const showWorstSubject =
+    worstSubjectMover != null &&
+    worstSubjectMover.delta < 0 &&
+    worstSubjectMover.item !== bestSubjectMover?.item
+
+  const startTeachersById = new Map(
+    (startTeachers?.data ?? []).map((teacher) => [teacher.id, teacher]),
+  )
+  const teacherMovers = (endTeachers?.data ?? [])
+    .map((end) => {
+      const start = startTeachersById.get(end.id)
+      return start ? { item: end, delta: end.overall_average - start.overall_average } : null
+    })
+    .filter((entry): entry is MoverEntry<TeacherRecord> => entry != null)
+  const { best: bestTeacherMover, worst: worstTeacherMover } = findBestWorstMover(teacherMovers)
+  const showBestTeacher = bestTeacherMover != null && bestTeacherMover.delta > 0
+  const showWorstTeacher =
+    worstTeacherMover != null &&
+    worstTeacherMover.delta < 0 &&
+    worstTeacherMover.item !== bestTeacherMover?.item
+  */
 
   if (!isPeriodsPending && sortedPeriods.length === 0) {
     return (
@@ -159,6 +265,96 @@ export function DepartmentPeriodRangeSummary({
             }
           />
 
+          {/* MOVER BADGES DISABLED — see the matching commented block above
+              (search "MOVER BADGES DISABLED") for why, and uncomment both
+              together to re-enable.
+
+          {moversActive &&
+            (isMoversPending ||
+              showBestSubject ||
+              showWorstSubject ||
+              showBestTeacher ||
+              showWorstTeacher) && (
+              <div className="space-y-2">
+                <p className="text-muted-foreground text-xs">
+                  {rangeCompareActive
+                    ? `Comparando ${previousMoverPeriod?.name} con ${currentMoverPeriod?.name}`
+                    : `Comparado con el periodo anterior (${previousMoverPeriod?.name})`}
+                </p>
+
+                {isMoversPending ? (
+                  <div className="flex flex-wrap gap-3">
+                    <Skeleton className="h-9 w-56 rounded-full" />
+                    <Skeleton className="h-9 w-56 rounded-full" />
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-3">
+                    {showBestSubject && bestSubjectMover && (
+                      <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3.5 py-2 text-sm font-medium text-emerald-700">
+                        <TrendingUp className="size-4.5" aria-hidden="true" />
+                        Materia con mayor mejora: {bestSubjectMover.item.course_name} (+
+                        {bestSubjectMover.delta.toFixed(2)})
+                      </span>
+                    )}
+
+                    {showWorstSubject && worstSubjectMover && (
+                      <span className="inline-flex items-center gap-2 rounded-full bg-red-50 px-3.5 py-2 text-sm font-medium text-red-700">
+                        <TrendingDown className="size-4.5" aria-hidden="true" />
+                        Materia que requiere atención: {worstSubjectMover.item.course_name} (
+                        {worstSubjectMover.delta.toFixed(2)})
+                      </span>
+                    )}
+
+                    {showBestTeacher && bestTeacherMover && (
+                      <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3.5 py-2 text-sm font-medium text-emerald-700">
+                        <TrendingUp className="size-4.5" aria-hidden="true" />
+                        Docente con mayor mejora: {bestTeacherMover.item.user.name} (+
+                        {bestTeacherMover.delta.toFixed(2)})
+                      </span>
+                    )}
+
+                    {showWorstTeacher && worstTeacherMover && (
+                      <span className="inline-flex items-center gap-2 rounded-full bg-red-50 px-3.5 py-2 text-sm font-medium text-red-700">
+                        <TrendingDown className="size-4.5" aria-hidden="true" />
+                        Docente que requiere atención: {worstTeacherMover.item.user.name} (
+                        {worstTeacherMover.delta.toFixed(2)})
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          */}
+
+          {(data?.data?.comments_risk_counts ||
+            data?.data?.comments_pedagogical_category_counts) && (
+            <DepartmentCommentsSummary
+              riskCounts={
+                rangeCompareActive
+                  ? endRangeStats?.data?.comments_risk_counts
+                  : data?.data?.comments_risk_counts
+              }
+              categoryCounts={
+                rangeCompareActive
+                  ? endRangeStats?.data?.comments_pedagogical_category_counts
+                  : data?.data?.comments_pedagogical_category_counts
+              }
+              previousRiskCounts={
+                rangeCompareActive ? startRangeStats?.data?.comments_risk_counts : undefined
+              }
+              previousCategoryCounts={
+                rangeCompareActive
+                  ? startRangeStats?.data?.comments_pedagogical_category_counts
+                  : undefined
+              }
+              comparisonLabel={
+                rangeCompareActive && startPeriod && endPeriod
+                  ? { start: startPeriod.name, end: endPeriod.name }
+                  : undefined
+              }
+            />
+          )}
+
           {compareRange && startPeriod !== endPeriod && (
             <section className="border-border bg-background rounded-md border">
               <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
@@ -197,44 +393,6 @@ export function DepartmentPeriodRangeSummary({
               />
             </div>
           </section>
-
-          {(data?.data?.comments_risk_counts ||
-            data?.data?.comments_pedagogical_category_counts) && (
-            <section className="border-border bg-background rounded-md border">
-              <div className="border-border border-b px-6 py-4">
-                <h2 className="text-sm font-medium">Comentarios de la heteroevaluación</h2>
-
-                <p className="text-muted-foreground mt-0.5 text-xs">
-                  Clasificación de los comentarios que los estudiantes dejaron en las evaluaciones
-                  del departamento durante el rango seleccionado.
-                </p>
-              </div>
-
-              <div className="divide-border grid divide-y sm:grid-cols-2 sm:divide-x sm:divide-y-0">
-                {data?.data?.comments_risk_counts && (
-                  <div className="px-6 py-4">
-                    <h3 className="text-muted-foreground mb-3 text-xs font-medium tracking-wide uppercase">
-                      Por nivel de riesgo
-                    </h3>
-
-                    <DepartmentCommentRiskChart counts={data?.data?.comments_risk_counts} />
-                  </div>
-                )}
-
-                {data?.data?.comments_pedagogical_category_counts && (
-                  <div className="px-6 py-4">
-                    <h3 className="text-muted-foreground mb-3 text-xs font-medium tracking-wide uppercase">
-                      Por categoría pedagógica
-                    </h3>
-
-                    <DepartmentCommentCategoriesChart
-                      counts={data?.data?.comments_pedagogical_category_counts}
-                    />
-                  </div>
-                )}
-              </div>
-            </section>
-          )}
 
           {/* Subjects table intentionally not shown here — belongs to the
               dedicated Materias flow, not the general summary. */}
