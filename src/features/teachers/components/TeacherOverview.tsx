@@ -1,6 +1,7 @@
 import { CalendarRange, TrendingDown, TrendingUp } from 'lucide-react'
 
 import { ScoreBadge } from '@/components/common/ScoreBadge'
+import { ScoreLegend } from '@/components/common/ScoreLegend'
 import { ScoreProgress } from '@/components/common/ScoreProgress'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -130,6 +131,10 @@ export function TeacherOverview({ teacher }: TeacherOverviewProps) {
             </div>
           )}
         </div>
+      </div>
+
+      <div className="flex justify-end px-6 py-2">
+        <ScoreLegend />
       </div>
 
       <div className="divide-border grid grid-cols-2 divide-x sm:grid-cols-4">

@@ -1,6 +1,11 @@
 /** Semantic tone bucket for a 0–5 evaluation score. */
 export type ScoreTone = 'success' | 'warning' | 'danger'
 
+/** Below this value the tone is `danger` — single source of truth, also used by `ScoreLegend`. */
+export const DEFAULT_DANGER_MAX = 3
+/** Above this value the tone is `success` — single source of truth, also used by `ScoreLegend`. */
+export const DEFAULT_SUCCESS_MIN = 3.6
+
 const TONE_TEXT_CLASS: Record<ScoreTone, string> = {
   success: 'text-green-500',
   warning: 'text-amber-500',
@@ -30,7 +35,7 @@ interface ScoreToneOptions {
  */
 export function getScoreTone(
   value: number,
-  { successMin = 3.6, dangerMax = 3 }: ScoreToneOptions = {},
+  { successMin = DEFAULT_SUCCESS_MIN, dangerMax = DEFAULT_DANGER_MAX }: ScoreToneOptions = {},
 ): ScoreTone {
   if (value > successMin) return 'success'
   if (value < dangerMax) return 'danger'

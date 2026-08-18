@@ -16,6 +16,7 @@ import { DynamicFormDrawer, type FieldConfig } from '@/components/common/Dynamic
 import { InlineError } from '@/components/common/InlineError'
 import { PeriodSelect } from '@/components/common/PeriodSelect'
 import { ScoreBadge } from '@/components/common/ScoreBadge'
+import { ScoreLegend } from '@/components/common/ScoreLegend'
 import { TransitionLink } from '@/components/common/TransitionLink'
 import { useUpdateCourse } from '@/features/courses'
 import { useGetAcademicPeriods } from '@/features/periods'
@@ -157,6 +158,8 @@ export function SubjectsList({ className }: { className?: string }) {
         />
 
         {isFetching && <Spinner className="text-muted-foreground size-4" />}
+
+        <ScoreLegend className="ml-auto" />
       </div>
 
       {error && <InlineError message={error.message} />}

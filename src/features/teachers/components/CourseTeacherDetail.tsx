@@ -3,6 +3,7 @@ import { useId, useState } from 'react'
 
 import { PeriodSelect, type PeriodSelectOption } from '@/components/common/PeriodSelect'
 import { ScoreBadge } from '@/components/common/ScoreBadge'
+import { ScoreLegend } from '@/components/common/ScoreLegend'
 import { TransitionLink } from '@/components/common/TransitionLink'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -315,11 +316,15 @@ export function CourseTeacherDetail({
       </div>
 
       <section className="border-border bg-background rounded-md border">
-        <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
-          {selectedComparison
-            ? `Dimensiones pedagógicas comparadas con ${selectedComparison.period_name}`
-            : 'Dimensiones pedagógicas'}
-        </h2>
+        <div className="border-border flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4">
+          <h2 className="text-sm font-medium">
+            {selectedComparison
+              ? `Dimensiones pedagógicas comparadas con ${selectedComparison.period_name}`
+              : 'Dimensiones pedagógicas'}
+          </h2>
+
+          <ScoreLegend />
+        </div>
 
         <CourseDimensionBreakdown
           course={course}
