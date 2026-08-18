@@ -1,4 +1,4 @@
-import { CalendarRange } from 'lucide-react'
+import { CalendarRange, TrendingDown, TrendingUp } from 'lucide-react'
 
 import { ScoreBadge } from '@/components/common/ScoreBadge'
 import { ScoreProgress } from '@/components/common/ScoreProgress'
@@ -24,6 +24,31 @@ interface TeacherOverviewProps {
  * <TeacherOverview teacher={teacher} />
  */
 export function TeacherOverview({ teacher }: TeacherOverviewProps) {
+  const dimensionDeltas = teacher.previous_period
+    ? teacher.dimensions
+        .map((dimension) => {
+          const previous = teacher.previous_period?.dimensions.find(
+            (item) => item.dimension === dimension.dimension,
+          )
+          return previous?.average != null
+            ? { dimension: dimension.dimension, delta: dimension.average - previous.average }
+            : null
+        })
+        .filter((item): item is { dimension: string; delta: number } => item != null)
+    : []
+
+  const bestMover = dimensionDeltas.reduce<{ dimension: string; delta: number } | null>(
+    (best, current) => (best == null || current.delta > best.delta ? current : best),
+    null,
+  )
+  const worstMover = dimensionDeltas.reduce<{ dimension: string; delta: number } | null>(
+    (worst, current) => (worst == null || current.delta < worst.delta ? current : worst),
+    null,
+  )
+  const showBestMover = bestMover != null && bestMover.delta > 0
+  const showWorstMover =
+    worstMover != null && worstMover.delta < 0 && worstMover.dimension !== bestMover?.dimension
+
   return (
     <section className="divide-border border-border bg-background divide-y overflow-hidden rounded-md border">
       <div className="bg-brand-50 dark:bg-brand-900/20 flex flex-wrap items-center justify-between gap-x-6 gap-y-1 px-6 py-3">
@@ -86,6 +111,24 @@ export function TeacherOverview({ teacher }: TeacherOverviewProps) {
             decimals={2}
             className="leading-none"
           />
+
+          {(showBestMover || showWorstMover) && (
+            <div className="mt-3 flex flex-wrap justify-end gap-2">
+              {showBestMover && bestMover && (
+                <Badge className="gap-1 bg-emerald-50 text-emerald-700">
+                  <TrendingUp className="size-3.5" aria-hidden="true" />
+                  Mayor mejora: {bestMover.dimension} (+{bestMover.delta.toFixed(2)})
+                </Badge>
+              )}
+
+              {showWorstMover && worstMover && (
+                <Badge className="gap-1 bg-red-50 text-red-700">
+                  <TrendingDown className="size-3.5" aria-hidden="true" />
+                  Requiere atención: {worstMover.dimension} ({worstMover.delta.toFixed(2)})
+                </Badge>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

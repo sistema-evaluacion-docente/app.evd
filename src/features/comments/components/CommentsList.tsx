@@ -6,6 +6,7 @@ import { DataTableFilters, type FilterConfig } from '@/components/common/DataTab
 import { PeriodSelect } from '@/components/common/PeriodSelect'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useAuthStore } from '@/features/auth'
 import { CommentList, TeacherSelect } from '@/features/teachers'
 import { useTableFilters } from '@/hooks/useTableFilters'
 import { CATEGORIES } from '@/lib/categoryLabel'
@@ -39,6 +40,7 @@ const filterConfig: FilterConfig[] = [
  * <CommentsList />
  */
 export function CommentsList() {
+  const departmentId = useAuthStore((state) => state.user?.department_id)
   const [periodId, setPeriodId] = useState<number | undefined>(undefined)
   const [teacherId, setTeacherId] = useState<number | undefined>(undefined)
   const [search, setSearch] = useState('')
@@ -62,11 +64,19 @@ export function CommentsList() {
       ? Number(filters.pedagogicalCategoryId)
       : undefined,
     search: debouncedSearch,
-    enabled: periodId !== undefined,
+    enabled: periodId !== undefined && Boolean(departmentId),
   })
 
   const comments = data?.data ?? []
   const pages = data?.pagination?.pages ?? 1
+
+  if (!departmentId) {
+    return (
+      <div className="text-muted-foreground py-10 text-center text-sm">
+        Su usuario no está vinculado a un departamento. Contacte al administrador del sistema.
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4">

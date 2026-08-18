@@ -28,7 +28,8 @@ export function DepartmentCommentCategoriesChart({
     count: counts?.[category.code] ?? 0,
   }))
 
-  const max = Math.max(1, ...entries.map((entry) => entry.count))
+  const rawMax = Math.max(1, ...entries.map((entry) => entry.count))
+  const max = Math.max(10, Math.ceil(rawMax / 10) * 10)
 
   return (
     <DimensionComparisonChart
@@ -46,7 +47,7 @@ export function DepartmentCommentCategoriesChart({
       labelFormatter={categoryShortLabel}
       orientation="vertical"
       min={0}
-      max={max + 20}
+      max={max}
       decimals={0}
       showLegend={false}
       emptyMessage="No hay comentarios clasificados por categoría en este rango de periodos."
