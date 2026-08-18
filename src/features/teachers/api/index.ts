@@ -4,9 +4,11 @@ import type { ResponseAPI } from '@/@types/Response'
 import api from '@/config/axios'
 import { useAuthStore } from '@/features/auth'
 import type {
+  CourseHistoryOut,
   TeacherComment,
   TeacherCommentsData,
   TeacherDetail,
+  TeacherMatrix,
   TeacherRecord,
   TeacherUploadData,
 } from '../types'
@@ -66,6 +68,25 @@ async function getTeacherComments(
   teacherId: number,
 ): Promise<ResponseAPI<TeacherCommentsData>> {
   return api.get(`/evaluations/${evaluationId}/teachers/${teacherId}/comments`)
+}
+
+async function getTeacherCourseHistory(
+  teacherId: number,
+  courseCode: string,
+  params: { limit?: number },
+): Promise<ResponseAPI<CourseHistoryOut>> {
+  return api.get(`/teachers/${teacherId}/courses/${encodeURIComponent(courseCode)}/history`, {
+    params,
+  })
+}
+
+async function getTeacherMatrix(
+  teacherId: number,
+  evaluationId: number,
+): Promise<ResponseAPI<TeacherMatrix>> {
+  return api.get(`/stats/teachers/${teacherId}/matrix`, {
+    params: { evaluation_id: evaluationId },
+  })
 }
 
 async function uploadTeachers(file: File): Promise<ResponseAPI<TeacherUploadData>> {
@@ -130,6 +151,10 @@ export const teachersKeys = {
     [...teachersKeys.all, 'detail', teacherId, periodName] as const,
   comments: (evaluationId: number, teacherId: number) =>
     [...teachersKeys.all, 'comments', evaluationId, teacherId] as const,
+  courseHistory: (teacherId: number, courseCode: string, limit?: number) =>
+    [...teachersKeys.all, 'course-history', teacherId, courseCode, limit] as const,
+  matrix: (teacherId: number, evaluationId: number) =>
+    [...teachersKeys.all, 'matrix', teacherId, evaluationId] as const,
 }
 
 /**
@@ -216,7 +241,11 @@ export function useGetTeachers({
  * attached (`GET /teachers/`) — e.g. to populate a teacher picker. By
  * default the department id is read from the authenticated director's
  * store; pass `departmentId` explicitly to override it, or `null` to span
- * every department.
+ * every department. Stays disabled (no request sent) for a director with no
+ * department and no explicit override — `GET /teachers/` accepts
+ * `department_id` as a plain query param rather than deriving it from the
+ * caller's session, so an unscoped request here would return every
+ * department's teachers.
  *
  * @example
  * const { data, isPending } = useListTeachers({ page: 1, limit: 50 });
@@ -233,6 +262,7 @@ export function useListTeachers({
 } = {}) {
   const authDepartmentId = useAuthStore((state) => state.user?.department_id) ?? undefined
   const resolvedDepartmentId = departmentId === undefined ? authDepartmentId : departmentId
+  const departmentResolved = departmentId !== undefined || authDepartmentId != null
 
   return useQuery({
     queryKey: [
@@ -241,6 +271,7 @@ export function useListTeachers({
       { page, limit, department_id: resolvedDepartmentId },
     ],
     queryFn: () => getTeachers({ page, limit, department_id: resolvedDepartmentId }),
+    enabled: departmentResolved,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
   })
@@ -287,6 +318,62 @@ export function useGetTeacherComments({
     queryKey: teachersKeys.comments(evaluationId ?? 0, teacherId ?? 0),
     queryFn: () => getTeacherComments(evaluationId!, teacherId!),
     enabled: evaluationId != null && teacherId != null,
+    staleTime: 60_000,
+  })
+}
+
+/**
+ * Fetches a teacher's per-period score history for one specific course
+ * (`GET /teachers/{teacher_id}/courses/{course_code}/history`), most recent
+ * period first — includes the department average and full dimension
+ * breakdown per period, so a screen can let the user compare against any
+ * period the course was taught, not just the immediately previous one.
+ * Works for any teacher id — used both by the teacher's own view and a
+ * director's read of that teacher.
+ *
+ * @example
+ * const { data } = useGetTeacherCourseHistory({ teacherId: 12, courseCode: 'SIS101', limit: 12 });
+ */
+export function useGetTeacherCourseHistory({
+  teacherId,
+  courseCode,
+  limit,
+}: {
+  teacherId?: number
+  courseCode?: string
+  limit?: number
+}) {
+  return useQuery({
+    queryKey: teachersKeys.courseHistory(teacherId ?? 0, courseCode ?? '', limit),
+    queryFn: () => getTeacherCourseHistory(teacherId!, courseCode!, { limit }),
+    enabled: teacherId != null && teacherId > 0 && Boolean(courseCode),
+    staleTime: 60_000,
+  })
+}
+
+/**
+ * Fetches a teacher's per-course, per-question average matrix for one
+ * evaluation (`GET /stats/teachers/{teacher_id}/matrix`) — one row per
+ * question, one column per course the teacher taught that period, plus the
+ * per-question average across all their courses. Lives here (not `stats/api`)
+ * despite the `/stats/...` path: it's single-teacher data, not a cross-teacher
+ * aggregate, and `stats` already imports types from `teachers`, so a hook
+ * here avoids a circular feature dependency.
+ *
+ * @example
+ * const { data } = useGetTeacherMatrix({ teacherId: 12, evaluationId: 5 });
+ */
+export function useGetTeacherMatrix({
+  teacherId,
+  evaluationId,
+}: {
+  teacherId?: number
+  evaluationId?: number
+}) {
+  return useQuery({
+    queryKey: teachersKeys.matrix(teacherId ?? 0, evaluationId ?? 0),
+    queryFn: () => getTeacherMatrix(teacherId!, evaluationId!),
+    enabled: teacherId != null && evaluationId != null,
     staleTime: 60_000,
   })
 }

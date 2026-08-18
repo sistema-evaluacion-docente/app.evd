@@ -1,5 +1,8 @@
 import { DimensionComparisonChart } from '@/components/common/DimensionComparisonChart'
-import { CATEGORIES, categoryShortLabel } from '@/lib/categoryLabel'
+import { CATEGORIES, categoryShortLabel, UNCATEGORIZED } from '@/lib/categoryLabel'
+
+/** Excludes "Sin categoría" — a non-classification, not useful for analysis. */
+const ANALYZABLE_CATEGORIES = CATEGORIES.filter((category) => category.code !== UNCATEGORIZED)
 
 export interface DepartmentCommentCategoriesChartProps {
   /** Comment count per pedagogical category code (`LABEL_0`…`LABEL_4`), as returned by the API. */
@@ -20,12 +23,13 @@ export function DepartmentCommentCategoriesChart({
   counts,
   className,
 }: DepartmentCommentCategoriesChartProps) {
-  const entries = CATEGORIES.map((category) => ({
+  const entries = ANALYZABLE_CATEGORIES.map((category) => ({
     key: category.code,
     count: counts?.[category.code] ?? 0,
   }))
 
-  const max = Math.max(1, ...entries.map((entry) => entry.count))
+  const rawMax = Math.max(1, ...entries.map((entry) => entry.count))
+  const max = Math.max(10, Math.ceil(rawMax / 10) * 10)
 
   return (
     <DimensionComparisonChart
@@ -36,11 +40,14 @@ export function DepartmentCommentCategoriesChart({
           scores: entries.map((entry) => ({ dimension: entry.key, value: entry.count })),
         },
       ]}
-      dimensions={CATEGORIES.map((category) => ({ key: category.code, color: category.color }))}
+      dimensions={ANALYZABLE_CATEGORIES.map((category) => ({
+        key: category.code,
+        color: category.color,
+      }))}
       labelFormatter={categoryShortLabel}
       orientation="vertical"
       min={0}
-      max={max + 20}
+      max={max}
       decimals={0}
       showLegend={false}
       emptyMessage="No hay comentarios clasificados por categoría en este rango de periodos."

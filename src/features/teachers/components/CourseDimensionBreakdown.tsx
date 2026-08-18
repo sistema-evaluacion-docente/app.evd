@@ -77,7 +77,7 @@ function DimensionRow({
 }) {
   return (
     <Collapsible>
-      <CollapsibleTrigger className="hover:bg-muted/30 group flex w-full items-center justify-between gap-4 py-3 text-left transition-colors">
+      <CollapsibleTrigger className="hover:bg-muted/30 group flex w-full cursor-pointer items-center justify-between gap-4 py-3 text-left transition-colors">
         <span className="flex min-w-0 items-center gap-2">
           <ChevronRight
             aria-hidden="true"

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 
 import { Minus, TrendingDown, TrendingUp } from 'lucide-react'
 
@@ -20,9 +20,16 @@ export interface ScoreProgressProps {
   /**
    * Fill color. `primary` uses the brand color, `auto` color-codes the fill
    * by value (danger/warning/success, same thresholds as `ScoreBadge`), or
-   * force one of the fixed tones. Defaults to `primary`.
+   * force one of the fixed tones. Defaults to `primary`. Ignored when `color`
+   * is set.
    */
   tone?: ScoreProgressTone
+  /**
+   * Raw CSS color (hex, `var(...)`, etc.) overriding `tone` entirely — for
+   * identity-coded bars (e.g. one color per teacher in a comparison), where
+   * the color isn't one of the fixed semantic tones.
+   */
+  color?: string
   /** Track height. Defaults to `sm`. */
   size?: ScoreProgressSize
   /** Accessible label describing what this progress represents (e.g. the question text). */
@@ -128,11 +135,16 @@ const TREND_WORD: Record<ScoreTrendDirection, string> = {
  *   previousLabel="semestre anterior"
  *   tone="auto"
  * />
+ *
+ * @example
+ * // Identity-coded bar (e.g. one color per teacher in a comparison) — `color` overrides `tone`.
+ * <ScoreProgress value={entry.average} color={teacherColor} label={entry.teacher_name} />
  */
 export function ScoreProgress({
   value,
   max = 5,
   tone = 'primary',
+  color,
   size = 'sm',
   label,
   decimals = 2,
@@ -149,7 +161,10 @@ export function ScoreProgress({
   const percentage = Math.min(100, Math.max(0, (value / max) * 100))
   const percentLabel = `${Math.round(percentage)}%`
   const scoreLabel = `${value.toFixed(decimals)} de ${max}`
-  const indicatorClass = TONE_INDICATOR_CLASS[tone === 'auto' ? getScoreTone(value) : tone]
+  const indicatorClass = color
+    ? '**:data-[slot=progress-indicator]:bg-(--score-color)'
+    : TONE_INDICATOR_CLASS[tone === 'auto' ? getScoreTone(value) : tone]
+  const indicatorStyle = color ? ({ '--score-color': color } as CSSProperties) : undefined
 
   /** Narrowed once so every later check is a plain `!= null` the compiler can track. */
   const comparisonValue =
@@ -190,6 +205,7 @@ export function ScoreProgress({
       value={percentage}
       aria-label={label}
       aria-valuetext={`${scoreLabel} (${percentLabel})`}
+      style={indicatorStyle}
       className={cn(
         '**:data-[slot=progress-track]:bg-[#aaa] min-w-15',
         SIZE_CLASS[size],

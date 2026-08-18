@@ -73,7 +73,7 @@ function CourseRow({
   return (
     <Collapsible className="group/row relative">
       <div className="flex items-center justify-between gap-4 px-6 py-4">
-        <CollapsibleTrigger className="hover:bg-muted/40 group -m-2 flex min-w-0 flex-1 items-center gap-3 rounded-md p-2 text-left transition-colors">
+        <CollapsibleTrigger className="hover:bg-muted/40 group -m-2 flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-md p-2 text-left transition-colors">
           <ChevronRight
             aria-hidden="true"
             className="text-muted-foreground size-4 shrink-0 transition-transform group-data-panel-open:rotate-90"
@@ -81,7 +81,9 @@ function CourseRow({
 
           <div className="min-w-0">
             <p className="truncate text-sm font-medium">{course.course_name}</p>
-            <p className="text-muted-foreground text-xs">Grupo {course.group_name}</p>
+            <p className="text-muted-foreground text-sm">
+              {course.course_code} - {course.group_name}
+            </p>
           </div>
         </CollapsibleTrigger>
 
@@ -97,6 +99,7 @@ function CourseRow({
             <Button
               variant="ghost"
               size="sm"
+              nativeButton={false}
               className="text-muted-foreground hover:text-primary gap-1 hover:bg-transparent"
               render={<Link href={href} />}
             >

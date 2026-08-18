@@ -4932,7 +4932,7 @@
       "patch": {
         "tags": ["Comments"],
         "summary": "Update Comment Classification",
-        "description": "Update the risk level and/or pedagogical category of a comment.\n\nOnly the director of the department that owns the comment's evaluation\nmay perform this action. Each field provided is flagged as modified by\nthe director.",
+        "description": "Update the risk level and/or pedagogical categories of a comment.\n\nOnly the director of the department that owns the comment's evaluation\nmay perform this action. Each field provided is flagged as modified by\nthe director. ``pedagogical_category_ids`` replaces the full set of\ncategories (accepts one, several, or an empty list to clear them all).",
         "operationId": "update_comment_classification_comments__comment_id__patch",
         "security": [
           {
@@ -7258,6 +7258,85 @@
           },
           "404": {
             "description": "Not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stats/departments/subjects/{course_code}/teachers-comparison": {
+      "get": {
+        "tags": ["Stats"],
+        "summary": "Get Subject Teachers Comparison",
+        "description": "Get per-(teacher, group) comparison for a course in a period.\nReturns dimensions, risk counts and pedagogical category counts per entry.\nOnly accessible by the department's director.",
+        "operationId": "get_subject_teachers_comparison_stats_departments_subjects__course_code__teachers_comparison_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "course_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Course Code"
+            }
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Código del periodo (ej. '2025-1')",
+              "title": "Period"
+            },
+            "description": "Código del periodo (ej. '2025-1')"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseEnvelope_list_dict__"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "403": {
+            "description": "Forbidden"
           },
           "422": {
             "description": "Validation Error",
@@ -9761,26 +9840,13 @@
             ],
             "title": "Risk Score"
           },
-          "pedagogical_category": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/PedagogicalCategoryOut"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "category_score": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Category Score"
+          "pedagogical_categories": {
+            "items": {
+              "$ref": "#/components/schemas/PedagogicalCategoryScoreOut"
+            },
+            "type": "array",
+            "title": "Pedagogical Categories",
+            "default": []
           },
           "risk_level_modified_by_director": {
             "type": "boolean",
@@ -9829,21 +9895,24 @@
             ],
             "title": "Risk Level"
           },
-          "pedagogical_category_id": {
+          "pedagogical_category_ids": {
             "anyOf": [
               {
-                "type": "integer"
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Pedagogical Category Id"
+            "title": "Pedagogical Category Ids"
           }
         },
         "type": "object",
         "title": "CommentUpdate",
-        "description": "Schema for updating a comment's risk level and/or pedagogical category.\n\nOnly a department director may perform this update; each field actually\nprovided is flagged as modified by the director."
+        "description": "Schema for updating a comment's risk level and/or pedagogical categories.\n\nOnly a department director may perform this update; each field actually\nprovided is flagged as modified by the director. ``pedagogical_category_ids``\nreplaces the comment's full set of categories — pass one, several, or an\nempty list to clear them all."
       },
       "CourseComments": {
         "properties": {
@@ -10546,6 +10615,20 @@
             },
             "type": "array",
             "title": "Dimensions"
+          },
+          "comments_risk_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Comments Risk Counts"
+          },
+          "comments_pedagogical_category_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Comments Pedagogical Category Counts"
           }
         },
         "type": "object",
@@ -10560,7 +10643,9 @@
           "total_respondents",
           "evaluation_count",
           "period_averages",
-          "dimensions"
+          "dimensions",
+          "comments_risk_counts",
+          "comments_pedagogical_category_counts"
         ],
         "title": "DepartmentPeriodRangeReport",
         "description": "Department overall/per-period averages and pedagogical dimension\naverages aggregated across a range of academic periods."
@@ -11408,6 +11493,20 @@
             ],
             "title": "Overall Average"
           },
+          "comments_risk_counts": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "integer"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comments Risk Counts"
+          },
           "dimension_averages": {
             "anyOf": [
               {
@@ -12069,6 +12168,17 @@
           "type": {
             "$ref": "#/components/schemas/NotificationType",
             "default": "info"
+          },
+          "link": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link"
           }
         },
         "type": "object",
@@ -12116,6 +12226,17 @@
           "read": {
             "type": "boolean",
             "title": "Read"
+          },
+          "link": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link"
           },
           "created_at": {
             "type": "string",
@@ -12172,7 +12293,7 @@
         "title": "Pagination",
         "description": "Pagination metadata for list endpoints."
       },
-      "PedagogicalCategoryOut": {
+      "PedagogicalCategoryScoreOut": {
         "properties": {
           "id": {
             "type": "integer",
@@ -12203,12 +12324,23 @@
               }
             ],
             "title": "Color Hex"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
           }
         },
         "type": "object",
         "required": ["id", "name"],
-        "title": "PedagogicalCategoryOut",
-        "description": "Schema for pedagogical category output."
+        "title": "PedagogicalCategoryScoreOut",
+        "description": "Pedagogical category output with the confidence score of this assignment."
       },
       "QuestionComparisonDetail": {
         "properties": {
@@ -15573,6 +15705,17 @@
               }
             ],
             "title": "Overall Average"
+          },
+          "high_risk_comments_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "High Risk Comments Count"
           },
           "created_at": {
             "type": "string",

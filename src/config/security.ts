@@ -11,6 +11,11 @@ const securityConfig = {
       roles: ['DOCENTE'],
     },
     {
+      path: '/periodos/materias',
+      name: 'Materias',
+      roles: ['DOCENTE'],
+    },
+    {
       path: '/mis-planes',
       name: 'Mi plan de mejoramiento',
       roles: ['DOCENTE'],
@@ -23,6 +28,11 @@ const securityConfig = {
     {
       path: '/docentes',
       name: 'Docentes',
+      roles: ['DIRECTOR DE DEPARTAMENTO'],
+    },
+    {
+      path: '/materias',
+      name: 'Materias',
       roles: ['DIRECTOR DE DEPARTAMENTO'],
     },
     {

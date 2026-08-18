@@ -5,4 +5,6 @@ export type {
   DepartmentSubjectAverage,
   DepartmentSubjectGroup,
   StatsPeriodRef,
+  TeacherComparisonDimension,
+  TeacherComparisonEntry,
 } from './stats.types'

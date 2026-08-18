@@ -65,6 +65,7 @@ export function EvaluationOverview({
             <Button
               variant="outline"
               size="sm"
+              nativeButton={false}
               render={<Link href={pdfHref} />}
               className="bg-background"
             >

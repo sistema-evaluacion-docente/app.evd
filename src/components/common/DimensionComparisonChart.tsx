@@ -70,16 +70,16 @@ export interface DimensionComparisonChartProps {
   min?: number
   max?: number
   decimals?: number
+  /**
+   * Shows a button that opens a popover to override the min/max of the value
+   * axis on the fly, e.g. to zoom into a narrow band of close scores. Purely
+   * a display preference — kept as local UI state, never reported back to
+   * the caller. Defaults to `true`.
+   */
+  customizable?: boolean
   isLoading?: boolean
   error?: string | null
   emptyMessage?: string
-  /**
-   * Shows a button that opens a popover to override the axis min/max on the
-   * fly, e.g. to zoom into a narrow band of scores. Purely a display
-   * preference — kept as local UI state, never reported back to the caller.
-   * Defaults to `true`.
-   */
-  customizable?: boolean
   /** Dashed marker, e.g. the institutional target or the overall average. */
   referenceValue?: number
   referenceLabel?: string
@@ -147,10 +147,10 @@ export function DimensionComparisonChart({
   min = 0,
   max = 5,
   decimals = 2,
+  customizable = true,
   isLoading = false,
   error = null,
   emptyMessage = 'No hay dimensiones para comparar.',
-  customizable = true,
   referenceValue,
   referenceLabel,
   showLegend,

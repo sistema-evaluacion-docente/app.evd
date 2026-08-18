@@ -1,5 +1,7 @@
 import type { SortField } from '@/components/common/DataTableFilters'
 
+export { courseTeacherHref } from './courseTeacherHref'
+
 /**
  * Contract type options shared by the teacher filters and forms. Left
  * without an explicit array type so its literal `value: string` shape stays
