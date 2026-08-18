@@ -78,6 +78,16 @@ const CANDIDATE: PlanCandidate = {
   overall_suggestions: [],
 }
 
+/** Nothing under the threshold and no risky comment: no plan is suggested. */
+const HEALTHY_CANDIDATE: PlanCandidate = {
+  ...CANDIDATE,
+  teacher_id: 9,
+  name: 'Grace Hopper',
+  institutional_code: '1150456',
+  overall_average: 4.5,
+  below_threshold: false,
+}
+
 /** Only the fields the page reads matter; the rest of the query is irrelevant. */
 function mockQueries({
   periodsLoading = false,
@@ -217,6 +227,30 @@ describe('PlanFormPage · creación', () => {
 
     expect(teacher).toBeEnabled()
     expect(teacher).toHaveTextContent('Selecciona un docente…')
+  })
+
+  it('counts the teachers a plan is suggested for, so the icon on them can be read', () => {
+    mockQueries({ candidates: [CANDIDATE, HEALTHY_CANDIDATE] })
+
+    renderAt(<PlanFormPage />)
+
+    expect(screen.getByText(/docente con plan sugerido por sus resultados/)).toBeInTheDocument()
+  })
+
+  it('keeps the legend out when nobody is under the threshold', () => {
+    mockQueries({ candidates: [HEALTHY_CANDIDATE] })
+
+    renderAt(<PlanFormPage />)
+
+    expect(screen.queryByText(/plan sugerido por sus resultados/)).not.toBeInTheDocument()
+  })
+
+  it('does not suggest a plan for a teacher that already has one', () => {
+    mockQueries({ candidates: [{ ...CANDIDATE, has_plan: true }] })
+
+    renderAt(<PlanFormPage />)
+
+    expect(screen.queryByText(/plan sugerido por sus resultados/)).not.toBeInTheDocument()
   })
 
   it('holds the space of the indicators when it arrives with a teacher preselected', () => {
