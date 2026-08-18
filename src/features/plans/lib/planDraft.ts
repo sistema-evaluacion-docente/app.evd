@@ -4,7 +4,10 @@ import type {
   DraftItem,
   IndicatorDimension,
   IndicatorQuestion,
+  PlanCourse,
   PlanCourseInput,
+  PlanIndicators,
+  PlanItem,
   PlanSubjectOption,
   TargetType,
 } from '../types'
@@ -228,4 +231,114 @@ export function buildBlankDraft(aspect: number): DraftItem {
     source_subject_key: null,
     source_subject_label: null,
   }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Seeding the workbench from a saved plan                                     */
+/* -------------------------------------------------------------------------- */
+
+/** Suggested actions of an indicator, which the plan itself doesn't store. */
+function suggestionsOf(
+  catalogue: PlanIndicators | undefined,
+  targetType: TargetType,
+  targetRef: string | null,
+): string[] {
+  if (!catalogue || targetRef == null) return []
+
+  if (targetType === 'DIMENSION') {
+    return catalogue.dimensions.find((entry) => entry.target_ref === targetRef)?.suggestions ?? []
+  }
+
+  if (targetType === 'QUESTION') {
+    for (const dimension of catalogue.dimensions) {
+      const question = dimension.questions.find((entry) => entry.target_ref === targetRef)
+
+      if (question) return question.suggestions
+    }
+  }
+
+  return []
+}
+
+/**
+ * Turns the commitments of a saved plan back into editable drafts.
+ *
+ * `id` travels with every row on purpose: the API replaces the whole list on
+ * update, so a row that comes back without one is recreated — losing the
+ * evidences and the verified result attached to it — and a row left out is
+ * deleted outright.
+ *
+ * The subject an indicator was picked under is not persisted, so the drafts
+ * come back at teacher level and the picker matches them by indicator alone.
+ *
+ * @example
+ * const [items] = useState(() => planItemsToDrafts(plan.items, indicators))
+ */
+export function planItemsToDrafts(items: PlanItem[], catalogue?: PlanIndicators): DraftItem[] {
+  return [...items]
+    .sort((a, b) => a.order - b.order)
+    .map((item) => {
+      const commentIds = item.comments.map((comment) => comment.comment_id)
+
+      return {
+        key: nextKey(),
+        selection_id:
+          commentIds.length > 0
+            ? commentSelectionId(commentIds[0])
+            : item.target_ref != null
+              ? indicatorSelectionId(null, item.target_type, item.target_ref)
+              : nextKey(),
+        id: item.id,
+        description: item.description,
+        commitment: item.commitment ?? '',
+        aspect: item.aspect,
+        target_type: item.target_type,
+        target_ref: item.target_ref,
+        baseline_value: item.baseline_value,
+        target_value: item.target_value,
+        status: item.status,
+        suggestions: suggestionsOf(catalogue, item.target_type, item.target_ref),
+        comment_ids: commentIds,
+        comment_previews: item.comments.map((comment) => ({
+          id: comment.comment_id,
+          text: comment.original_text ?? '',
+          risk_level_name: comment.risk_level_name,
+        })),
+        source_subject_key: null,
+        source_subject_label: null,
+      }
+    })
+}
+
+/**
+ * Turns the asignaturas of a saved plan back into editable rows.
+ *
+ * Every row is `manual`: it is already part of the agreement, so unpicking the
+ * commitment that once brought it in must not take it back out. Rows sharing an
+ * identity collapse into one — two of them would be the same asignatura twice.
+ */
+export function planCoursesToDrafts(courses: PlanCourse[]): DraftCourse[] {
+  const seen = new Set<string>()
+
+  return [...courses]
+    .sort((a, b) => a.order - b.order)
+    .reduce<DraftCourse[]>((rows, course) => {
+      const key = courseRowKey(course)
+
+      if (seen.has(key)) return rows
+
+      seen.add(key)
+      rows.push({
+        key,
+        origin: 'manual',
+        academic_group_id: course.academic_group_id,
+        course_name: course.course_name,
+        course_code: course.course_code,
+        group_name: course.group_name,
+        program_name: course.program_name,
+        order: rows.length,
+      })
+
+      return rows
+    }, [])
 }
