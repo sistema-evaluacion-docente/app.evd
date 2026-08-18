@@ -595,8 +595,6 @@ function PlanForm({
 
   return (
     <div className="space-y-6">
-      {isEdit && plan && <BackButton href={`/planes/${plan.id}`} className="mb-2" />}
-
       <PageTitle>{isEdit ? 'Editar plan de mejoramiento' : 'Nuevo plan de mejoramiento'}</PageTitle>
 
       {actaLocked && (
