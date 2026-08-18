@@ -23,7 +23,7 @@ import {
   PeriodDetailPage,
   PeriodsPage,
 } from '@/features/periods'
-import { CreatePlanPage, MyPlansPage, PlanDetailPage, PlansPage } from '@/features/plans'
+import { MyPlansPage, PlanDetailPage, PlanFormPage, PlansPage } from '@/features/plans'
 import { TeacherDetailPage, TeachersPage, TeacherUploadPage } from '@/features/teachers'
 import { UsersPage } from '@/features/users'
 
@@ -89,7 +89,13 @@ function App() {
 
         <Route path="/planes/nuevo">
           <AppLayout>
-            <CreatePlanPage />
+            <PlanFormPage />
+          </AppLayout>
+        </Route>
+
+        <Route path="/planes/:id/editar">
+          <AppLayout>
+            <PlanFormPage />
           </AppLayout>
         </Route>
 
