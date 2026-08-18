@@ -24,6 +24,7 @@ import {
   PeriodsPage,
   TeacherMateriasPage,
 } from '@/features/periods'
+import { MyPlansPage, PlanDetailPage, PlanFormPage, PlansPage } from '@/features/plans'
 import { SubjectComparisonPage, SubjectsPage, SubjectTeacherDetailPage } from '@/features/subjects'
 import { TeacherDetailPage, TeachersPage, TeacherUploadPage } from '@/features/teachers'
 import { UsersPage } from '@/features/users'
@@ -103,6 +104,36 @@ function App() {
         <Route path="/comentarios">
           <AppLayout>
             <CommentsPage />
+          </AppLayout>
+        </Route>
+
+        <Route path="/mis-planes">
+          <AppLayout>
+            <MyPlansPage />
+          </AppLayout>
+        </Route>
+
+        <Route path="/planes/nuevo">
+          <AppLayout>
+            <PlanFormPage />
+          </AppLayout>
+        </Route>
+
+        <Route path="/planes/:id/editar">
+          <AppLayout>
+            <PlanFormPage />
+          </AppLayout>
+        </Route>
+
+        <Route path="/planes">
+          <AppLayout>
+            <PlansPage />
+          </AppLayout>
+        </Route>
+
+        <Route path="/planes/:id">
+          <AppLayout>
+            <PlanDetailPage />
           </AppLayout>
         </Route>
 

@@ -3,6 +3,7 @@ import { useRoute, useSearchParams } from 'wouter'
 import { BackButton } from '@/components/common/BackButton'
 import { PageTitle } from '@/components/common/PageTitle'
 import TeacherDetailSkeleton from '@/components/skeletons/TeacherDetailSkeleton'
+import { TeacherPlanAction } from '@/features/plans'
 import { useGetTeacherDetail } from '../api'
 import { TeacherEvaluationDetail } from '../components'
 import { courseTeacherHref } from '../config'
@@ -40,6 +41,11 @@ export default function TeacherDetailPage() {
         getCourseHref={(course) =>
           courseTeacherHref(course.course_code, teacher.teacher_id, teacher.period_code, course.group_name)
         }
+      />
+      <TeacherPlanAction
+        teacherId={teacher.teacher_id}
+        teacherName={teacher.name}
+        periodCode={teacher.period_code}
       />
     </div>
   )

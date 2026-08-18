@@ -12,6 +12,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import type { buttonVariants } from '@/components/ui/button'
+import { Spinner } from '@/components/ui/spinner'
 
 interface ConfirmDialogProps {
   open: boolean
@@ -72,8 +73,17 @@ export function ConfirmDialog({
         <AlertDialogFooter>
           <AlertDialogCancel>{cancelLabel}</AlertDialogCancel>
 
-          <AlertDialogAction variant={confirmVariant} disabled={isPending} onClick={onConfirm}>
-            {confirmIcon ? <span aria-hidden="true">{confirmIcon}</span> : null}
+          <AlertDialogAction
+            variant={confirmVariant}
+            disabled={isPending}
+            aria-busy={isPending}
+            onClick={onConfirm}
+          >
+            {isPending ? (
+              <Spinner className="size-4" aria-hidden="true" />
+            ) : confirmIcon ? (
+              <span aria-hidden="true">{confirmIcon}</span>
+            ) : null}
             {isPending ? pendingLabel : confirmLabel}
           </AlertDialogAction>
         </AlertDialogFooter>

@@ -20,4 +20,18 @@ function formatDate(value?: string | null, pattern = 'MMMM D, YYYY h:mm A') {
   return date.format(pattern)
 }
 
+/** Today as `YYYY-MM-DD`, the wire format of every date field of the API. */
+export function todayISO(): string {
+  return dayjs().format('YYYY-MM-DD')
+}
+
+/** Whether a `YYYY-MM-DD` date falls before today. Blank values are not past. */
+export function isPastDate(value?: string | null): boolean {
+  const date = dayjs(value)
+
+  if (!value || !date.isValid()) return false
+
+  return date.isBefore(dayjs(), 'day')
+}
+
 export default formatDate
