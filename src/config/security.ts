@@ -1,7 +1,7 @@
 const securityConfig = {
   pages: [
     {
-      path: '/',
+      path: '/home',
       name: 'Mi Resumen',
       roles: ['DIRECTOR DE DEPARTAMENTO', 'ADMIN', 'DOCENTE'],
     },

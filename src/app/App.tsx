@@ -1,6 +1,7 @@
 import { Route, Switch } from 'wouter'
 
 import { AppLayout } from '@/components/common/AppLayout'
+import { AboutPage } from '@/features/about'
 import { LogsPage, SettingsPage } from '@/features/admin'
 import { LoginPage } from '@/features/auth'
 import { CommentsPage } from '@/features/comments'
@@ -35,7 +36,9 @@ function App() {
       <Switch>
         <Route path="/login" component={LoginPage} />
 
-        <Route path="/">
+        <Route path="/" component={AboutPage} />
+
+        <Route path="/home">
           <AppLayout>
             <DashboardPage />
           </AppLayout>

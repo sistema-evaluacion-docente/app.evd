@@ -110,7 +110,7 @@ export function Avatar() {
                 <DropdownMenuRadioGroup
                   value={selectedRole ?? ''}
                   onValueChange={(value) => {
-                    navigate('/')
+                    navigate('/home')
                     setSelectedRole(value)
                   }}
                 >
