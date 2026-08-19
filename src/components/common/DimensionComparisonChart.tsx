@@ -67,6 +67,14 @@ export interface DimensionComparisonChartProps {
   variant?: 'bars' | 'radar'
   /** Bars only: `horizontal` puts dimensions on the left (best for long labels). */
   orientation?: 'horizontal' | 'vertical'
+  /**
+   * Vertical layout only: wraps the categorical axis labels onto two lines
+   * at the nearest word boundary instead of printing them flat, for when
+   * they're too long to sit side by side without overlapping (e.g. full
+   * dimension names). Leave off for short labels — flat reads better when
+   * it already fits.
+   */
+  wrapLabels?: boolean
   min?: number
   max?: number
   decimals?: number
@@ -104,6 +112,52 @@ export interface DimensionComparisonChartProps {
 
 /** Row key holding the pre-formatted value rendered as a direct bar label. */
 const LABEL_SUFFIX = '__label'
+
+/**
+ * Custom X-axis tick for the vertical layout's categorical axis — wraps a
+ * multi-word label (e.g. a full dimension name) onto two lines at the
+ * nearest word boundary instead of letting recharts clip or overlap it. A
+ * single-word label renders on one line exactly as the default tick would.
+ * Positions itself via a local `<g translate>` + `style` fill (not a raw
+ * `fill` attribute) — the combination that reliably renders in this axis
+ * slot; a bare `<text x y fill=...>` here has previously rendered blank or
+ * misplaced.
+ */
+function WrappingCategoryTick({
+  x,
+  y,
+  payload,
+}: {
+  x?: string | number
+  y?: string | number
+  payload?: { value?: unknown }
+}) {
+  const text = String(payload?.value ?? '')
+  const words = text.split(' ')
+  const mid = Math.ceil(words.length / 2)
+  const line1 = words.length > 1 ? words.slice(0, mid).join(' ') : text
+  const line2 = words.length > 1 ? words.slice(mid).join(' ') : ''
+
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text
+        x={0}
+        y={0}
+        textAnchor="middle"
+        style={{ fontSize: 11, fill: 'var(--color-muted-foreground)' }}
+      >
+        <tspan x={0} dy="0.9em">
+          {line1}
+        </tspan>
+        {line2 && (
+          <tspan x={0} dy="1.1em">
+            {line2}
+          </tspan>
+        )}
+      </text>
+    </g>
+  )
+}
 
 /** Palette order is fixed: a series keeps its color when others are filtered out. */
 const PALETTE = [
@@ -144,6 +198,7 @@ export function DimensionComparisonChart({
   dimensions,
   variant = 'bars',
   orientation = 'horizontal',
+  wrapLabels = false,
   min = 0,
   max = 5,
   decimals = 2,
@@ -364,7 +419,12 @@ export function DimensionComparisonChart({
         <BarChart
           data={rows}
           layout={isHorizontal ? 'vertical' : 'horizontal'}
-          margin={{ top: 8, right: withValues ? 40 : 12, left: isHorizontal ? 8 : -16, bottom: 8 }}
+          margin={{
+            top: isHorizontal && referenceLabel != null ? 22 : 8,
+            right: withValues ? 40 : 12,
+            left: isHorizontal ? 8 : -16,
+            bottom: !isHorizontal && wrapLabels ? 24 : 8,
+          }}
           barGap={2}
         >
           {showGrid && (
@@ -400,7 +460,9 @@ export function DimensionComparisonChart({
                 dataKey="dimension"
                 tickLine={false}
                 axisLine={false}
-                tick={tickStyle}
+                interval={0}
+                height={wrapLabels ? 34 : undefined}
+                tick={wrapLabels ? WrappingCategoryTick : tickStyle}
               />
               <YAxis
                 type="number"
@@ -415,16 +477,16 @@ export function DimensionComparisonChart({
           {referenceValue != null && (
             <ReferenceLine
               {...(isHorizontal ? { x: referenceValue } : { y: referenceValue })}
-              stroke="var(--color-muted-foreground)"
+              stroke="var(--color-foreground)"
               strokeDasharray="4 4"
-              strokeOpacity={0.6}
+              strokeOpacity={0.75}
               label={
                 referenceLabel
                   ? {
                       value: referenceLabel,
-                      position: isHorizontal ? 'insideTopRight' : 'insideTopLeft',
-                      fontSize: 10,
-                      fill: 'var(--color-muted-foreground)',
+                      position: isHorizontal ? 'top' : 'insideTopLeft',
+                      fontSize: 12,
+                      fill: 'var(--color-foreground)',
                     }
                   : undefined
               }

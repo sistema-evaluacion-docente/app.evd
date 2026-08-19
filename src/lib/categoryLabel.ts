@@ -27,7 +27,7 @@ const CATEGORY_META: Record<string, CategoryMeta> = {
     short: 'Conocimiento',
     description:
       'Dominio de la asignatura, claridad al explicar los temas y actualización de los contenidos.',
-    color: 'var(--color-chart-1)',
+    color: '#3c8dbc',
   },
   LABEL_1: {
     id: 2,
@@ -36,7 +36,7 @@ const CATEGORY_META: Record<string, CategoryMeta> = {
     short: 'Desempeño',
     description:
       'Planeación de las clases, metodología, uso del tiempo, puntualidad y cumplimiento del programa.',
-    color: 'var(--color-chart-2)',
+    color: '#7c3aed',
   },
   LABEL_2: {
     id: 3,
@@ -45,7 +45,7 @@ const CATEGORY_META: Record<string, CategoryMeta> = {
     short: 'Evaluación',
     description:
       'Claridad y pertinencia de los criterios, coherencia con lo visto en clase y retroalimentación de las notas.',
-    color: 'var(--color-chart-4)',
+    color: '#0d9488',
   },
   LABEL_3: {
     id: 4,
@@ -54,7 +54,7 @@ const CATEGORY_META: Record<string, CategoryMeta> = {
     short: 'Relaciones',
     description:
       'Respeto y trato con el grupo, disposición para resolver dudas y acompañamiento a los estudiantes.',
-    color: 'var(--color-chart-3)',
+    color: '#db2777',
   },
   LABEL_4: {
     id: 5,
@@ -112,7 +112,7 @@ export function categoryShortLabel(name?: string | null) {
  * charts. Falls back to the color the API sent, then to the muted foreground.
  *
  * @example
- * categoryColor('LABEL_0') // "var(--color-chart-1)"
+ * categoryColor('LABEL_0') // "#3c8dbc"
  * categoryColor('LABEL_9', '#3c8dbc') // "#3c8dbc"
  */
 export function categoryColor(name?: string | null, fallback?: string | null) {
