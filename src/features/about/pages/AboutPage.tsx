@@ -1,4 +1,3 @@
-import '@fontsource-variable/eb-garamond/wght.css'
 import '@fontsource-variable/geist-mono/wght.css'
 import 'katex/dist/katex.min.css'
 
@@ -8,7 +7,7 @@ import {
   ClipboardCheck,
   FileSearch,
   GitCompareArrows,
-  MoveRight,
+  MoveDown,
   Scissors,
   ShieldCheck,
   UploadCloud,
@@ -81,19 +80,33 @@ function SiteNav() {
 
 function Hero() {
   return (
-    <section id="inicio" className="border-ink-200 border-b">
-      <div className="mx-auto grid max-w-[1240px] grid-cols-1 px-5 lg:gap-16 lg:px-8">
-        <div className="flex flex-col justify-center py-16 lg:col-span-7 lg:min-h-[calc(100dvh-68px)] lg:py-20">
-          <h1 className="font-display text-ink-900 text-[40px] leading-[1.08] font-semibold tracking-tight text-balance md:text-[56px] lg:text-[64px]">
-            Componente de IA para la evaluación docente
-          </h1>
+    <section id="inicio" className="border-ink-200 relative overflow-hidden border-b">
+      <div className="hero-grid mx-auto max-w-[1240px] text-center lg:px-8">
+        <div className="hero relative mx-auto flex flex-col justify-between">
+          <div className="relative z-10 mx-auto mt-20 flex max-w-xl flex-col items-center gap-6">
+            <h1 className="font-display text-ink-900 text-3xl leading-[1.08] font-semibold tracking-tight text-balance md:text-4xl lg:text-5xl">
+              Componente de IA para la evaluación docente
+            </h1>
 
-          <p className="text-ink-600 mt-7 max-w-[54ch] text-[17px] leading-relaxed md:text-[19px]">
+            <a href="#problema" className="text-white bg-primary transition-transform hover:scale-120 rounded-full w-10 h-10 flex justify-center items-center">
+              <MoveDown size={20} />
+            </a>
+          </div>
+
+          <div className="absolute -bottom-20">
+            <img
+              src="/1.png"
+              alt="Ilustración de un robot leyendo un libro"
+              className="mx-auto w-full"
+            />
+          </div>
+
+          {/* <p className="text-ink-600 mt-7 max-w-[54ch] text-base leading-relaxed">
             Clasifica los comentarios de heteroevaluación por riesgo institucional y dimensión
             pedagógica, y prioriza los casos que requieren atención humana.
-          </p>
+          </p> */}
 
-          <div className="mt-10 flex flex-wrap items-center gap-3">
+          {/* <div className="mt-10 flex flex-wrap items-center gap-3 justify-center">
             <a
               href="/login"
               className="bg-brand-600 hover:bg-brand-700 focus-visible:ring-brand-600 focus-visible:ring-offset-background inline-flex items-center gap-2.5 rounded px-7 py-3.5 text-[15px] font-semibold whitespace-nowrap text-white transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none active:translate-y-px"
@@ -108,21 +121,8 @@ function Hero() {
             >
               Leer el enfoque técnico
             </a>
-          </div>
+          </div> */}
         </div>
-
-        {/* <div className="w-full lg:col-span-5 h-auto grid place-items-center">
-          <img
-            src="/1.png"
-            alt="Espacio de estudio universitario con mesas de trabajo junto a un ventanal"
-            // width={1200}
-            // height={1600}
-            loading="eager"
-            fetchPriority="high"
-            decoding="async"
-            className="w-lg w-full object-cover opacity-95"
-          />
-        </div> */}
       </div>
     </section>
   )
@@ -145,7 +145,7 @@ function Problema() {
   return (
     <section id="problema" className="border-ink-200 border-b py-20 md:py-28">
       <div className="mx-auto max-w-[1240px] px-5 lg:px-8">
-        <h2 className="font-display text-ink-900 max-w-[20ch] text-[34px] leading-[1.12] font-semibold text-balance md:text-[46px]">
+        <h2 className="font-display text-ink-900 max-w-[25ch] text-[34px] leading-[1.12] font-semibold text-balance md:text-[46px]">
           El problema no es la falta de datos. Es el tiempo para leerlos.
         </h2>
 

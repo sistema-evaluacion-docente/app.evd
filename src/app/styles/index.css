@@ -293,6 +293,49 @@ body {
   --sidebar-ring: var(--color-brand-500);
 }
 
+
+
+.hero {
+  height: 380px;
+}
+
+@media (min-width: 400px) {
+  .hero {
+    height: 420px;
+  }
+}
+
+@media (min-width: 500px) {
+  .hero {
+    height: 500px;
+  }
+}
+
+@media (min-width: 650px) {
+  .hero {
+    height: 550px;
+  }
+}
+
+@media (min-width: 750px) {
+  .hero {
+    height: 650px;
+  }
+}
+
+@media (min-width: 875px) {
+  .hero {
+    height: 750px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .hero {
+    height: calc(100dvh - 68px);
+  }
+}
+
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
