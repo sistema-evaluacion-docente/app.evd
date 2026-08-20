@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useNavigate } from '@/hooks/useNavigate'
+import { ROLES_LABEL } from '../config'
 import { useAuthStore } from '../store/useAuthStore'
 
 export function Avatar() {
@@ -52,7 +53,9 @@ export function Avatar() {
         <div className="max-w-40 truncate text-[13px] leading-tight font-medium">{userName}</div>
 
         <div className="text-muted-foreground mt-0.5 flex flex-col items-end justify-end gap-1 text-[11px] leading-tight">
-          <span className="truncate tracking-wide uppercase">{visibleRole}</span>
+          <span className="truncate tracking-wide uppercase">
+            {ROLES_LABEL[visibleRole] ?? visibleRole}
+          </span>
         </div>
       </div>
 
@@ -85,7 +88,9 @@ export function Avatar() {
               <div className="min-w-0">
                 <div className="truncate text-sm font-semibold">{userName}</div>
 
-                <div className="text-muted-foreground mt-0.5 truncate text-xs">{visibleRole}</div>
+                <div className="text-muted-foreground mt-0.5 truncate text-xs">
+                  {ROLES_LABEL[visibleRole] ?? visibleRole}
+                </div>
 
                 {department ? (
                   <div className="text-muted-foreground mt-1 flex items-center gap-1 text-xs">
@@ -104,7 +109,10 @@ export function Avatar() {
             </DropdownMenuItem>
 
             <DropdownMenuSub>
-              <DropdownMenuSubTrigger>Cambiar Rol</DropdownMenuSubTrigger>
+              <DropdownMenuSubTrigger className="cursor-pointer">
+                <Building2 className="size-4" aria-hidden="true" />
+                Cambiar de rol
+              </DropdownMenuSubTrigger>
 
               <DropdownMenuSubContent>
                 <DropdownMenuRadioGroup
@@ -116,7 +124,7 @@ export function Avatar() {
                 >
                   {userRoles.map((role) => (
                     <DropdownMenuRadioItem key={role} value={role}>
-                      {role}
+                      {ROLES_LABEL[role] ?? role}
                     </DropdownMenuRadioItem>
                   ))}
                 </DropdownMenuRadioGroup>
