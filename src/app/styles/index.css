@@ -343,6 +343,54 @@ body {
   }
 }
 
+/* Landing /acerca — la ilustración del hero entra desde abajo al cargar. */
+.hero-image {
+  animation: hero-rise 1s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+}
+
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(90px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Landing /acerca — bloques que aparecen al entrar en viewport.
+   El atributo data-visible lo pone <Reveal> en AboutPage.tsx. */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+}
+
+.reveal[data-visible='true'] {
+  animation: reveal 0.75s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-image,
+  .reveal,
+  .reveal[data-visible='true'] {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

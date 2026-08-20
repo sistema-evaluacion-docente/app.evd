@@ -14,9 +14,43 @@ import {
   UploadCloud,
   UserRoundX,
 } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { useMemo } from 'react'
 
+import { useInView } from '@/hooks/useInView'
+
 const ICON_STROKE = 1.5
+
+/**
+ * Envuelve un bloque para que aparezca deslizándose hacia arriba la primera vez
+ * que entra en viewport. Los estilos viven en `.reveal` (app/styles/index.css),
+ * que también respeta prefers-reduced-motion.
+ */
+function Reveal({
+  children,
+  className,
+  delay = 0,
+}: {
+  children: ReactNode
+  className?: string
+  delay?: number
+}) {
+  const { ref, isInView } = useInView<HTMLDivElement>({
+    threshold: 0.1,
+    rootMargin: '0px 0px -60px 0px',
+  })
+
+  return (
+    <div
+      ref={ref}
+      data-visible={isInView || undefined}
+      style={delay ? { animationDelay: `${delay}ms` } : undefined}
+      className={className ? `reveal ${className}` : 'reveal'}
+    >
+      {children}
+    </div>
+  )
+}
 
 function Tex({ tex, className }: { tex: string; className?: string }) {
   const html = useMemo(
@@ -86,23 +120,27 @@ function Hero() {
       <div className="hero-grid mx-auto max-w-[1240px] text-center lg:px-8">
         <div className="hero relative mx-auto flex flex-col justify-between">
           <div className="relative z-10 mx-auto mt-20 flex max-w-xl flex-col items-center gap-6">
-            <h1 className="font-display text-ink-900 text-3xl leading-[1.08] font-semibold tracking-tight text-balance md:text-4xl lg:text-5xl">
-              Componente de IA para la evaluación docente
-            </h1>
+            <Reveal>
+              <h1 className="font-display text-ink-900 text-3xl leading-[1.08] font-semibold tracking-tight text-balance md:text-4xl lg:text-5xl">
+                Componente de IA para la evaluación docente
+              </h1>
+            </Reveal>
 
-            <a
-              href="#problema"
-              className="bg-primary flex h-10 w-10 items-center justify-center rounded-full text-white transition-transform hover:scale-120"
-            >
-              <MoveDown size={20} />
-            </a>
+            <Reveal delay={180}>
+              <a
+                href="#problema"
+                className="bg-primary flex h-10 w-10 items-center justify-center rounded-full text-white transition-transform hover:scale-120"
+              >
+                <MoveDown size={20} />
+              </a>
+            </Reveal>
           </div>
 
           <div className="absolute -bottom-20">
             <img
               src="/1.png"
               alt="Ilustración de un robot leyendo un libro"
-              className="mx-auto w-full"
+              className="hero-image mx-auto w-full"
             />
           </div>
 
@@ -150,11 +188,16 @@ function Problema() {
   return (
     <section id="problema" className="border-ink-200 border-b py-20 md:py-28">
       <div className="mx-auto max-w-[1240px] px-5 lg:px-8">
-        <h2 className="font-display text-ink-900 max-w-[25ch] text-[34px] leading-[1.12] font-semibold text-balance md:text-[46px]">
-          El problema no es la falta de datos. Es el tiempo para leerlos.
-        </h2>
+        <Reveal>
+          <h2 className="font-display text-ink-900 max-w-[25ch] text-[34px] leading-[1.12] font-semibold text-balance md:text-[46px]">
+            El problema no es la falta de datos. Es el tiempo para leerlos.
+          </h2>
+        </Reveal>
 
-        <div className="text-ink-600 mt-8 max-w-[68ch] space-y-5 text-[17px] leading-relaxed">
+        <Reveal
+          delay={120}
+          className="text-ink-600 mt-8 max-w-[68ch] space-y-5 text-[17px] leading-relaxed"
+        >
           <p>
             Cada semestre, un director de departamento recibe los resultados de la evaluación
             docente como reportes PDF dispersos. Las notas cuantitativas se revisan rápido, pero los
@@ -168,11 +211,11 @@ function Problema() {
             inmediata. Los compromisos que se acuerdan con cada docente quedan guardados y siguen
             ahí el semestre siguiente.
           </p>
-        </div>
+        </Reveal>
 
         <div className="border-ink-300 mt-16 grid grid-cols-1 gap-y-10 border-t pt-10 md:grid-cols-3 md:gap-x-12">
-          {PROBLEM_FACTS.map((fact) => (
-            <div key={fact.figure}>
+          {PROBLEM_FACTS.map((fact, index) => (
+            <Reveal key={fact.figure} delay={index * 120}>
               <p className="font-numeric text-ink-900 text-[26px] leading-none font-semibold">
                 {fact.figure}
               </p>
@@ -180,7 +223,7 @@ function Problema() {
               <p className="text-ink-500 mt-4 max-w-[34ch] text-[15px] leading-relaxed">
                 {fact.body}
               </p>
-            </div>
+            </Reveal>
           ))}
         </div>
       </div>
@@ -201,20 +244,28 @@ function Objetivos() {
   return (
     <section id="objetivos" className="border-ink-200 bg-ink-100 border-b py-20 md:py-28">
       <div className="mx-auto max-w-[1240px] px-5 lg:px-8">
-        <p className="font-numeric text-ink-600 text-[12px] tracking-[0.12em]">Objetivo general</p>
+        <Reveal>
+          <p className="font-numeric text-ink-600 text-[12px] tracking-[0.12em]">
+            Objetivo general
+          </p>
 
-        <p className="font-display text-ink-900 mt-6 max-w-[26ch] text-[30px] leading-[1.18] font-semibold text-balance md:max-w-[30ch] md:text-[42px]">
-          Implementar un componente de inteligencia artificial en el proceso de evaluación docente
-          de la UFPS como apoyo a la toma de decisiones.
-        </p>
+          <p className="font-display text-ink-900 mt-6 max-w-[26ch] text-[30px] leading-[1.18] font-semibold text-balance md:max-w-[30ch] md:text-[42px]">
+            Implementar un componente de inteligencia artificial en el proceso de evaluación docente
+            de la UFPS como apoyo a la toma de decisiones.
+          </p>
+        </Reveal>
 
         <div className="mt-16 grid grid-cols-1 gap-x-14 gap-y-10 md:grid-cols-2">
           {SPECIFIC_OBJECTIVES.map((objective, index) => (
-            <div key={objective} className="border-ink-300 flex gap-5 border-t pt-5">
+            <Reveal
+              key={objective}
+              delay={index * 100}
+              className="border-ink-300 flex gap-5 border-t pt-5"
+            >
               <span className="font-numeric text-ink-500 text-lg leading-[1.6]">{index + 1}</span>
 
               <p className="text-ink-700 text-lg leading-relaxed">{objective}</p>
-            </div>
+            </Reveal>
           ))}
         </div>
       </div>
@@ -266,12 +317,14 @@ function Proceso() {
   return (
     <section id="proceso" className="border-ink-200 border-b py-20 md:py-28">
       <div className="mx-auto max-w-[1240px] px-5 lg:px-8">
-        <h2 className="font-display text-ink-900 max-w-[22ch] text-[32px] leading-[1.14] font-semibold text-balance md:text-[42px]">
-          Del PDF a la alerta, sin que el texto salga del servidor
-        </h2>
+        <Reveal>
+          <h2 className="font-display text-ink-900 max-w-[22ch] text-[32px] leading-[1.14] font-semibold text-balance md:text-[42px]">
+            Del PDF a la alerta, sin que el texto salga del servidor
+          </h2>
+        </Reveal>
 
         {/* Mobile: timeline vertical */}
-        <div className="mt-16 max-w-[720px] md:hidden">
+        <Reveal delay={120} className="mt-16 max-w-[720px] md:hidden">
           {PIPELINE.map((step, index) => {
             const isLast = index === PIPELINE.length - 1
             const Icon = step.icon
@@ -298,10 +351,10 @@ function Proceso() {
               </div>
             )
           })}
-        </div>
+        </Reveal>
 
         {/* Desktop: horizontal, dos filas */}
-        <div className="mt-16 hidden md:grid md:grid-cols-4 md:gap-x-10 md:gap-y-14">
+        <Reveal delay={120} className="mt-16 hidden md:grid md:grid-cols-4 md:gap-x-10 md:gap-y-14">
           {PIPELINE.map((step, index) => {
             const Icon = step.icon
             const isLastInRow = (index + 1) % 4 === 0
@@ -330,7 +383,7 @@ function Proceso() {
               </div>
             )
           })}
-        </div>
+        </Reveal>
       </div>
     </section>
   )
@@ -355,18 +408,20 @@ function Modelos() {
   return (
     <section id="modelos" className="border-ink-200 border-b py-20 md:py-28">
       <div className="mx-auto max-w-[1240px] px-5 lg:px-8">
-        <h2 className="font-display text-ink-900 max-w-[24ch] text-[32px] leading-[1.14] font-semibold text-balance md:text-[42px]">
-          Dos modelos ajustados, ninguno generativo
-        </h2>
+        <Reveal>
+          <h2 className="font-display text-ink-900 max-w-[24ch] text-[32px] leading-[1.14] font-semibold text-balance md:text-[42px]">
+            Dos modelos ajustados, ninguno generativo
+          </h2>
 
-        <p className="text-ink-600 mt-8 max-w-[68ch] text-[17px] leading-relaxed">
-          Partimos de Transformers preentrenados en español y les aplicamos ajuste fino sobre un
-          corpus de comentarios de heteroevaluación etiquetado para esta tarea. DistilBETO aprendió
-          a estimar qué tan grave es un comentario. RoBERTuito aprendió a reconocer de qué dimensión
-          del ejercicio docente está hablando.
-        </p>
+          <p className="text-ink-600 mt-8 max-w-[68ch] text-[17px] leading-relaxed">
+            Partimos de Transformers preentrenados en español y les aplicamos ajuste fino sobre un
+            corpus de comentarios de heteroevaluación etiquetado para esta tarea. DistilBETO
+            aprendió a estimar qué tan grave es un comentario. RoBERTuito aprendió a reconocer de
+            qué dimensión del ejercicio docente está hablando.
+          </p>
+        </Reveal>
 
-        <div className="bg-ink-200 mt-14 grid grid-cols-1 gap-px md:grid-cols-2">
+        <Reveal delay={120} className="bg-ink-200 mt-14 grid grid-cols-1 gap-px md:grid-cols-2">
           <article className="bg-background p-7 md:p-9">
             <p className="font-numeric text-ink-500 text-[12px] tracking-[0.12em]">Motor A</p>
 
@@ -427,7 +482,7 @@ function Modelos() {
               <Metric label="Huella de memoria" tex="\approx 954\ \text{MB}" />
             </div>
           </article>
-        </div>
+        </Reveal>
       </div>
     </section>
   )
@@ -439,7 +494,7 @@ function PapelDelLlm() {
   return (
     <section id="llm" className="border-ink-200 bg-ink-100 border-b py-20 md:py-28">
       <div className="mx-auto max-w-[1240px] px-5 lg:px-8">
-        <div className="border-ink-300 border-t-brand-600 bg-background rounded border border-t-2 p-7 md:p-12">
+        <Reveal className="border-ink-300 border-t-brand-600 bg-background rounded border border-t-2 p-7 md:p-12">
           <h2 className="font-display text-ink-900 max-w-[22ch] text-[30px] leading-[1.14] font-semibold text-balance md:text-[40px]">
             Dónde estuvo el modelo generativo y dónde no está
           </h2>
@@ -471,7 +526,7 @@ function PapelDelLlm() {
               operación del sistema.
             </p>
           </div>
-        </div>
+        </Reveal>
       </div>
     </section>
   )
@@ -501,21 +556,23 @@ function Corpus() {
   return (
     <section id="corpus" className="border-ink-200 border-b py-20 md:py-28">
       <div className="mx-auto max-w-[1240px] px-5 lg:px-8">
-        <h2 className="font-display text-ink-900 max-w-[26ch] text-[32px] leading-[1.14] font-semibold text-balance md:text-[42px]">
-          Cerca de 12.000 comentarios
-        </h2>
+        <Reveal>
+          <h2 className="font-display text-ink-900 max-w-[26ch] text-[32px] leading-[1.14] font-semibold text-balance md:text-[42px]">
+            Cerca de 12.000 comentarios
+          </h2>
 
-        <p className="text-ink-600 mt-8 max-w-[68ch] text-[17px] leading-relaxed">
-          Al corpus se le inyectó de forma deliberada ruido lingüístico de la frontera colombo
-          venezolana: jerga, ironía y errores ortográficos para que los modelos aprendieran a lidiar
-          con la realidad de los comentarios de heteroevaluación.
-        </p>
+          <p className="text-ink-600 mt-8 max-w-[68ch] text-[17px] leading-relaxed">
+            Al corpus se le inyectó de forma deliberada ruido lingüístico de la frontera colombo
+            venezolana: jerga, ironía y errores ortográficos para que los modelos aprendieran a
+            lidiar con la realidad de los comentarios de heteroevaluación.
+          </p>
+        </Reveal>
       </div>
-      s
+
       <div className="mx-auto mt-16 max-w-[1240px] px-5 lg:px-8">
         <div className="border-ink-300 grid grid-cols-1 gap-x-10 gap-y-10 border-t pt-10 sm:grid-cols-2 lg:grid-cols-4">
-          {CORPUS_FIGURES.map((item) => (
-            <div key={item.figure}>
+          {CORPUS_FIGURES.map((item, index) => (
+            <Reveal key={item.figure} delay={index * 120}>
               <p className="flex items-baseline gap-2">
                 {item.prefix ? (
                   <span className="text-ink-500 text-[13px]">{item.prefix}</span>
@@ -527,7 +584,7 @@ function Corpus() {
               <p className="text-ink-500 mt-4 max-w-[32ch] text-[14px] leading-relaxed">
                 {item.body}
               </p>
-            </div>
+            </Reveal>
           ))}
         </div>
 
@@ -547,7 +604,7 @@ function Privacidad() {
   return (
     <section id="datos" className="border-ink-200 bg-ink-100 border-b py-20 md:py-28">
       <div className="mx-auto max-w-[1240px] px-5 lg:px-8">
-        <div className="flex items-start gap-4">
+        <Reveal className="flex items-start gap-4">
           <ShieldCheck
             size={30}
             strokeWidth={ICON_STROKE}
@@ -558,9 +615,12 @@ function Privacidad() {
           <h2 className="font-display text-ink-900 max-w-[24ch] text-[32px] leading-[1.14] font-semibold text-balance md:text-[42px]">
             Los datos no salen del servidor de la universidad
           </h2>
-        </div>
+        </Reveal>
 
-        <div className="bg-ink-300 mt-14 grid grid-cols-1 gap-px overflow-hidden rounded lg:grid-cols-4">
+        <Reveal
+          delay={120}
+          className="bg-ink-300 mt-14 grid grid-cols-1 gap-px overflow-hidden rounded lg:grid-cols-4"
+        >
           <div className="bg-ink-200 p-7 md:p-9 lg:col-span-2">
             <h3 className="text-ink-900 text-[15px] font-semibold">Inferencia local</h3>
 
@@ -629,11 +689,13 @@ function Privacidad() {
               resultado pasado siempre se puede explicar.
             </p>
           </div>
-        </div>
+        </Reveal>
 
-        <p className="border-brand-600 font-display text-ink-900 mt-10 border-l-2 pl-6 text-[24px] leading-snug font-semibold md:text-[30px]">
-          Ningún rol del sistema puede identificar al autor de un comentario.
-        </p>
+        <Reveal>
+          <p className="border-brand-600 font-display text-ink-900 mt-10 border-l-2 pl-6 text-[24px] leading-snug font-semibold md:text-[30px]">
+            Ningún rol del sistema puede identificar al autor de un comentario.
+          </p>
+        </Reveal>
       </div>
     </section>
   )
@@ -660,17 +722,19 @@ function Límites() {
   return (
     <section id="limites" className="border-ink-200 border-b py-20 md:py-28">
       <div className="mx-auto max-w-[1240px] px-5 lg:px-8">
-        <h2 className="font-display text-ink-900 max-w-[30ch] text-[32px] leading-[1.14] font-semibold text-balance md:text-[42px]">
-          El sistema prioriza. La decisión sigue siendo del director.
-        </h2>
+        <Reveal>
+          <h2 className="font-display text-ink-900 max-w-[30ch] text-[32px] leading-[1.14] font-semibold text-balance md:text-[42px]">
+            El sistema prioriza. La decisión sigue siendo del director.
+          </h2>
 
-        <p className="text-ink-600 mt-8 max-w-[68ch] text-[17px] leading-relaxed">
-          El componente ordena el material y señala dónde mirar primero. La decisión sobre cada
-          docente permanece en el director de departamento y su Consejo. Estos son los límites
-          conocidos del trabajo:
-        </p>
+          <p className="text-ink-600 mt-8 max-w-[68ch] text-[17px] leading-relaxed">
+            El componente ordena el material y señala dónde mirar primero. La decisión sobre cada
+            docente permanece en el director de departamento y su Consejo. Estos son los límites
+            conocidos del trabajo:
+          </p>
+        </Reveal>
 
-        <div className="border-ink-200 mt-12 max-w-[900px] border-t">
+        <Reveal delay={120} className="border-ink-200 mt-12 max-w-[900px] border-t">
           {LIMITS.map((limit) => (
             <details key={limit.title} className="group border-ink-200 border-b">
               <summary className="text-ink-900 hover:text-brand-600 dark:hover:text-brand-400 focus-visible:ring-brand-600 flex cursor-pointer list-none items-center justify-between gap-6 py-5 text-[17px] font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none [&::-webkit-details-marker]:hidden">
@@ -688,7 +752,7 @@ function Límites() {
               </p>
             </details>
           ))}
-        </div>
+        </Reveal>
       </div>
     </section>
   )
@@ -790,9 +854,11 @@ function Autores() {
   return (
     <section id="autores" className="py-20 md:py-28">
       <div className="mx-auto max-w-[1240px] px-5 lg:px-8">
-        <h2 className="font-display text-ink-900 text-[32px] leading-[1.14] font-semibold md:text-[42px]">
-          Autores y dirección
-        </h2>
+        <Reveal>
+          <h2 className="font-display text-ink-900 text-[32px] leading-[1.14] font-semibold md:text-[42px]">
+            Autores y dirección
+          </h2>
+        </Reveal>
 
         <dl className="mt-14 grid grid-cols-1 gap-y-10 md:grid-cols-12 md:gap-x-12">
           <dt className="font-numeric text-ink-500 text-[12px] tracking-[0.12em] md:col-span-3">
@@ -800,26 +866,28 @@ function Autores() {
           </dt>
 
           <dd className="md:col-span-9">
-            <ul className="divide-ink-200 border-ink-200 divide-y border-t">
-              {AUTHORS.map((author) => (
-                <li key={author.code} className="flex flex-wrap items-center gap-x-4 py-4">
-                  <img
-                    src={author.photo}
-                    alt={author.name}
-                    className="h-10 w-10 rounded-full object-cover"
-                  />
+            <Reveal>
+              <ul className="divide-ink-200 border-ink-200 divide-y border-t">
+                {AUTHORS.map((author) => (
+                  <li key={author.code} className="flex flex-wrap items-center gap-x-4 py-4">
+                    <img
+                      src={author.photo}
+                      alt={author.name}
+                      className="h-10 w-10 rounded-full object-cover"
+                    />
 
-                  <a
-                    className="text-ink-900 text-[18px]"
-                    href={author.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {author.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
+                    <a
+                      className="text-ink-900 text-[18px]"
+                      href={author.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {author.name}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </Reveal>
           </dd>
 
           <dt className="font-numeric text-ink-500 text-[12px] tracking-[0.12em] md:col-span-3">
@@ -827,28 +895,30 @@ function Autores() {
           </dt>
 
           <dd className="md:col-span-9">
-            <ul className="divide-ink-200 border-ink-200 divide-y border-t">
-              {ADVISORS.map((advisor) => (
-                <li key={advisor.name} className="flex flex-wrap items-center gap-x-4 py-4">
-                  <img
-                    src={advisor.photo}
-                    alt={advisor.name}
-                    className="h-10 w-10 rounded-full object-cover"
-                  />
+            <Reveal>
+              <ul className="divide-ink-200 border-ink-200 divide-y border-t">
+                {ADVISORS.map((advisor) => (
+                  <li key={advisor.name} className="flex flex-wrap items-center gap-x-4 py-4">
+                    <img
+                      src={advisor.photo}
+                      alt={advisor.name}
+                      className="h-10 w-10 rounded-full object-cover"
+                    />
 
-                  <a
-                    className="text-ink-900 text-[18px]"
-                    href={advisor.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {advisor.name}
-                  </a>
+                    <a
+                      className="text-ink-900 text-[18px]"
+                      href={advisor.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {advisor.name}
+                    </a>
 
-                  <span className="text-ink-500 text-[13px]">{advisor.role}</span>
-                </li>
-              ))}
-            </ul>
+                    <span className="text-ink-500 text-[13px]">{advisor.role}</span>
+                  </li>
+                ))}
+              </ul>
+            </Reveal>
           </dd>
         </dl>
       </div>
