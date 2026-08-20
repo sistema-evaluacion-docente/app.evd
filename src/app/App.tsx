@@ -9,6 +9,7 @@ import { DashboardPage } from '@/features/dashboard'
 import { DepartmentsPage } from '@/features/departments'
 import { DirectorsPage } from '@/features/directors'
 import {
+  EvaluationCoursesPage,
   EvaluationDetailPage,
   EvaluationDimensionsPage,
   EvaluationLogsPanel,
@@ -162,6 +163,12 @@ function App() {
         <Route path="/evaluaciones/:id/pdf">
           <AppLayout>
             <EvaluationPdfPage />
+          </AppLayout>
+        </Route>
+
+        <Route path="/evaluaciones/:id/materias">
+          <AppLayout>
+            <EvaluationCoursesPage />
           </AppLayout>
         </Route>
 

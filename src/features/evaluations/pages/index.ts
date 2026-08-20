@@ -1,3 +1,4 @@
+export { default as EvaluationCoursesPage } from './EvaluationCoursesPage'
 export { default as EvaluationDetailPage } from './EvaluationDetailPage'
 export { default as EvaluationDimensionsPage } from './EvaluationDimensionsPage'
 export { default as EvaluationPdfPage } from './EvaluationPdfPage'

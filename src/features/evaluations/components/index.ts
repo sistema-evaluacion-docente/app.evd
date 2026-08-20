@@ -1,4 +1,6 @@
 export { evaluationColumns } from './columns'
+export { EvaluationCoursesReview } from './EvaluationCoursesReview'
+export type { EvaluationCoursesReviewProps } from './EvaluationCoursesReview'
 export { EvaluationDimensionDetailCard } from './EvaluationDimensionDetailCard'
 export type { EvaluationDimensionDetailCardProps } from './EvaluationDimensionDetailCard'
 export { EvaluationDimensionsChart } from './EvaluationDimensionsChart'
