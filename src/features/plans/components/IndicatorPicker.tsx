@@ -167,7 +167,7 @@ export function IndicatorPicker({
               )}
             </SelectTrigger>
 
-            <SelectContent>
+            <SelectContent className="w-auto">
               <SelectItem value={SUBJECT_ALL}>General · todas las asignaturas</SelectItem>
               {subjectOptions.map((option) => (
                 <SelectItem key={option.key} value={option.key}>
@@ -254,7 +254,7 @@ export function IndicatorPicker({
 
           {uncategorized.length > 0 && (
             <Collapsible className="border-border rounded-md border border-dashed">
-              <CollapsibleTrigger className="group flex w-full cursor-pointer items-center gap-2 px-4 py-3 text-left">
+              <CollapsibleTrigger className="group bg-muted/50 flex w-full cursor-pointer items-center gap-2 px-4 py-3 text-left">
                 <ChevronRight
                   className="text-muted-foreground size-4 shrink-0 transition-transform group-data-panel-open:rotate-90"
                   aria-hidden="true"
@@ -346,8 +346,8 @@ function DimensionBlock({
   const scope = subjectKey === SUBJECT_ALL ? null : subjectKey
 
   return (
-    <Collapsible defaultOpen className="border-border rounded-md border">
-      <div className="flex items-center justify-between gap-3 px-4 py-3">
+    <Collapsible className="border-border rounded-md border">
+      <div className="bg-muted/50 flex items-center justify-between gap-3 px-4 py-3">
         <CollapsibleTrigger className="group flex flex-1 cursor-pointer items-center gap-2 text-left">
           <ChevronRight
             className="text-muted-foreground size-4 shrink-0 transition-transform group-data-panel-open:rotate-90"
@@ -371,7 +371,7 @@ function DimensionBlock({
       </div>
 
       <CollapsibleContent>
-        <ul className="divide-border border-border divide-y border-t">
+        <ul className="divide-border border-border bg-background divide-y border-t">
           {questions.map((question) => {
             const picked = selectedIds.has(
               indicatorSelectionId(scope, 'QUESTION', question.target_ref),
@@ -416,7 +416,7 @@ function DimensionBlock({
           )}
 
           {comments.length > 0 && (
-            <li className="bg-muted/30 text-muted-foreground px-4 py-1.5 pl-10 text-xs tracking-wide uppercase">
+            <li className="text-muted-foreground px-4 py-1.5 pl-10 text-xs tracking-wide uppercase">
               Comentarios de estudiantes <span className="num">({comments.length})</span>
             </li>
           )}
