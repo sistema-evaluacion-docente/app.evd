@@ -143,6 +143,17 @@ async function updateComment(
   return api.patch(`/comments/${commentId}`, payload)
 }
 
+/** Raw PDF (not the JSON envelope) with a teacher's pages extracted from the
+ *  department's evaluation report for one period. */
+async function getTeacherEvaluationReportBlob(
+  teacherId: number,
+  evaluationId: number,
+): Promise<Blob> {
+  return api.get(`/teachers/${teacherId}/evaluations/${evaluationId}/report`, {
+    responseType: 'blob',
+  }) as unknown as Promise<Blob>
+}
+
 /** Query-key factory so list invalidations stay consistent. */
 export const teachersKeys = {
   all: ['teachers'] as const,
@@ -458,6 +469,38 @@ export function useUpdateComment() {
       queryClient.invalidateQueries({
         predicate: (query) => query.queryKey.includes('comments'),
       })
+    },
+  })
+}
+
+/**
+ * Fetches a teacher's evaluation report PDF for one period
+ * (`GET /teachers/{teacher_id}/evaluations/{evaluation_id}/report`) and
+ * resolves to an object URL ready to open — an imperative action, not
+ * cached data, so it's a mutation rather than a query. The backend enforces
+ * who can see which report (a teacher only their own, a director only their
+ * department); on a 403/404 the caller gets the rejected `ApiError` to show
+ * a precise message.
+ *
+ * @example
+ * const downloadReport = useDownloadTeacherEvaluationReport()
+ * downloadReport.mutate(
+ *   { teacherId, evaluationId },
+ *   { onSuccess: (url) => window.open(url, '_blank') },
+ * )
+ */
+export function useDownloadTeacherEvaluationReport() {
+  return useMutation({
+    mutationFn: async ({
+      teacherId,
+      evaluationId,
+    }: {
+      teacherId: number
+      evaluationId: number
+    }) => {
+      const blob = await getTeacherEvaluationReportBlob(teacherId, evaluationId)
+
+      return URL.createObjectURL(blob)
     },
   })
 }
