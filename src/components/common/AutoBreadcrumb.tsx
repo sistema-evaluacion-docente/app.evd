@@ -10,6 +10,8 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
+import { isAuthorizedForPage } from '@/config/security'
+import useAuth from '@/hooks/useAuth'
 import { useNavigate } from '@/hooks/useNavigate'
 
 const SEGMENT_LABELS: Record<string, string> = {
@@ -36,6 +38,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   faculties: 'Facultades',
   departments: 'Departamentos',
   logs: 'Logs',
+  pdf: 'Documento',
 }
 
 interface Crumb {
@@ -62,6 +65,7 @@ function isNumericId(segment: string): boolean {
 export function AutoBreadcrumb() {
   const [location] = useLocation()
   const navigate = useNavigate()
+  const { selectedRole } = useAuth()
 
   const items = useMemo(() => {
     const segments = location.split('/').filter(Boolean)
@@ -116,7 +120,7 @@ export function AutoBreadcrumb() {
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/home')}
             className="inline-flex cursor-pointer items-center gap-1.5"
           >
             <Home aria-hidden="true" className="size-3.5" />
@@ -129,8 +133,10 @@ export function AutoBreadcrumb() {
             <BreadcrumbSeparator />
 
             <BreadcrumbItem>
-              {item.isCurrent ? (
-                <BreadcrumbPage className="text-foreground font-medium">
+              {item.isCurrent || !isAuthorizedForPage(item.href, selectedRole) ? (
+                <BreadcrumbPage
+                  className={item.isCurrent ? 'text-foreground font-medium' : undefined}
+                >
                   {item.label}
                 </BreadcrumbPage>
               ) : (
