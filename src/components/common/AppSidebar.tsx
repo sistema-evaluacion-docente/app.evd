@@ -16,12 +16,14 @@ import {
   Building2,
   ClipboardCheck,
   Clock,
+  FileChartColumnIncreasing,
   FileText,
   Layers,
   LayoutGrid,
   Library,
   LogOut,
   Logs,
+  MessagesSquare,
   Settings,
   UserSearch,
   Users,
@@ -36,6 +38,7 @@ import Logo from './Logo'
 const DEFAULT_ICON = FileText
 
 const MENU_ICON_BY_PATH: Record<string, typeof DEFAULT_ICON> = {
+  '/': FileChartColumnIncreasing,
   '/dashboard': LayoutGrid,
   '/notificaciones': Bell,
   '/periodos': Clock,
@@ -43,6 +46,7 @@ const MENU_ICON_BY_PATH: Record<string, typeof DEFAULT_ICON> = {
   '/evaluaciones': ClipboardCheck,
   '/docentes': Users,
   '/materias': Layers,
+  '/comentarios': MessagesSquare,
   '/admin/facultades': Building2,
   '/admin/departamentos': Library,
   '/admin/periodos': Clock,

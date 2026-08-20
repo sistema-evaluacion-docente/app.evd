@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { useSearchParams } from 'wouter'
 
 import { PercentMeter } from '@/components/common/PercentMeter'
@@ -36,6 +36,7 @@ export interface CommentCardProps {
   /** Slot rendered at the end of the meta line (buttons, menus...). */
   actions?: ReactNode
   className?: string
+  style?: CSSProperties
 }
 
 const CLAMP_CLASS: Record<number, string> = {
@@ -72,6 +73,7 @@ export function CommentCard({
   clampLines = 0,
   actions,
   className,
+  style,
 }: CommentCardProps) {
   const isDirector = useAuthStore((state) => state.selectedRole) === 'DIRECTOR DE DEPARTAMENTO'
   const isCompact = variant === 'compact'
@@ -90,6 +92,7 @@ export function CommentCard({
         isCompact ? 'py-3' : 'py-5',
         className,
       )}
+      style={style}
     >
       {withGutter && (
         <div className="flex flex-col items-center gap-1.5 pt-1">
@@ -159,11 +162,18 @@ export function CommentCard({
           {comment.original_text}
         </blockquote>
 
-        <div className="text-muted-foreground mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs font-medium tracking-wide uppercase">
+        <div className="text-muted-foreground mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-xs font-medium tracking-wide uppercase">
           {showRisk && comment.risk_level && (
             <span
-              className="inline-flex items-center gap-1.5"
-              style={accent ? { color: accent } : undefined}
+              className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5"
+              style={
+                accent
+                  ? {
+                      color: `color-mix(in srgb, ${accent} 60%, var(--color-foreground))`,
+                      backgroundColor: `color-mix(in srgb, ${accent} 18%, transparent)`,
+                    }
+                  : undefined
+              }
             >
               {comment.risk_level.name}
 
@@ -189,6 +199,7 @@ export function CommentCard({
                 <CategoryTag
                   key={category.id}
                   category={category}
+                  variant="soft"
                   short={isCompact}
                   showDot={false}
                   score={showScores ? category.score : undefined}
@@ -216,7 +227,7 @@ export function CommentCard({
 }
 
 function Divider() {
-  return <span aria-hidden="true" className="bg-border/80 h-3 w-px" />
+  return <span aria-hidden="true" className="bg-border h-5 w-0.5 shrink-0 rounded-full" />
 }
 
 function ModifiedMark({ label }: { label: string }) {

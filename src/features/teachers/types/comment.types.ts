@@ -23,7 +23,9 @@ export interface CommentPedagogicalCategoryScore extends CommentPedagogicalCateg
   score: number
 }
 
-/** A single student comment about a teacher, already analyzed by the backend. */
+/** A single student comment about a teacher. `risk_level`/`risk_score` are
+ *  `null` until the AI analysis has classified it — most call sites already
+ *  guard for that with `?.`. */
 export interface TeacherComment {
   id: number
   teacher_id: number
@@ -35,9 +37,9 @@ export interface TeacherComment {
   course_name: string
   /** Verbatim text written by the student. */
   original_text: string
-  risk_level: CommentRiskLevel
+  risk_level: CommentRiskLevel | null
   /** Numeric risk assigned to the comment. */
-  risk_score: number
+  risk_score: number | null
   /** A comment can be classified into several pedagogical categories at once. */
   pedagogical_categories: CommentPedagogicalCategoryScore[]
   /** `true` once a director has overridden the AI-assigned risk level. */

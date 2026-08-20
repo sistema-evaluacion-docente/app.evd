@@ -1,6 +1,7 @@
 import { Link } from 'wouter'
 
 import { ScoreBadge } from '@/components/common/ScoreBadge'
+import { ScoreLegend } from '@/components/common/ScoreLegend'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import type { TeacherComparisonEntry } from '@/features/stats'
@@ -46,9 +47,13 @@ export function TeacherComparisonRanking({
 
   return (
     <section className={className}>
-      <h2 className="text-muted-foreground mb-3 text-xs font-medium tracking-wide uppercase">
-        Ranking por promedio general
-      </h2>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+          Ranking por promedio general
+        </h2>
+
+        <ScoreLegend />
+      </div>
 
       <div className="border-border bg-background divide-border divide-y rounded-md border">
         {ranked.map((entry) => {
@@ -102,7 +107,12 @@ export function TeacherComparisonRanking({
                   className="hover:text-primary hover:border-primary/40 hover:bg-primary/5"
                   render={
                     <Link
-                      href={courseTeacherHref(courseCode, entry.teacher_id, period, entry.group_name)}
+                      href={courseTeacherHref(
+                        courseCode,
+                        entry.teacher_id,
+                        period,
+                        entry.group_name,
+                      )}
                     />
                   }
                 >

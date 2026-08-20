@@ -107,11 +107,11 @@ export function CountPieChart({
             return (
               <span
                 key={entry.key}
-                className="text-muted-foreground flex items-center gap-1 text-xs"
+                className="text-muted-foreground flex items-center gap-1.5 text-xs"
               >
                 <span
                   aria-hidden="true"
-                  className="size-1.5 shrink-0 rounded-full"
+                  className="size-2.5 shrink-0 rounded-full"
                   style={{ backgroundColor: entry.color ?? PALETTE[index % PALETTE.length] }}
                 />
                 {entry.label}: {entry.value} ({Math.round(delta?.percent ?? 0)}%)

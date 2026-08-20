@@ -1,5 +1,5 @@
 import { DimensionComparisonChart } from '@/components/common/DimensionComparisonChart'
-import { CATEGORIES, categoryShortLabel, UNCATEGORIZED } from '@/lib/categoryLabel'
+import { CATEGORIES, categoryLabel, UNCATEGORIZED } from '@/lib/categoryLabel'
 
 /** Excludes "Sin categoría" — a non-classification, not useful for analysis. */
 const ANALYZABLE_CATEGORIES = CATEGORIES.filter((category) => category.code !== UNCATEGORIZED)
@@ -44,8 +44,9 @@ export function DepartmentCommentCategoriesChart({
         key: category.code,
         color: category.color,
       }))}
-      labelFormatter={categoryShortLabel}
+      labelFormatter={categoryLabel}
       orientation="vertical"
+      wrapLabels
       min={0}
       max={max}
       decimals={0}

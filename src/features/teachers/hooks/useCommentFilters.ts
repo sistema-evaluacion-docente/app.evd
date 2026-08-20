@@ -91,7 +91,7 @@ export function useCommentFilters(
             ...comment.pedagogical_categories.map((category) => categoryLabel(category.name)),
             comment.risk_level?.name,
           ]
-            .filter(Boolean)
+            .filter((field): field is string => Boolean(field))
             .some((field) => field.toLowerCase().includes(term))
         }),
       }))
@@ -131,7 +131,7 @@ export function useCommentFilters(
 
 function countInto(
   map: Map<number, CommentFilterOption>,
-  option?: { id: number; name: string; color_hex: string },
+  option?: { id: number; name: string; color_hex: string } | null,
 ) {
   if (!option) return
 

@@ -1,10 +1,15 @@
 import { DimensionComparisonChart } from '@/components/common/DimensionComparisonChart'
 
-/** Risk levels in display order, object key + readable label. */
+/**
+ * Risk levels in display order: key, readable label, and a fixed semantic
+ * color (green/amber/red) — same set the donut view uses in
+ * `DepartmentCommentsSummary`, so both view modes read consistently instead
+ * of this one falling back to the generic chart palette.
+ */
 const RISK_LEVELS = [
-  { key: 'BAJO', label: 'Bajo' },
-  { key: 'MEDIO', label: 'Medio' },
-  { key: 'ALTO', label: 'Alto' },
+  { key: 'BAJO', label: 'Bajo', color: '#22c55e' },
+  { key: 'MEDIO', label: 'Medio', color: '#f59e0b' },
+  { key: 'ALTO', label: 'Alto', color: '#ef4444' },
 ] as const
 
 export interface DepartmentCommentRiskChartProps {
@@ -41,7 +46,11 @@ export function DepartmentCommentRiskChart({ counts, className }: DepartmentComm
           scores: entries.map((entry) => ({ dimension: entry.key, value: entry.count })),
         },
       ]}
-      dimensions={entries.map((entry) => ({ key: entry.key, label: entry.label }))}
+      dimensions={RISK_LEVELS.map((level) => ({
+        key: level.key,
+        label: level.label,
+        color: level.color,
+      }))}
       orientation="vertical"
       min={0}
       max={max}

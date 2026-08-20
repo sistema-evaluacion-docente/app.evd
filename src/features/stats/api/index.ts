@@ -46,7 +46,7 @@ async function getDepartmentPeriodRangeSubjects({
       limit,
       search: search || undefined,
       sort_by: sortBy || undefined,
-      teacher_name: teacherName,
+      teacher_name: teacherName || undefined,
     },
   })
 }

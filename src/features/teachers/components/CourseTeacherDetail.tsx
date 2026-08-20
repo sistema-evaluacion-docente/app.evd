@@ -1,8 +1,9 @@
-import { TrendingDown, TrendingUp } from 'lucide-react'
+import { ChevronUp, TrendingDown, TrendingUp } from 'lucide-react'
 import { useId, useState } from 'react'
 
 import { PeriodSelect, type PeriodSelectOption } from '@/components/common/PeriodSelect'
 import { ScoreBadge } from '@/components/common/ScoreBadge'
+import { ScoreLegend } from '@/components/common/ScoreLegend'
 import { TransitionLink } from '@/components/common/TransitionLink'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -11,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
 import { AI_STATUS_DISPLAY, type AiStatus } from '@/features/evaluations'
 import { dimensionColor } from '@/lib/dimensionLabel'
+import { getScoreToneClass } from '@/lib/scoreTone'
 import { cn } from '@/lib/utils'
 import { useGetTeacherComments, useGetTeacherCourseHistory, useGetTeacherDetail } from '../api'
 import { CommentsPanel } from './CommentsPanel'
@@ -166,7 +168,7 @@ export function CourseTeacherDetail({
 
         {showTeacherIdentity && teacher && (
           <TransitionLink
-            href={`/docentes/${teacher.teacher_id}`}
+            href={`/docentes/${teacher.teacher_id}?period=${encodeURIComponent(period)}`}
             className="group inline-flex w-fit shrink-0 items-center gap-3 lg:flex-row-reverse"
           >
             <Avatar className="ring-border ring-offset-background group-hover:ring-primary/40 size-11 ring-2 ring-offset-2 transition-colors">
@@ -273,20 +275,34 @@ export function CourseTeacherDetail({
         {dimensionRanking.length > 0 && (
           <div className="border-border bg-background flex w-full shrink-0 flex-col rounded-md border px-5 py-5 sm:w-80">
             <p className="text-muted-foreground mb-3 text-xs font-medium tracking-wide uppercase">
-              Ranking de dimensiones
+              Promedio por dimensión
             </p>
 
-            <ol className="flex flex-1 flex-col justify-center space-y-3">
-              {dimensionRanking.map((dimension, index) => {
-                const isBest = index === 0
-                const isWorst = index === dimensionRanking.length - 1 && dimensionRanking.length > 1
+            <div className="flex flex-1 items-stretch gap-3">
+              {/* Order axis: dimensions are sorted highest → lowest, top to
+                  bottom — this arrow says so directly instead of numbering
+                  each row 1st/2nd/3rd, which read as a competitive ranking
+                  and broke down entirely on ties. */}
+              <div className="flex flex-col items-center">
+                <span className="text-muted-foreground text-[10px] font-medium tracking-wide uppercase">
+                  Mayor
+                </span>
+                <ChevronUp
+                  className="text-muted-foreground -mb-1.5 size-4 shrink-0"
+                  aria-hidden="true"
+                />
+                <span
+                  aria-hidden="true"
+                  className="bg-muted-foreground/30 w-0.5 flex-1 rounded-full"
+                />
+                <span className="text-muted-foreground mt-1 text-[10px] font-medium tracking-wide uppercase">
+                  Menor
+                </span>
+              </div>
 
-                return (
+              <ol className="flex flex-1 flex-col justify-center space-y-3">
+                {dimensionRanking.map((dimension) => (
                   <li key={dimension.dimension} className="flex items-center gap-2.5 text-sm">
-                    <span className="text-muted-foreground w-4 shrink-0 tabular-nums">
-                      {index + 1}
-                    </span>
-
                     <span
                       aria-hidden="true"
                       className="size-2 shrink-0 rounded-full"
@@ -300,26 +316,31 @@ export function CourseTeacherDetail({
                     <span
                       className={cn(
                         'num shrink-0 text-base font-bold tabular-nums',
-                        isBest && 'text-green-600',
-                        isWorst && 'text-red-600',
+                        getScoreToneClass(dimension.average),
                       )}
                     >
                       {dimension.average.toFixed(2)}
                     </span>
                   </li>
-                )
-              })}
-            </ol>
+                ))}
+              </ol>
+            </div>
+
+            <ScoreLegend className="mt-4" />
           </div>
         )}
       </div>
 
       <section className="border-border bg-background rounded-md border">
-        <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
-          {selectedComparison
-            ? `Dimensiones pedagógicas comparadas con ${selectedComparison.period_name}`
-            : 'Dimensiones pedagógicas'}
-        </h2>
+        <div className="border-border flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4">
+          <h2 className="text-sm font-medium">
+            {selectedComparison
+              ? `Dimensiones pedagógicas comparadas con ${selectedComparison.period_name}`
+              : 'Dimensiones pedagógicas'}
+          </h2>
+
+          <ScoreLegend />
+        </div>
 
         <CourseDimensionBreakdown
           course={course}
