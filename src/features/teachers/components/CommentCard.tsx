@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { useSearchParams } from 'wouter'
 
 import { PercentMeter } from '@/components/common/PercentMeter'
@@ -36,6 +36,7 @@ export interface CommentCardProps {
   /** Slot rendered at the end of the meta line (buttons, menus...). */
   actions?: ReactNode
   className?: string
+  style?: CSSProperties
 }
 
 const CLAMP_CLASS: Record<number, string> = {
@@ -72,6 +73,7 @@ export function CommentCard({
   clampLines = 0,
   actions,
   className,
+  style,
 }: CommentCardProps) {
   const isDirector = useAuthStore((state) => state.selectedRole) === 'DIRECTOR DE DEPARTAMENTO'
   const isCompact = variant === 'compact'
@@ -90,6 +92,7 @@ export function CommentCard({
         isCompact ? 'py-3' : 'py-5',
         className,
       )}
+      style={style}
     >
       {withGutter && (
         <div className="flex flex-col items-center gap-1.5 pt-1">

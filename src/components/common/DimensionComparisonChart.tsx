@@ -420,7 +420,13 @@ export function DimensionComparisonChart({
           data={rows}
           layout={isHorizontal ? 'vertical' : 'horizontal'}
           margin={{
-            top: isHorizontal && referenceLabel != null ? 22 : 8,
+            top: isHorizontal
+              ? referenceLabel != null
+                ? 22
+                : 8
+              : withValues || referenceLabel != null
+                ? 20
+                : 8,
             right: withValues ? 40 : 12,
             left: isHorizontal ? 8 : -16,
             bottom: !isHorizontal && wrapLabels ? 24 : 8,

@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { cn } from '@/lib/utils'
 import { useQueryClient } from '@tanstack/react-query'
-import { ArrowUpRight, ChevronRight, Pencil, Search, Users } from 'lucide-react'
+import { ArrowUpRight, ChevronRight, Pencil, Search, UserSearch, Users } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { useDebounce, useDebouncedCallback } from 'use-debounce'
@@ -45,7 +45,11 @@ const SORT_FIELDS: SortField[] = [
  * name). Expanding a name reveals the real course codes underneath it, and
  * only within one code — its teachers are genuinely comparable — does
  * "Ver detalle" (one teacher) or "Comparar" (two or more) show up. A materia
- * with a single teacher overall skips straight to their materia report.
+ * with a single teacher overall skips straight to their materia report. A
+ * second, independent search box filters by teacher name instead of materia
+ * name — narrowing which materias show up to the ones that teacher is part
+ * of, with the averages recalculated for just their groups (backend-side);
+ * other teachers still show alongside them once a materia matches.
  *
  * @example
  * <SubjectsList />
@@ -59,6 +63,8 @@ export function SubjectsList({ className }: { className?: string }) {
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [debouncedSearch] = useDebounce(search, 400)
+  const [teacherSearch, setTeacherSearch] = useState('')
+  const [debouncedTeacherSearch] = useDebounce(teacherSearch, 400)
   const [sortBy, setSortBy] = useState<string | undefined>(undefined)
   const [editTarget, setEditTarget] = useState<EditCourseTarget | null>(null)
 
@@ -81,8 +87,11 @@ export function SubjectsList({ className }: { className?: string }) {
   const handleUpdateSubmit = (values: Record<string, string>) => {
     if (!editTarget) return
 
+    // Course names are always uppercase on the source evaluation PDFs — keep
+    // renamed materias consistent with that instead of allowing a stray
+    // lowercase name to drift from how it reads everywhere else.
     updateCourse(
-      { courseId: editTarget.id, payload: { name: values.name } },
+      { courseId: editTarget.id, payload: { name: values.name.toUpperCase() } },
       {
         onSuccess: () => {
           toast.success('Materia actualizada exitosamente')
@@ -102,6 +111,7 @@ export function SubjectsList({ className }: { className?: string }) {
     page,
     limit: 10,
     search: debouncedSearch,
+    teacherName: debouncedTeacherSearch,
     sortBy,
   })
 
@@ -144,6 +154,25 @@ export function SubjectsList({ className }: { className?: string }) {
             }}
             placeholder="Buscar materia..."
             aria-label="Buscar materia"
+            className="bg-background h-9 w-56 pl-9 shadow-none"
+          />
+        </div>
+
+        <div className="relative">
+          <UserSearch
+            aria-hidden="true"
+            className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
+          />
+
+          <Input
+            type="text"
+            value={teacherSearch}
+            onChange={(event) => {
+              setTeacherSearch(event.target.value)
+              resetPage()
+            }}
+            placeholder="Buscar docente..."
+            aria-label="Buscar docente"
             className="bg-background h-9 w-56 pl-9 shadow-none"
           />
         </div>
@@ -284,7 +313,7 @@ function SubjectRow({
 
   return (
     <Collapsible className="group/row">
-      <div className="hover:bg-muted/40 muted group flex w-full items-center justify-between gap-4 px-6 transition-colors">
+      <div className="hover:bg-muted/40 muted group hover:border-primary flex w-full items-center justify-between gap-4 border-l-2 border-transparent px-6 transition-colors">
         <CollapsibleTrigger className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 py-4 text-left">
           <ChevronRight
             aria-hidden="true"
@@ -293,6 +322,10 @@ function SubjectRow({
 
           <div className="min-w-0">
             <p className="truncate text-sm font-medium">{subject.course_name}</p>
+            <p className="text-muted-foreground text-xs">
+              {groups.length} docente{groups.length === 1 ? '' : 's'} · {codeGroups.length} código
+              {codeGroups.length === 1 ? '' : 's'}
+            </p>
           </div>
         </CollapsibleTrigger>
 
@@ -345,7 +378,7 @@ function CourseCodeRow({
           soleGroup.academic_period_code,
           soleGroup.group_name,
         )}
-        className="hover:bg-muted/40 group flex w-full items-center justify-between gap-4 py-3 pr-6 pl-12 text-left transition-colors"
+        className="hover:bg-muted/40 group hover:border-primary flex w-full items-center justify-between gap-4 border-l-2 border-transparent py-3 pr-6 pl-12 text-left transition-colors"
       >
         <div className="min-w-0">
           <p className="group-hover:text-primary truncate text-sm font-medium transition-colors">
@@ -367,7 +400,7 @@ function CourseCodeRow({
 
   return (
     <Collapsible>
-      <CollapsibleTrigger className="hover:bg-muted/40 group flex w-full cursor-pointer items-center justify-between gap-4 py-3 pr-6 pl-12 text-left transition-colors">
+      <CollapsibleTrigger className="hover:bg-muted/40 group hover:border-primary flex w-full cursor-pointer items-center justify-between gap-4 border-l-2 border-transparent py-3 pr-6 pl-12 text-left transition-colors">
         <div className="flex min-w-0 items-center gap-3">
           <ChevronRight
             aria-hidden="true"
@@ -376,7 +409,7 @@ function CourseCodeRow({
 
           <div className="min-w-0">
             <p className="truncate text-sm font-medium">{code}</p>
-            {/* <p className="text-muted-foreground text-xs">{groups.length} docentes</p> */}
+            <p className="text-muted-foreground text-xs">{groups.length} docentes</p>
           </div>
         </div>
       </CollapsibleTrigger>
@@ -389,6 +422,7 @@ function CourseCodeRow({
               variant="outline"
               size="xs"
               nativeButton={false}
+              className="hover:border-primary hover:bg-primary hover:text-primary-foreground"
               render={
                 <TransitionLink
                   href={subjectComparisonHref(code, groups[0].academic_period_code, courseName)}

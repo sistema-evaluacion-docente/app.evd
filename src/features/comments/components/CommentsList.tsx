@@ -48,7 +48,7 @@ export function CommentsList() {
   const [page, setPage] = useState(1)
 
   const { filters, setFilters } = useTableFilters('comments', {
-    riskLevel: 3,
+    riskLevel: undefined as number | undefined,
     pedagogicalCategoryId: undefined as string | undefined,
   })
 

@@ -79,13 +79,26 @@ export function CommentList({
         className,
       )}
     >
-      {comments.map((comment, index) =>
-        renderComment ? (
-          <div key={comment.id}>{renderComment(comment, index)}</div>
+      {comments.map((comment, index) => {
+        // Capped so a long page of comments still finishes settling in well
+        // under a second, instead of the stagger growing unbounded.
+        const style = { animationDelay: `${Math.min(index, 8) * 60}ms` }
+
+        return renderComment ? (
+          <div key={comment.id} className="animate-rise" style={style}>
+            {renderComment(comment, index)}
+          </div>
         ) : (
-          <CommentCard key={comment.id} comment={comment} index={index} {...commentProps} />
-        ),
-      )}
+          <CommentCard
+            key={comment.id}
+            comment={comment}
+            index={index}
+            className="animate-rise"
+            style={style}
+            {...commentProps}
+          />
+        )
+      })}
     </div>
   )
 }
