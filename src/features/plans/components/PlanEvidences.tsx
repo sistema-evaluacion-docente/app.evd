@@ -142,7 +142,7 @@ function RequestBlock({
           )}
           {request.due_date && (
             <p className="text-muted-foreground text-xs">
-              Fecha límite: {formatDate(request.due_date)}
+              Fecha límite: {formatDate(request.due_date, 'D [de] MMMM [de] YYYY')}
             </p>
           )}
         </div>
