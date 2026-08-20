@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown, Download, FileText, FileType2, Trash2, Upload } from 'lucide-react'
+import { ChevronDown, Download, FileText, FileType2, Paperclip, Trash2, Upload } from 'lucide-react'
 
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { FileDropzone } from '@/components/common/FileDropzone'
@@ -132,6 +132,11 @@ function FormatRow({
 
   const isActa = format.slug === 'formato-2'
 
+  // The caso reportado reaches the director already signed by the academic
+  // programme: he files it when drawing the plan up, so here it is an
+  // attachment to read, never a form to take away and sign.
+  const isCaseReport = format.slug === 'formato-1'
+
   // Signing the Ficha de acuerdo is what turns it into the copy of record, so
   // the acto administrativo backing it and at least one agreed commitment have
   // to be there first — the API refuses the upload otherwise, and saying so
@@ -146,9 +151,11 @@ function FormatRow({
 
   const actaIncomplete = missingActaData.length > 0
 
-  // Copies signed before the API kept the uploaded name fall back to a generic
+  // Copies filed before the API kept the uploaded name fall back to a generic
   // one, so the chip never renders an empty label.
-  const signedName = record?.signed_filename ?? `${format.slug}_firmado.pdf`
+  const signedName =
+    record?.signed_filename ??
+    (isCaseReport ? 'formato-1_caso_reportado.pdf' : `${format.slug}_firmado.pdf`)
 
   function submitSigned() {
     if (!file) return
@@ -197,7 +204,7 @@ function FormatRow({
 
         {record?.signed_at && (
           <p className="text-muted-foreground mt-0.5 text-xs">
-            Firmado el {formatDate(record.signed_at)}
+            {isCaseReport ? 'Adjuntado' : 'Firmado'} el {formatDate(record.signed_at)}
           </p>
         )}
       </div>
@@ -259,7 +266,7 @@ function FormatRow({
               onClick={() => downloadSigned.mutate({ format: format.slug, filename: signedName })}
               pending={downloadSigned.isPending}
               aria-label={`Descargar ${signedName}`}
-              title="Descargar el PDF firmado"
+              title={isCaseReport ? 'Descargar el PDF adjunto' : 'Descargar el PDF firmado'}
             >
               <Download className="size-3.5" aria-hidden="true" />
             </LoadingButton>
@@ -270,7 +277,7 @@ function FormatRow({
                 variant="ghost"
                 onClick={() => setConfirmDelete(true)}
                 aria-label={`Eliminar ${signedName}`}
-                title="Eliminar el PDF firmado"
+                title={isCaseReport ? 'Eliminar el PDF adjunto' : 'Eliminar el PDF firmado'}
               >
                 <Trash2 className="size-3.5" aria-hidden="true" />
               </Button>
@@ -289,8 +296,12 @@ function FormatRow({
                   : undefined
               }
             >
-              <Upload className="size-4" aria-hidden="true" />
-              Subir firmado
+              {isCaseReport ? (
+                <Paperclip className="size-4" aria-hidden="true" />
+              ) : (
+                <Upload className="size-4" aria-hidden="true" />
+              )}
+              {isCaseReport ? 'Adjuntar Formato 1' : 'Subir firmado'}
             </Button>
           )
         )}
@@ -307,9 +318,13 @@ function FormatRow({
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Subir {format.name} firmado</DialogTitle>
+            <DialogTitle>
+              {isCaseReport ? `Adjuntar ${format.name}` : `Subir ${format.name} firmado`}
+            </DialogTitle>
             <DialogDescription>
-              Adjunta el PDF escaneado con las firmas. Reemplaza cualquier versión firmada anterior.
+              {isCaseReport
+                ? 'Adjunta el PDF del caso que el programa académico remitió a la dirección de departamento. Reemplaza cualquier versión anterior.'
+                : 'Adjunta el PDF escaneado con las firmas. Reemplaza cualquier versión firmada anterior.'}
             </DialogDescription>
           </DialogHeader>
 
@@ -338,11 +353,13 @@ function FormatRow({
       <ConfirmDialog
         open={confirmDelete}
         onOpenChange={setConfirmDelete}
-        title="¿Eliminar el PDF firmado?"
+        title={isCaseReport ? '¿Eliminar el PDF adjunto?' : '¿Eliminar el PDF firmado?'}
         description={
-          isActa
-            ? 'El acuerdo volverá a estado borrador y podrás editar el plan de nuevo. El formato en blanco se conserva y se te pedirá otra vez la versión firmada.'
-            : 'Se te pedirá de nuevo la versión firmada de este formato. El formato en blanco se conserva.'
+          isCaseReport
+            ? 'Se quitará el caso reportado adjunto al plan. Podrás volver a adjuntarlo cuando quieras.'
+            : isActa
+              ? 'El acuerdo volverá a estado borrador y podrás editar el plan de nuevo. El formato en blanco se conserva y se te pedirá otra vez la versión firmada.'
+              : 'Se te pedirá de nuevo la versión firmada de este formato. El formato en blanco se conserva.'
         }
         confirmLabel="Eliminar"
         pendingLabel="Eliminando…"

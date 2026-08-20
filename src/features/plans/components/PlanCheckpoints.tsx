@@ -1,12 +1,15 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { toast } from 'sonner'
 import { CalendarCheck } from 'lucide-react'
 
 import { DatePicker } from '@/components/common/DatePicker'
 import { LoadingButton } from '@/components/common/LoadingButton'
+import { Required } from '@/components/common/Required'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useUpdateCheckpoint } from '../api'
+import { checkpointErrors, checkpointFieldId, focusField } from '../lib/planValidation'
 import { CHECKPOINT_HINT, CHECKPOINT_LABEL, CHECKPOINT_ORDER } from '../lib/planStatus'
 import type { Plan, PlanAspect, PlanCheckpoint } from '../types'
 
@@ -94,21 +97,64 @@ function CheckpointBlock({
     ),
   )
 
+  // Same bookkeeping as the plan form: a field goes red once it is left empty,
+  // not while it is still waiting its turn, and a failed save turns every
+  // pending error on at once.
+  const [touched, setTouched] = useState<ReadonlySet<string>>(() => new Set())
+  const [showAllErrors, setShowAllErrors] = useState(false)
+
   const update = useUpdateCheckpoint(planId)
 
+  const errors = useMemo(
+    () => checkpointErrors({ checkpointId: checkpoint.id, date, aspects, notes }),
+    [checkpoint.id, date, aspects, notes],
+  )
+
+  const invalidFields = useMemo(
+    () =>
+      new Set(
+        errors.filter((error) => showAllErrors || touched.has(error.id)).map((error) => error.id),
+      ),
+    [errors, showAllErrors, touched],
+  )
+
+  function markTouched(id: string) {
+    setTouched((current) => (current.has(id) ? current : new Set(current).add(id)))
+  }
+
+  /** Leaves the editor, and leaves the red behind with it. */
+  function close() {
+    setEditing(false)
+    setTouched(new Set())
+    setShowAllErrors(false)
+  }
+
   function save() {
+    if (errors.length > 0) {
+      // The button stays live on purpose: a disabled one never says why. The
+      // toast says what happened, the red says which fields, and the scroll
+      // puts the cursor in the first of them.
+      setShowAllErrors(true)
+      toast.warning('Faltan campos obligatorios por completar.', {
+        description: 'Revisa los campos marcados en rojo.',
+      })
+      focusField(errors[0].id)
+
+      return
+    }
+
     update.mutate(
       {
         checkpointId: checkpoint.id,
         payload: {
-          scheduled_date: date || undefined,
+          scheduled_date: date,
           aspect_notes: aspects.map((aspect) => ({
             aspect: aspect.aspect,
-            note: notes[aspect.aspect] ?? '',
+            note: (notes[aspect.aspect] ?? '').trim(),
           })),
         },
       },
-      { onSuccess: () => setEditing(false) },
+      { onSuccess: close },
     )
   }
 
@@ -142,36 +188,51 @@ function CheckpointBlock({
       {editing ? (
         <div className="space-y-3">
           <div className="max-w-56 space-y-1.5">
-            <Label htmlFor={`date-${checkpoint.id}`} className="text-xs">
-              Fecha del seguimiento
+            <Label htmlFor={checkpointFieldId.date(checkpoint.id)} className="text-xs">
+              Fecha del seguimiento <Required />
             </Label>
-            <DatePicker id={`date-${checkpoint.id}`} value={date} onChange={setDate} />
+            <DatePicker
+              id={checkpointFieldId.date(checkpoint.id)}
+              value={date}
+              onChange={setDate}
+              invalid={invalidFields.has(checkpointFieldId.date(checkpoint.id))}
+              onBlur={() => markTouched(checkpointFieldId.date(checkpoint.id))}
+            />
           </div>
 
-          {aspects.map((aspect) => (
-            <div key={aspect.aspect} className="space-y-1.5">
-              <Label htmlFor={`note-${checkpoint.id}-${aspect.aspect}`} className="text-xs">
-                {aspect.aspect}. {aspect.label}
-              </Label>
-              <Textarea
-                id={`note-${checkpoint.id}-${aspect.aspect}`}
-                rows={2}
-                value={notes[aspect.aspect] ?? ''}
-                onChange={(event) =>
-                  setNotes((current) => ({ ...current, [aspect.aspect]: event.target.value }))
-                }
-                placeholder="Observación de este aspecto en el seguimiento"
-              />
-            </div>
-          ))}
+          {aspects.map((aspect) => {
+            const noteId = checkpointFieldId.note(checkpoint.id, aspect.aspect)
 
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setEditing(false)}
-              disabled={update.isPending}
-            >
+            return (
+              <div key={aspect.aspect} className="space-y-1.5">
+                <Label htmlFor={noteId} className="text-xs">
+                  {aspect.aspect}. {aspect.label} <Required />
+                </Label>
+                <Textarea
+                  id={noteId}
+                  rows={2}
+                  value={notes[aspect.aspect] ?? ''}
+                  onChange={(event) =>
+                    setNotes((current) => ({ ...current, [aspect.aspect]: event.target.value }))
+                  }
+                  onBlur={() => markTouched(noteId)}
+                  aria-invalid={invalidFields.has(noteId)}
+                  placeholder="Observación de este aspecto en el seguimiento"
+                />
+              </div>
+            )
+          })}
+
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {showAllErrors && errors.length > 0 && (
+              <p className="text-destructive mr-auto text-xs" role="alert">
+                {errors.length === 1
+                  ? 'Falta 1 campo obligatorio por completar.'
+                  : `Faltan ${errors.length} campos obligatorios por completar.`}
+              </p>
+            )}
+
+            <Button variant="outline" size="sm" onClick={close} disabled={update.isPending}>
               Cancelar
             </Button>
             {/* Stays open and spinning until the refreshed plan is on screen. */}
