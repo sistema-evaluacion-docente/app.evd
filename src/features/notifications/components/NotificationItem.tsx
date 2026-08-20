@@ -54,7 +54,7 @@ export function NotificationItem({
 
   return (
     <div
-      className={`flex gap-3 rounded border-b p-3 transition-colors ${
+      className={`flex gap-3 rounded border-b p-4 transition-colors ${
         notification.read
           ? 'bg-muted/50 border-transparent opacity-70'
           : 'bg-background border-border'
