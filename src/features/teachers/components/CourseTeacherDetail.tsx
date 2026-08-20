@@ -168,7 +168,7 @@ export function CourseTeacherDetail({
 
         {showTeacherIdentity && teacher && (
           <TransitionLink
-            href={`/docentes/${teacher.teacher_id}`}
+            href={`/docentes/${teacher.teacher_id}?period=${encodeURIComponent(period)}`}
             className="group inline-flex w-fit shrink-0 items-center gap-3 lg:flex-row-reverse"
           >
             <Avatar className="ring-border ring-offset-background group-hover:ring-primary/40 size-11 ring-2 ring-offset-2 transition-colors">
