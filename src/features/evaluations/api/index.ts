@@ -89,6 +89,9 @@ async function getEvaluationDimensionsDetail(
   return api.get(`/evaluations/${evaluationId}/dimensions/detail`, { params: query })
 }
 
+/** How often an in-flight evaluation is re-checked while it processes. */
+const EVALUATION_POLL_INTERVAL = 5_000
+
 /** Query-key factory so list invalidations stay consistent. */
 export const evaluationsKeys = {
   all: ['evaluations'] as const,
@@ -143,6 +146,11 @@ export function useGetEvaluationByPeriod(periodId?: number) {
  * through the period is an extra indirection that breaks as soon as a period
  * holds more than one.
  *
+ * Polls itself every 5s while the evaluation is still `PROCESSING`, so a page
+ * opened right after the upload lands on the finished record on its own. The
+ * progress WebSocket is the fast path; this is the fallback for when it never
+ * connects.
+ *
  * @example
  * const { data, isLoading } = useGetEvaluation(evaluationId);
  */
@@ -152,6 +160,8 @@ export function useGetEvaluation(evaluationId?: number) {
     queryFn: () => getEvaluationById(evaluationId!),
     enabled: evaluationId != null,
     staleTime: 60_000,
+    refetchInterval: (query) =>
+      query.state.data?.data?.status === 'PROCESSING' ? EVALUATION_POLL_INTERVAL : false,
   })
 }
 
