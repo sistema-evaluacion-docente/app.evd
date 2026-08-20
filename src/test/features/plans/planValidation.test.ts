@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 
 import { buildBlankDraft, buildIndicatorDraft } from '@/features/plans/lib/planDraft'
 import {
+  checkpointErrors,
+  checkpointFieldId,
   COMMITMENTS_ANCHOR_ID,
   commitmentFieldId,
   COURSES_ANCHOR_ID,
@@ -186,5 +188,65 @@ describe('planFormErrors', () => {
     const errors = errorsOf({ title: '   ', items: [] })
 
     expect(errors.at(-1)).toEqual({ id: 'title', message: 'El plan necesita un título.' })
+  })
+})
+
+describe('checkpointErrors', () => {
+  const both = { 1: 'Estructuró mejor la clase', 2: 'Devolvió las notas a tiempo' }
+
+  it('asks for the date first: it is what the form prints at the top of the cut', () => {
+    const errors = checkpointErrors({ checkpointId: 11, date: '', aspects: ASPECTS, notes: both })
+
+    expect(errors).toEqual([
+      { id: checkpointFieldId.date(11), message: 'Registra la fecha del seguimiento.' },
+    ])
+  })
+
+  it('asks for an observation on every aspect the plan follows up on', () => {
+    const errors = checkpointErrors({
+      checkpointId: 11,
+      date: '',
+      aspects: ASPECTS,
+      notes: {},
+    })
+
+    expect(errors.map((error) => error.id)).toEqual([
+      checkpointFieldId.date(11),
+      checkpointFieldId.note(11, 1),
+      checkpointFieldId.note(11, 2),
+    ])
+  })
+
+  it('does not settle for half the matrix', () => {
+    const errors = checkpointErrors({
+      checkpointId: 11,
+      date: '2026-05-04',
+      aspects: ASPECTS,
+      notes: { 1: 'Estructuró mejor la clase' },
+    })
+
+    expect(errors.map((error) => error.id)).toEqual([checkpointFieldId.note(11, 2)])
+  })
+
+  it('counts whitespace as nothing written', () => {
+    const errors = checkpointErrors({
+      checkpointId: 11,
+      date: '   ',
+      aspects: ASPECTS,
+      notes: { 1: '  ', 2: '\n' },
+    })
+
+    expect(errors).toHaveLength(3)
+  })
+
+  it('is happy once the cut says when it was made and what was seen', () => {
+    const errors = checkpointErrors({
+      checkpointId: 11,
+      date: '2026-05-04',
+      aspects: ASPECTS,
+      notes: both,
+    })
+
+    expect(errors).toEqual([])
   })
 })
