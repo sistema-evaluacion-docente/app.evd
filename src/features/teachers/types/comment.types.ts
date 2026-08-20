@@ -46,7 +46,14 @@ export interface TeacherComment {
   risk_level_modified_by_director?: boolean
   /** `true` once a director has overridden the AI-assigned pedagogical category. */
   pedagogical_category_modified_by_director?: boolean
+  /** Identifier of the model that assigned `risk_level` (e.g. `DistilBETO`). */
+  risk_level_ai_model?: string | null
+  /** Identifier of the model that assigned `pedagogical_categories` (e.g. `RoBERTuito`). */
+  pedagogical_category_ai_model?: string | null
+  /** When the comment was ingested and first classified. */
   created_at: string
+  /** Last write to the record — the director's correction, when either
+   *  `*_modified_by_director` flag is set. */
   updated_at: string
 }
 
