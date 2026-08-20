@@ -486,6 +486,32 @@ export function useUploadSignedDocument(planId: number) {
  * Detaches a signed scan attached by mistake. The generated form stays in
  * place, so the row simply goes back to asking for a signature.
  */
+/**
+ * Attaches a signed scan to a plan whose id is only known at call time — the
+ * Formato 1 picked while creating a plan, which can't be filed until the plan
+ * it belongs to exists.
+ *
+ * @example
+ * await uploadDocument.mutateAsync({ planId: created.id, format: 'formato-1', file })
+ */
+export function useUploadPlanDocument() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      planId,
+      format,
+      file,
+    }: {
+      planId: number
+      format: PlanFormatSlug
+      file: File
+    }) => uploadSignedDocument(planId, format, file),
+    onSuccess: (_data, variables) =>
+      queryClient.invalidateQueries({ queryKey: plansKeys.detail(variables.planId) }),
+  })
+}
+
 export function useDeleteSignedDocument(planId: number) {
   const refresh = usePlanRefresh(planId)
 

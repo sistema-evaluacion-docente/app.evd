@@ -1,5 +1,6 @@
 export { default as PlanFormPage } from './pages/PlanFormPage'
 export { default as MyPlansPage } from './pages/MyPlansPage'
+export { default as MyPlanDetailPage } from './pages/MyPlanDetailPage'
 export { default as PlanDetailPage } from './pages/PlanDetailPage'
 export { default as PlansPage } from './pages/PlansPage'
 
@@ -27,6 +28,7 @@ export {
   useGetPlans,
   useGetTeacherCourses,
   useGetTeacherPlanHistory,
+  useUploadPlanDocument,
 } from './api'
 
 export { ACADEMIC_FACULTIES, FACULTY_NAMES, PROGRAM_NAMES } from './config/academicCatalog'
