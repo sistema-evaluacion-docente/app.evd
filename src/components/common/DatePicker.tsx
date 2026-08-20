@@ -17,6 +17,10 @@ interface DatePickerProps {
   id?: string
   placeholder?: string
   disabled?: boolean
+  /** Paints the field as still missing, the same way an input does. */
+  invalid?: boolean
+  /** Leaving it without a date is what turns it red the first time. */
+  onBlur?: () => void
   /** Earliest date that can be picked, as `YYYY-MM-DD`. */
   minDate?: string
   /** Latest date that can be picked, as `YYYY-MM-DD`. */
@@ -50,6 +54,8 @@ export function DatePicker({
   id,
   placeholder = 'Seleccionar fecha',
   disabled = false,
+  invalid = false,
+  onBlur,
   minDate,
   maxDate,
   clearable = true,
@@ -81,6 +87,8 @@ export function DatePicker({
               type="button"
               variant="outline"
               disabled={disabled}
+              aria-invalid={invalid || undefined}
+              onBlur={onBlur}
               className={cn(
                 'w-full justify-start text-left font-normal',
                 !selected && 'text-muted-foreground',
