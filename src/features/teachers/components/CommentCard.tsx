@@ -1,3 +1,5 @@
+import { cn } from '@/lib/utils'
+import { Pencil } from 'lucide-react'
 import type { CSSProperties, ReactNode } from 'react'
 import { useSearchParams } from 'wouter'
 
@@ -5,7 +7,6 @@ import { PercentMeter } from '@/components/common/PercentMeter'
 import { TransitionLink } from '@/components/common/TransitionLink'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuthStore } from '@/features/auth'
-import { cn } from '@/lib/utils'
 import type { TeacherComment } from '../types'
 import { CategoryTag } from './CategoryTag'
 import { CommentClassificationEditor } from './CommentClassificationEditor'
@@ -233,9 +234,11 @@ function Divider() {
 function ModifiedMark({ label }: { label: string }) {
   return (
     <span
-      aria-hidden="true"
       title={label}
-      className="size-1 shrink-0 rounded-full bg-current opacity-60"
-    />
+      className="text-muted-foreground inline-flex items-center gap-1 px-1.5 py-0.5 text-[0.65rem] font-medium tracking-normal normal-case"
+    >
+      <Pencil aria-hidden="true" className="size-2.5" />
+      Editado
+    </span>
   )
 }
