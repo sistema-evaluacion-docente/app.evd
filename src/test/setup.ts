@@ -23,3 +23,12 @@ if (!window.matchMedia) {
     dispatchEvent: () => false,
   })
 }
+
+/**
+ * jsdom doesn't implement `scrollIntoView`. The plan form calls it to carry the
+ * director to the first field it is missing, and without this every test that
+ * submits an incomplete form dies on a method that isn't there.
+ */
+if (!Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = () => {}
+}
