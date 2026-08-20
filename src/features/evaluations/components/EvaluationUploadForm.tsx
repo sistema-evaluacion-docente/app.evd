@@ -1,4 +1,5 @@
-import { Info } from 'lucide-react'
+import { CheckCircle2, Info, ListChecks } from 'lucide-react'
+import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { FileDropzone } from '@/components/common/FileDropzone'
@@ -16,7 +17,9 @@ import { useEvaluationLogs } from '../hooks'
  * Form that uploads the teacher-evaluation PDF of a period: file picker with
  * PDF/10 MB validation, an informational notice linking to the teacher upload
  * page, and submit/cancel actions. On success it opens the progress WebSocket
- * so the global `FloatingLogs` panel streams the processing logs.
+ * so the global `FloatingLogs` panel streams the processing logs, and swaps
+ * the picker for the review step — the PDF cuts long materia names off, so
+ * the director is sent straight to correcting them.
  *
  * @example
  * <EvaluationUploadForm />
@@ -26,6 +29,7 @@ export function EvaluationUploadForm() {
   const { connect } = useEvaluationLogs()
   const upload = useUploadEvaluation()
   const { file, error, handleFile } = useFileUpload()
+  const [uploadedId, setUploadedId] = useState<number | null>(null)
 
   const uploadError = upload.error?.message || null
   const displayedError = error ?? uploadError
@@ -35,6 +39,8 @@ export function EvaluationUploadForm() {
 
     upload.mutate(file, {
       onSuccess: (result) => {
+        setUploadedId(result.data.id)
+
         connect({
           evaluationId: result.data.id,
           queryKeysToInvalidate: [evaluationsKeys.lists()],
@@ -57,40 +63,70 @@ export function EvaluationUploadForm() {
       </CardHeader>
 
       <CardContent className="space-y-5">
-        <Alert className="border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-200">
-          <Info className="size-4" aria-hidden="true" />
-          <AlertTitle>Asegúrate de haber subido los docentes previamente</AlertTitle>
+        {uploadedId != null ? (
+          <>
+            <Alert className="border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
+              <CheckCircle2 className="size-4" aria-hidden="true" />
+              <AlertTitle>Evaluación subida</AlertTitle>
 
-          <AlertDescription>
-            Para evitar problemas al procesar la evaluación, verifica que los docentes ya estén
-            registrados antes de continuar.{' '}
-            <TransitionLink href="/docentes/cargar">Ir a cargar docentes</TransitionLink>
-          </AlertDescription>
-        </Alert>
+              <AlertDescription>
+                El procesamiento continúa en segundo plano. Cuando termine, revisa los nombres de
+                las materias: el PDF suele cortarlos cuando son largos.
+              </AlertDescription>
+            </Alert>
 
-        <FileDropzone
-          file={file}
-          error={displayedError}
-          onFileChange={handleFile}
-          disabled={upload.isPending}
-          isUploading={upload.isPending}
-          subtitle="Arrastra y suelta o haz clic · Máximo 10 MB"
-        />
+            <div className="flex flex-wrap items-center justify-end gap-3">
+              <Button type="button" variant="ghost" onClick={() => navigate('/evaluaciones')}>
+                Ir a evaluaciones
+              </Button>
 
-        <div className="flex items-center justify-end gap-3">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => navigate('/evaluaciones')}
-            disabled={upload.isPending}
-          >
-            Cancelar
-          </Button>
+              <Button
+                type="button"
+                onClick={() => navigate(`/evaluaciones/${uploadedId}/materias`)}
+              >
+                <ListChecks className="size-4" aria-hidden="true" />
+                Revisar materias
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <Alert className="border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-200">
+              <Info className="size-4" aria-hidden="true" />
+              <AlertTitle>Asegúrate de haber subido los docentes previamente</AlertTitle>
 
-          <Button type="button" onClick={handleSubmit} disabled={!file || upload.isPending}>
-            {upload.isPending ? 'Subiendo…' : 'Subir evaluación'}
-          </Button>
-        </div>
+              <AlertDescription>
+                Para evitar problemas al procesar la evaluación, verifica que los docentes ya estén
+                registrados antes de continuar.{' '}
+                <TransitionLink href="/docentes/cargar">Ir a cargar docentes</TransitionLink>
+              </AlertDescription>
+            </Alert>
+
+            <FileDropzone
+              file={file}
+              error={displayedError}
+              onFileChange={handleFile}
+              disabled={upload.isPending}
+              isUploading={upload.isPending}
+              subtitle="Arrastra y suelta o haz clic · Máximo 10 MB"
+            />
+
+            <div className="flex items-center justify-end gap-3">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => navigate('/evaluaciones')}
+                disabled={upload.isPending}
+              >
+                Cancelar
+              </Button>
+
+              <Button type="button" onClick={handleSubmit} disabled={!file || upload.isPending}>
+                {upload.isPending ? 'Subiendo…' : 'Subir evaluación'}
+              </Button>
+            </div>
+          </>
+        )}
       </CardContent>
     </Card>
   )
