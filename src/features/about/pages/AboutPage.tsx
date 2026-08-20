@@ -7,6 +7,7 @@ import {
   ClipboardCheck,
   FileSearch,
   GitCompareArrows,
+  LogIn,
   MoveDown,
   Scissors,
   ShieldCheck,
@@ -67,9 +68,10 @@ function SiteNav() {
 
         <a
           href="/login"
-          className="bg-brand-600 hover:bg-brand-700 focus-visible:ring-brand-600 focus-visible:ring-offset-background rounded px-5 py-2.5 text-[14px] font-semibold whitespace-nowrap text-white transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none active:translate-y-px"
+          className="bg-brand-600 hover:bg-brand-700 focus-visible:ring-brand-600 focus-visible:ring-offset-background flex items-center gap-2 rounded px-5 py-2.5 text-[14px] font-semibold whitespace-nowrap text-white transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none active:translate-y-px"
         >
-          Ingresar
+          <LogIn size={16} />
+          <span>Ingresar</span>
         </a>
       </div>
     </header>
