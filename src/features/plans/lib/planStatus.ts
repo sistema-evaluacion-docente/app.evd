@@ -5,6 +5,7 @@ import type {
   EvidenceStatus,
   Plan,
   PlanCheckpoint,
+  PlanEvidence,
   PlanStatus,
 } from '../types'
 
@@ -75,6 +76,37 @@ export const REQUEST_STATUS_CLASS: Record<EvidenceRequestStatus, string> = {
   EN_REVISION: WARNING,
   APROBADA: SUCCESS,
   RECHAZADA: DANGER,
+}
+
+/**
+ * How a submitted evidence is called: the name it was uploaded under.
+ *
+ * `PlanEvidence` has no filename of its own — unlike `PlanDocument`, the API
+ * doesn't keep the one on disk — so the name travels in `description`, which
+ * the attach dialog fills in from the file. Older entries were uploaded before
+ * that, hence the fallback on the row's own id.
+ *
+ * @example
+ * evidenceLabel({ id: 12, description: 'listas_asistencia.pdf' })
+ * // → 'listas_asistencia.pdf'
+ */
+export function evidenceLabel(evidence: Pick<PlanEvidence, 'id' | 'description'>): string {
+  return evidence.description?.trim() || `Evidencia #${evidence.id}`
+}
+
+/**
+ * The name to save it under. The label is free text the teacher can edit, so
+ * the extension is put back when it isn't already there — the API only ever
+ * serves these as PDFs.
+ *
+ * @example
+ * evidenceFileName({ id: 12, description: 'Listas de asistencia' })
+ * // → 'Listas de asistencia.pdf'
+ */
+export function evidenceFileName(evidence: Pick<PlanEvidence, 'id' | 'description'>): string {
+  const label = evidenceLabel(evidence)
+
+  return label.toLowerCase().endsWith('.pdf') ? label : `${label}.pdf`
 }
 
 /** The official form defines exactly two follow-ups per semester. */

@@ -173,6 +173,59 @@ export function planFormErrors({
   return errors
 }
 
+/** Ids of the fields one seguimiento owns, matching what `PlanCheckpoints` renders. */
+export const checkpointFieldId = {
+  date: (checkpointId: number) => `date-${checkpointId}`,
+  note: (checkpointId: number, aspect: number) => `note-${checkpointId}-${aspect}`,
+}
+
+/**
+ * What a seguimiento still needs before it can be saved, in painting order.
+ *
+ * A cut is only worth recording once it says *when* it was made and *what* was
+ * observed: the API takes every field as optional, so an empty save used to go
+ * through, answer "guardado" and overwrite the previous notes with `''`.
+ *
+ * Every aspect on screen is asked for, not just one — the aspects passed in are
+ * already the ones the plan committed to, so each of them is a row Formato 3
+ * prints and would otherwise print blank.
+ *
+ * @example
+ * checkpointErrors({ checkpointId: 7, date: '', aspects, notes: {} })[0]
+ * // → { id: 'date-7', message: 'Registra la fecha del seguimiento.' }
+ */
+export function checkpointErrors({
+  checkpointId,
+  date,
+  aspects,
+  notes,
+}: {
+  checkpointId: number
+  date: string
+  aspects: PlanAspect[]
+  notes: Record<number, string>
+}): PlanFieldError[] {
+  const errors: PlanFieldError[] = []
+
+  if (isBlank(date)) {
+    errors.push({
+      id: checkpointFieldId.date(checkpointId),
+      message: 'Registra la fecha del seguimiento.',
+    })
+  }
+
+  for (const aspect of aspects) {
+    if (isBlank(notes[aspect.aspect] ?? '')) {
+      errors.push({
+        id: checkpointFieldId.note(checkpointId, aspect.aspect),
+        message: 'Falta la observación de este aspecto.',
+      })
+    }
+  }
+
+  return errors
+}
+
 /**
  * Scrolls to a field and puts the cursor in it.
  *
