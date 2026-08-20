@@ -52,11 +52,11 @@ export function TeacherOverview({ teacher }: TeacherOverviewProps) {
 
   return (
     <>
-      <p className="text-foreground mb-2 text-sm font-bold">
+      <p className="text-foreground mb-2 text-sm font-medium">
         Tomado de: Evaluación docente generado por DIVISIST (División de Sistemas)
       </p>
 
-      <section className="divide-border border-border bg-background divide-y overflow-hidden rounded-md border">
+      <section className="border-border bg-background divide-y overflow-hidden rounded-md border">
         <div className="bg-brand-50 dark:bg-brand-900/20 flex flex-wrap items-center justify-between gap-x-6 gap-y-1 px-6 py-3">
           <p className="text-brand-700 dark:text-brand-200 flex flex-wrap items-center gap-x-2 gap-y-0.5">
             <CalendarRange
@@ -81,65 +81,69 @@ export function TeacherOverview({ teacher }: TeacherOverviewProps) {
           )}
         </div>
 
-        <div className="relative flex flex-wrap items-start justify-between gap-6 overflow-hidden p-6">
-          <div
-            aria-hidden="true"
-            className="from-brand-500/10 pointer-events-none absolute -top-24 -right-24 size-56 rounded-full bg-radial to-transparent blur-2xl"
-          />
-
-          <div className="relative flex items-center gap-2">
-            <div>
-              <Avatar className="size-20">
-                <AvatarFallback>{teacher.name.at(0)}</AvatarFallback>
-                <AvatarImage src={teacher.avatar_url} alt={`Foto de ${teacher.name}`} />
-              </Avatar>
-            </div>
-
-            <div>
-              <h2 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">{teacher.name}</h2>
-              <p className="text-muted-foreground tracking-wide uppercase">
-                {teacher.institutional_code}
-              </p>
-            </div>
-          </div>
-
-          <div className="relative text-right">
-            <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-              Promedio general del periodo
-            </p>
-
-            <ScoreBadge
-              value={teacher.overall_average}
-              previousValue={teacher.previous_period?.overall_average}
-              previousLabel="periodo anterior"
-              tone="auto"
-              size="5xl"
-              decimals={2}
-              className="leading-none"
+        <div>
+          <div className="relative flex flex-wrap items-start justify-between gap-6 overflow-hidden p-6">
+            <div
+              aria-hidden="true"
+              className="from-brand-500/10 pointer-events-none absolute -top-24 -right-24 size-56 rounded-full bg-radial to-transparent blur-2xl"
             />
 
-            {(showBestMover || showWorstMover) && (
-              <div className="mt-3 flex flex-wrap justify-end gap-2">
-                {showBestMover && bestMover && (
-                  <Badge className="gap-1 bg-emerald-50 text-emerald-700">
-                    <TrendingUp className="size-3.5" aria-hidden="true" />
-                    Mayor mejora: {bestMover.dimension} (+{bestMover.delta.toFixed(2)})
-                  </Badge>
-                )}
-
-                {showWorstMover && worstMover && (
-                  <Badge className="gap-1 bg-red-50 text-red-700">
-                    <TrendingDown className="size-3.5" aria-hidden="true" />
-                    Requiere atención: {worstMover.dimension} ({worstMover.delta.toFixed(2)})
-                  </Badge>
-                )}
+            <div className="relative flex items-center gap-2">
+              <div>
+                <Avatar className="size-20">
+                  <AvatarFallback>{teacher.name.at(0)}</AvatarFallback>
+                  <AvatarImage src={teacher.avatar_url} alt={`Foto de ${teacher.name}`} />
+                </Avatar>
               </div>
-            )}
-          </div>
-        </div>
 
-        <div className="flex justify-end px-6 py-2">
-          <ScoreLegend />
+              <div>
+                <h2 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
+                  {teacher.name}
+                </h2>
+                <p className="text-muted-foreground tracking-wide uppercase">
+                  {teacher.institutional_code}
+                </p>
+              </div>
+            </div>
+
+            <div className="relative text-right">
+              <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                Promedio general del periodo
+              </p>
+
+              <ScoreBadge
+                value={teacher.overall_average}
+                previousValue={teacher.previous_period?.overall_average}
+                previousLabel="periodo anterior"
+                tone="auto"
+                size="5xl"
+                decimals={2}
+                className="leading-none"
+              />
+
+              {(showBestMover || showWorstMover) && (
+                <div className="mt-3 flex flex-wrap justify-end gap-2">
+                  {showBestMover && bestMover && (
+                    <Badge className="gap-1 bg-emerald-50 text-emerald-700">
+                      <TrendingUp className="size-3.5" aria-hidden="true" />
+                      Mayor mejora: {bestMover.dimension} (+{bestMover.delta.toFixed(2)})
+                    </Badge>
+                  )}
+
+                  {showWorstMover && worstMover && (
+                    <Badge className="gap-1 bg-red-50 text-red-700">
+                      <TrendingDown className="size-3.5" aria-hidden="true" />
+                      Requiere atención: {worstMover.dimension} ({worstMover.delta.toFixed(2)})
+                    </Badge>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex justify-end px-6 py-2">
+            <ScoreLegend />
+          </div>
         </div>
 
         <div className="divide-border grid grid-cols-2 divide-x sm:grid-cols-4">
