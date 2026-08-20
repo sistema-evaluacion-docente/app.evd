@@ -88,7 +88,7 @@ export function CommentCard({
   return (
     <article
       className={cn(
-        'group hover:bg-muted/30 relative grid gap-x-4 transition-colors duration-300',
+        'group relative grid gap-x-4 transition-colors duration-300',
         withGutter ? 'grid-cols-[1.5rem_1fr]' : 'grid-cols-1',
         isCompact ? 'py-3' : 'py-5',
         className,
@@ -166,7 +166,7 @@ export function CommentCard({
         <div className="text-muted-foreground mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-xs font-medium tracking-wide uppercase">
           {showRisk && comment.risk_level && (
             <span
-              className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5"
+              className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 opacity-80"
               style={
                 accent
                   ? {
@@ -205,6 +205,7 @@ export function CommentCard({
                   showDot={false}
                   score={showScores ? category.score : undefined}
                   showScoreBar={false}
+                  className="opacity-80"
                 />
               ))}
 
