@@ -1,0 +1,11 @@
+User-agent: *
+Disallow: /home
+Disallow: /notificaciones
+Disallow: /periodos
+Disallow: /docentes
+Disallow: /materias
+Disallow: /comentarios
+Disallow: /planes
+Disallow: /mis-planes
+Disallow: /evaluaciones
+Disallow: /admin
