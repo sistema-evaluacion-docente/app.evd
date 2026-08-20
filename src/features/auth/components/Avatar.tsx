@@ -1,4 +1,4 @@
-import { Building2, LogOut, User } from 'lucide-react'
+import { Bell, Building2, LogOut } from 'lucide-react'
 
 import { AvatarFallback, AvatarImage, Avatar as AvatarPrimitive } from '@/components/ui/avatar'
 import {
@@ -98,9 +98,9 @@ export function Avatar() {
 
             <DropdownMenuSeparator />
 
-            <DropdownMenuItem onClick={() => navigate('/me/profile')}>
-              <User className="size-4" aria-hidden="true" />
-              Perfil
+            <DropdownMenuItem onClick={() => navigate('/notificaciones')}>
+              <Bell className="size-4" aria-hidden="true" />
+              Notificaciones
             </DropdownMenuItem>
 
             <DropdownMenuSub>
