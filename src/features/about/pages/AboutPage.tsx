@@ -816,7 +816,7 @@ function Límites() {
 
 const AUTHORS = [
   {
-    photo: '',
+    photo: '/orlando-beltran.jpeg',
     name: 'Orlando José Beltrán Valero',
     code: '1152167',
     url: 'https://github.com/DevOB31',
