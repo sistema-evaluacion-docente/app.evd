@@ -439,7 +439,7 @@ function PapelDelLlm() {
   return (
     <section id="llm" className="border-ink-200 bg-ink-100 border-b py-20 md:py-28">
       <div className="mx-auto max-w-[1240px] px-5 lg:px-8">
-        <div className="border-ink-300 border-t-brand-600 bg-background border border-t-2 p-7 md:p-12">
+        <div className="border-ink-300 border-t-brand-600 bg-background rounded border border-t-2 p-7 md:p-12">
           <h2 className="font-display text-ink-900 max-w-[22ch] text-[30px] leading-[1.14] font-semibold text-balance md:text-[40px]">
             Dónde estuvo el modelo generativo y dónde no está
           </h2>
@@ -511,19 +511,7 @@ function Corpus() {
           con la realidad de los comentarios de heteroevaluación.
         </p>
       </div>
-
-      <div className="mt-14">
-        <img
-          src="https://picsum.photos/id/24/2400/900?grayscale"
-          alt="Libro abierto sobre un escritorio de madera"
-          width={2400}
-          height={900}
-          loading="lazy"
-          decoding="async"
-          className="h-[240px] w-full object-cover md:h-[400px]"
-        />
-      </div>
-
+      s
       <div className="mx-auto mt-16 max-w-[1240px] px-5 lg:px-8">
         <div className="border-ink-300 grid grid-cols-1 gap-x-10 gap-y-10 border-t pt-10 sm:grid-cols-2 lg:grid-cols-4">
           {CORPUS_FIGURES.map((item) => (
@@ -602,8 +590,8 @@ function Privacidad() {
 
           <div className="relative min-h-[220px] lg:col-span-2">
             <img
-              src="https://picsum.photos/id/396/1400/900?grayscale"
-              alt="Corredor técnico de una instalación de infraestructura"
+              src="https://ww2.ufps.edu.co/public/imagenes/template/header/vista_ufps.png"
+              alt="Imagen de la Universidad Francisco de Paula Santander"
               width={1400}
               height={900}
               loading="lazy"
