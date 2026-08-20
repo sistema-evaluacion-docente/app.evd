@@ -38,7 +38,7 @@ import Logo from './Logo'
 const DEFAULT_ICON = FileText
 
 const MENU_ICON_BY_PATH: Record<string, typeof DEFAULT_ICON> = {
-  '/': FileChartColumnIncreasing,
+  '/home': FileChartColumnIncreasing,
   '/dashboard': LayoutGrid,
   '/notificaciones': Bell,
   '/periodos': Clock,
