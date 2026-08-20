@@ -145,8 +145,6 @@ export function CourseTeacherDetail({
     code: item.period_code,
   }))
 
-  const periodsTaughtCount = comparisonOptions.length + 1
-
   return (
     <div className={cn('space-y-6', className)}>
       <div
@@ -186,23 +184,12 @@ export function CourseTeacherDetail({
         )}
       </div>
 
-      <div className="flex flex-wrap items-stretch gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="border-border bg-background min-w-0 flex-1 rounded-md border px-6 py-5">
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
             <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
               Promedio en esta asignatura
             </p>
-
-            {isHistoryLoading ? (
-              <Skeleton className="h-4 w-40" />
-            ) : (
-              <span className="text-muted-foreground text-xs">
-                Ha dictado esta materia en:{' '}
-                <span className="text-foreground text-base font-bold">
-                  {periodsTaughtCount} {periodsTaughtCount === 1 ? 'periodo' : 'periodos'}
-                </span>
-              </span>
-            )}
           </div>
 
           <ScoreBadge
@@ -273,7 +260,7 @@ export function CourseTeacherDetail({
         </div>
 
         {dimensionRanking.length > 0 && (
-          <div className="border-border bg-background flex w-full shrink-0 flex-col rounded-md border px-5 py-5 sm:w-80">
+          <div className="border-border bg-background flex w-full shrink-0 flex-col rounded-md border px-5 py-5">
             <p className="text-muted-foreground mb-3 text-xs font-medium tracking-wide uppercase">
               Promedio por dimensión
             </p>

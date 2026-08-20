@@ -173,7 +173,7 @@ export function ScoreBadge({
   const score = showMax ? (
     <span className={cn('inline-flex items-baseline', !showTrendBadge && className)}>
       {valueSpan}
-      <span className={cn('text-muted-foreground/70 ml-1 font-normal', SIZE_CLASS[size])}>
+      <span className={cn('ml-1 font-normal', SIZE_CLASS[size])}>
         /{max.toFixed(1)}
       </span>
     </span>
