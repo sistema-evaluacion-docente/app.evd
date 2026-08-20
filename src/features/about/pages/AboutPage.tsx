@@ -946,12 +946,13 @@ function SiteFooter() {
             . Facultad de Ingeniería, programa de Ingeniería de Sistemas. San José de Cúcuta, 2025.
           </p>
         </div>
-        <a
+
+        <TransitionLink
           href="/login"
           className="text-ink-700 hover:text-brand-600 dark:hover:text-brand-400 text-[14px] font-medium whitespace-nowrap underline underline-offset-4 transition-colors"
         >
           Ingresar
-        </a>
+        </TransitionLink>
       </div>
     </footer>
   )
