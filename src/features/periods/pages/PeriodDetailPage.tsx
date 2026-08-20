@@ -1,8 +1,10 @@
-import { useRoute } from 'wouter'
+import { FileText } from 'lucide-react'
+import { Link, useRoute } from 'wouter'
 
 import { BackButton } from '@/components/common/BackButton'
 import { PageTitle } from '@/components/common/PageTitle'
 import TeacherDetailSkeleton from '@/components/skeletons/TeacherDetailSkeleton'
+import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/features/auth'
 import { TeacherEvaluationDetail, useGetTeacherDetail } from '@/features/teachers'
 import { courseHref } from '../config'
@@ -54,7 +56,19 @@ export default function PeriodDetailPage() {
 
   return (
     <div className="space-y-6">
-      <BackButton href="/periodos" label="Volver a mis periodos" className="mb-4" />
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <BackButton href="/periodos" label="Volver a mis periodos" />
+
+        <Button
+          variant="outline"
+          size="sm"
+          nativeButton={false}
+          render={<Link href={`/evaluaciones/${teacher.evaluation_id}/pdf`} />}
+        >
+          <FileText className="size-4" aria-hidden="true" />
+          Ver documento
+        </Button>
+      </div>
 
       <TeacherEvaluationDetail
         teacher={teacher}
