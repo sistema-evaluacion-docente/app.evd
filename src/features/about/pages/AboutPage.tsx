@@ -17,6 +17,7 @@ import {
 import type { ReactNode } from 'react'
 import { useMemo } from 'react'
 
+import { TransitionLink } from '@/components/common/TransitionLink'
 import { useInView } from '@/hooks/useInView'
 
 const ICON_STROKE = 1.5
@@ -100,13 +101,13 @@ function SiteNav() {
           ))}
         </nav>
 
-        <a
+        <TransitionLink
           href="/login"
           className="bg-brand-600 hover:bg-brand-700 focus-visible:ring-brand-600 focus-visible:ring-offset-background flex items-center gap-2 rounded px-5 py-2.5 text-[14px] font-semibold whitespace-nowrap text-white transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none active:translate-y-px"
         >
           <LogIn size={16} />
           <span>Ingresar</span>
-        </a>
+        </TransitionLink>
       </div>
     </header>
   )
