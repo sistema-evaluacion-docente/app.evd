@@ -86,10 +86,6 @@ export function SubjectsList({ className }: { className?: string }) {
 
   const handleUpdateSubmit = (values: Record<string, string>) => {
     if (!editTarget) return
-
-    // Course names are always uppercase on the source evaluation PDFs — keep
-    // renamed materias consistent with that instead of allowing a stray
-    // lowercase name to drift from how it reads everywhere else.
     updateCourse(
       { courseId: editTarget.id, payload: { name: values.name.toUpperCase() } },
       {
