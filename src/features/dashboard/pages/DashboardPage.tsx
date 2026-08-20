@@ -10,7 +10,7 @@ function TeacherDashboard() {
     <>
       <PageTitle>Mi resumen</PageTitle>
 
-      <div className="bg-background space-y-8 rounded p-4">
+      <div className="bg-background space-y-8 rounded">
         <PeriodAverageTrend />
 
         <TeacherPeriodInsights />
