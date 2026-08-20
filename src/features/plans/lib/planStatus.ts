@@ -88,10 +88,7 @@ export const CHECKPOINT_HINT: Record<CheckpointStage, string> = {
   SEGUNDO_SEGUIMIENTO: 'Semanas 15 y/o 16 desde el inicio del plan',
 }
 
-export const CHECKPOINT_ORDER: CheckpointStage[] = [
-  'PRIMER_SEGUIMIENTO',
-  'SEGUNDO_SEGUIMIENTO',
-]
+export const CHECKPOINT_ORDER: CheckpointStage[] = ['PRIMER_SEGUIMIENTO', 'SEGUNDO_SEGUIMIENTO']
 
 /** How far Formato 3 has been carried, said the way the form names its columns. */
 const CHECKPOINT_SHORT_LABEL: Record<CheckpointStage, string> = {
@@ -126,6 +123,9 @@ export function followupFormatStage(plan: Plan): string | null {
   return null
 }
 
+/** How complete a drafted commitment is. */
+export type CommitmentState = 'complete' | 'missing-description' | 'missing-commitment'
+
 /** A plan is closed when its status is any of the terminal ones. */
 export function isPlanClosed(status: PlanStatus): boolean {
   return status.startsWith('CERRADO_')
@@ -156,4 +156,32 @@ export const PLAN_FORMATS = [
 /** Stable key for an indicator, matching how the API identifies it. */
 export function indicatorKey(targetType: string, targetRef: string | null): string {
   return `${targetType}:${targetRef ?? ''}`
+}
+
+/**
+ * How complete a drafted commitment is, for the card that holds it to say so.
+ *
+ * Only the description is required by the form itself — `commitment` is
+ * nullable on the API — but the Ficha de acuerdo can't be signed until at least
+ * one commitment carries its text, so an empty one is still worth flagging.
+ *
+ * @example
+ * commitmentState({ description: 'Metodología (3.10)', commitment: '' })
+ * // → 'missing-commitment'
+ */
+export function commitmentState(item: {
+  description: string
+  commitment: string
+}): CommitmentState {
+  if (item.description.trim().length === 0) return 'missing-description'
+  if (item.commitment.trim().length === 0) return 'missing-commitment'
+
+  return 'complete'
+}
+
+/** Whether every commitment of the list is filled in, for the section counter. */
+export function countCompleteCommitments(
+  items: { description: string; commitment: string }[],
+): number {
+  return items.filter((item) => commitmentState(item) === 'complete').length
 }
