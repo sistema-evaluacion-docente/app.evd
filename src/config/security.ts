@@ -5,6 +5,7 @@ const securityConfig = {
       name: 'Mi Resumen',
       roles: ['DIRECTOR DE DEPARTAMENTO', 'ADMIN', 'DOCENTE'],
     },
+
     {
       path: '/periodos',
       name: 'Mis periodos',
@@ -44,6 +45,11 @@ const securityConfig = {
       path: '/planes',
       name: 'Planes de mejoramiento',
       roles: ['DIRECTOR DE DEPARTAMENTO'],
+    },
+    {
+      path: '/notificaciones',
+      name: 'Notificaciones',
+      roles: ['DIRECTOR DE DEPARTAMENTO', 'ADMIN', 'DOCENTE'],
     },
     {
       path: '/admin/facultades',

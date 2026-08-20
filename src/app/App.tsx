@@ -18,6 +18,7 @@ import {
 } from '@/features/evaluations'
 import { FacultiesPage } from '@/features/faculties'
 import { NotFoundPage } from '@/features/not-found'
+import { NotificationsPage } from '@/features/notifications'
 import {
   AdminPeriodsPage,
   PeriodCourseDetailPage,
@@ -41,6 +42,12 @@ function App() {
         <Route path="/home">
           <AppLayout>
             <DashboardPage />
+          </AppLayout>
+        </Route>
+
+        <Route path="/notificaciones">
+          <AppLayout>
+            <NotificationsPage />
           </AppLayout>
         </Route>
 

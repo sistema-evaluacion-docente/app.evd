@@ -1,3 +1,5 @@
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
+
 import type { ResponseAPI } from '@/@types/Response'
 import api from '@/config/axios'
 import type { Notification, NotificationFilters, NotificationMarkRead } from '../types/Notification'
@@ -41,4 +43,35 @@ export {
   getUnreadCount,
   markAllAsRead as markAllAsReadApi,
   markAsRead as markAsReadApi,
+}
+
+/** Query-key factory so list invalidations/refetches stay consistent. */
+export const notificationsKeys = {
+  all: ['notifications'] as const,
+  lists: () => [...notificationsKeys.all, 'list'] as const,
+}
+
+/**
+ * Fetches the authenticated user's notifications, paginated and optionally
+ * filtered by type, read status and/or free text (`GET /notifications/me`).
+ * Used by the full notifications page; the header bell keeps its own
+ * unpaginated feed via the notifications store.
+ *
+ * @example
+ * const { data, isPending } = useGetMyNotifications({ page, limit: 10, filters: { read: false } });
+ */
+export function useGetMyNotifications({
+  page = 1,
+  limit = 10,
+  filters,
+}: {
+  page?: number
+  limit?: number
+  filters?: NotificationFilters
+} = {}) {
+  return useQuery({
+    queryKey: [...notificationsKeys.lists(), { page, limit, filters }],
+    queryFn: () => getMyNotifications(filters, page, limit),
+    placeholderData: keepPreviousData,
+  })
 }

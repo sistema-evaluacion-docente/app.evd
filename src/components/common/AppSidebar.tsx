@@ -12,6 +12,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import {
+  Bell,
   Building2,
   ClipboardCheck,
   Clock,
@@ -36,6 +37,7 @@ const DEFAULT_ICON = FileText
 
 const MENU_ICON_BY_PATH: Record<string, typeof DEFAULT_ICON> = {
   '/dashboard': LayoutGrid,
+  '/notificaciones': Bell,
   '/periodos': Clock,
   '/periodos/materias': Layers,
   '/evaluaciones': ClipboardCheck,
