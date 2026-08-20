@@ -636,13 +636,30 @@ export function useDownloadDocumentWord(planId: number) {
   })
 }
 
-/** Same idea for a submitted evidence file. */
+/**
+ * Same idea for a submitted evidence file: saved under the name it was uploaded
+ * with, which the caller resolves with `evidenceFileName`.
+ */
 export function useDownloadEvidence(planId: number) {
+  return useMutation({
+    mutationFn: async ({ evidenceId, filename }: { evidenceId: number; filename: string }) => {
+      const blob = await getEvidenceBlob(planId, evidenceId)
+
+      await saveBlob(blob, filename)
+    },
+  })
+}
+
+/**
+ * Object URL of a submitted evidence, for previewing it in a new tab. As with
+ * the signed forms, the caller owns the URL: it opens the tab and revokes it.
+ */
+export function usePreviewEvidence(planId: number) {
   return useMutation({
     mutationFn: async (evidenceId: number) => {
       const blob = await getEvidenceBlob(planId, evidenceId)
 
-      await saveBlob(blob, `evidencia_${evidenceId}.pdf`)
+      return URL.createObjectURL(blob)
     },
   })
 }
