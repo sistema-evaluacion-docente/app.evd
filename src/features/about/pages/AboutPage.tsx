@@ -88,7 +88,10 @@ function Hero() {
               Componente de IA para la evaluación docente
             </h1>
 
-            <a href="#problema" className="text-white bg-primary transition-transform hover:scale-120 rounded-full w-10 h-10 flex justify-center items-center">
+            <a
+              href="#problema"
+              className="bg-primary flex h-10 w-10 items-center justify-center rounded-full text-white transition-transform hover:scale-120"
+            >
               <MoveDown size={20} />
             </a>
           </div>
@@ -265,13 +268,14 @@ function Proceso() {
           Del PDF a la alerta, sin que el texto salga del servidor
         </h2>
 
-        <div className="mt-16 max-w-[720px]">
+        {/* Mobile: timeline vertical */}
+        <div className="mt-16 max-w-[720px] md:hidden">
           {PIPELINE.map((step, index) => {
             const isLast = index === PIPELINE.length - 1
             const Icon = step.icon
 
             return (
-              <div key={step.title} className="group flex gap-6 md:gap-8">
+              <div key={step.title} className="group flex gap-6">
                 <div className="flex flex-col items-center">
                   <span className="border-ink-300 bg-background text-ink-600 group-hover:border-brand-600 group-hover:text-brand-600 relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors">
                     <Icon size={16} strokeWidth={ICON_STROKE} aria-hidden />
@@ -289,6 +293,38 @@ function Proceso() {
                     {step.body}
                   </p>
                 </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Desktop: horizontal, dos filas */}
+        <div className="mt-16 hidden md:grid md:grid-cols-4 md:gap-x-10 md:gap-y-14">
+          {PIPELINE.map((step, index) => {
+            const Icon = step.icon
+            const isLastInRow = (index + 1) % 4 === 0
+            const isLast = index === PIPELINE.length - 1
+            const showConnector = !isLastInRow && !isLast
+
+            return (
+              <div key={step.title} className="group bg-background rounded-lg p-6">
+                <div className="flex items-center gap-3">
+                  <span className="border-ink-300 bg-background text-ink-600 group-hover:border-brand-600 group-hover:text-brand-600 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors">
+                    <Icon size={16} strokeWidth={ICON_STROKE} aria-hidden />
+                  </span>
+
+                  <span className="font-numeric text-ink-500 shrink-0 text-[12px]">
+                    Paso {index + 1}
+                  </span>
+
+                  {showConnector && (
+                    <span className="bg-ink-300 -mr-[5.5rem] h-px flex-1" aria-hidden />
+                  )}
+                </div>
+
+                <h3 className="text-ink-900 mt-4 text-[17px] font-semibold">{step.title}</h3>
+
+                <p className="text-ink-500 mt-2 text-[15px] leading-relaxed">{step.body}</p>
               </div>
             )
           })}
