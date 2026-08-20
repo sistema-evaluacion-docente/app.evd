@@ -4,9 +4,9 @@ import { useDebounce, useDebouncedCallback } from 'use-debounce'
 
 import { DataTableFilters, type FilterConfig } from '@/components/common/DataTableFilters'
 import { PageTitle } from '@/components/common/PageTitle'
+import NotificationsSkeleton from '@/components/skeletons/NotificationsSkeleton'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Skeleton } from '@/components/ui/skeleton'
 import { useTableFilters } from '@/hooks/useTableFilters'
 import { useGetMyNotifications } from '../api'
 import { NotificationItem } from '../components'
@@ -124,38 +124,34 @@ export default function NotificationsPage() {
           />
         </div>
 
-        <div className="bg-background border-border/70 overflow-hidden rounded-lg border">
-          {isPending ? (
-            <div className="space-y-3 p-4">
-              <Skeleton className="h-16 w-full" />
-              <Skeleton className="h-16 w-full" />
-              <Skeleton className="h-16 w-full" />
-              <Skeleton className="h-16 w-full" />
-              <Skeleton className="h-16 w-full" />
-            </div>
-          ) : error ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <p className="text-destructive text-sm">{error.message}</p>
-            </div>
-          ) : notifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <Bell className="text-muted-foreground/40 size-10" aria-hidden="true" />
-              <p className="text-muted-foreground mt-4 text-sm">
-                No tienes notificaciones que coincidan con los filtros aplicados.
-              </p>
-            </div>
-          ) : (
-            <div className={isFetching ? 'opacity-60 transition-opacity' : 'transition-opacity'}>
-              {notifications.map((notification) => (
-                <NotificationItem
-                  key={notification.id}
-                  notification={notification}
-                  onMarkAsRead={handleMarkAsRead}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        {isPending ? (
+          <NotificationsSkeleton />
+        ) : (
+          <div className="bg-background border-border/70 overflow-hidden rounded-lg border">
+            {error ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <p className="text-destructive text-sm">{error.message}</p>
+              </div>
+            ) : notifications.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <Bell className="text-muted-foreground/40 size-10" aria-hidden="true" />
+                <p className="text-muted-foreground mt-4 text-sm">
+                  No tienes notificaciones que coincidan con los filtros aplicados.
+                </p>
+              </div>
+            ) : (
+              <div className={isFetching ? 'opacity-60 transition-opacity' : 'transition-opacity'}>
+                {notifications.map((notification) => (
+                  <NotificationItem
+                    key={notification.id}
+                    notification={notification}
+                    onMarkAsRead={handleMarkAsRead}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {!isPending && !error && notifications.length > 0 && (
           <div className="flex items-center justify-center gap-1.5">
