@@ -1,6 +1,7 @@
-import { ChevronRight, Search, X } from 'lucide-react'
+import { ChevronRight, Search, Sparkles, X } from 'lucide-react'
 import { useMemo, type ReactNode } from 'react'
 
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { categoryColor, categoryLabel } from '@/lib/categoryLabel'
 import { cn } from '@/lib/utils'
@@ -108,6 +109,15 @@ export function CommentsPanel({
   const flatComments = filteredCourses.flatMap((course) => course.comments)
   const hasData = !isLoading && !error && totalCount > 0
 
+  // The AI disclaimer only makes sense once at least one comment has
+  // actually been classified — comments can exist before that (`risk_level`
+  // is `null` until the analysis runs), and the message specifically talks
+  // about "los comentarios clasificados", not comments in general.
+  const hasClassifiedComments = useMemo(
+    () => (courses ?? []).some((course) => course.comments.some((c) => c.risk_level != null)),
+    [courses],
+  )
+
   const listProps: Omit<CommentListProps, 'comments'> = {
     isLoading,
     error,
@@ -157,6 +167,17 @@ export function CommentsPanel({
 
           {headerActions && <div className="relative ml-auto">{headerActions}</div>}
         </header>
+      )}
+
+      {hasData && hasClassifiedComments && (
+        <Alert className="mx-6 mt-4 w-auto border-amber-200 bg-amber-50 py-2.5 dark:border-amber-900/50 dark:bg-amber-950/40">
+          <Sparkles className="size-3.5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+
+          <AlertDescription className="text-xs text-amber-800 dark:text-amber-300">
+            Los comentarios clasificados fueron analizados por el componente de Inteligencia
+            Artificial y están sujetos a revisión del director de departamento.
+          </AlertDescription>
+        </Alert>
       )}
 
       {showFilters && hasData && (

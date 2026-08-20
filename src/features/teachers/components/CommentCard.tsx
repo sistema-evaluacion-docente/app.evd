@@ -162,11 +162,18 @@ export function CommentCard({
           {comment.original_text}
         </blockquote>
 
-        <div className="text-muted-foreground mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs font-medium tracking-wide uppercase">
+        <div className="text-muted-foreground mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-xs font-medium tracking-wide uppercase">
           {showRisk && comment.risk_level && (
             <span
-              className="inline-flex items-center gap-1.5"
-              style={accent ? { color: accent } : undefined}
+              className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5"
+              style={
+                accent
+                  ? {
+                      color: `color-mix(in srgb, ${accent} 60%, var(--color-foreground))`,
+                      backgroundColor: `color-mix(in srgb, ${accent} 18%, transparent)`,
+                    }
+                  : undefined
+              }
             >
               {comment.risk_level.name}
 
@@ -192,6 +199,7 @@ export function CommentCard({
                 <CategoryTag
                   key={category.id}
                   category={category}
+                  variant="soft"
                   short={isCompact}
                   showDot={false}
                   score={showScores ? category.score : undefined}
@@ -219,7 +227,7 @@ export function CommentCard({
 }
 
 function Divider() {
-  return <span aria-hidden="true" className="bg-border/80 h-3 w-px" />
+  return <span aria-hidden="true" className="bg-border h-5 w-0.5 shrink-0 rounded-full" />
 }
 
 function ModifiedMark({ label }: { label: string }) {
