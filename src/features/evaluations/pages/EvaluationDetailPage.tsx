@@ -1,3 +1,4 @@
+import { ListChecks } from 'lucide-react'
 import { Link, useRoute } from 'wouter'
 
 import { BackButton } from '@/components/common/BackButton'
@@ -76,7 +77,22 @@ export default function EvaluationDetailPage() {
     <div className="space-y-6">
       <BackButton href="/evaluaciones" label="Volver a evaluaciones" className="mb-4" />
 
-      <EvaluationOverview evaluation={evaluation} pdfHref={`/evaluaciones/${evaluation.id}/pdf`} />
+      <EvaluationOverview
+        evaluation={evaluation}
+        pdfHref={`/evaluaciones/${evaluation.id}/pdf`}
+        actions={
+          <Button
+            variant="outline"
+            size="sm"
+            nativeButton={false}
+            render={<Link href={`/evaluaciones/${evaluation.id}/materias`} />}
+            className="bg-background"
+          >
+            <ListChecks className="size-4" aria-hidden="true" />
+            Revisar materias
+          </Button>
+        }
+      />
 
       <section className="border-border bg-background rounded-md border">
         <div className="border-border flex items-center justify-between gap-4 border-b px-6 py-4">
