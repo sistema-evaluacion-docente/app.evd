@@ -72,6 +72,12 @@ async function getEvaluationPdf(evaluationId: number): Promise<Blob> {
   return api.get(`/evaluations/${evaluationId}/pdf`, { responseType: 'blob' })
 }
 
+async function getTeacherEvaluationReport(teacherId: number, evaluationId: number): Promise<Blob> {
+  return api.get(`/teachers/${teacherId}/evaluations/${evaluationId}/report`, {
+    responseType: 'blob',
+  })
+}
+
 interface EvaluationDimensionsDetailParams {
   teacherId?: number
   courseId?: number
@@ -99,6 +105,8 @@ export const evaluationsKeys = {
   detail: (periodId: number) => [...evaluationsKeys.all, 'detail', periodId] as const,
   byId: (evaluationId: number) => [...evaluationsKeys.all, 'byId', evaluationId] as const,
   pdf: (evaluationId: number) => [...evaluationsKeys.all, 'pdf', evaluationId] as const,
+  teacherReport: (teacherId: number, evaluationId: number) =>
+    [...evaluationsKeys.all, 'teacher-report', teacherId, evaluationId] as const,
   dimensionsDetail: (evaluationId: number, filters: EvaluationDimensionsDetailParams = {}) =>
     [...evaluationsKeys.all, 'dimensionsDetail', evaluationId, filters] as const,
 }
@@ -118,6 +126,36 @@ export function useGetEvaluationPdf(evaluationId?: number) {
     queryKey: evaluationsKeys.pdf(evaluationId ?? 0),
     queryFn: () => getEvaluationPdf(evaluationId!),
     enabled: evaluationId != null,
+    retry: false,
+    staleTime: 300_000,
+    gcTime: 300_000,
+  })
+}
+
+/**
+ * Downloads a teacher's own report for an evaluation as a `Blob`
+ * (`GET /teachers/{teacher_id}/evaluations/{evaluation_id}/report`) — the
+ * source document split down to the part that belongs to that teacher, which
+ * is what they may read of a PDF they can't see in full. Lives here, next to
+ * `useGetEvaluationPdf`, despite the `/teachers/...` path: it feeds the same
+ * document page, and keeping the pair together avoids a dependency from this
+ * feature's hooks onto `teachers`. Never retried — neither 403 nor 404
+ * improves on a second try.
+ *
+ * @example
+ * const { data: blob } = useGetTeacherEvaluationReport({ teacherId, evaluationId });
+ */
+export function useGetTeacherEvaluationReport({
+  teacherId,
+  evaluationId,
+}: {
+  teacherId?: number
+  evaluationId?: number
+}) {
+  return useQuery({
+    queryKey: evaluationsKeys.teacherReport(teacherId ?? 0, evaluationId ?? 0),
+    queryFn: () => getTeacherEvaluationReport(teacherId!, evaluationId!),
+    enabled: teacherId != null && evaluationId != null,
     retry: false,
     staleTime: 300_000,
     gcTime: 300_000,
