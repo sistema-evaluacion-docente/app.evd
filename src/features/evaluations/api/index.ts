@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import type { ResponseAPI } from '@/@types/Response'
 import api from '@/config/axios'
 import { useAuthStore } from '@/features/auth'
+import type { CourseModality } from '@/features/stats'
 import type { EvaluationDimensionsDetail, EvaluationRecord, EvaluationStatusUpdate } from '../types'
 
 interface EvaluationListParams {
@@ -71,8 +72,11 @@ async function uploadEvaluation(files: File[]): Promise<ResponseAPI<EvaluationRe
   })
 }
 
-async function getEvaluationPdf(evaluationId: number): Promise<Blob> {
-  return api.get(`/evaluations/${evaluationId}/pdf`, { responseType: 'blob' })
+async function getEvaluationPdf(evaluationId: number, modality?: CourseModality): Promise<Blob> {
+  return api.get(`/evaluations/${evaluationId}/pdf`, {
+    params: { modality },
+    responseType: 'blob',
+  })
 }
 
 async function getTeacherEvaluationReport(teacherId: number, evaluationId: number): Promise<Blob> {
@@ -107,7 +111,8 @@ export const evaluationsKeys = {
   lists: () => [...evaluationsKeys.all, 'list'] as const,
   detail: (periodId: number) => [...evaluationsKeys.all, 'detail', periodId] as const,
   byId: (evaluationId: number) => [...evaluationsKeys.all, 'byId', evaluationId] as const,
-  pdf: (evaluationId: number) => [...evaluationsKeys.all, 'pdf', evaluationId] as const,
+  pdf: (evaluationId: number, modality?: CourseModality) =>
+    [...evaluationsKeys.all, 'pdf', evaluationId, modality] as const,
   teacherReport: (teacherId: number, evaluationId: number) =>
     [...evaluationsKeys.all, 'teacher-report', teacherId, evaluationId] as const,
   dimensionsDetail: (evaluationId: number, filters: EvaluationDimensionsDetailParams = {}) =>
@@ -116,18 +121,21 @@ export const evaluationsKeys = {
 
 /**
  * Downloads the source PDF of an evaluation as a `Blob`
- * (`GET /evaluations/{evaluation_id}/pdf`). The file is not a public asset:
+ * (`GET /evaluations/{evaluation_id}/pdf`). An evaluation can carry one
+ * document per modality; `modality` picks which one, and the backend falls
+ * back to `PRESENCIAL` when it is omitted. The file is not a public asset:
  * the request carries the Bearer token and the backend only serves it to an
  * ADMIN or the DIRECTOR of the owning department, so a 403 is an expected
- * outcome. Never retried — neither 403 nor 404 improves on a second try.
+ * outcome — and so is a 404 for a modality this evaluation was never given.
+ * Never retried — neither improves on a second try.
  *
  * @example
- * const { data: blob, isPending } = useGetEvaluationPdf(evaluationId);
+ * const { data: blob, isPending } = useGetEvaluationPdf(evaluationId, 'DISTANCIA');
  */
-export function useGetEvaluationPdf(evaluationId?: number) {
+export function useGetEvaluationPdf(evaluationId?: number, modality?: CourseModality) {
   return useQuery({
-    queryKey: evaluationsKeys.pdf(evaluationId ?? 0),
-    queryFn: () => getEvaluationPdf(evaluationId!),
+    queryKey: evaluationsKeys.pdf(evaluationId ?? 0, modality),
+    queryFn: () => getEvaluationPdf(evaluationId!, modality),
     enabled: evaluationId != null,
     retry: false,
     staleTime: 300_000,

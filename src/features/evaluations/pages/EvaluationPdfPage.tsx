@@ -1,14 +1,27 @@
+import { useState } from 'react'
 import { useRoute } from 'wouter'
 
 import { BackButton } from '@/components/common/BackButton'
 import { PageTitle } from '@/components/common/PageTitle'
+import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/features/auth'
+import type { CourseModality } from '@/features/stats'
 import { ApiError } from '@/lib/apiError'
 import { EvaluationPdfViewer } from '../components'
 import { useEvaluationPdfUrl } from '../hooks'
 
-/** Turns the API failure into what the reader can actually do about it. */
-function messageFor(error: unknown) {
+/** The two documents an evaluation can carry, in the order they are offered. */
+const MODALITIES: { value: CourseModality; label: string }[] = [
+  { value: 'PRESENCIAL', label: 'Presencial' },
+  { value: 'DISTANCIA', label: 'Distancia' },
+]
+
+/**
+ * Turns the API failure into what the reader can actually do about it. With a
+ * modality selected, a 404 is far more likely to mean "this evaluation only
+ * has the other document" than a lost file, so it says that instead.
+ */
+function messageFor(error: unknown, modalityLabel?: string) {
   const status = error instanceof ApiError ? error.status : undefined
 
   if (status === 403) {
@@ -16,17 +29,54 @@ function messageFor(error: unknown) {
   }
 
   if (status === 404) {
-    return 'No se encontró el PDF de esta evaluación. Es posible que el archivo se haya eliminado del servidor.'
+    return modalityLabel
+      ? `Esta evaluación no tiene documento de ${modalityLabel.toLowerCase()}. Puede que solo se haya cargado el de la otra modalidad.`
+      : 'No se encontró el PDF de esta evaluación. Es posible que el archivo se haya eliminado del servidor.'
   }
 
   return 'No fue posible cargar el documento. Intente de nuevo en unos minutos.'
 }
 
 /**
+ * Picks which of the evaluation's two documents to read. Both are always
+ * offered: the API doesn't announce which ones exist, so an evaluation with a
+ * single document answers 404 for the other and the viewer explains it.
+ */
+function ModalitySwitch({
+  value,
+  onChange,
+}: {
+  value: CourseModality
+  onChange: (modality: CourseModality) => void
+}) {
+  return (
+    <div
+      role="group"
+      aria-label="Modalidad del documento"
+      className="bg-muted flex items-center gap-0.5 rounded-md p-0.5"
+    >
+      {MODALITIES.map((modality) => (
+        <Button
+          key={modality.value}
+          type="button"
+          size="xs"
+          variant={modality.value === value ? 'default' : 'ghost'}
+          aria-pressed={modality.value === value}
+          onClick={() => onChange(modality.value)}
+        >
+          {modality.label}
+        </Button>
+      ))}
+    </div>
+  )
+}
+
+/**
  * Full page showing the source PDF of an evaluation. The director reads the
- * whole document (`/evaluations/{id}/pdf`); the teacher reads their own report
- * out of it (`/teachers/{teacher_id}/evaluations/{id}/report`), the split the
- * backend builds for them.
+ * whole document (`/evaluations/{id}/pdf`) and switches between the presencial
+ * and distancia versions of it; the teacher reads their own report out of it
+ * (`/teachers/{teacher_id}/evaluations/{id}/report`), the split the backend
+ * builds for them, which already covers whatever modality they taught.
  * Route: `/evaluaciones/:id/pdf`
  */
 export default function EvaluationPdfPage() {
@@ -37,9 +87,13 @@ export default function EvaluationPdfPage() {
   const isTeacher = selectedRole === 'DOCENTE'
   const evaluationId = params?.id ? Number(params.id) : undefined
 
+  const [modality, setModality] = useState<CourseModality>('PRESENCIAL')
+  const modalityLabel = MODALITIES.find((entry) => entry.value === modality)?.label
+
   const { url, isPending, isError, error } = useEvaluationPdfUrl({
     evaluationId,
     teacherId: isTeacher ? teacherId : undefined,
+    modality: isTeacher ? undefined : modality,
   })
 
   if (evaluationId == null || Number.isNaN(evaluationId)) {
@@ -78,9 +132,14 @@ export default function EvaluationPdfPage() {
       <EvaluationPdfViewer
         url={url}
         isPending={isPending}
-        error={isError ? messageFor(error) : null}
-        fileName={`evaluacion-${evaluationId}.pdf`}
+        error={isError ? messageFor(error, isTeacher ? undefined : modalityLabel) : null}
+        fileName={
+          isTeacher
+            ? `evaluacion-${evaluationId}.pdf`
+            : `evaluacion-${evaluationId}-${modality.toLowerCase()}.pdf`
+        }
         title={isTeacher ? 'Documento de la evaluación' : `Evaluación #${evaluationId}`}
+        actions={isTeacher ? undefined : <ModalitySwitch value={modality} onChange={setModality} />}
       />
     </div>
   )

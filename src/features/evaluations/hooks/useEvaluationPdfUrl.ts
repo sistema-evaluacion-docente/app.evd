@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react'
 
+import type { CourseModality } from '@/features/stats'
 import { useGetEvaluationPdf, useGetTeacherEvaluationReport } from '../api'
 
 export interface EvaluationPdfUrlParams {
@@ -10,6 +11,12 @@ export interface EvaluationPdfUrlParams {
    * part of the PDF they are allowed to see.
    */
   teacherId?: number
+  /**
+   * Which of the two documents an evaluation can carry to read. Ignored for a
+   * teacher's report, which is already scoped to them; the backend defaults to
+   * `PRESENCIAL` when omitted.
+   */
+  modality?: CourseModality
 }
 
 /**
@@ -27,13 +34,16 @@ export interface EvaluationPdfUrlParams {
  * @example
  * // The teacher's own split of the same document.
  * const { url } = useEvaluationPdfUrl({ evaluationId, teacherId });
+ *
+ * @example
+ * const { url } = useEvaluationPdfUrl({ evaluationId, modality: 'DISTANCIA' });
  */
-export function useEvaluationPdfUrl({ evaluationId, teacherId }: EvaluationPdfUrlParams) {
+export function useEvaluationPdfUrl({ evaluationId, teacherId, modality }: EvaluationPdfUrlParams) {
   const forTeacher = teacherId != null
 
   // Both are declared, only the one matching the caller is enabled: hooks
   // can't be called conditionally, and a disabled query never fires.
-  const wholeDocument = useGetEvaluationPdf(forTeacher ? undefined : evaluationId)
+  const wholeDocument = useGetEvaluationPdf(forTeacher ? undefined : evaluationId, modality)
   const teacherReport = useGetTeacherEvaluationReport({ teacherId, evaluationId })
 
   const { data: blob, isPending, isError, error } = forTeacher ? teacherReport : wholeDocument
