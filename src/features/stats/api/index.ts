@@ -2,8 +2,8 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query'
 
 import type { ResponseAPI } from '@/@types/Response'
 import api from '@/config/axios'
+import type { CourseModality } from '@/lib/modality'
 import type {
-  CourseModality,
   DepartmentPeriodRangeStats,
   DepartmentSubjectAverage,
   TeacherComparisonEntry,
