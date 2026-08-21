@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Textarea } from '@/components/ui/textarea'
 import formatDate from '@/lib/formatDate'
-import { useClosePlan, useEvaluatePlan } from '../api'
+import { useClosePlan } from '../api'
 import { PLAN_STATUS_LABEL } from '../lib/planStatus'
 import type { CloseResult, Plan } from '../types'
 
@@ -35,22 +35,18 @@ const RESULT_OPTIONS: { value: CloseResult; label: string; hint: string }[] = [
     value: 'NO_CUMPLIDO',
     label: 'No cumplido',
     hint: 'Quedaron compromisos sin alcanzar.',
-  },
-  {
-    value: 'MANUAL',
-    label: 'Cierre manual',
-    hint: 'Se cierra por otra razón: traslado, retiro, caso remitido a otra instancia.',
-  },
+  }
 ]
 
 /**
  * Closing of an improvement plan, the last step of the process.
  *
  * The plan runs for the semester and is settled once the Formato 3 — the
- * seguimiento matrix the teacher signs at the end — is filed signed. What is
- * *not* automatic is the verdict: the API needs a result, and comparing the
- * agreed targets against the verification period only *suggests* one, so the
- * director is the one who states whether the teacher complied.
+ * seguimiento matrix the teacher signs at the end — is filed signed. The
+ * verdict is the director's alone. Whether the agreed targets were actually
+ * met can only be told by the grades of the *following* semester, which do not
+ * exist yet at this point: that verification runs on its own once those grades
+ * are uploaded, and never gates the closing.
  *
  * @example
  * <PlanClosure plan={plan} canManage={isDirector} />
@@ -60,7 +56,6 @@ export function PlanClosure({ plan, canManage }: PlanClosureProps) {
   const [result, setResult] = useState<CloseResult | null>(null)
   const [reason, setReason] = useState('')
 
-  const evaluate = useEvaluatePlan(plan.id)
   const closePlan = useClosePlan(plan.id)
 
   if (!canManage) return null
@@ -68,16 +63,11 @@ export function PlanClosure({ plan, canManage }: PlanClosureProps) {
   const followup = plan.documents.find((entry) => entry.format_type === 'FORMATO_3')
   const signedFollowup = Boolean(followup?.has_signed)
 
-  // `suggested_result` only comes back on the answer of `evaluate`, so it is
-  // there once the verification has been run at least once.
-  const suggested = plan.suggested_result as CloseResult | null
-  const chosen = result ?? suggested ?? null
-
   function confirm() {
-    if (!chosen) return
+    if (!result) return
 
     closePlan.mutate(
-      { result: chosen, reason: reason.trim() || undefined },
+      { result, reason: reason.trim() || undefined },
       { onSuccess: () => setOpen(false) },
     )
   }
@@ -142,53 +132,41 @@ export function PlanClosure({ plan, canManage }: PlanClosureProps) {
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="border-border space-y-2 rounded-md border p-3">
-              <p className="text-sm">
-                <span className="text-muted-foreground">Resultado sugerido:</span>{' '}
-                <span className="font-semibold">
-                  {suggested ? RESULT_OPTIONS.find((o) => o.value === suggested)?.label : '—'}
-                </span>
-              </p>
-              <p className="text-muted-foreground text-xs">
-                Se calcula comparando las metas acordadas con las notas del periodo de verificación
-                {plan.verification_period_code ? ` (${plan.verification_period_code})` : ''}.
-              </p>
-
-              <LoadingButton
-                size="sm"
-                variant="outline"
-                onClick={() => evaluate.mutate()}
-                pending={evaluate.isPending}
-                pendingLabel="Verificando…"
-              >
-                Verificar cumplimiento
-              </LoadingButton>
-            </div>
-
             <RadioGroup
-              value={chosen}
+              value={result}
               onValueChange={(value) => setResult(value as CloseResult)}
               aria-label="Resultado del plan"
             >
               {RESULT_OPTIONS.map((option) => (
-                <div key={option.value} className="flex items-start gap-2.5">
-                  <RadioGroupItem value={option.value} id={`result-${option.value}`} />
-                  <div className="grid gap-0.5">
-                    <Label htmlFor={`result-${option.value}`}>{option.label}</Label>
-                    <p className="text-muted-foreground text-xs">{option.hint}</p>
-                  </div>
-                </div>
+                <Label
+                  key={option.value}
+                  htmlFor={`result-${option.value}`}
+                  onClick={() => setResult(option.value)}
+                  className="flex cursor-pointer items-start gap-2.5"
+                >
+                  <RadioGroupItem
+                    value={option.value}
+                    id={`result-${option.value}`}
+                    className="border-2 border-black"
+                  />
+                  <span className="grid gap-0.5">
+                    <span>{option.label}</span>
+                    <span className="text-muted-foreground block text-xs font-normal">
+                      {option.hint}
+                    </span>
+                  </span>
+                </Label>
               ))}
             </RadioGroup>
 
             <div className="space-y-1.5">
-              <Label htmlFor="close-reason">Motivo</Label>
+              <Label htmlFor="close-reason">Información adicional</Label>
               <Textarea
                 id="close-reason"
                 rows={2}
                 value={reason}
                 onChange={(event) => setReason(event.target.value)}
-                placeholder="Opcional, salvo en un cierre manual"
+                placeholder="Opcional: agrega un comentario sobre el cierre del plan"
               />
             </div>
           </div>
@@ -199,7 +177,7 @@ export function PlanClosure({ plan, canManage }: PlanClosureProps) {
             </Button>
             <LoadingButton
               onClick={confirm}
-              disabled={!chosen}
+              disabled={!result}
               pending={closePlan.isPending}
               pendingLabel="Cerrando…"
             >
