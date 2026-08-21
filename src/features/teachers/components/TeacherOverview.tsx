@@ -12,6 +12,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { dimensionColor } from '@/lib/dimensionLabel'
 import { getScoreToneClass } from '@/lib/scoreTone'
 import type { TeacherDetail } from '../types'
+import { TeacherReportDownloadButton } from './TeacherReportDownloadButton'
 
 interface TeacherOverviewProps {
   teacher: TeacherDetail
