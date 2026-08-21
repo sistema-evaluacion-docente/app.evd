@@ -11,7 +11,16 @@ import type { Plan, PlanPeriod } from '@/features/plans/types'
 vi.mock('@/features/plans/api', () => ({
   useGetPlans: vi.fn(),
   useGetPlanPeriods: vi.fn(),
+  useDeletePlan: () => mockDelete,
 }))
+
+// The directory is the director's; the delete action is gated on the role.
+vi.mock('@/features/auth', () => ({
+  useAuthStore: (selector: (state: unknown) => unknown) =>
+    selector({ user: { roles: ['DIRECTOR DE DEPARTAMENTO'] } }),
+}))
+
+const mockDelete = { mutate: vi.fn(), isPending: false }
 
 const PERIODS: PlanPeriod[] = [
   { id: 9, code: '2028-2', name: null },
@@ -177,5 +186,33 @@ describe('PlansPage', () => {
     renderPage('/planes?estado=CERRADO_CUMPLIDO')
 
     expect(lastQuery()).toMatchObject({ status: 'CERRADO_CUMPLIDO' })
+  })
+})
+
+describe('PlansPage · eliminar un plan', () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('ofrece eliminar desde la fila', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click((await screen.findAllByRole('button', { name: 'Acciones' }))[0])
+
+    expect(await screen.findByRole('menuitem', { name: /Eliminar/ })).toBeInTheDocument()
+  })
+
+  it('pide confirmación nombrando el plan y el docente', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click((await screen.findAllByRole('button', { name: 'Acciones' }))[0])
+    await user.click(await screen.findByRole('menuitem', { name: /Eliminar/ }))
+
+    const dialog = await screen.findByRole('alertdialog')
+
+    expect(dialog).toHaveTextContent('Ada Lovelace')
+    expect(mockDelete.mutate).not.toHaveBeenCalled()
   })
 })

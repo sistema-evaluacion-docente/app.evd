@@ -171,7 +171,8 @@ describe('PlanCheckpoints', () => {
 
     render(<PlanCheckpoints plan={plan} aspects={ASPECTS} canManage />)
 
-    await user.click(screen.getAllByRole('button', { name: 'Registrar' })[0])
+    // Ya tiene fecha, así que el corte se edita en vez de registrarse.
+    await user.click(screen.getByRole('button', { name: 'Editar' }))
 
     const [first, second] = screen.getAllByRole('textbox')
 
@@ -192,6 +193,42 @@ describe('PlanCheckpoints', () => {
       },
       expect.anything(),
     )
+  })
+
+  it('deja de pedir el corte y ofrece corregirlo una vez está registrado', () => {
+    mockUpdate()
+
+    const plan = buildPlan()
+    plan.checkpoints[0].aspect_notes = [{ id: 99, aspect: 1, note: 'Estructuró mejor la clase' }]
+
+    render(<PlanCheckpoints plan={plan} aspects={ASPECTS} canManage />)
+
+    // El primer corte ya está escrito; el segundo sigue en blanco.
+    expect(screen.getByRole('button', { name: 'Editar' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Registrar' })).toBeInTheDocument()
+  })
+
+  it('cuenta la fecha sola como corte registrado', () => {
+    mockUpdate()
+
+    const plan = buildPlan()
+    plan.checkpoints[0].scheduled_date = '2026-05-04'
+
+    render(<PlanCheckpoints plan={plan} aspects={ASPECTS} canManage />)
+
+    expect(screen.getByRole('button', { name: 'Editar' })).toBeInTheDocument()
+  })
+
+  it('dibuja los cortes mientras el catálogo de aspectos viene en camino', () => {
+    mockUpdate()
+
+    render(<PlanCheckpoints plan={buildPlan()} aspects={[]} canManage isLoading />)
+
+    expect(screen.getByText('Cargando los seguimientos…')).toBeInTheDocument()
+    // Ni la falsa promesa de que no hay nada que seguir, ni botones que aún no aplican.
+    expect(
+      screen.queryByText(/No hay compromisos a los que hacer seguimiento/),
+    ).not.toBeInTheDocument()
   })
 
   it('says so when there is nothing to follow up on yet', () => {

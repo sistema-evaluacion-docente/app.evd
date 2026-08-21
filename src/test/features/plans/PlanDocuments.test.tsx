@@ -385,6 +385,16 @@ describe('PlanDocuments · el acuerdo se firma, no se cierra', () => {
     expect(within(rowOf(/Formato 3/)).getByRole('button', { name: /Subir firmado/ })).toBeEnabled()
   })
 
+  it('el aviso de vigencia se puede cerrar una vez leído', async () => {
+    const user = userEvent.setup()
+
+    render(<PlanDocuments plan={buildPlan({ acta_locked: true })} canManage />)
+
+    await user.click(screen.getByRole('button', { name: 'Cerrar el aviso' }))
+
+    expect(screen.queryByText(/el plan está en vigencia/)).not.toBeInTheDocument()
+  })
+
   it('avisa de que el plan está en vigencia cuando el acuerdo ya está firmado', () => {
     render(
       <PlanDocuments plan={buildPlan({ acta_locked: true, acta_status: 'FIRMADA' })} canManage />,

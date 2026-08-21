@@ -1,15 +1,23 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Router } from 'wouter'
 import { memoryLocation } from 'wouter/memory-location'
 
 import { useGetPlan, useGetPlanIndicators } from '@/features/plans/api'
 import PlanDetailPage from '@/features/plans/pages/PlanDetailPage'
-import type { Plan, PlanAspect, PlanItem } from '@/features/plans/types'
+import type {
+  Plan,
+  PlanAspect,
+  PlanCheckpoint,
+  PlanDocument,
+  PlanItem,
+} from '@/features/plans/types'
 
 vi.mock('@/features/plans/api', () => ({
   useGetPlan: vi.fn(),
   useGetPlanIndicators: vi.fn(),
+  useDeletePlan: () => mockDelete,
 }))
 
 vi.mock('@/features/auth', () => ({
@@ -22,9 +30,6 @@ vi.mock('@/features/auth', () => ({
 vi.mock('@/features/plans/components/PlanCheckpoints', () => ({
   PlanCheckpoints: () => <div data-testid="checkpoints" />,
 }))
-vi.mock('@/features/plans/components/PlanActa', () => ({
-  PlanActa: () => <div data-testid="acta" />,
-}))
 vi.mock('@/features/plans/components/PlanEvidences', () => ({
   PlanEvidences: () => <div data-testid="evidences" />,
 }))
@@ -35,6 +40,9 @@ vi.mock('@/features/plans/components/PlanClosure', () => ({
   PlanClosure: () => <div data-testid="closure" />,
   PlanClosedSummary: () => <div data-testid="closed-summary" />,
 }))
+
+/** Shared so a test can assert what the confirmation ends up calling. */
+const mockDelete = { mutate: vi.fn(), isPending: false }
 
 const ASPECTS: PlanAspect[] = [
   { aspect: 1, label: 'Desarrollo de Conocimiento', dimension: 'Dimensión 1' },
@@ -57,6 +65,16 @@ function item(id: number, aspect: number | null, description: string): PlanItem 
     comments: [],
   } as unknown as PlanItem
 }
+
+/** The signed Ficha de acuerdo, which is what settles the agreement. */
+const SIGNED_ACTA = [
+  { format_type: 'FORMATO_2', has_signed: true, has_generated: true },
+] as unknown as PlanDocument[]
+
+/** A first cut already on the record, which is what moves the progress bar. */
+const FIRST_CHECKPOINT = [
+  { stage: 'PRIMER_SEGUIMIENTO', scheduled_date: '2026-05-04', aspect_notes: [] },
+] as unknown as PlanCheckpoint[]
 
 function mockPlan(items: PlanItem[], overrides: Partial<Plan> = {}) {
   vi.mocked(useGetPlan).mockReturnValue({
@@ -147,11 +165,6 @@ describe('PlanDetailPage · compromisos', () => {
   })
 })
 
-/** The signed Ficha de acuerdo, which is what settles the agreement. */
-const SIGNED_ACTA = [
-  { format_type: 'FORMATO_2', has_signed: true, has_generated: true },
-] as unknown as Plan['documents']
-
 describe('PlanDetailPage · editar el plan', () => {
   afterEach(() => {
     vi.clearAllMocks()
@@ -162,10 +175,7 @@ describe('PlanDetailPage · editar el plan', () => {
 
     renderPage()
 
-    expect(screen.getByRole('link', { name: /Editar/ })).toHaveAttribute(
-      'href',
-      '/planes/7/editar',
-    )
+    expect(screen.getByRole('link', { name: /Editar/ })).toHaveAttribute('href', '/planes/7/editar')
   })
 
   it('deja de ofrecerlo en cuanto la ficha firmada está subida', () => {
@@ -195,5 +205,127 @@ describe('PlanDetailPage · editar el plan', () => {
 
     expect(screen.getByTestId('closed-summary')).toBeInTheDocument()
     expect(screen.queryByTestId('closure')).not.toBeInTheDocument()
+  })
+})
+
+describe('PlanDetailPage · la cabecera del plan', () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('lleva el acto administrativo arriba, con la identidad del plan', () => {
+    mockPlan([item(1, 1, 'Expresa sus ideas')], {
+      acta_number: '012',
+      acta_date: '2026-03-03',
+    })
+
+    renderPage()
+
+    const acta = screen.getByText(/Acta N\.º/)
+
+    expect(acta).toHaveTextContent('012')
+    expect(acta).toHaveTextContent('3 de marzo de 2026')
+  })
+
+  it('ya no le dedica una sección propia al acta', () => {
+    mockPlan([item(1, 1, 'Expresa sus ideas')], { acta_number: '012' })
+
+    renderPage()
+
+    expect(screen.queryByText('Acto administrativo')).not.toBeInTheDocument()
+  })
+
+  it('no deja un renglón vacío cuando no hay acta que mostrar', () => {
+    mockPlan([item(1, 1, 'Expresa sus ideas')])
+
+    renderPage()
+
+    expect(screen.queryByText(/Acta N\.º/)).not.toBeInTheDocument()
+  })
+
+  it('dice el avance en número, no sólo con la barra', () => {
+    mockPlan([item(1, 1, 'Expresa sus ideas')], {
+      documents: SIGNED_ACTA,
+      checkpoints: FIRST_CHECKPOINT,
+    })
+
+    renderPage()
+
+    // Acuerdo firmado + primer seguimiento: dos de los cuatro hitos del plan.
+    expect(screen.getByText('50%')).toBeInTheDocument()
+  })
+
+  it('cuenta los hitos del plan, no el cumplimiento que la API deja en cero', () => {
+    mockPlan([item(1, 1, 'Expresa sus ideas')], {
+      progress: 0,
+      documents: SIGNED_ACTA,
+      checkpoints: [],
+    })
+
+    renderPage()
+
+    expect(screen.getByText('25%')).toBeInTheDocument()
+    expect(screen.queryByText('0%')).not.toBeInTheDocument()
+  })
+})
+
+describe('PlanDetailPage · eliminar el plan', () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('ofrece eliminarlo junto a editar', () => {
+    mockPlan([item(1, 1, 'Expresa sus ideas')])
+
+    renderPage()
+
+    expect(screen.getByRole('button', { name: /Eliminar/ })).toBeInTheDocument()
+  })
+
+  it('sigue ofreciéndolo con el acuerdo firmado, que ya no deja editar', () => {
+    mockPlan([item(1, 1, 'Expresa sus ideas')], { documents: SIGNED_ACTA })
+
+    renderPage()
+
+    // Un plan hecho al docente equivocado tiene que poder deshacerse; la firma
+    // no arregla el error, solo lo pone en vigencia.
+    expect(screen.queryByRole('link', { name: /Editar/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Eliminar/ })).toBeInTheDocument()
+  })
+
+  it('avisa de lo que se pierde antes de borrar nada', async () => {
+    const user = userEvent.setup()
+    mockPlan([item(1, 1, 'Expresa sus ideas')])
+
+    renderPage()
+
+    await user.click(screen.getByRole('button', { name: /Eliminar/ }))
+
+    expect(await screen.findByText(/¿Eliminar el plan de mejoramiento\?/)).toBeInTheDocument()
+    expect(screen.getByText(/no se puede deshacer/)).toBeInTheDocument()
+    expect(mockDelete.mutate).not.toHaveBeenCalled()
+  })
+
+  it('subraya que el acuerdo está firmado cuando lo está', async () => {
+    const user = userEvent.setup()
+    mockPlan([item(1, 1, 'Expresa sus ideas')], { documents: SIGNED_ACTA })
+
+    renderPage()
+
+    await user.click(screen.getByRole('button', { name: /Eliminar/ }))
+
+    expect(await screen.findByText(/está en vigencia/)).toBeInTheDocument()
+  })
+
+  it('borra solo al confirmar', async () => {
+    const user = userEvent.setup()
+    mockPlan([item(1, 1, 'Expresa sus ideas')])
+
+    renderPage()
+
+    await user.click(screen.getByRole('button', { name: /Eliminar/ }))
+    await user.click(await screen.findByRole('button', { name: 'Eliminar' }))
+
+    expect(mockDelete.mutate).toHaveBeenCalledWith(7, expect.anything())
   })
 })
