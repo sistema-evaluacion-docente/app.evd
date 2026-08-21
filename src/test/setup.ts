@@ -23,3 +23,10 @@ if (!window.matchMedia) {
     dispatchEvent: () => false,
   })
 }
+
+/**
+ * jsdom has no layout, so `window.scrollTo` is a stub that logs "Not
+ * implemented" for every navigation. Replaced with a real no-op to keep test
+ * output about the tests.
+ */
+window.scrollTo = () => {}
