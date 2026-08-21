@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useRoute } from 'wouter'
+import { useRoute, useSearchParams } from 'wouter'
 
 import { BackButton } from '@/components/common/BackButton'
 import { PageTitle } from '@/components/common/PageTitle'
@@ -9,6 +9,13 @@ import { ApiError } from '@/lib/apiError'
 import { MODALITIES, MODALITY_LABEL, type CourseModality } from '@/lib/modality'
 import { EvaluationPdfViewer } from '../components'
 import { useEvaluationPdfUrl } from '../hooks'
+
+/** Reads `?profesor=`, ignoring anything that isn't a usable teacher id. */
+function parseTeacherId(raw: string | null): number | undefined {
+  const id = Number(raw)
+
+  return Number.isInteger(id) && id > 0 ? id : undefined
+}
 
 /**
  * Turns the API failure into what the reader can actually do about it. With a
@@ -32,28 +39,39 @@ function messageFor(error: unknown, modalityLabel?: string) {
 }
 
 /**
- * Full page showing the source PDF of an evaluation. The director reads the
- * whole document (`/evaluations/{id}/pdf`) and switches between the presencial
- * and distancia versions of it; the teacher reads their own report out of it
- * (`/teachers/{teacher_id}/evaluations/{id}/report`), the split the backend
- * builds for them, which already covers whatever modality they taught.
- * Route: `/evaluaciones/:id/pdf`
+ * Full page showing the source PDF of an evaluation, in one of two readings:
+ *
+ * - The whole document (`/evaluations/{id}/pdf`), with a switch between its
+ *   presencial and distancia versions. This is what the director gets by
+ *   default.
+ * - One teacher's report out of it
+ *   (`/teachers/{teacher_id}/evaluations/{id}/report`), the split the backend
+ *   builds for them. The teacher always lands here, on their own report; a
+ *   director reaches it by naming a teacher in `?profesor=`. The split already
+ *   covers whatever modality that teacher taught, so no switch is offered.
+ *
+ * Route: `/evaluaciones/:id/pdf?profesor=<teacher_id>`
  */
 export default function EvaluationPdfPage() {
   const [, params] = useRoute('/evaluaciones/:id/pdf')
+  const [searchParams] = useSearchParams()
   const selectedRole = useAuthStore((state) => state.selectedRole)
-  const teacherId = useAuthStore((state) => state.user?.teacher_id) ?? undefined
+  const ownTeacherId = useAuthStore((state) => state.user?.teacher_id) ?? undefined
 
   const isTeacher = selectedRole === 'DOCENTE'
   const evaluationId = params?.id ? Number(params.id) : undefined
 
+  // A teacher only ever reads their own report: the param is ignored for them,
+  // so a hand-edited URL asks for nothing the backend would refuse anyway.
+  const teacherId = isTeacher ? ownTeacherId : parseTeacherId(searchParams.get('profesor'))
+  const isReport = teacherId != null
+
   const [modality, setModality] = useState<CourseModality>('PRESENCIAL')
-  const modalityLabel = MODALITY_LABEL[modality]
 
   const { url, isPending, isError, error } = useEvaluationPdfUrl({
     evaluationId,
-    teacherId: isTeacher ? teacherId : undefined,
-    modality: isTeacher ? undefined : modality,
+    teacherId,
+    modality: isReport ? undefined : modality,
   })
 
   if (evaluationId == null || Number.isNaN(evaluationId)) {
@@ -92,15 +110,21 @@ export default function EvaluationPdfPage() {
       <EvaluationPdfViewer
         url={url}
         isPending={isPending}
-        error={isError ? messageFor(error, isTeacher ? undefined : modalityLabel) : null}
+        error={isError ? messageFor(error, isReport ? undefined : MODALITY_LABEL[modality]) : null}
         fileName={
-          isTeacher
-            ? `evaluacion-${evaluationId}.pdf`
+          isReport
+            ? `evaluacion-${evaluationId}-docente-${teacherId}.pdf`
             : `evaluacion-${evaluationId}-${modality.toLowerCase()}.pdf`
         }
-        title={isTeacher ? 'Documento de la evaluación' : `Evaluación #${evaluationId}`}
+        title={
+          isTeacher
+            ? 'Documento de la evaluación'
+            : isReport
+              ? `Evaluación #${evaluationId} · Docente ${teacherId}`
+              : `Evaluación #${evaluationId}`
+        }
         actions={
-          isTeacher ? undefined : (
+          isReport ? undefined : (
             // Both documents are always offered: the API doesn't announce which
             // ones exist, so an evaluation holding a single one answers 404 for
             // the other and the viewer explains it.

@@ -87,7 +87,11 @@ export function TeacherOverview({ teacher }: TeacherOverviewProps) {
               variant="outline"
               size="sm"
               nativeButton={false}
-              render={<TransitionLink href={`/evaluaciones/${teacher.evaluation_id}/pdf`} />}
+              render={
+                <TransitionLink
+                  href={`/evaluaciones/${teacher.evaluation_id}/pdf?profesor=${teacher.teacher_id}`}
+                />
+              }
             >
               <FileText className="size-4" aria-hidden="true" />
               Ver evaluación en PDF
