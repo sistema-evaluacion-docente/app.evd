@@ -3,7 +3,7 @@ import { useRoute } from 'wouter'
 
 import { BackButton } from '@/components/common/BackButton'
 import { PageTitle } from '@/components/common/PageTitle'
-import { Button } from '@/components/ui/button'
+import { SegmentedControl } from '@/components/common/SegmentedControl'
 import { useAuthStore } from '@/features/auth'
 import { ApiError } from '@/lib/apiError'
 import { MODALITIES, MODALITY_LABEL, type CourseModality } from '@/lib/modality'
@@ -29,40 +29,6 @@ function messageFor(error: unknown, modalityLabel?: string) {
   }
 
   return 'No fue posible cargar el documento. Intente de nuevo en unos minutos.'
-}
-
-/**
- * Picks which of the evaluation's two documents to read. Both are always
- * offered: the API doesn't announce which ones exist, so an evaluation with a
- * single document answers 404 for the other and the viewer explains it.
- */
-function ModalitySwitch({
-  value,
-  onChange,
-}: {
-  value: CourseModality
-  onChange: (modality: CourseModality) => void
-}) {
-  return (
-    <div
-      role="group"
-      aria-label="Modalidad del documento"
-      className="bg-muted flex items-center gap-0.5 rounded-md p-0.5"
-    >
-      {MODALITIES.map((modality) => (
-        <Button
-          key={modality.value}
-          type="button"
-          size="xs"
-          variant={modality.value === value ? 'default' : 'ghost'}
-          aria-pressed={modality.value === value}
-          onClick={() => onChange(modality.value)}
-        >
-          {modality.label}
-        </Button>
-      ))}
-    </div>
-  )
 }
 
 /**
@@ -133,7 +99,19 @@ export default function EvaluationPdfPage() {
             : `evaluacion-${evaluationId}-${modality.toLowerCase()}.pdf`
         }
         title={isTeacher ? 'Documento de la evaluación' : `Evaluación #${evaluationId}`}
-        actions={isTeacher ? undefined : <ModalitySwitch value={modality} onChange={setModality} />}
+        actions={
+          isTeacher ? undefined : (
+            // Both documents are always offered: the API doesn't announce which
+            // ones exist, so an evaluation holding a single one answers 404 for
+            // the other and the viewer explains it.
+            <SegmentedControl
+              ariaLabel="Modalidad del documento"
+              options={MODALITIES}
+              value={modality}
+              onValueChange={setModality}
+            />
+          )
+        }
       />
     </div>
   )
