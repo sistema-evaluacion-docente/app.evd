@@ -1,14 +1,21 @@
-import { useId, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 
 import { AverageTrendChart } from '@/components/common/AverageTrendChart'
+import { GenerateReportPdfButton } from '@/components/common/GenerateReportPdfButton'
 import { InlineError } from '@/components/common/InlineError'
 import { PageTitle } from '@/components/common/PageTitle'
+import { PdfChartImage } from '@/components/common/pdf/PdfChartImage'
+import { PdfFactGrid } from '@/components/common/pdf/PdfFactGrid'
+import { PdfPage } from '@/components/common/pdf/PdfPage'
+import { PdfSection } from '@/components/common/pdf/PdfSection'
 import { PeriodSelect } from '@/components/common/PeriodSelect'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { Switch } from '@/components/ui/switch'
 import { useGetAcademicPeriods } from '@/features/periods'
+import { CATEGORIES, categoryLabel, UNCATEGORIZED } from '@/lib/categoryLabel'
+import { pdfColors } from '@/lib/pdf/pdfColors'
 import { cn } from '@/lib/utils'
 import { useGetDepartmentPeriodRangeStats } from '../api'
 import { DepartmentCommentsSummary } from './DepartmentCommentsSummary'
@@ -21,6 +28,8 @@ import { DepartmentStatsHero } from './DepartmentStatsHero'
 //   import { findBestWorstMover, type MoverEntry } from '@/lib/bestWorstMover'
 //   import { useGetDepartmentPeriodRangeSubjects } from '../api'
 //   import type { DepartmentSubjectAverage } from '../types'
+
+const ANALYZABLE_CATEGORIES = CATEGORIES.filter((category) => category.code !== UNCATEGORIZED)
 
 export interface DepartmentPeriodRangeSummaryProps {
   /** How many trailing periods to preselect once "comparar un rango" is turned on. Defaults to 2. */
@@ -58,6 +67,10 @@ export function DepartmentPeriodRangeSummary({
   const [compareRange, setCompareRange] = useState(false)
   const [startPeriodId, setStartPeriodId] = useState<number | undefined>(undefined)
   const [endPeriodId, setEndPeriodId] = useState<number | undefined>(undefined)
+
+  const commentsCardRef = useRef<HTMLDivElement>(null)
+  const trendCardRef = useRef<HTMLElement>(null)
+  const dimensionsCardRef = useRef<HTMLElement>(null)
 
   const effectiveEndId = endPeriodId ?? defaultEnd?.id
   // Outside "comparar un rango" mode, start always tracks end — there's only
@@ -196,12 +209,98 @@ export function DepartmentPeriodRangeSummary({
     )
   }
 
+  const periodLabel =
+    compareRange && startPeriod && endPeriod && startPeriod !== endPeriod
+      ? `${startPeriod.name} — ${endPeriod.name}`
+      : (endPeriod?.name ?? '')
+
+  const showTrendChart = compareRange && startPeriod !== endPeriod
+
+  const departmentName = data?.data?.department_name
+  const reportTitle = departmentName
+    ? `Resumen del departamento (${departmentName})`
+    : 'Resumen del departamento'
+  const reportFileName = departmentName
+    ? `Resumen-Departamento-${departmentName.replace(/\s+/g, '-')}`
+    : undefined
+
+  const stats = data?.data
+
+  const generalFacts = stats
+    ? [
+        { label: 'Departamento', value: stats.department_name },
+        { label: 'Promedio general', value: stats.overall_average.toFixed(2) },
+        { label: 'Periodo evaluado', value: periodLabel || stats.start_period_code },
+      ]
+    : []
+
+  const riskFacts = stats?.comments_risk_counts
+    ? [
+        {
+          label: 'Comentarios de riesgo bajo',
+          value: String(stats.comments_risk_counts.BAJO),
+          color: pdfColors.riskLow,
+        },
+        {
+          label: 'Comentarios de riesgo medio',
+          value: String(stats.comments_risk_counts.MEDIO),
+          color: pdfColors.riskMedium,
+        },
+        {
+          label: 'Comentarios de riesgo alto',
+          value: String(stats.comments_risk_counts.ALTO),
+          color: pdfColors.riskHigh,
+        },
+      ]
+    : []
+
+  const categoryFacts = stats?.comments_pedagogical_category_counts
+    ? ANALYZABLE_CATEGORIES.map((category) => ({
+        label: categoryLabel(category.code),
+        value: String(stats.comments_pedagogical_category_counts?.[category.code] ?? 0),
+      }))
+    : []
+
   return (
     <div className={cn('space-y-6', className)}>
       <PageTitle className="flex w-full flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>Resumen del departamento</div>
 
         <div className="flex flex-wrap items-center gap-3 font-normal">
+          <GenerateReportPdfButton
+            fileName={reportFileName ?? 'Resumen-Departamento'}
+            className={!stats ? 'pointer-events-none opacity-50' : undefined}
+            chartRefs={{
+              comments: commentsCardRef,
+              ...(showTrendChart ? { trend: trendCardRef } : {}),
+              dimensions: dimensionsCardRef,
+            }}
+            buildDocument={(images) => (
+              <PdfPage
+                title={reportTitle}
+                subtitle={periodLabel ? `Periodo: ${periodLabel}` : undefined}
+              >
+                <PdfFactGrid facts={generalFacts} columns={3} />
+                {riskFacts.length > 0 && <PdfFactGrid facts={riskFacts} columns={3} />}
+                {categoryFacts.length > 0 && <PdfFactGrid facts={categoryFacts} columns={4} />}
+
+                <PdfSection title="Comentarios de la heteroevaluación">
+                  <PdfChartImage src={images.comments} />
+                </PdfSection>
+
+                {showTrendChart && images.trend && (
+                  <PdfSection title="Evolución del promedio por periodo">
+                    <PdfChartImage src={images.trend} />
+                  </PdfSection>
+                )}
+
+                <PdfSection title="Promedios por dimensión pedagógica">
+                  <PdfChartImage src={images.dimensions} />
+                </PdfSection>
+              </PdfPage>
+            )}
+          />
+
           {compareRange ? (
             <>
               <PeriodSelect
@@ -332,35 +431,37 @@ export function DepartmentPeriodRangeSummary({
 
           {(data?.data?.comments_risk_counts ||
             data?.data?.comments_pedagogical_category_counts) && (
-            <DepartmentCommentsSummary
-              riskCounts={
-                rangeCompareActive
-                  ? endRangeStats?.data?.comments_risk_counts
-                  : data?.data?.comments_risk_counts
-              }
-              categoryCounts={
-                rangeCompareActive
-                  ? endRangeStats?.data?.comments_pedagogical_category_counts
-                  : data?.data?.comments_pedagogical_category_counts
-              }
-              previousRiskCounts={
-                rangeCompareActive ? startRangeStats?.data?.comments_risk_counts : undefined
-              }
-              previousCategoryCounts={
-                rangeCompareActive
-                  ? startRangeStats?.data?.comments_pedagogical_category_counts
-                  : undefined
-              }
-              comparisonLabel={
-                rangeCompareActive && startPeriod && endPeriod
-                  ? { start: startPeriod.name, end: endPeriod.name }
-                  : undefined
-              }
-            />
+            <div ref={commentsCardRef}>
+              <DepartmentCommentsSummary
+                riskCounts={
+                  rangeCompareActive
+                    ? endRangeStats?.data?.comments_risk_counts
+                    : data?.data?.comments_risk_counts
+                }
+                categoryCounts={
+                  rangeCompareActive
+                    ? endRangeStats?.data?.comments_pedagogical_category_counts
+                    : data?.data?.comments_pedagogical_category_counts
+                }
+                previousRiskCounts={
+                  rangeCompareActive ? startRangeStats?.data?.comments_risk_counts : undefined
+                }
+                previousCategoryCounts={
+                  rangeCompareActive
+                    ? startRangeStats?.data?.comments_pedagogical_category_counts
+                    : undefined
+                }
+                comparisonLabel={
+                  rangeCompareActive && startPeriod && endPeriod
+                    ? { start: startPeriod.name, end: endPeriod.name }
+                    : undefined
+                }
+              />
+            </div>
           )}
 
-          {compareRange && startPeriod !== endPeriod && (
-            <section className="border-border bg-background rounded-md border">
+          {showTrendChart && (
+            <section ref={trendCardRef} className="border-border bg-background rounded-md border">
               <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
                 Evolución del promedio por periodo
               </h2>
@@ -384,7 +485,10 @@ export function DepartmentPeriodRangeSummary({
             </section>
           )}
 
-          <section className="border-border bg-background rounded-md border">
+          <section
+            ref={dimensionsCardRef}
+            className="border-border bg-background rounded-md border"
+          >
             <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
               Promedios por dimensión pedagógica
             </h2>

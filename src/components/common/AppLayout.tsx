@@ -78,7 +78,7 @@ function AppLayoutContent({ children, authorized, mainClassName, header }: AppLa
       <div className="flex min-w-0 flex-1 flex-col">
         <AppHeader showBreadcrumb={true} breadcrumb={<AutoBreadcrumb />} {...header} />
 
-        <div className="bg-[#fafafa] dark:bg-background relative flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="dark:bg-background relative flex min-h-0 flex-1 flex-col overflow-hidden bg-[#fafafa]">
           <main
             className={cn(
               'relative mx-auto w-full flex-1 overflow-y-auto px-4 py-6 lg:px-8 lg:py-8',
