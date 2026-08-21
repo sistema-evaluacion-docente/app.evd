@@ -91,16 +91,18 @@ async function getTeacherEvaluationReport(teacherId: number, evaluationId: numbe
 interface EvaluationDimensionsDetailParams {
   teacherId?: number
   courseId?: number
+  modality?: CourseModality
 }
 
 async function getEvaluationDimensionsDetail(
   evaluationId: number,
-  { teacherId, courseId }: EvaluationDimensionsDetailParams = {},
+  { teacherId, courseId, modality }: EvaluationDimensionsDetailParams = {},
 ): Promise<ResponseAPI<EvaluationDimensionsDetail>> {
   const query: Record<string, unknown> = {}
 
   if (teacherId) query['teacher_id'] = teacherId
   if (courseId) query['course_id'] = courseId
+  if (modality) query['modality'] = modality
 
   return api.get(`/evaluations/${evaluationId}/dimensions/detail`, { params: query })
 }
@@ -296,11 +298,15 @@ export function useGetEvaluations({
  */
 export function useGetEvaluationDimensionsDetail(
   evaluationId?: number,
-  { teacherId, courseId }: EvaluationDimensionsDetailParams = {},
+  { teacherId, courseId, modality }: EvaluationDimensionsDetailParams = {},
 ) {
   return useQuery({
-    queryKey: evaluationsKeys.dimensionsDetail(evaluationId ?? 0, { teacherId, courseId }),
-    queryFn: () => getEvaluationDimensionsDetail(evaluationId!, { teacherId, courseId }),
+    queryKey: evaluationsKeys.dimensionsDetail(evaluationId ?? 0, {
+      teacherId,
+      courseId,
+      modality,
+    }),
+    queryFn: () => getEvaluationDimensionsDetail(evaluationId!, { teacherId, courseId, modality }),
     enabled: evaluationId != null,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
