@@ -109,6 +109,8 @@ export function AppSidebar() {
               {items.map((item) => {
                 const Icon = MENU_ICON_BY_PATH[item.path] ?? DEFAULT_ICON
 
+                if (item.path === '/home' && selectedRole === 'ADMIN') return null
+
                 return (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton

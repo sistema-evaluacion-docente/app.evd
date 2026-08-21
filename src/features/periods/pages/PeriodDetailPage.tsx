@@ -54,7 +54,9 @@ export default function PeriodDetailPage() {
 
   return (
     <div className="space-y-6">
-      <BackButton href="/periodos" label="Volver a mis periodos" className="mb-4" />
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <BackButton href="/periodos" label="Volver a mis periodos" />
+      </div>
 
       <TeacherEvaluationDetail
         teacher={teacher}

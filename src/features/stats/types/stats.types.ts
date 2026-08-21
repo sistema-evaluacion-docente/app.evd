@@ -1,5 +1,6 @@
 import type { AiStatus } from '@/features/evaluations'
 import type { CourseHistoryQuestion } from '@/features/teachers'
+import type { CourseModality } from '@/lib/modality'
 
 /** Minimal reference to an academic period embedded in a stats report. */
 export interface StatsPeriodRef {
@@ -36,6 +37,8 @@ export interface DepartmentSubjectGroup {
   academic_period_code: string
   overall_average: number
   respondent_count: number
+  /** Missing on groups the backend hasn't classified yet. */
+  modality?: CourseModality | null
 }
 
 /** One pedagogical dimension's average for a teacher, in a subject comparison. */

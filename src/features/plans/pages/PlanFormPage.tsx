@@ -1,12 +1,15 @@
 import { useMemo, useState } from 'react'
 import { useLocation, useRoute, useSearchParams } from 'wouter'
-import { AlertTriangle, Layers, Save } from 'lucide-react'
+import { toast } from 'sonner'
+import { AlertTriangle, Cloud, Layers, Plus, RotateCcw, Save, X } from 'lucide-react'
 
 import { Combobox } from '@/components/common/Combobox'
 import { DatePicker } from '@/components/common/DatePicker'
 import { InlineError } from '@/components/common/InlineError'
 import { PageTitle } from '@/components/common/PageTitle'
+import { Required } from '@/components/common/Required'
 import { ScoreBadge } from '@/components/common/ScoreBadge'
+import { SearchSelect } from '@/components/common/SearchSelect'
 import {
   SelectLoadingLabel,
   selectLoadingTriggerClass,
@@ -15,12 +18,19 @@ import CreatePlanSkeleton from '@/components/skeletons/CreatePlanSkeleton'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
   SelectItem,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
@@ -28,7 +38,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { useAuthStore } from '@/features/auth'
 import type { TeacherComment } from '@/features/teachers/types'
-import { todayISO } from '@/lib/formatDate'
+import formatDate, { todayISO } from '@/lib/formatDate'
 import { cn } from '@/lib/utils'
 import {
   useCreatePlan,
@@ -37,7 +47,9 @@ import {
   useGetPlanIndicators,
   useGetPlanPeriods,
   useUpdatePlan,
+  useUploadPlanDocument,
 } from '../api'
+import { PlanCaseReportUpload } from '../components/PlanCaseReportUpload'
 import { CommitmentsEditor } from '../components/CommitmentsEditor'
 import { IndicatorPicker } from '../components/IndicatorPicker'
 import {
@@ -48,6 +60,13 @@ import {
 } from '../config/academicCatalog'
 import { usePlanWorkbench } from '../hooks/usePlanWorkbench'
 import { SUBJECT_ALL } from '../lib/indicatorMatrix'
+import { usePlanFormDraft } from '../hooks/usePlanFormDraft'
+import {
+  clearPlanDraft,
+  type PlanFormDraft,
+  planDraftKey,
+  readPlanDraft,
+} from '../lib/planFormStorage'
 import {
   buildBlankDraft,
   buildCommentDraft,
@@ -61,22 +80,33 @@ import {
   planCoursesToDrafts,
   planItemsToDrafts,
   pruneCourses,
+  reserveDraftKeys,
   subjectOfComment,
   type IndicatorPick,
 } from '../lib/planDraft'
-import { indicatorKey } from '../lib/planStatus'
+import { countCompleteCommitments, indicatorKey } from '../lib/planStatus'
 import { isPlanSuggested, planSuggestionReason } from '../lib/planSuggestion'
+import {
+  COMMITMENTS_ANCHOR_ID,
+  COURSES_ANCHOR_ID,
+  focusField,
+  planFormErrors,
+} from '../lib/planValidation'
 import type {
   DraftCourse,
   DraftItem,
   Plan,
+  PlanCandidate,
   PlanIndicators,
   PlanPeriod,
   PlanSubjectOption,
 } from '../types'
 
-/** Sentinel of the "añadir asignatura" select: an empty row to type by hand. */
-const MANUAL_COURSE = 'MANUAL'
+/** Sentinel of the "añadir asignatura" select: takes every one of them at once. */
+const ALL_COURSES = 'ALL'
+
+/** Campos planos del formulario: sin sombra y con el borde siempre visible. */
+const FIELD_CLASS = 'border-border shadow-none'
 
 type FormMode = 'create' | 'edit'
 
@@ -151,6 +181,17 @@ export default function PlanFormPage() {
 
   const title = mode === 'edit' ? 'Editar plan de mejoramiento' : 'Nuevo plan de mejoramiento'
 
+  const draftKey = planDraftKey(mode === 'edit' ? planId : undefined)
+
+  // Read once, on mount, and above the early returns below — a hook that only
+  // runs on some renders is no hook at all. This is a starting value, not
+  // something that follows the form: `PlanForm` owns every field from here on.
+  const [restored, setRestored] = useState(() =>
+    readPlanDraft(draftKey, {
+      presetTeacherId: presetTeacher ? Number(presetTeacher) : undefined,
+    }),
+  )
+
   if (periodsLoading || indicatorsLoading || (mode === 'edit' && planLoading)) {
     return (
       <div>
@@ -214,16 +255,78 @@ export default function PlanFormPage() {
           courses: [],
         }
 
+  const seeded: PlanFormInitial = restored ? { ...initial, ...restoredFields(restored) } : initial
+
+  // The key counter starts over on every load; without this a commitment added
+  // after restoring would be handed a key a restored one already holds.
+  if (restored) reserveDraftKeys([...seeded.items, ...seeded.courses])
+
   return (
     <PlanForm
+      // Discarding rebuilds the form from `initial`, which is what dropping the
+      // draft means — the remount is the point, not a side effect.
+      key={restored ? 'restored' : 'clean'}
       mode={mode}
       plan={plan}
-      initial={initial}
+      initial={seeded}
       periods={periods}
       indicators={indicators}
       presetPeriodCode={presetPeriodCode}
+      draftKey={draftKey}
+      restoredAt={restored?.savedAt ?? null}
+      onDiscardDraft={() => {
+        clearPlanDraft(draftKey)
+        setRestored(null)
+      }}
     />
   )
+}
+
+/**
+ * One teacher in the picker of section 1: the name, the average, and the flag
+ * for the ones whose results already justify a plan.
+ */
+function CandidateOption({ candidate }: { candidate: PlanCandidate }) {
+  // A teacher who already has one is past the suggestion.
+  const suggested = !candidate.has_plan && isPlanSuggested(candidate)
+
+  return (
+    <>
+      {suggested && (
+        <>
+          <AlertTriangle className="size-4 text-amber-600 dark:text-amber-500" aria-hidden="true" />
+          {/* The icon alone says nothing to a screen reader, and the colour
+              alone nothing to a director who can't tell it apart. */}
+          <span className="sr-only">Plan sugerido: {planSuggestionReason(candidate)}.</span>
+        </>
+      )}
+      {candidate.name}
+      <span className="text-muted-foreground num">
+        · {candidate.overall_average.toFixed(2)}
+        {candidate.has_plan ? ' (ya tiene plan)' : ''}
+      </span>
+    </>
+  )
+}
+
+/** The half of a saved draft that overrides the seed the route computed. */
+function restoredFields(draft: PlanFormDraft): Partial<PlanFormInitial> {
+  return {
+    periodId: draft.periodId,
+    teacherId: draft.teacherId,
+    titleOverride: draft.titleOverride,
+    description: draft.description,
+    facultyOverride: draft.facultyOverride,
+    departmentOverride: draft.departmentOverride,
+    programOverride: draft.programOverride,
+    actaDate: draft.actaDate,
+    actaNumber: draft.actaNumber,
+    councilObservations: draft.councilObservations,
+    departmentObservations: draft.departmentObservations,
+    programObservations: draft.programObservations,
+    items: draft.items,
+    courses: draft.courses,
+  }
 }
 
 function PlanForm({
@@ -233,6 +336,9 @@ function PlanForm({
   periods,
   indicators,
   presetPeriodCode,
+  draftKey,
+  restoredAt,
+  onDiscardDraft,
 }: {
   mode: FormMode
   plan?: Plan
@@ -240,6 +346,11 @@ function PlanForm({
   periods: PlanPeriod[]
   indicators: PlanIndicators
   presetPeriodCode: string | null
+  /** Where this form's local backup is filed. */
+  draftKey: string
+  /** When the restored draft was written, or `null` if nothing was restored. */
+  restoredAt: string | null
+  onDiscardDraft: () => void
 }) {
   const [, navigate] = useLocation()
 
@@ -270,10 +381,24 @@ function PlanForm({
   )
   const [programObservations, setProgramObservations] = useState(initial.programObservations)
 
+  // Deliberately outside the autosaved snapshot: a File can't be serialised, so
+  // it is re-picked after a reload rather than silently lost on submit.
+  const [caseReport, setCaseReport] = useState<File | null>(null)
+
   const [onlyWeak, setOnlyWeak] = useState(true)
   const [subjectKey, setSubjectKey] = useState(SUBJECT_ALL)
   const [items, setItems] = useState<DraftItem[]>(initial.items)
   const [courses, setCourses] = useState<DraftCourse[]>(initial.courses)
+
+  // A required field goes red once it has been left empty, not while it is
+  // still waiting its turn: `touched` grows on blur, and a failed submit turns
+  // every pending error on at once.
+  // Dismissing the restore notice only takes the notice down: what it restored
+  // is still in the form, and "Descartar y empezar de nuevo" is what throws it
+  // away. They are two different things and need two different controls.
+  const [noticeDismissed, setNoticeDismissed] = useState(false)
+  const [touched, setTouched] = useState<ReadonlySet<string>>(() => new Set())
+  const [showAllErrors, setShowAllErrors] = useState(false)
 
   const aspects = useMemo(() => indicators.aspects ?? [], [indicators])
 
@@ -295,7 +420,7 @@ function PlanForm({
   // period, and a disabled query is pending forever — which would leave the
   // teacher select dead with no explanation.
   const { data: candidatesResponse, isLoading: candidatesLoading } = useGetPlanCandidates(periodId)
-  const candidates = candidatesResponse?.data ?? []
+  const candidates = useMemo(() => candidatesResponse?.data ?? [], [candidatesResponse])
   const threshold = indicators.threshold ?? 3.5
 
   const candidate = candidates.find((entry) => entry.teacher_id === teacherId)
@@ -318,6 +443,7 @@ function PlanForm({
 
   const createPlan = useCreatePlan()
   const updatePlan = useUpdatePlan(plan?.id ?? 0)
+  const uploadCaseReport = useUploadPlanDocument()
   const submission = isEdit ? updatePlan : createPlan
 
   const teacherName = candidate?.name ?? plan?.teacher_name ?? null
@@ -330,13 +456,14 @@ function PlanForm({
   const title = titleOverride ?? defaultTitle
 
   // At UFPS the director's own "department" is named after the programme it
-  // serves, so it seeds PROGRAMA ACADÉMICO. The academic department proper has
-  // no catalogue yet: it is typed by hand and left blank until there is one, in
-  // which case the API falls back to the teacher's own department.
+  // serves, so it seeds PROGRAMA ACADÉMICO. Facultad and departamento académico
+  // come from the evaluated teacher's own record, which the candidates endpoint
+  // resolves for us; the faculty of the programme is only the last resort.
   const authDepartment = useAuthStore((state) => state.user?.department_name) ?? ''
   const programName = programOverride ?? authDepartment
-  const departmentName = departmentOverride ?? ''
-  const facultyName = facultyOverride ?? facultyOfProgram(programName)?.name ?? ''
+  const departmentName = departmentOverride ?? candidate?.department_name ?? ''
+  const facultyName =
+    facultyOverride ?? candidate?.faculty_name ?? facultyOfProgram(programName)?.name ?? ''
 
   const programOptions = useMemo(
     () => (facultyName ? programsOfFaculty(facultyName) : PROGRAM_NAMES),
@@ -404,7 +531,7 @@ function PlanForm({
       return
     }
 
-    setItems((current) => [...current, buildIndicatorDraft(pick, subject, threshold)])
+    setItems((current) => [...current, buildIndicatorDraft(pick, subject)])
     // Picked at teacher level, the commitment covers every asignatura he taught
     // — not only the ones the "solo indicadores bajos" filter left standing.
     setCourses((current) => mergeCourses(current, coursesOfSubject(subject, workbench.allSubjects)))
@@ -429,6 +556,11 @@ function PlanForm({
 
   function addQualitative(aspect: number) {
     setItems((current) => [...current, buildBlankDraft(aspect)])
+    // A manual commitment is written at teacher level — it doesn't come from
+    // any one asignatura — so it covers every one he taught, exactly like an
+    // indicator picked under "General". It is also what `pruneCourses` assumes,
+    // and it is what keeps section 4 from being left empty.
+    setCourses((current) => mergeCourses(current, coursesOfSubject(null, workbench.allSubjects)))
   }
 
   function patchItem(key: string, patch: Partial<DraftItem>) {
@@ -440,14 +572,6 @@ function PlanForm({
 
     setItems(next)
     setCourses((current) => pruneCourses(current, next))
-  }
-
-  function patchCourse(key: string, patch: Partial<DraftCourse>) {
-    setCourses((current) =>
-      current.map((course) =>
-        course.key === key ? { ...course, ...patch, origin: 'manual' } : course,
-      ),
-    )
   }
 
   /**
@@ -465,17 +589,9 @@ function PlanForm({
     )
   }
 
-  /** An asignatura the app doesn't know about, typed from scratch. */
-  function addBlankCourse() {
-    setCourses((current) => [
-      ...current,
-      {
-        key: `manual-${current.length}-${Date.now()}`,
-        origin: 'manual',
-        course_name: '',
-        order: current.length,
-      },
-    ])
+  /** Every asignatura of the teacher at once, the usual case. */
+  function addAllCourses() {
+    setCourses((current) => mergeCourses(current, coursesOfSubject(null, workbench.allSubjects)))
   }
 
   /** Subjects of the teacher that aren't already listed in the plan. */
@@ -487,17 +603,82 @@ function PlanForm({
     )
   }, [courses, workbench.allSubjects])
 
-  const blockers = [
-    !isEdit && teacherId == null && 'Selecciona un docente.',
-    !isEdit && periodId == null && 'Selecciona un periodo.',
-    title.trim().length === 0 && 'El plan necesita un título.',
-    !actaLocked && items.length === 0 && 'Agrega al menos un indicador, comentario o compromiso.',
-    !actaLocked &&
-      items.some((item) => item.description.trim().length === 0) &&
-      'Hay compromisos sin descripción.',
-  ].filter((entry): entry is string => Boolean(entry))
+  /** Drives the counter of section 3, the reinforcement the director asked for. */
+  const completeCount = useMemo(() => countCompleteCommitments(items), [items])
 
-  const canSubmit = blockers.length === 0
+  /** Everything worth getting back after a reload. Nothing derived from a query. */
+  const snapshot = {
+    teacherId,
+    periodId,
+    titleOverride,
+    description,
+    facultyOverride,
+    departmentOverride,
+    programOverride,
+    actaDate,
+    actaNumber,
+    councilObservations,
+    departmentObservations,
+    programObservations,
+    items,
+    courses,
+  }
+
+  // A signed acta rejects its own content, so there is nothing to keep a local
+  // copy of — and restoring one later would only offer edits the API refuses.
+  const draft = usePlanFormDraft(draftKey, snapshot, { enabled: !actaLocked })
+
+  /** What is still missing, in the order the page paints it. */
+  const errors = useMemo(
+    () =>
+      planFormErrors({
+        isEdit,
+        actaLocked,
+        teacherId,
+        periodId,
+        title,
+        items,
+        aspects,
+        courses,
+        facultyName,
+        departmentName,
+        programName,
+        actaNumber,
+        actaDate,
+      }),
+    [
+      isEdit,
+      actaLocked,
+      teacherId,
+      periodId,
+      title,
+      items,
+      aspects,
+      courses,
+      facultyName,
+      departmentName,
+      programName,
+      actaNumber,
+      actaDate,
+    ],
+  )
+
+  /**
+   * The errors worth painting right now. A field the director hasn't reached
+   * yet is not a mistake — it goes red once they leave it empty, or once they
+   * try to save.
+   */
+  const invalidFields = useMemo(
+    () =>
+      new Set(
+        errors.filter((error) => showAllErrors || touched.has(error.id)).map((error) => error.id),
+      ),
+    [errors, showAllErrors, touched],
+  )
+
+  function markTouched(id: string) {
+    setTouched((current) => (current.has(id) ? current : new Set(current).add(id)))
+  }
 
   /** Where the teacher select stands, so the trigger can say it out loud. */
   const noPeriodYet = periodId == null
@@ -538,7 +719,17 @@ function PlanForm({
   }
 
   function submit() {
-    if (!canSubmit) return
+    if (errors.length > 0) {
+      // Three things at once, because any one of them alone leaves the director
+      // hunting: the toast says what happened, the red says which fields, and
+      // the scroll puts the cursor in the first of them.
+      setShowAllErrors(true)
+      toast.warning('Faltan campos obligatorios por completar.', {
+        description: 'Revisa los campos marcados en rojo.',
+      })
+      focusField(errors[0].id)
+      return
+    }
 
     const shared = {
       title: title.trim(),
@@ -567,7 +758,12 @@ function PlanForm({
                 courses: coursesPayload(),
               }),
         },
-        { onSuccess: () => navigate(`/planes/${plan.id}`) },
+        {
+          onSuccess: () => {
+            draft.discard()
+            navigate(`/planes/${plan.id}`)
+          },
+        },
       )
       return
     }
@@ -587,9 +783,31 @@ function PlanForm({
         courses: coursesPayload(),
       },
       {
-        onSuccess: (response) => {
+        onSuccess: async (response) => {
           const created = response.data
-          if (created) navigate(`/planes/${created.id}`)
+
+          if (!created) return
+
+          draft.discard()
+
+          // The plan exists from here on, so a failed attachment must not read
+          // as a failed creation: the director is taken to the plan either way
+          // and told the Formato 1 is still to be uploaded there.
+          if (caseReport) {
+            try {
+              await uploadCaseReport.mutateAsync({
+                planId: created.id,
+                format: 'formato-1',
+                file: caseReport,
+              })
+            } catch {
+              toast.warning('El plan se creó, pero no se pudo adjuntar el Formato 1.', {
+                description: 'Puedes subirlo desde los formatos oficiales del plan.',
+              })
+            }
+          }
+
+          navigate(`/planes/${created.id}`)
         },
       },
     )
@@ -603,7 +821,34 @@ function PlanForm({
         <InlineError message="El acuerdo está firmado: los compromisos, las asignaturas y los datos del acta ya no se pueden modificar. Para cambiarlos, elimina primero la Ficha de acuerdo firmada." />
       )}
 
-      <section className="border-border bg-background space-y-4 rounded-md border p-6">
+      {restoredAt && !noticeDismissed && (
+        <div
+          className="border-border bg-muted/40 flex flex-wrap items-center justify-between gap-3 rounded-md border px-4 py-3"
+          role="status"
+        >
+          <p className="flex items-center gap-2 text-sm">
+            <RotateCcw className="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
+            Recuperamos lo que estabas escribiendo el {formatDate(restoredAt)}.
+          </p>
+
+          <div className="flex items-center gap-1.5">
+            <Button variant="outline" size="sm" onClick={onDiscardDraft}>
+              Descartar y empezar de nuevo
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Cerrar el aviso"
+              onClick={() => setNoticeDismissed(true)}
+            >
+              <X className="size-4" aria-hidden="true" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <section className="border-border bg-card space-y-4 rounded-md border p-6">
         <h2 className="font-semibold">1. Docente y periodo</h2>
 
         {isEdit ? (
@@ -623,7 +868,9 @@ function PlanForm({
         ) : (
           <div className="flex flex-wrap gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="period">Periodo de origen</Label>
+              <Label htmlFor="period">
+                Periodo de origen <Required />
+              </Label>
               <Select
                 value={periodId ?? null}
                 onValueChange={(value) => {
@@ -632,7 +879,12 @@ function PlanForm({
                   resetPicking()
                 }}
               >
-                <SelectTrigger id="period" className="w-40">
+                <SelectTrigger
+                  id="period"
+                  className="w-40"
+                  aria-invalid={invalidFields.has('period')}
+                  onBlur={() => markTouched('period')}
+                >
                   <SelectValue placeholder="Periodo">{period?.code}</SelectValue>
                 </SelectTrigger>
 
@@ -647,68 +899,32 @@ function PlanForm({
             </div>
 
             <div className="min-w-64 flex-1 space-y-1.5">
-              <Label htmlFor="teacher">Docente</Label>
-              <Select
-                value={teacherId ?? null}
-                onValueChange={(value) => {
-                  setTeacherId(value as number)
+              <Label htmlFor="teacher">
+                Docente <Required />
+              </Label>
+              <SearchSelect<PlanCandidate>
+                id="teacher"
+                value={candidate ?? null}
+                onValueChange={(entry) => {
+                  setTeacherId(entry?.teacher_id)
+                  markTouched('teacher')
                   resetPicking()
                 }}
-                disabled={candidatesLoading || noPeriodYet || noCandidates}
-              >
-                <SelectTrigger
-                  id="teacher"
-                  aria-busy={candidatesLoading}
-                  className={cn('w-full', candidatesLoading && selectLoadingTriggerClass)}
-                >
-                  {candidatesLoading ? (
-                    <SelectLoadingLabel>Cargando docentes…</SelectLoadingLabel>
-                  ) : (
-                    <SelectValue placeholder={teacherPlaceholder}>{candidate?.name}</SelectValue>
-                  )}
-                </SelectTrigger>
-
-                <SelectContent>
-                  {candidates.length === 0 ? (
-                    <p className="text-muted-foreground px-2 py-1.5 text-sm">
-                      Sin docentes evaluados en este periodo.
-                    </p>
-                  ) : (
-                    candidates.map((entry) => {
-                      // A teacher who already has one is past the suggestion.
-                      const suggested = !entry.has_plan && isPlanSuggested(entry)
-
-                      return (
-                        <SelectItem
-                          key={entry.teacher_id}
-                          value={entry.teacher_id}
-                          disabled={entry.has_plan}
-                        >
-                          {suggested && (
-                            <>
-                              <AlertTriangle
-                                className="text-amber-600 dark:text-amber-500"
-                                aria-hidden="true"
-                              />
-                              {/* The icon alone says nothing to a screen reader,
-                                  and the colour alone nothing to a director who
-                                  can't tell it apart. */}
-                              <span className="sr-only">
-                                Plan sugerido: {planSuggestionReason(entry)}.
-                              </span>
-                            </>
-                          )}
-                          {entry.name}
-                          <span className="text-muted-foreground num">
-                            · {entry.overall_average.toFixed(2)}
-                            {entry.has_plan ? ' (ya tiene plan)' : ''}
-                          </span>
-                        </SelectItem>
-                      )
-                    })
-                  )}
-                </SelectContent>
-              </Select>
+                items={candidates}
+                itemToKey={(entry) => entry.teacher_id}
+                itemToLabel={(entry) => entry.name ?? ''}
+                filter={(entry, query) =>
+                  entry.institutional_code?.toLowerCase().includes(query.toLowerCase()) ?? false
+                }
+                isItemDisabled={(entry) => entry.has_plan}
+                renderItem={(entry) => <CandidateOption candidate={entry} />}
+                disabled={noPeriodYet || noCandidates}
+                invalid={invalidFields.has('teacher')}
+                loading={candidatesLoading}
+                loadingLabel="Cargando docentes…"
+                placeholder={teacherPlaceholder}
+                emptyMessage="Sin docentes que coincidan."
+              />
 
               {suggestedCount > 0 && (
                 <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
@@ -752,7 +968,7 @@ function PlanForm({
           the page down when it appears. */}
       {teacherId != null && !candidate && candidatesLoading && (
         <section
-          className="border-border bg-background space-y-4 rounded-md border p-6"
+          className="border-border bg-card space-y-4 rounded-md border p-6"
           role="status"
           aria-busy="true"
         >
@@ -765,7 +981,7 @@ function PlanForm({
       )}
 
       {candidate && !actaLocked && (
-        <section className="border-border bg-background space-y-4 rounded-md border p-6">
+        <section className="border-border bg-card space-y-4 rounded-md border p-6">
           <div>
             <h2 className="font-semibold">2. Indicadores y comentarios</h2>
             <p className="text-muted-foreground text-sm">
@@ -796,23 +1012,75 @@ function PlanForm({
         </section>
       )}
 
-      <section className="border-border bg-background space-y-4 rounded-md border p-6">
-        <div>
-          <h2 className="font-semibold">3. Compromisos</h2>
-          <p className="text-muted-foreground text-sm">
-            Agrupados por los cinco aspectos de los formatos oficiales. Puedes añadir compromisos a
-            mano aunque no hayas marcado ningún indicador.
-          </p>
+      <section className="border-border bg-card space-y-4 rounded-md border p-6">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="font-semibold">3. Compromisos</h2>
+            <p className="text-muted-foreground text-sm">
+              Solo aparecen los aspectos de los formatos oficiales sobre los que marcaste algo en el
+              paso 2. Puedes añadir compromisos a mano aunque no hayas marcado ningún indicador.
+            </p>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-4">
+            {items.length > 0 && (
+              <p className="text-muted-foreground text-sm" role="status">
+                <span className="num font-semibold">{completeCount}</span> de{' '}
+                <span className="num font-semibold">{items.length}</span>{' '}
+                {items.length === 1 ? 'compromiso completo' : 'compromisos completos'}
+              </p>
+            )}
+
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button variant="outline" size="sm" disabled={actaLocked}>
+                    <Plus className="size-4" aria-hidden="true" />
+                    Añadir compromiso manual
+                  </Button>
+                }
+              />
+
+              <DropdownMenuContent align="end">
+                {aspects.map((aspect) => (
+                  <DropdownMenuItem
+                    key={aspect.aspect}
+                    onClick={() => addQualitative(aspect.aspect)}
+                  >
+                    <span className="num text-muted-foreground mr-1.5">{aspect.aspect}.</span>
+                    {aspect.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
-        <CommitmentsEditor
-          items={items}
-          aspects={aspects}
-          onChange={patchItem}
-          onRemove={removeItem}
-          onAddQualitative={addQualitative}
-          disabled={actaLocked}
-        />
+        {items.length === 0 ? (
+          // `tabIndex` so the failed-save scroll can put the cursor on a
+          // paragraph; `outline-none` so it doesn't grow a focus ring for it.
+          <p
+            id={COMMITMENTS_ANCHOR_ID}
+            tabIndex={-1}
+            className={cn(
+              'text-muted-foreground border-border rounded-md border border-dashed px-4 py-6 text-center text-sm outline-none',
+              invalidFields.has(COMMITMENTS_ANCHOR_ID) && 'border-destructive text-destructive',
+            )}
+          >
+            Todavía no hay compromisos: marca un indicador o un comentario en el paso 2, o añade uno
+            a mano con el botón de arriba.
+          </p>
+        ) : (
+          <CommitmentsEditor
+            items={items}
+            aspects={aspects}
+            onChange={patchItem}
+            onRemove={removeItem}
+            invalidFields={invalidFields}
+            onFieldBlur={markTouched}
+            disabled={actaLocked}
+          />
+        )}
 
         <div className="space-y-4 border-t pt-4">
           <div className="space-y-1.5">
@@ -820,6 +1088,7 @@ function PlanForm({
             <Textarea
               id="council-obs"
               rows={3}
+              className={FIELD_CLASS}
               value={councilObservations}
               onChange={(event) => setCouncilObservations(event.target.value)}
               placeholder="Se imprimen en el Formato 2, bajo los compromisos acordados"
@@ -833,6 +1102,7 @@ function PlanForm({
               <Textarea
                 id="department-obs"
                 rows={2}
+                className={FIELD_CLASS}
                 value={departmentObservations}
                 onChange={(event) => setDepartmentObservations(event.target.value)}
               />
@@ -843,6 +1113,7 @@ function PlanForm({
               <Textarea
                 id="program-obs"
                 rows={2}
+                className={FIELD_CLASS}
                 value={programObservations}
                 onChange={(event) => setProgramObservations(event.target.value)}
               />
@@ -852,120 +1123,105 @@ function PlanForm({
       </section>
 
       {teacherId != null && (
-        <section className="border-border bg-background space-y-4 rounded-md border p-6">
+        <section className="border-border bg-card space-y-4 rounded-md border p-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="font-semibold">4. Asignaturas</h2>
               <p className="text-muted-foreground text-sm">
                 Se van agregando solas con lo que marcas arriba: en «General» entran todas las del
-                docente; con una asignatura filtrada, sólo esa. También puedes añadir cualquier otra
-                que haya dictado y corregir su nombre.
+                docente; con una asignatura filtrada, sólo esa. Vienen del reporte de evaluación,
+                así que no se editan: si sobra alguna, quítala.
               </p>
             </div>
 
             {workbench.allSubjects.length > 0 && !actaLocked && (
-              <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setCourses((current) =>
-                      mergeCourses(current, coursesOfSubject(null, workbench.allSubjects)),
-                    )
+              <Select
+                value={null}
+                onValueChange={(value) => {
+                  if (value === ALL_COURSES) {
+                    addAllCourses()
+                    return
                   }
+                  const subject = addableSubjects.find((option) => option.key === value)
+
+                  if (subject) addSubjectCourse(subject)
+                }}
+                disabled={workbench.isLoading}
+              >
+                <SelectTrigger
+                  aria-label="Añadir asignatura"
+                  aria-busy={workbench.isLoading}
+                  className={cn('w-80', workbench.isLoading && selectLoadingTriggerClass)}
                 >
-                  <Layers className="size-4" aria-hidden="true" />
-                  Añadir todas las del docente
-                </Button>
-                <Select
-                  value={null}
-                  onValueChange={(value) => {
-                    if (value === MANUAL_COURSE) {
-                      addBlankCourse()
-                      return
-                    }
-                    const subject = addableSubjects.find((option) => option.key === value)
+                  {workbench.isLoading ? (
+                    <SelectLoadingLabel>Cargando asignaturas…</SelectLoadingLabel>
+                  ) : (
+                    <SelectValue placeholder="Añadir asignatura…" />
+                  )}
+                </SelectTrigger>
 
-                    if (subject) addSubjectCourse(subject)
-                  }}
-                  disabled={workbench.isLoading}
-                >
-                  <SelectTrigger
-                    aria-label="Añadir asignatura"
-                    aria-busy={workbench.isLoading}
-                    className={cn('w-80', workbench.isLoading && selectLoadingTriggerClass)}
-                  >
-                    {workbench.isLoading ? (
-                      <SelectLoadingLabel>Cargando asignaturas…</SelectLoadingLabel>
-                    ) : (
-                      <SelectValue placeholder="Añadir asignatura…" />
-                    )}
-                  </SelectTrigger>
+                <SelectContent>
+                  {/* The usual case, so it leads the list instead of sitting in
+                      a button of its own outside the field. */}
+                  <SelectItem value={ALL_COURSES}>
+                    <Layers className="size-4" aria-hidden="true" />
+                    Añadir todas las del docente
+                  </SelectItem>
 
-                  <SelectContent>
-                    {addableSubjects.length === 0 ? (
-                      <p className="text-muted-foreground px-2 py-1.5 text-sm">
-                        {workbench.allSubjects.length === 0
-                          ? 'Sin asignaturas registradas para este docente.'
-                          : 'Ya están todas las asignaturas del docente.'}
-                      </p>
-                    ) : (
-                      addableSubjects.map((subject) => (
-                        <SelectItem key={subject.key} value={subject.key}>
-                          {subject.label}
-                        </SelectItem>
-                      ))
-                    )}
+                  <SelectSeparator />
 
-                    <SelectItem value={MANUAL_COURSE}>Otra asignatura…</SelectItem>
-                  </SelectContent>
-                </Select>
-              </>
+                  {addableSubjects.length === 0 ? (
+                    <p className="text-muted-foreground px-2 py-1.5 text-sm">
+                      Ya están todas las asignaturas del docente.
+                    </p>
+                  ) : (
+                    addableSubjects.map((subject) => (
+                      <SelectItem key={subject.key} value={subject.key}>
+                        {subject.label}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
             )}
           </div>
 
           {courses.length === 0 ? (
-            <div className="flex flex-col items-center justify-center">
-              <p className="text-muted-foreground px-3 py-4 text-sm">
-                Todavía no hay asignaturas: marca un indicador o un comentario y aparecerán aquí, o
-                añádelas con el selector de abajo.
-              </p>
-            </div>
+            <p
+              id={COURSES_ANCHOR_ID}
+              tabIndex={-1}
+              className={cn(
+                'text-muted-foreground border-border rounded-md border border-dashed px-4 py-6 text-center text-sm outline-none',
+                invalidFields.has(COURSES_ANCHOR_ID) && 'border-destructive text-destructive',
+              )}
+            >
+              Todavía no hay asignaturas: marca un indicador o un comentario y aparecerán aquí, o
+              añádelas con el selector de arriba.
+            </p>
           ) : (
-            <ul className="space-y-2">
+            // Read-only on purpose: the name, the code and the group are what
+            // the evaluation report says the teacher taught, and a plan that
+            // renames them stops matching the record it is built on.
+            <ul className="divide-border border-border divide-y rounded-md border">
               {courses.map((course) => (
-                <li key={course.key} className="flex flex-wrap items-center gap-2">
-                  <Input
-                    className="min-w-56 flex-1"
-                    value={course.course_name}
-                    onChange={(event) =>
-                      patchCourse(course.key, { course_name: event.target.value })
-                    }
-                    placeholder="Asignatura"
-                    disabled={actaLocked}
-                  />
-                  <Input
-                    className="w-32"
-                    value={course.course_code ?? ''}
-                    onChange={(event) =>
-                      patchCourse(course.key, { course_code: event.target.value })
-                    }
-                    placeholder="Código"
-                    disabled={actaLocked}
-                  />
-                  <Input
-                    className="w-24"
-                    value={course.group_name ?? ''}
-                    onChange={(event) =>
-                      patchCourse(course.key, { group_name: event.target.value })
-                    }
-                    placeholder="Grupo"
-                    disabled={actaLocked}
-                  />
+                <li key={course.key} className="flex flex-wrap items-center gap-3 px-4 py-2.5">
+                  <span className="min-w-0 flex-1 text-sm font-medium">{course.course_name}</span>
+
+                  {course.course_code && (
+                    <span className="text-muted-foreground num text-xs">{course.course_code}</span>
+                  )}
+
+                  {course.group_name && (
+                    <Badge variant="outline" className="num font-normal">
+                      Grupo {course.group_name}
+                    </Badge>
+                  )}
+
                   <Button
                     variant="ghost"
                     size="sm"
                     disabled={actaLocked}
+                    aria-label={`Quitar ${course.course_name}`}
                     onClick={() =>
                       setCourses((current) => current.filter((entry) => entry.key !== course.key))
                     }
@@ -979,15 +1235,25 @@ function PlanForm({
         </section>
       )}
 
-      <section className="border-border bg-background space-y-4 rounded-md border p-6">
+      {!isEdit && <PlanCaseReportUpload file={caseReport} onFileChange={setCaseReport} />}
+
+      <section className="border-border bg-card space-y-4 rounded-md border p-6">
         <h2 className="font-semibold">5. Datos del plan</h2>
 
         <div className="space-y-1.5">
-          <Label htmlFor="title">Título</Label>
+          <Label htmlFor="title">
+            Título{' '}
+            <span className="text-destructive" aria-hidden="true">
+              *
+            </span>
+          </Label>
           <Input
             id="title"
+            className={FIELD_CLASS}
             value={title}
             onChange={(event) => setTitleOverride(event.target.value)}
+            onBlur={() => markTouched('title')}
+            aria-invalid={invalidFields.has('title')}
           />
         </div>
 
@@ -996,6 +1262,7 @@ function PlanForm({
           <Textarea
             id="plan-desc"
             rows={3}
+            className={FIELD_CLASS}
             value={description}
             onChange={(event) => setDescription(event.target.value)}
           />
@@ -1005,37 +1272,50 @@ function PlanForm({
             free text on the API, so anything off-catalogue can still be typed. */}
         <div className="flex flex-wrap gap-4">
           <div className="min-w-56 flex-1 space-y-1.5">
-            <Label htmlFor="faculty">Facultad</Label>
+            <Label htmlFor="faculty">
+              Facultad <Required />
+            </Label>
             <Combobox
               id="faculty"
               value={facultyName}
               onValueChange={setFacultyOverride}
               options={FACULTY_NAMES}
               placeholder="Facultad"
+              invalid={invalidFields.has('faculty')}
+              onBlur={() => markTouched('faculty')}
             />
           </div>
 
           <div className="min-w-56 flex-1 space-y-1.5">
-            <Label htmlFor="department">Departamento académico</Label>
+            <Label htmlFor="department">
+              Departamento académico <Required />
+            </Label>
             <Input
               id="department"
+              className={FIELD_CLASS}
               value={departmentName}
               onChange={(event) => setDepartmentOverride(event.target.value)}
               placeholder="Escríbelo"
+              aria-invalid={invalidFields.has('department')}
+              onBlur={() => markTouched('department')}
             />
             <p className="text-muted-foreground text-xs">
-              Si lo dejas vacío se imprime el departamento registrado del docente.
+              Viene del registro del docente evaluado; corrígelo si el formato debe decir otra cosa.
             </p>
           </div>
 
           <div className="min-w-56 flex-1 space-y-1.5">
-            <Label htmlFor="program">Programa académico</Label>
+            <Label htmlFor="program">
+              Programa académico <Required />
+            </Label>
             <Combobox
               id="program"
               value={programName}
               onValueChange={setProgramOverride}
               options={programOptions}
               placeholder="Programa"
+              invalid={invalidFields.has('program')}
+              onBlur={() => markTouched('program')}
             />
           </div>
         </div>
@@ -1045,24 +1325,32 @@ function PlanForm({
             that approves the plan. */}
         <div className="flex flex-wrap gap-4 border-t pt-4">
           <div className="min-w-40 space-y-1.5">
-            <Label htmlFor="acta-number">Acta N.º</Label>
+            <Label htmlFor="acta-number">
+              Acta N.º <Required />
+            </Label>
             <Input
               id="acta-number"
               value={actaNumber}
               onChange={(event) => setActaNumber(event.target.value)}
               placeholder="Ej. 012"
-              className="num"
+              className={cn('num', FIELD_CLASS)}
               disabled={actaLocked}
+              aria-invalid={invalidFields.has('acta-number')}
+              onBlur={() => markTouched('acta-number')}
             />
           </div>
 
           <div className="min-w-56 space-y-1.5">
-            <Label htmlFor="acta-date">Fecha del acta</Label>
+            <Label htmlFor="acta-date">
+              Fecha del acta <Required />
+            </Label>
             <DatePicker
               id="acta-date"
               value={actaDate}
               onChange={setActaDate}
               disabled={actaLocked}
+              invalid={invalidFields.has('acta-date')}
+              onBlur={() => markTouched('acta-date')}
             />
           </div>
 
@@ -1075,8 +1363,26 @@ function PlanForm({
       </section>
 
       <div className="flex flex-wrap items-center justify-end gap-3 pb-8">
-        {blockers.length > 0 && (
-          <p className="text-muted-foreground mr-auto text-xs">{blockers[0]}</p>
+        {showAllErrors && errors.length > 0 && (
+          <p className="text-destructive mr-auto text-xs" role="alert">
+            {errors.length === 1
+              ? 'Falta 1 campo obligatorio por completar.'
+              : `Faltan ${errors.length} campos obligatorios por completar.`}
+          </p>
+        )}
+
+        {draft.savedAt && (
+          <p
+            className={cn(
+              'text-muted-foreground flex items-center gap-1.5 text-xs',
+              !(showAllErrors && errors.length > 0) && 'mr-auto',
+            )}
+          >
+            <Cloud className="size-3.5 shrink-0" aria-hidden="true" />
+            {/* "En este navegador" on purpose: a director who reads plain
+                "guardado" would think the plan is already filed. */}
+            Guardado en este navegador · {formatDate(draft.savedAt, 'h:mm A')}
+          </p>
         )}
 
         <Button
@@ -1085,7 +1391,9 @@ function PlanForm({
         >
           Cancelar
         </Button>
-        <Button onClick={submit} disabled={!canSubmit || submission.isPending}>
+        {/* Never disabled: a dead button says nothing about what is missing.
+            Pressing it is what points at the first empty field. */}
+        <Button onClick={submit} disabled={submission.isPending}>
           <Save className="size-4" aria-hidden="true" />
           {submission.isPending
             ? isEdit

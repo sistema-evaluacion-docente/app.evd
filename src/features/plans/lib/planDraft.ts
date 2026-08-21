@@ -23,6 +23,25 @@ function nextKey(): string {
 }
 
 /**
+ * Moves the key counter past the ones already in use.
+ *
+ * The counter starts over on every page load, so commitments restored from a
+ * saved draft come back holding keys this module would hand out again — and two
+ * rows sharing a key means editing one edits the other. Call this with whatever
+ * is seeded in before the form can add anything of its own.
+ *
+ * @example
+ * reserveDraftKeys(draft.items) // keys 'draft-1'…'draft-4' → next is 'draft-5'
+ */
+export function reserveDraftKeys(items: { key: string }[]): void {
+  for (const item of items) {
+    const match = /^draft-(\d+)$/.exec(item.key)
+
+    if (match) draftSeq = Math.max(draftSeq, Number(match[1]))
+  }
+}
+
+/**
  * Identity of a pick. The subject takes part in it so the same dimension read
  * on two subjects yields two commitments — `target_ref` stays clean because
  * the API verifies compliance through it.
@@ -148,11 +167,17 @@ export function questionPickOf(question: IndicatorQuestion, aspect: number | nul
   }
 }
 
-/** Builds the commitment an indicator pick becomes. */
+/**
+ * Builds the commitment an indicator pick becomes.
+ *
+ * `target_value` is left empty on purpose: seeded with the institutional
+ * threshold it read as already decided, and the director scrolled past it. The
+ * form now asks for it, and the API falls back to the threshold if it never
+ * arrives.
+ */
 export function buildIndicatorDraft(
   pick: IndicatorPick,
   subject: PlanSubjectOption | null,
-  threshold: number,
 ): DraftItem {
   const score = pick.average != null ? ` (${pick.average.toFixed(2)})` : ''
   const scope = subject ? ` — ${subject.label}` : ''
@@ -166,7 +191,7 @@ export function buildIndicatorDraft(
     target_type: pick.target_type,
     target_ref: pick.target_ref,
     baseline_value: pick.average,
-    target_value: threshold,
+    target_value: null,
     suggestions: pick.suggestions,
     comment_ids: [],
     comment_previews: [],

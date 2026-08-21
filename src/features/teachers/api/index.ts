@@ -3,6 +3,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import type { ResponseAPI } from '@/@types/Response'
 import api from '@/config/axios'
 import { useAuthStore } from '@/features/auth'
+import type { CourseModality } from '@/lib/modality'
 import type {
   CourseHistoryOut,
   TeacherComment,
@@ -23,6 +24,7 @@ interface TeacherListParams {
   contract_type?: string
   sort_by?: string
   has_average?: boolean
+  modality?: CourseModality
 }
 
 /** Raw request functions. Not exported — call through the hooks below. */
@@ -42,6 +44,7 @@ async function getTeachersWithAverages(
   if (params.contract_type) query['contract_type'] = params.contract_type
   if (params.sort_by) query['sort_by'] = params.sort_by
   if (params.has_average !== undefined) query['has_average'] = params.has_average
+  if (params.modality) query['modality'] = params.modality
 
   return api.get('/teachers/with-averages', { params: query })
 }
@@ -191,6 +194,7 @@ export function useGetTeachers({
   contractType,
   sortBy,
   hasAverage,
+  modality,
 }: {
   page?: number
   limit?: number
@@ -202,6 +206,8 @@ export function useGetTeachers({
   contractType?: string
   sortBy?: string
   hasAverage?: boolean
+  /** Narrows the averages to the groups taught in one modality. */
+  modality?: CourseModality
 }) {
   const authDepartmentId = useAuthStore((state) => state.user?.department_id) ?? undefined
   const resolvedDepartmentId =
@@ -220,6 +226,7 @@ export function useGetTeachers({
           contract_type: contractType,
           sort_by: sortBy,
           has_average: hasAverage,
+          modality,
         }
       : null
 
@@ -236,6 +243,7 @@ export function useGetTeachers({
         contractType,
         sortBy,
         hasAverage,
+        modality,
       },
     ],
     queryFn: () => getTeachersWithAverages(params!),

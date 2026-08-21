@@ -1,5 +1,15 @@
 import { useState } from 'react'
-import { ChevronDown, Download, FileText, FileType2, Trash2, Upload } from 'lucide-react'
+import {
+  ChevronDown,
+  Download,
+  FileText,
+  FileType2,
+  Info,
+  Paperclip,
+  Trash2,
+  Upload,
+  X,
+} from 'lucide-react'
 
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { FileDropzone } from '@/components/common/FileDropzone'
@@ -21,6 +31,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import formatDate from '@/lib/formatDate'
+import { openPendingTab } from '@/lib/openPendingTab'
 import {
   useDeleteSignedDocument,
   useDownloadDocument,
@@ -63,10 +74,13 @@ interface PlanDocumentsProps {
  */
 export function PlanDocuments({ plan, canManage }: PlanDocumentsProps) {
   const followupStage = followupFormatStage(plan)
+  // Good news, not a warning: it is dismissed for the session once read, and
+  // comes back on the next visit for whoever hasn't seen it.
+  const [noticeDismissed, setNoticeDismissed] = useState(false)
 
   return (
-    <section className="border-border bg-background overflow-hidden rounded-md border">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4">
+    <section className="border-border bg-card overflow-hidden rounded-md border">
+      <header className="bg-muted/50 flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4">
         <div>
           <h2 className="font-semibold">Formatos oficiales</h2>
           <p className="text-muted-foreground text-sm">
@@ -77,11 +91,25 @@ export function PlanDocuments({ plan, canManage }: PlanDocumentsProps) {
         <ActaStatusBadge status={plan.acta_status} />
       </header>
 
-      {plan.acta_locked && (
-        <p className="bg-amber-50 px-6 py-2 text-sm text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
-          Acuerdo firmado: el plan está en vigencia y el contenido del acta ya no se modifica. El
-          seguimiento sigue su curso.
-        </p>
+      {plan.acta_locked && !noticeDismissed && (
+        <div className="flex items-start gap-2.5 bg-emerald-50 px-6 py-2.5 text-sm text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200">
+          <Info className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+
+          <p className="flex-1">
+            Acuerdo firmado: el plan está en vigencia y el contenido del acta ya no se modifica. El
+            seguimiento sigue su curso.
+          </p>
+
+          <Button
+            size="icon-xs"
+            variant="ghost"
+            onClick={() => setNoticeDismissed(true)}
+            aria-label="Cerrar el aviso"
+            className="-my-0.5 shrink-0 hover:bg-emerald-100 dark:hover:bg-emerald-900/40"
+          >
+            <X className="size-3.5" aria-hidden="true" />
+          </Button>
+        </div>
       )}
 
       <ul className="divide-border divide-y">
@@ -132,6 +160,11 @@ function FormatRow({
 
   const isActa = format.slug === 'formato-2'
 
+  // The caso reportado reaches the director already signed by the academic
+  // programme: he files it when drawing the plan up, so here it is an
+  // attachment to read, never a form to take away and sign.
+  const isCaseReport = format.slug === 'formato-1'
+
   // Signing the Ficha de acuerdo is what turns it into the copy of record, so
   // the acto administrativo backing it and at least one agreed commitment have
   // to be there first — the API refuses the upload otherwise, and saying so
@@ -146,9 +179,11 @@ function FormatRow({
 
   const actaIncomplete = missingActaData.length > 0
 
-  // Copies signed before the API kept the uploaded name fall back to a generic
+  // Copies filed before the API kept the uploaded name fall back to a generic
   // one, so the chip never renders an empty label.
-  const signedName = record?.signed_filename ?? `${format.slug}_firmado.pdf`
+  const signedName =
+    record?.signed_filename ??
+    (isCaseReport ? 'formato-1_caso_reportado.pdf' : `${format.slug}_firmado.pdf`)
 
   function submitSigned() {
     if (!file) return
@@ -170,18 +205,9 @@ function FormatRow({
    * blocker eats it — and the blob is pushed into it once it lands.
    */
   function previewInNewTab() {
-    const tab = window.open('', '_blank')
+    const tab = openPendingTab(`Abriendo ${signedName}…`)
 
-    previewSigned.mutate(format.slug, {
-      onSuccess: (url) => {
-        if (tab) tab.location.href = url
-        else window.open(url, '_blank')
-
-        // The tab holds the file by now; keeping the blob alive only leaks it.
-        window.setTimeout(() => URL.revokeObjectURL(url), 60_000)
-      },
-      onError: () => tab?.close(),
-    })
+    previewSigned.mutate(format.slug, { onSuccess: tab.settle, onError: tab.fail })
   }
 
   return (
@@ -197,44 +223,50 @@ function FormatRow({
 
         {record?.signed_at && (
           <p className="text-muted-foreground mt-0.5 text-xs">
-            Firmado el {formatDate(record.signed_at)}
+            {isCaseReport ? 'Adjuntado' : 'Firmado'} el {formatDate(record.signed_at)}
           </p>
         )}
       </div>
 
       <div className="flex shrink-0 flex-wrap items-center gap-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <LoadingButton
-                size="sm"
-                pending={download.isPending || downloadWord.isPending}
-                pendingLabel="Descargando…"
-              >
-                <Download className="size-4" aria-hidden="true" />
-                Descargar
-                <ChevronDown className="size-3.5" aria-hidden="true" />
-              </LoadingButton>
-            }
-          />
+        {/* The caso reportado is never rendered by us — it arrives by email
+            already made and signed, and is only filed here. So there is nothing
+            to generate and nothing to offer until it has been attached; from
+            then on the chip below hands over the very PDF that was uploaded. */}
+        {!isCaseReport && (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <LoadingButton
+                  size="sm"
+                  pending={download.isPending || downloadWord.isPending}
+                  pendingLabel="Descargando…"
+                >
+                  <Download className="size-4" aria-hidden="true" />
+                  Descargar
+                  <ChevronDown className="size-3.5" aria-hidden="true" />
+                </LoadingButton>
+              }
+            />
 
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => download.mutate(format.slug)}>
-              <FileText className="size-4" aria-hidden="true" />
-              Formato PDF
-            </DropdownMenuItem>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => download.mutate(format.slug)}>
+                <FileText className="size-4" aria-hidden="true" />
+                Formato PDF
+              </DropdownMenuItem>
 
-            {/* Rendered on the fly from the plan as it stands: the working copy
+              {/* Rendered on the fly from the plan as it stands: the working copy
                 the director corrects before printing it for signature. The API
                 keeps it to managers, so the teacher is not offered it. */}
-            {canManage && (
-              <DropdownMenuItem onClick={() => downloadWord.mutate(format.slug)}>
-                <FileType2 className="size-4" aria-hidden="true" />
-                Formato Word
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+              {canManage && (
+                <DropdownMenuItem onClick={() => downloadWord.mutate(format.slug)}>
+                  <FileType2 className="size-4" aria-hidden="true" />
+                  Formato Word
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
 
         {record?.has_signed ? (
           <div className="border-border bg-muted/40 flex max-w-full items-center gap-1 rounded-md border py-1 pr-1 pl-2.5">
@@ -259,7 +291,7 @@ function FormatRow({
               onClick={() => downloadSigned.mutate({ format: format.slug, filename: signedName })}
               pending={downloadSigned.isPending}
               aria-label={`Descargar ${signedName}`}
-              title="Descargar el PDF firmado"
+              title={isCaseReport ? 'Descargar el PDF adjunto' : 'Descargar el PDF firmado'}
             >
               <Download className="size-3.5" aria-hidden="true" />
             </LoadingButton>
@@ -270,7 +302,7 @@ function FormatRow({
                 variant="ghost"
                 onClick={() => setConfirmDelete(true)}
                 aria-label={`Eliminar ${signedName}`}
-                title="Eliminar el PDF firmado"
+                title={isCaseReport ? 'Eliminar el PDF adjunto' : 'Eliminar el PDF firmado'}
               >
                 <Trash2 className="size-3.5" aria-hidden="true" />
               </Button>
@@ -289,8 +321,12 @@ function FormatRow({
                   : undefined
               }
             >
-              <Upload className="size-4" aria-hidden="true" />
-              Subir firmado
+              {isCaseReport ? (
+                <Paperclip className="size-4" aria-hidden="true" />
+              ) : (
+                <Upload className="size-4" aria-hidden="true" />
+              )}
+              {isCaseReport ? 'Adjuntar Formato 1' : 'Subir firmado'}
             </Button>
           )
         )}
@@ -307,9 +343,13 @@ function FormatRow({
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Subir {format.name} firmado</DialogTitle>
+            <DialogTitle>
+              {isCaseReport ? `Adjuntar ${format.name}` : `Subir ${format.name} firmado`}
+            </DialogTitle>
             <DialogDescription>
-              Adjunta el PDF escaneado con las firmas. Reemplaza cualquier versión firmada anterior.
+              {isCaseReport
+                ? 'Adjunta el PDF del caso que el programa académico remitió a la dirección de departamento. Reemplaza cualquier versión anterior.'
+                : 'Adjunta el PDF escaneado con las firmas. Reemplaza cualquier versión firmada anterior.'}
             </DialogDescription>
           </DialogHeader>
 
@@ -338,11 +378,13 @@ function FormatRow({
       <ConfirmDialog
         open={confirmDelete}
         onOpenChange={setConfirmDelete}
-        title="¿Eliminar el PDF firmado?"
+        title={isCaseReport ? '¿Eliminar el PDF adjunto?' : '¿Eliminar el PDF firmado?'}
         description={
-          isActa
-            ? 'El acuerdo volverá a estado borrador y podrás editar el plan de nuevo. El formato en blanco se conserva y se te pedirá otra vez la versión firmada.'
-            : 'Se te pedirá de nuevo la versión firmada de este formato. El formato en blanco se conserva.'
+          isCaseReport
+            ? 'Se quitará el caso reportado adjunto al plan. Podrás volver a adjuntarlo cuando quieras.'
+            : isActa
+              ? 'El acuerdo volverá a estado borrador y podrás editar el plan de nuevo. El formato en blanco se conserva y se te pedirá otra vez la versión firmada.'
+              : 'Se te pedirá de nuevo la versión firmada de este formato. El formato en blanco se conserva.'
         }
         confirmLabel="Eliminar"
         pendingLabel="Eliminando…"

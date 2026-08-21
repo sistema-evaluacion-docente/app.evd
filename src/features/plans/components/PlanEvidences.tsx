@@ -1,6 +1,17 @@
 import { useState } from 'react'
-import { Check, Download, MessageSquare, Paperclip, Plus, Send, X } from 'lucide-react'
+import {
+  Check,
+  Download,
+  FileText,
+  MessageSquare,
+  Paperclip,
+  Plus,
+  Send,
+  Trash2,
+  X,
+} from 'lucide-react'
 
+import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { DatePicker } from '@/components/common/DatePicker'
 import { FileDropzone } from '@/components/common/FileDropzone'
 import { LoadingButton } from '@/components/common/LoadingButton'
@@ -15,6 +26,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Select,
   SelectContent,
@@ -23,16 +35,21 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { useFileUpload } from '@/hooks/useFileUpload'
 import formatDate, { isPastDate, todayISO } from '@/lib/formatDate'
+import { openPendingTab } from '@/lib/openPendingTab'
 import { cn } from '@/lib/utils'
 import {
   useAddEvidenceComment,
   useCreateEvidenceRequest,
+  useDeleteEvidence,
   useDownloadEvidence,
   useGetEvidenceRequests,
+  usePreviewEvidence,
   useReviewEvidence,
   useUploadEvidence,
 } from '../api'
+import { evidenceFileName, evidenceLabel } from '../lib/planStatus'
 import type { Plan, PlanEvidenceRequest } from '../types'
 import { EvidenceRequestBadge, EvidenceStatusBadge } from './PlanStatusBadge'
 
@@ -56,8 +73,8 @@ export function PlanEvidences({ plan, canManage }: PlanEvidencesProps) {
   const requests = data?.data ?? []
 
   return (
-    <section className="border-border bg-background overflow-hidden rounded-md border">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4">
+    <section className="border-border bg-card overflow-hidden rounded-md border">
+      <header className="bg-muted/50 flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4">
         <div>
           <h2 className="font-semibold">Evidencias</h2>
           <p className="text-muted-foreground text-sm">
@@ -74,7 +91,7 @@ export function PlanEvidences({ plan, canManage }: PlanEvidencesProps) {
       </header>
 
       {isPending ? (
-        <p className="text-muted-foreground px-6 py-4 text-sm">Cargando…</p>
+        <EvidenceRequestsSkeleton />
       ) : requests.length === 0 ? (
         <p className="text-muted-foreground px-6 py-4 text-sm">
           Aún no se han solicitado evidencias en este plan.
@@ -108,25 +125,59 @@ function RequestBlock({
 }) {
   const [comment, setComment] = useState('')
   const [uploading, setUploading] = useState(false)
-  const [file, setFile] = useState<File | null>(null)
+  /** The evidence waiting for its deletion to be confirmed, if any. */
+  const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
+  const [title, setTitle] = useState('')
+  /** Once the title is written by hand, picking another file stops rewriting it. */
+  const [titleEdited, setTitleEdited] = useState(false)
 
   const addComment = useAddEvidenceComment(planId)
   const upload = useUploadEvidence(planId)
   const review = useReviewEvidence(planId)
   const download = useDownloadEvidence(planId)
+  const preview = usePreviewEvidence(planId)
+  const remove = useDeleteEvidence(planId)
+
+  // The hook is the one that decides what counts as a file — the dropzone's
+  // `accept` only filters the native picker, so a dropped .docx used to sail
+  // through. It also owns the file, so there is no second copy to keep in sync.
+  const { file, error, handleFile, clear } = useFileUpload({
+    onValidFile: (candidate) => {
+      if (!titleEdited) setTitle(candidate.name)
+    },
+  })
+
+  function resetUpload() {
+    clear()
+    setTitle('')
+    setTitleEdited(false)
+  }
 
   function submitFile() {
     if (!file) return
 
     upload.mutate(
-      { file, requestId: request.id },
+      // The API keeps no filename of its own, so the name travels as the
+      // description — that is what the list prints and what the download saves.
+      { file, requestId: request.id, description: title.trim() || file.name },
       {
         onSuccess: () => {
           setUploading(false)
-          setFile(null)
+          resetUpload()
         },
       },
     )
+  }
+
+  /**
+   * The evidence sits behind the Bearer token, so there is no URL to link to:
+   * the tab is opened first — while the click is still a user gesture, or the
+   * popup blocker eats it — and the blob is pushed into it once it lands.
+   */
+  function previewInNewTab(evidenceId: number, name: string) {
+    const tab = openPendingTab(`Abriendo ${name}…`)
+
+    preview.mutate(evidenceId, { onSuccess: tab.settle, onError: tab.fail })
   }
 
   return (
@@ -142,7 +193,7 @@ function RequestBlock({
           )}
           {request.due_date && (
             <p className="text-muted-foreground text-xs">
-              Fecha límite: {formatDate(request.due_date)}
+              Fecha límite: {formatDate(request.due_date, 'D [de] MMMM [de] YYYY')}
             </p>
           )}
         </div>
@@ -155,80 +206,113 @@ function RequestBlock({
 
       {request.evidences.length > 0 && (
         <ul className="divide-border border-border divide-y rounded-md border">
-          {request.evidences.map((evidence) => (
-            <li key={evidence.id} className="flex flex-wrap items-center gap-3 px-3 py-2">
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm">
-                  {evidence.description || `Evidencia #${evidence.id}`}
-                </p>
-                <p className="text-muted-foreground text-xs">
-                  {evidence.uploader_name ?? 'Usuario'} ·{' '}
-                  {evidence.created_at ? formatDate(evidence.created_at) : ''}
-                </p>
-              </div>
+          {request.evidences.map((evidence) => {
+            const name = evidenceLabel(evidence)
 
-              <EvidenceStatusBadge status={evidence.status} />
+            return (
+              <li key={evidence.id} className="flex flex-wrap items-center gap-3 px-3 py-2">
+                <FileText
+                  className="size-4 shrink-0 text-red-600 dark:text-red-400"
+                  aria-hidden="true"
+                />
 
-              {/* Scoped to this row: one download must not spin every button. */}
-              <LoadingButton
-                size="icon"
-                variant="ghost"
-                aria-label="Descargar evidencia"
-                onClick={() => download.mutate(evidence.id)}
-                pending={download.isPending && download.variables === evidence.id}
-              >
-                <Download className="size-4" aria-hidden="true" />
-              </LoadingButton>
-
-              {canManage && evidence.status === 'PENDIENTE' && (
-                <div className="flex gap-1">
-                  <LoadingButton
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      review.mutate({
-                        evidenceId: evidence.id,
-                        payload: { status: 'APROBADA' },
-                      })
-                    }
-                    disabled={review.isPending}
-                    pending={
-                      review.isPending &&
-                      review.variables?.evidenceId === evidence.id &&
-                      review.variables.payload.status === 'APROBADA'
-                    }
-                    pendingLabel="Aprobando…"
+                <div className="min-w-0 flex-1">
+                  <button
+                    type="button"
+                    onClick={() => previewInNewTab(evidence.id, name)}
+                    disabled={preview.isPending && preview.variables === evidence.id}
+                    title={`Previsualizar ${name} en una pestaña nueva`}
+                    className="block max-w-full cursor-pointer truncate text-sm underline-offset-2 hover:underline disabled:cursor-default disabled:opacity-60"
                   >
-                    <Check className="size-3.5" aria-hidden="true" />
-                    Aprobar
-                  </LoadingButton>
-                  <LoadingButton
-                    size="sm"
-                    variant="ghost"
-                    onClick={() =>
-                      review.mutate({
-                        evidenceId: evidence.id,
-                        payload: {
-                          status: 'RECHAZADA',
-                          comment: comment.trim() || undefined,
-                        },
-                      })
-                    }
-                    disabled={review.isPending}
-                    pending={
-                      review.isPending &&
-                      review.variables?.evidenceId === evidence.id &&
-                      review.variables.payload.status === 'RECHAZADA'
-                    }
-                    pendingLabel="Rechazando…"
-                  >
-                    <X className="size-3.5" aria-hidden="true" />
-                    Rechazar
-                  </LoadingButton>
+                    {name}
+                  </button>
+                  <p className="text-muted-foreground text-xs">
+                    {evidence.uploader_name ?? 'Usuario'} ·{' '}
+                    {evidence.created_at ? formatDate(evidence.created_at) : ''}
+                  </p>
                 </div>
-              )}
-            </li>
-          ))}
+
+                <EvidenceStatusBadge status={evidence.status} />
+
+                {/* Scoped to this row: one download must not spin every button. */}
+                <LoadingButton
+                  size="icon"
+                  variant="ghost"
+                  aria-label={`Descargar ${name}`}
+                  title="Descargar el PDF"
+                  onClick={() =>
+                    download.mutate({
+                      evidenceId: evidence.id,
+                      filename: evidenceFileName(evidence),
+                    })
+                  }
+                  pending={download.isPending && download.variables?.evidenceId === evidence.id}
+                >
+                  <Download className="size-4" aria-hidden="true" />
+                </LoadingButton>
+
+                {canManage && (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => setConfirmDelete(evidence.id)}
+                    aria-label={`Eliminar ${name}`}
+                    title="Eliminar la evidencia"
+                  >
+                    <Trash2 className="size-4" aria-hidden="true" />
+                  </Button>
+                )}
+
+                {canManage && evidence.status === 'PENDIENTE' && (
+                  <div className="flex gap-1">
+                    <LoadingButton
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        review.mutate({
+                          evidenceId: evidence.id,
+                          payload: { status: 'APROBADA' },
+                        })
+                      }
+                      disabled={review.isPending}
+                      pending={
+                        review.isPending &&
+                        review.variables?.evidenceId === evidence.id &&
+                        review.variables.payload.status === 'APROBADA'
+                      }
+                      pendingLabel="Aprobando…"
+                    >
+                      <Check className="size-3.5" aria-hidden="true" />
+                      Aprobar
+                    </LoadingButton>
+                    <LoadingButton
+                      size="sm"
+                      variant="ghost"
+                      onClick={() =>
+                        review.mutate({
+                          evidenceId: evidence.id,
+                          payload: {
+                            status: 'RECHAZADA',
+                            comment: comment.trim() || undefined,
+                          },
+                        })
+                      }
+                      disabled={review.isPending}
+                      pending={
+                        review.isPending &&
+                        review.variables?.evidenceId === evidence.id &&
+                        review.variables.payload.status === 'RECHAZADA'
+                      }
+                      pendingLabel="Rechazando…"
+                    >
+                      <X className="size-3.5" aria-hidden="true" />
+                      Rechazar
+                    </LoadingButton>
+                  </div>
+                )}
+              </li>
+            )
+          })}
         </ul>
       )}
 
@@ -284,7 +368,7 @@ function RequestBlock({
         open={uploading}
         onOpenChange={(open) => {
           setUploading(open)
-          if (!open) setFile(null)
+          if (!open) resetUpload()
         }}
       >
         <DialogContent>
@@ -293,7 +377,30 @@ function RequestBlock({
             <DialogDescription>{request.title}</DialogDescription>
           </DialogHeader>
 
-          <FileDropzone file={file} onFileChange={setFile} isUploading={upload.isPending} />
+          <div className="space-y-3">
+            <FileDropzone
+              file={file}
+              onFileChange={handleFile}
+              error={error}
+              isUploading={upload.isPending}
+              title="Selecciona el PDF de la evidencia"
+            />
+
+            <div className="space-y-1.5">
+              <Label htmlFor={`evidence-title-${request.id}`}>Título</Label>
+              {/* Prefilled with the file name, because that is what the plan
+                  ends up listing — but the teacher can name it properly. */}
+              <Input
+                id={`evidence-title-${request.id}`}
+                value={title}
+                onChange={(event) => {
+                  setTitle(event.target.value)
+                  setTitleEdited(true)
+                }}
+                placeholder="Nombre con el que aparecerá en el plan"
+              />
+            </div>
+          </div>
 
           <DialogFooter>
             <Button
@@ -314,6 +421,24 @@ function RequestBlock({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={confirmDelete != null}
+        onOpenChange={(open) => {
+          if (!open) setConfirmDelete(null)
+        }}
+        title="¿Eliminar esta evidencia?"
+        description="El archivo se quita del plan y el docente tendrá que volver a entregarlo."
+        confirmLabel="Eliminar"
+        pendingLabel="Eliminando…"
+        confirmVariant="destructive"
+        isPending={remove.isPending}
+        onConfirm={() => {
+          if (confirmDelete == null) return
+
+          remove.mutate(confirmDelete, { onSuccess: () => setConfirmDelete(null) })
+        }}
+      />
     </li>
   )
 }
@@ -449,5 +574,42 @@ function NewRequestDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  )
+}
+
+/** Widths of the fake request titles, so the placeholder reads as a list. */
+const REQUEST_LINES = ['w-64', 'w-52']
+
+/**
+ * The evidence loop arrives from its own request, later than the plan around
+ * it. Drawing the rows it will fill keeps the section from collapsing to a
+ * single line of text and then jumping open.
+ */
+function EvidenceRequestsSkeleton() {
+  return (
+    <ul className="divide-border divide-y" role="status" aria-busy="true">
+      <span className="sr-only">Cargando las evidencias…</span>
+
+      {REQUEST_LINES.map((width) => (
+        <li key={width} className="space-y-3 px-6 py-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="space-y-1.5">
+              <Skeleton className={`h-4 ${width}`} />
+              <Skeleton className="h-3 w-40" />
+            </div>
+            <Skeleton className="h-8 w-24 rounded-md" />
+          </div>
+
+          <div className="border-border flex items-center gap-3 rounded-md border px-3 py-2">
+            <Skeleton className="size-4 shrink-0 rounded-sm" />
+            <div className="flex-1 space-y-1.5">
+              <Skeleton className="h-3.5 w-48" />
+              <Skeleton className="h-3 w-32" />
+            </div>
+            <Skeleton className="h-5 w-24 rounded-full" />
+          </div>
+        </li>
+      ))}
+    </ul>
   )
 }

@@ -10,6 +10,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
+import { isAuthorizedForPage } from '@/config/security'
 import { useNavigate } from '@/hooks/useNavigate'
 
 const SEGMENT_LABELS: Record<string, string> = {
@@ -36,6 +37,16 @@ const SEGMENT_LABELS: Record<string, string> = {
   faculties: 'Facultades',
   departments: 'Departamentos',
   logs: 'Logs',
+  pdf: 'Documento',
+}
+
+export interface AutoBreadcrumbProps {
+  /**
+   * Role the trail is rendered for. Crumbs this role can't open are printed as
+   * plain text instead of links. Omit to link every crumb — the trail then
+   * makes no claim about permissions.
+   */
+  role?: string | null
 }
 
 interface Crumb {
@@ -58,8 +69,12 @@ function isNumericId(segment: string): boolean {
  *
  * @example
  * <AutoBreadcrumb />
+ *
+ * @example
+ * // Only links the crumbs a teacher may actually open.
+ * <AutoBreadcrumb role={selectedRole} />
  */
-export function AutoBreadcrumb() {
+export function AutoBreadcrumb({ role }: AutoBreadcrumbProps = {}) {
   const [location] = useLocation()
   const navigate = useNavigate()
 
@@ -116,7 +131,7 @@ export function AutoBreadcrumb() {
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/home')}
             className="inline-flex cursor-pointer items-center gap-1.5"
           >
             <Home aria-hidden="true" className="size-3.5" />
@@ -129,8 +144,14 @@ export function AutoBreadcrumb() {
             <BreadcrumbSeparator />
 
             <BreadcrumbItem>
-              {item.isCurrent ? (
-                <BreadcrumbPage className="text-foreground font-medium">
+              {item.isCurrent || (role != null && !isAuthorizedForPage(item.href, role)) ? (
+                // A crumb the role can't open — e.g. "Evaluaciones" above the
+                // teacher's own PDF — is plain text: linking it would only
+                // lead to the "unauthorized" screen.
+
+                <BreadcrumbPage
+                  className={item.isCurrent ? 'text-foreground font-medium' : undefined}
+                >
                   {item.label}
                 </BreadcrumbPage>
               ) : (

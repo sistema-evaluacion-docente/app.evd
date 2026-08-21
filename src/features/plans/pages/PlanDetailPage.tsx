@@ -1,22 +1,24 @@
-import { Link, useRoute } from 'wouter'
-import { Pencil } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useLocation, useRoute } from 'wouter'
+import { Pencil, Stamp, Trash2 } from 'lucide-react'
 
 import { BackButton } from '@/components/common/BackButton'
 import { PageTitle } from '@/components/common/PageTitle'
 import { ScoreProgress } from '@/components/common/ScoreProgress'
+import PlanDetailSkeleton from '@/components/skeletons/PlanDetailSkeleton'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
 import { useAuthStore } from '@/features/auth'
+import formatDate from '@/lib/formatDate'
 import { useGetPlan, useGetPlanIndicators } from '../api'
-import { PlanActa } from '../components/PlanActa'
 import { PlanCheckpoints } from '../components/PlanCheckpoints'
+import { DeletePlanDialog } from '../components/DeletePlanDialog'
 import { PlanClosedSummary, PlanClosure } from '../components/PlanClosure'
 import { PlanDocuments } from '../components/PlanDocuments'
 import { PlanEvidences } from '../components/PlanEvidences'
 import { ActaStatusBadge, PlanStatusBadge } from '../components/PlanStatusBadge'
-import { isPlanClosed } from '../lib/planStatus'
+import { hasSignedActa, isPlanClosed, planProgress, planProgressStage } from '../lib/planStatus'
 import type { PlanItem } from '../types'
 
 /**
@@ -27,7 +29,9 @@ import type { PlanItem } from '../types'
  * Route: `/planes/:id`
  */
 export default function PlanDetailPage() {
+  const [, navigate] = useLocation()
   const [, params] = useRoute('/planes/:id')
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const planId = params?.id ? Number(params.id) : undefined
 
   const roles = useAuthStore((state) => state.user?.roles) ?? []
@@ -36,7 +40,7 @@ export default function PlanDetailPage() {
   const canManage = roles.includes('DIRECTOR DE DEPARTAMENTO')
 
   const { data, isPending } = useGetPlan(planId)
-  const { data: indicatorsResponse } = useGetPlanIndicators()
+  const { data: indicatorsResponse, isPending: aspectsPending } = useGetPlanIndicators()
 
   const plan = data?.data
   const aspects = indicatorsResponse?.data?.aspects ?? []
@@ -51,21 +55,11 @@ export default function PlanDetailPage() {
   // Signing the Ficha de acuerdo settles what was agreed: from there the plan
   // is in force and its content stops being editable, so the way back is to
   // take the signed scan off in "Formatos oficiales".
-  const signedActa = plan?.documents.some(
-    (document) => document.format_type === 'FORMATO_2' && document.has_signed,
-  )
+  const signedActa = plan ? hasSignedActa(plan) : false
   const closed = plan ? isPlanClosed(plan.status) : false
   const canEdit = Boolean(canManage && plan && !closed && !signedActa)
 
-  if (isPending) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-40 w-full" />
-        <Skeleton className="h-40 w-full" />
-      </div>
-    )
-  }
+  if (isPending) return <PlanDetailSkeleton withAvatar />
 
   if (!plan) {
     return (
@@ -80,7 +74,7 @@ export default function PlanDetailPage() {
     <div className="space-y-6 pb-8">
       <BackButton href="/planes" className="mb-2" />
 
-      <section className="border-border bg-background overflow-hidden rounded-md border">
+      <section className="border-border bg-card overflow-hidden rounded-md border">
         <div className="flex flex-wrap items-start justify-between gap-4 p-6">
           <div className="flex min-w-0 items-center gap-3">
             <Avatar className="size-12">
@@ -106,32 +100,71 @@ export default function PlanDetailPage() {
 
           <div className="flex flex-wrap items-start gap-4">
             <div className="min-w-48">
-              <p className="text-muted-foreground mb-1 text-xs tracking-wide uppercase">Avance</p>
+              <div className="mb-1 flex items-baseline justify-between gap-3">
+                <p className="text-muted-foreground text-xs tracking-wide uppercase">Avance</p>
+                {/* Said out loud, not only on hover: a bar that reads empty all
+                    semester tells the director nothing about where the plan is. */}
+                <p className="num text-sm font-semibold">{planProgress(plan)}%</p>
+              </div>
               <ScoreProgress
-                value={plan.progress}
+                value={planProgress(plan)}
                 max={100}
                 decimals={0}
                 interactive={false}
                 label="Avance del plan"
+                tooltipContent={planProgressStage(plan)}
               />
             </div>
 
-            {canEdit && (
-              <Button size="sm" variant="outline" render={<Link href={`/planes/${plan.id}/editar`} />}>
-                <Pencil className="size-4" aria-hidden="true" />
-                Editar
-              </Button>
-            )}
+            <div className="flex flex-wrap items-center gap-2">
+              {canEdit && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  render={<Link href={`/planes/${plan.id}/editar`} />}
+                >
+                  <Pencil className="size-4" aria-hidden="true" />
+                  Editar
+                </Button>
+              )}
+
+              {/* Undoing the agreement belongs to the director who made it, so
+                  it stays offered even once the acta is signed and the plan can
+                  no longer be edited — the confirmation is what guards it. */}
+              {canManage && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setConfirmDelete(true)}
+                  className="text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="size-4" aria-hidden="true" />
+                  Eliminar
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
         {plan.description && (
           <p className="text-muted-foreground border-t px-6 py-3 text-sm">{plan.description}</p>
         )}
+
+        {/* The acto administrativo backing the agreement: two blanks the Ficha
+            de acuerdo prints, so they belong with the plan's identity rather
+            than in a section of their own. */}
+        {(plan.acta_number || plan.acta_date) && (
+          <p className="text-muted-foreground flex flex-wrap items-center gap-2 border-t px-6 py-3 text-sm">
+            <Stamp className="size-4 shrink-0" aria-hidden="true" />
+            Acta N.º{' '}
+            <span className="num text-foreground font-semibold">{plan.acta_number ?? '—'}</span>
+            {plan.acta_date && ` · ${formatDate(plan.acta_date, 'D [de] MMMM [de] YYYY')}`}
+          </p>
+        )}
       </section>
 
-      <section className="border-border bg-background overflow-hidden rounded-md border">
-        <header className="border-b px-6 py-4">
+      <section className="border-border bg-card overflow-hidden rounded-md border">
+        <header className="bg-muted/50 border-b px-6 py-4">
           <h2 className="font-semibold">Compromisos</h2>
           <p className="text-muted-foreground text-sm">
             {plan.items.length === 0
@@ -180,8 +213,8 @@ export default function PlanDetailPage() {
       </section>
 
       {plan.courses.length > 0 && (
-        <section className="border-border bg-background overflow-hidden rounded-md border">
-          <header className="border-b px-6 py-4">
+        <section className="border-border bg-card overflow-hidden rounded-md border">
+          <header className="bg-muted/50 border-b px-6 py-4">
             <h2 className="font-semibold">Asignaturas</h2>
           </header>
           <ul className="divide-border divide-y">
@@ -200,11 +233,14 @@ export default function PlanDetailPage() {
         </section>
       )}
 
-      <PlanCheckpoints plan={plan} aspects={aspects} canManage={canManage && !closed} />
+      <PlanCheckpoints
+        plan={plan}
+        aspects={aspects}
+        canManage={canManage && !closed}
+        isLoading={aspectsPending}
+      />
 
       <PlanEvidences plan={plan} canManage={canManage && !closed} />
-
-      <PlanActa plan={plan} canManage={canManage} />
 
       <PlanDocuments plan={plan} canManage={canManage} />
 
@@ -213,6 +249,12 @@ export default function PlanDetailPage() {
       ) : (
         <PlanClosure plan={plan} canManage={canManage} />
       )}
+
+      <DeletePlanDialog
+        plan={confirmDelete ? plan : null}
+        onOpenChange={() => setConfirmDelete(false)}
+        onDeleted={() => navigate('/planes')}
+      />
     </div>
   )
 }

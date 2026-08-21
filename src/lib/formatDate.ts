@@ -7,12 +7,17 @@ dayjs.locale(localeEs)
 
 /**
  * Formats a date string into a human-readable format.
+ *
+ * The default reads the way a date is said in Spanish — "3 de marzo de 2026" —
+ * and not "marzo 3, 2026", which is the English order wearing Spanish month
+ * names. The whole app is in Spanish, so this is the shape it gets everywhere.
+ *
  * @param value - The date string to format.
- * @param pattern - dayjs pattern; defaults to the long "MMMM D, YYYY h:mm A".
+ * @param pattern - dayjs pattern; defaults to the long "D [de] MMMM [de] YYYY, h:mm A".
  * @returns The formatted date, or an em dash when the value is missing or not
  * a valid date.
  */
-function formatDate(value?: string | null, pattern = 'MMMM D, YYYY h:mm A') {
+function formatDate(value?: string | null, pattern = 'D [de] MMMM [de] YYYY, h:mm A') {
   const date = dayjs(value)
 
   if (!value || !date.isValid()) return '—'

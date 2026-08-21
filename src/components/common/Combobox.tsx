@@ -21,6 +21,10 @@ interface ComboboxProps {
   /** Shown when nothing matches what was typed. */
   emptyMessage?: string
   disabled?: boolean
+  /** Paints the field as still missing, the same way an input does. */
+  invalid?: boolean
+  /** Leaving it empty is what turns it red the first time. */
+  onBlur?: () => void
   className?: string
 }
 
@@ -40,6 +44,8 @@ export function Combobox({
   placeholder,
   emptyMessage = 'Sin coincidencias · se guardará lo que escribas',
   disabled = false,
+  invalid = false,
+  onBlur,
   className,
 }: ComboboxProps) {
   return (
@@ -49,8 +55,8 @@ export function Combobox({
       onValueChange={(next) => onValueChange(next)}
       openOnInputClick
     >
-      <AutocompleteInputGroup className={cn(className)}>
-        <AutocompleteInput id={id} placeholder={placeholder} disabled={disabled} />
+      <AutocompleteInputGroup className={cn(className)} aria-invalid={invalid || undefined}>
+        <AutocompleteInput id={id} placeholder={placeholder} disabled={disabled} onBlur={onBlur} />
         {value && !disabled && <AutocompleteClear />}
         <AutocompleteTrigger disabled={disabled} />
       </AutocompleteInputGroup>

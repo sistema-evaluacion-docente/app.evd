@@ -83,6 +83,10 @@ async function updatePlan(planId: number, payload: UpdatePlanInput): Promise<Res
   return api.put(`/improvement-plans/${planId}`, payload)
 }
 
+async function deletePlan(planId: number): Promise<void> {
+  return api.delete(`/improvement-plans/${planId}`)
+}
+
 async function upsertCaseReport(
   planId: number,
   payload: CaseReportInput,
@@ -108,10 +112,6 @@ async function reopenActa(planId: number): Promise<ResponseAPI<Plan>> {
 
 async function closePlan(planId: number, payload: ClosePlanInput): Promise<ResponseAPI<Plan>> {
   return api.post(`/improvement-plans/${planId}/close`, payload)
-}
-
-async function evaluatePlan(planId: number): Promise<ResponseAPI<Plan>> {
-  return api.post(`/improvement-plans/${planId}/evaluate`)
 }
 
 async function uploadSignedDocument(
@@ -426,6 +426,33 @@ export function useUpdatePlan(planId: number) {
   })
 }
 
+/**
+ * Removes a plan for good, with everything hanging off it. Only the director of
+ * its department may: the API turns anyone else away.
+ *
+ * The plan is gone, so its detail cache goes with it instead of being
+ * refetched — a refetch would only 404 and paint an error over a page the
+ * caller is already navigating away from.
+ *
+ * @example
+ * const remove = useDeletePlan()
+ * remove.mutate(plan.id, { onSuccess: () => navigate('/planes') })
+ */
+export function useDeletePlan() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (planId: number) => deletePlan(planId),
+    onSuccess: async (_data, planId) => {
+      queryClient.removeQueries({ queryKey: plansKeys.detail(planId) })
+      queryClient.removeQueries({ queryKey: plansKeys.evidenceRequests(planId) })
+
+      await queryClient.invalidateQueries({ queryKey: plansKeys.lists() })
+      await queryClient.invalidateQueries({ queryKey: plansKeys.mine() })
+    },
+  })
+}
+
 export function useUpsertCaseReport(planId: number) {
   const refresh = usePlanRefresh(planId)
 
@@ -466,12 +493,6 @@ export function useClosePlan(planId: number) {
   })
 }
 
-export function useEvaluatePlan(planId: number) {
-  const refresh = usePlanRefresh(planId)
-
-  return useMutation({ mutationFn: () => evaluatePlan(planId), onSuccess: refresh })
-}
-
 export function useUploadSignedDocument(planId: number) {
   const refresh = usePlanRefresh(planId)
 
@@ -486,6 +507,32 @@ export function useUploadSignedDocument(planId: number) {
  * Detaches a signed scan attached by mistake. The generated form stays in
  * place, so the row simply goes back to asking for a signature.
  */
+/**
+ * Attaches a signed scan to a plan whose id is only known at call time — the
+ * Formato 1 picked while creating a plan, which can't be filed until the plan
+ * it belongs to exists.
+ *
+ * @example
+ * await uploadDocument.mutateAsync({ planId: created.id, format: 'formato-1', file })
+ */
+export function useUploadPlanDocument() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      planId,
+      format,
+      file,
+    }: {
+      planId: number
+      format: PlanFormatSlug
+      file: File
+    }) => uploadSignedDocument(planId, format, file),
+    onSuccess: (_data, variables) =>
+      queryClient.invalidateQueries({ queryKey: plansKeys.detail(variables.planId) }),
+  })
+}
+
 export function useDeleteSignedDocument(planId: number) {
   const refresh = usePlanRefresh(planId)
 
@@ -610,13 +657,30 @@ export function useDownloadDocumentWord(planId: number) {
   })
 }
 
-/** Same idea for a submitted evidence file. */
+/**
+ * Same idea for a submitted evidence file: saved under the name it was uploaded
+ * with, which the caller resolves with `evidenceFileName`.
+ */
 export function useDownloadEvidence(planId: number) {
+  return useMutation({
+    mutationFn: async ({ evidenceId, filename }: { evidenceId: number; filename: string }) => {
+      const blob = await getEvidenceBlob(planId, evidenceId)
+
+      await saveBlob(blob, filename)
+    },
+  })
+}
+
+/**
+ * Object URL of a submitted evidence, for previewing it in a new tab. As with
+ * the signed forms, the caller owns the URL: it opens the tab and revokes it.
+ */
+export function usePreviewEvidence(planId: number) {
   return useMutation({
     mutationFn: async (evidenceId: number) => {
       const blob = await getEvidenceBlob(planId, evidenceId)
 
-      await saveBlob(blob, `evidencia_${evidenceId}.pdf`)
+      return URL.createObjectURL(blob)
     },
   })
 }

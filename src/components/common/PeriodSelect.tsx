@@ -12,6 +12,20 @@ import { Spinner } from '@/components/ui/spinner'
 import { useAcademicPeriodsStore, useGetAcademicPeriods } from '@/features/periods'
 import { cn } from '@/lib/utils'
 
+/**
+ * Writes one search param while keeping the rest of the query string — the
+ * page around this select may own filters of its own (e.g. `?modality=`), and
+ * replacing the whole query would silently drop them.
+ */
+function withParam(name: string, value: string) {
+  return (previous: URLSearchParams) => {
+    const params = new URLSearchParams(previous)
+    params.set(name, value)
+
+    return params
+  }
+}
+
 export interface PeriodSelectOption {
   id: number
   name: string
@@ -80,8 +94,7 @@ export function PeriodSelect({
       const name = options.find((o) => o.id === selectedId)?.name
 
       if (name) {
-        setSearchParams({ [searchParam]: name }, { replace: true })
-        console.log('Setting search param:', searchParam, name)
+        setSearchParams(withParam(searchParam, name), { replace: true })
         onValueChange?.(selectedId)
       }
     }
@@ -98,7 +111,7 @@ export function PeriodSelect({
       const name = options.find((o) => o.id === id)?.name
 
       if (name) {
-        setSearchParams({ [searchParam]: name }, { replace: true })
+        setSearchParams(withParam(searchParam, name), { replace: true })
       }
     }
     onValueChange?.(id)

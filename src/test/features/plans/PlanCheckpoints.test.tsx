@@ -125,6 +125,112 @@ describe('PlanCheckpoints', () => {
     expect(screen.getAllByRole('textbox')).toHaveLength(2)
   })
 
+  it('no guarda un seguimiento en blanco y dice qué falta', async () => {
+    const user = userEvent.setup()
+    const mutate = mockUpdate()
+
+    render(<PlanCheckpoints plan={buildPlan()} aspects={ASPECTS} canManage />)
+
+    await user.click(screen.getAllByRole('button', { name: 'Registrar' })[0])
+    await user.click(screen.getByRole('button', { name: 'Guardar' }))
+
+    expect(mutate).not.toHaveBeenCalled()
+    // El editor sigue abierto, con los tres campos en rojo.
+    expect(screen.getByRole('alert')).toHaveTextContent('Faltan 3 campos obligatorios')
+    for (const note of screen.getAllByRole('textbox')) {
+      expect(note).toHaveAttribute('aria-invalid', 'true')
+    }
+  })
+
+  it('no pinta de rojo un campo al que todavía no se ha llegado', async () => {
+    const user = userEvent.setup()
+    mockUpdate()
+
+    render(<PlanCheckpoints plan={buildPlan()} aspects={ASPECTS} canManage />)
+
+    await user.click(screen.getAllByRole('button', { name: 'Registrar' })[0])
+
+    const [first, second] = screen.getAllByRole('textbox')
+
+    expect(first).toHaveAttribute('aria-invalid', 'false')
+
+    // Salir de la primera observación vacía es lo que la enciende — y sólo a ella.
+    await user.click(first)
+    await user.click(second)
+
+    expect(first).toHaveAttribute('aria-invalid', 'true')
+    expect(second).toHaveAttribute('aria-invalid', 'false')
+  })
+
+  it('guarda una vez hay fecha y observación de cada aspecto', async () => {
+    const user = userEvent.setup()
+    const mutate = mockUpdate()
+
+    const plan = buildPlan()
+    plan.checkpoints[0].scheduled_date = '2026-05-04'
+
+    render(<PlanCheckpoints plan={plan} aspects={ASPECTS} canManage />)
+
+    // Ya tiene fecha, así que el corte se edita en vez de registrarse.
+    await user.click(screen.getByRole('button', { name: 'Editar' }))
+
+    const [first, second] = screen.getAllByRole('textbox')
+
+    await user.type(first, 'Estructuró mejor la clase')
+    await user.type(second, '  Devolvió las notas a tiempo  ')
+    await user.click(screen.getByRole('button', { name: 'Guardar' }))
+
+    expect(mutate).toHaveBeenCalledWith(
+      {
+        checkpointId: 11,
+        payload: {
+          scheduled_date: '2026-05-04',
+          aspect_notes: [
+            { aspect: 1, note: 'Estructuró mejor la clase' },
+            { aspect: 3, note: 'Devolvió las notas a tiempo' },
+          ],
+        },
+      },
+      expect.anything(),
+    )
+  })
+
+  it('deja de pedir el corte y ofrece corregirlo una vez está registrado', () => {
+    mockUpdate()
+
+    const plan = buildPlan()
+    plan.checkpoints[0].aspect_notes = [{ id: 99, aspect: 1, note: 'Estructuró mejor la clase' }]
+
+    render(<PlanCheckpoints plan={plan} aspects={ASPECTS} canManage />)
+
+    // El primer corte ya está escrito; el segundo sigue en blanco.
+    expect(screen.getByRole('button', { name: 'Editar' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Registrar' })).toBeInTheDocument()
+  })
+
+  it('cuenta la fecha sola como corte registrado', () => {
+    mockUpdate()
+
+    const plan = buildPlan()
+    plan.checkpoints[0].scheduled_date = '2026-05-04'
+
+    render(<PlanCheckpoints plan={plan} aspects={ASPECTS} canManage />)
+
+    expect(screen.getByRole('button', { name: 'Editar' })).toBeInTheDocument()
+  })
+
+  it('dibuja los cortes mientras el catálogo de aspectos viene en camino', () => {
+    mockUpdate()
+
+    render(<PlanCheckpoints plan={buildPlan()} aspects={[]} canManage isLoading />)
+
+    expect(screen.getByText('Cargando los seguimientos…')).toBeInTheDocument()
+    // Ni la falsa promesa de que no hay nada que seguir, ni botones que aún no aplican.
+    expect(
+      screen.queryByText(/No hay compromisos a los que hacer seguimiento/),
+    ).not.toBeInTheDocument()
+  })
+
   it('says so when there is nothing to follow up on yet', () => {
     mockUpdate()
 

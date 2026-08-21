@@ -8,12 +8,22 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAuthStore } from '@/features/auth'
 import { CommentList, TeacherSelect } from '@/features/teachers'
+import { useModalityFilter } from '@/hooks/useModalityFilter'
 import { useTableFilters } from '@/hooks/useTableFilters'
 import { CATEGORIES } from '@/lib/categoryLabel'
+import { MODALITIES } from '@/lib/modality'
 import { RISK_LEVELS } from '@/lib/riskLevel'
 import { useGetComments } from '../api'
 
 const filterConfig: FilterConfig[] = [
+  {
+    type: 'select',
+    name: 'modality',
+    label: 'Modalidad',
+    placeholder: 'Todas',
+    options: MODALITIES.map(({ value, label }) => ({ value, label })),
+    clearable: true,
+  },
   {
     type: 'select',
     name: 'riskLevel',
@@ -33,8 +43,9 @@ const filterConfig: FilterConfig[] = [
 /**
  * Displays the paginated list of comments (`GET /comments/`) of a selected
  * academic period, with server-side search and filters by teacher, risk
- * level and pedagogical category. The period is read from/written to the
- * `period` URL query param via `PeriodSelect`.
+ * level, pedagogical category and modality. The period and the modality are
+ * read from/written to the `period` and `modality` URL query params, so a
+ * narrowed read stays linkable.
  *
  * @example
  * <CommentsList />
@@ -46,6 +57,8 @@ export function CommentsList() {
   const [search, setSearch] = useState('')
   const [debouncedSearch] = useDebounce(search, 400)
   const [page, setPage] = useState(1)
+
+  const { modality, setModality } = useModalityFilter()
 
   const { filters, setFilters } = useTableFilters('comments', {
     riskLevel: undefined as number | undefined,
@@ -64,6 +77,7 @@ export function CommentsList() {
       ? Number(filters.pedagogicalCategoryId)
       : undefined,
     search: debouncedSearch,
+    modality,
     enabled: periodId !== undefined && Boolean(departmentId),
   })
 
@@ -119,10 +133,18 @@ export function CommentsList() {
 
         <DataTableFilters
           filters={filterConfig}
-          values={filters}
-          onChange={(values) => {
-            setFilters(values)
-            resetPage()
+          // The modality lives in the URL, the rest in the table's own state;
+          // the panel reads them as one set of values and hands them back the
+          // same way, so they are split again here.
+          values={{ ...filters, modality }}
+          onChange={({ modality: nextModality, ...rest }) => {
+            setFilters(rest)
+            setModality(nextModality as string | undefined)
+
+            // A modality change swaps the whole result set, so page 1 has to
+            // travel with the very next request instead of 400ms later.
+            if (nextModality === modality) resetPage()
+            else setPage(1)
           }}
         />
       </div>

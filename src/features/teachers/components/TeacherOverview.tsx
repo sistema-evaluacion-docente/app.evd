@@ -1,16 +1,17 @@
-import { CalendarRange, TrendingDown, TrendingUp } from 'lucide-react'
+import { CalendarRange, FileText, TrendingDown, TrendingUp } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 import { ScoreBadge } from '@/components/common/ScoreBadge'
 import { ScoreLegend } from '@/components/common/ScoreLegend'
 import { ScoreProgress } from '@/components/common/ScoreProgress'
+import { TransitionLink } from '@/components/common/TransitionLink'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { dimensionColor } from '@/lib/dimensionLabel'
 import { getScoreToneClass } from '@/lib/scoreTone'
 import type { TeacherDetail } from '../types'
-import { TeacherReportDownloadButton } from './TeacherReportDownloadButton'
 
 interface TeacherOverviewProps {
   teacher: TeacherDetail
@@ -92,6 +93,19 @@ export function TeacherOverview({ teacher, extraActions }: TeacherOverviewProps)
             />
 
             {extraActions}
+            <Button
+              variant="outline"
+              size="sm"
+              nativeButton={false}
+              render={
+                <TransitionLink
+                  href={`/evaluaciones/${teacher.evaluation_id}/pdf?profesor=${teacher.teacher_id}`}
+                />
+              }
+            >
+              <FileText className="size-4" aria-hidden="true" />
+              Ver evaluación en PDF
+            </Button>
           </div>
         </div>
 

@@ -4,6 +4,7 @@ import { Link, useRoute } from 'wouter'
 
 import { BackButton } from '@/components/common/BackButton'
 import { GenerateReportPdfButton } from '@/components/common/GenerateReportPdfButton'
+import { DataTableFilters, type FilterConfig } from '@/components/common/DataTableFilters'
 import { PageTitle } from '@/components/common/PageTitle'
 import { PdfChartImage } from '@/components/common/pdf/PdfChartImage'
 import { PdfFactGrid } from '@/components/common/pdf/PdfFactGrid'
@@ -20,17 +21,41 @@ import { TeacherAveragesTable, useGetTeachers } from '@/features/teachers'
 import { useNavigate } from '@/hooks/useNavigate'
 import formatDate from '@/lib/formatDate'
 import { formatPdfAverage } from '@/lib/pdf/formatPdfAverage'
+import { Spinner } from '@/components/ui/spinner'
+import { useAcademicPeriodsStore } from '@/features/periods'
+import { TeacherAveragesTable } from '@/features/teachers'
+import { useModalityFilter } from '@/hooks/useModalityFilter'
+import { useNavigate } from '@/hooks/useNavigate'
+import { MODALITIES } from '@/lib/modality'
+import { cn } from '@/lib/utils'
 import { useGetEvaluation } from '../api'
 import { AI_STATUS_DISPLAY, EVALUATION_STATUS_DISPLAY } from '../config'
 import {
   EvaluationDimensionDetailCard,
   EvaluationDimensionsChart,
   EvaluationOverview,
+  ModalityNotice,
 } from '../components'
 import type { EvaluationDimensionDetail } from '../types'
 
+/** The report's only filter, offered through the shared "Filtros" panel. */
+const FILTERS: FilterConfig[] = [
+  {
+    type: 'select',
+    name: 'modality',
+    label: 'Modalidad',
+    placeholder: 'Todas',
+    options: MODALITIES.map(({ value, label }) => ({ value, label })),
+    clearable: true,
+  },
+]
+
 /**
- * Full page displaying the summary of a single evaluation.
+ * Full page displaying the summary of a single evaluation, optionally narrowed
+ * to one modality — an evaluation can hold a presencial and a distancia
+ * document, and reading them apart is what tells the two cohorts' results
+ * apart. The filter lives in the URL (`?modality=`) so a narrowed report can be
+ * linked and shared.
  * Route: `/evaluaciones/:id` where `:id` is the evaluation id.
  */
 export default function EvaluationDetailPage() {
@@ -40,7 +65,9 @@ export default function EvaluationDetailPage() {
   const periods = useAcademicPeriodsStore((state) => state.periods)
   const includeTeachersId = useId()
 
-  const { data, isLoading } = useGetEvaluation(evaluationId)
+  const { modality, setModality } = useModalityFilter()
+
+  const { data, isLoading, isPlaceholderData } = useGetEvaluation(evaluationId, modality)
   const evaluation = data?.data
 
   const dimensionsCardRef = useRef<HTMLElement>(null)
@@ -58,6 +85,22 @@ export default function EvaluationDetailPage() {
     limit: 100,
     sortBy: 'overall_average_desc',
   })
+  // The report for the modality just picked is still in flight: the one on
+  // screen is the previous one, so it dims instead of collapsing into the page
+  // skeleton. The filter stays reachable — that is how you get back.
+  const isSwitching = isPlaceholderData
+
+  const modalityFilter = (
+    <div className="flex items-center gap-2">
+      {isSwitching && <Spinner aria-label="Cargando" className="text-muted-foreground size-4" />}
+
+      <DataTableFilters
+        filters={FILTERS}
+        values={{ modality }}
+        onChange={(values) => setModality(values.modality as string | undefined)}
+      />
+    </div>
+  )
 
   if (isLoading) return <EvaluationDetailSkeleton />
 
@@ -110,8 +153,17 @@ export default function EvaluationDetailPage() {
   const reportFileName = `Evaluacion-Periodo-${periodLabel.replace(/\s+/g, '-')}`
 
   return (
-    <div className="space-y-6">
-      <BackButton href="/evaluaciones" label="Volver a evaluaciones" className="mb-4" />
+    <div
+      aria-busy={isSwitching}
+      className={cn('space-y-6 transition-opacity', isSwitching && 'opacity-60')}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <BackButton href="/evaluaciones" label="Volver a evaluaciones" className="mb-4" />
+
+        {modalityFilter}
+      </div>
+
+      <ModalityNotice modality={modality} className="-mt-2" />
 
       <div className="flex items-center gap-2">
         <Switch
@@ -287,6 +339,7 @@ export default function EvaluationDetailPage() {
       <TeacherAveragesTable
         departmentId={evaluation.department_id}
         defaultPeriodId={evaluation.academic_period_id}
+        modality={modality}
         onTeacherClick={(teacher, periodId) => {
           const period = periods.find((p) => p.id === periodId)
           navigate(`/docentes/${teacher.id}?period=${period?.name}`)

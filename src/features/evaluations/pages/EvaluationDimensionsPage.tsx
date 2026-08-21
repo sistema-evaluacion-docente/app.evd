@@ -1,8 +1,9 @@
-import { CalendarRange, Inbox, SlidersHorizontal } from 'lucide-react'
+import { CalendarRange, Inbox } from 'lucide-react'
 import { useState } from 'react'
 import { useRoute } from 'wouter'
 
 import { BackButton } from '@/components/common/BackButton'
+import { DataTableFilters, type FilterConfig } from '@/components/common/DataTableFilters'
 import { PageTitle } from '@/components/common/PageTitle'
 import { ScoreBadge } from '@/components/common/ScoreBadge'
 import { Stagger } from '@/components/common/stagger'
@@ -11,14 +12,62 @@ import { Badge } from '@/components/ui/badge'
 import { Spinner } from '@/components/ui/spinner'
 import { CourseSelect } from '@/features/courses'
 import { TeacherSelect } from '@/features/teachers'
+import { useModalityFilter } from '@/hooks/useModalityFilter'
+import { MODALITIES } from '@/lib/modality'
 import { useGetEvaluationDimensionsDetail } from '../api'
 import { EvaluationDimensionDetailCard, EvaluationDimensionsChart } from '../components'
+
+/**
+ * Every filter of the breakdown, offered through the shared "Filtros" panel
+ * beside the back button. Teacher and course come in as `custom` entries
+ * because both selects load their own options from the API — the panel only
+ * supplies the current value and a setter.
+ */
+const FILTERS: FilterConfig[] = [
+  {
+    type: 'custom',
+    name: 'teacherId',
+    label: 'Docente',
+    render: (value, onChange) => (
+      <TeacherSelect
+        idValue={value as number | undefined}
+        onIdChange={onChange}
+        placeholder="Todos"
+        size="sm"
+        className="w-full"
+      />
+    ),
+  },
+  {
+    type: 'custom',
+    name: 'courseId',
+    label: 'Asignatura',
+    render: (value, onChange) => (
+      <CourseSelect
+        value={value as number | undefined}
+        onValueChange={onChange}
+        placeholder="Todas"
+        size="sm"
+        className="w-full"
+      />
+    ),
+  },
+  {
+    type: 'select',
+    name: 'modality',
+    label: 'Modalidad',
+    placeholder: 'Todas',
+    options: MODALITIES.map(({ value, label }) => ({ value, label })),
+    clearable: true,
+  },
+]
 
 /**
  * Full page with the per-dimension breakdown of an evaluation: each
  * pedagogical dimension's average, its questions, the best/worst performing
  * teacher, and the full teacher ranking on that dimension. Optionally scoped
- * to one teacher and/or one course.
+ * to one teacher, one course and/or one modality — the modality through the
+ * URL (`?modality=`), so a narrowed breakdown stays linkable.
  * Route: `/evaluaciones/:id/dimensiones` where `:id` is the evaluation id.
  */
 export default function EvaluationDimensionsPage() {
@@ -28,9 +77,12 @@ export default function EvaluationDimensionsPage() {
   const [teacherId, setTeacherId] = useState<number | undefined>(undefined)
   const [courseId, setCourseId] = useState<number | undefined>(undefined)
 
+  const { modality, setModality } = useModalityFilter()
+
   const { data, isLoading, isFetching } = useGetEvaluationDimensionsDetail(evaluationId, {
     teacherId,
     courseId,
+    modality,
   })
   const detail = data?.data
 
@@ -64,11 +116,28 @@ export default function EvaluationDimensionsPage() {
 
   return (
     <div className="space-y-6">
-      <BackButton
-        href={`/evaluaciones/${detail.evaluation_id}`}
-        label="Volver a la evaluación"
-        className="mb-4"
-      />
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
+        <BackButton href={`/evaluaciones/${detail.evaluation_id}`} label="Volver a la evaluación" />
+
+        <div className="flex items-center gap-2">
+          {isFetching && (
+            <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
+              <Spinner className="size-3.5" />
+              Actualizando…
+            </span>
+          )}
+
+          <DataTableFilters
+            filters={FILTERS}
+            values={{ teacherId, courseId, modality }}
+            onChange={(values) => {
+              setTeacherId(values.teacherId as number | undefined)
+              setCourseId(values.courseId as number | undefined)
+              setModality(values.modality as string | undefined)
+            }}
+          />
+        </div>
+      </div>
 
       <Stagger>
         <section className="divide-border border-border bg-background divide-y overflow-hidden rounded-md border">
@@ -137,36 +206,6 @@ export default function EvaluationDimensionsPage() {
       </Stagger>
 
       <Stagger delay={120}>
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase">
-            <SlidersHorizontal aria-hidden="true" className="size-3.5" />
-            Filtrar
-          </span>
-
-          <TeacherSelect
-            idValue={teacherId}
-            onIdChange={setTeacherId}
-            placeholder="Docente"
-            size="sm"
-          />
-
-          <CourseSelect
-            value={courseId}
-            onValueChange={setCourseId}
-            placeholder="Asignatura"
-            size="sm"
-          />
-
-          {isFetching && (
-            <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
-              <Spinner className="size-3.5" />
-              Actualizando…
-            </span>
-          )}
-        </div>
-      </Stagger>
-
-      <Stagger delay={180}>
         <section className="border-border bg-background rounded-md border">
           <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
             Detalle por dimensión

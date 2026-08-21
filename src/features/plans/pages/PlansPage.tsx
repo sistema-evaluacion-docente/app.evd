@@ -2,9 +2,9 @@ import { useMemo, useState } from 'react'
 import { useLocation } from 'wouter'
 import type { ColumnDef, SortingState } from '@tanstack/react-table'
 import { useDebounce } from 'use-debounce'
-import { History, Plus, X } from 'lucide-react'
+import { History, Plus, Trash2, X } from 'lucide-react'
 
-import { DataTable } from '@/components/common/DataTable'
+import { DataTable, type DataTableAction } from '@/components/common/DataTable'
 import { PageTitle } from '@/components/common/PageTitle'
 import { ScoreProgress } from '@/components/common/ScoreProgress'
 import {
@@ -21,9 +21,11 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
+import { useAuthStore } from '@/features/auth'
 import { useGetPlans, useGetPlanPeriods } from '../api'
+import { DeletePlanDialog } from '../components/DeletePlanDialog'
 import { usePlansFilters } from '../hooks/usePlansFilters'
-import { PLAN_STATUS_LABEL } from '../lib/planStatus'
+import { PLAN_STATUS_LABEL, planProgress } from '../lib/planStatus'
 import type { Plan, PlanStatus } from '../types'
 import { ActaStatusBadge, PlanStatusBadge } from '../components/PlanStatusBadge'
 
@@ -38,6 +40,14 @@ import { ActaStatusBadge, PlanStatusBadge } from '../components/PlanStatusBadge'
  */
 export default function PlansPage() {
   const [, navigate] = useLocation()
+
+  // Deleting a plan undoes an agreement with a teacher, so it belongs to the
+  // director who made it — the API turns anyone else away regardless.
+  const roles = useAuthStore((state) => state.user?.roles) ?? []
+  const canDelete = roles.includes('DIRECTOR DE DEPARTAMENTO')
+
+  /** The plan waiting for its deletion to be confirmed, if any. */
+  const [deleteTarget, setDeleteTarget] = useState<Plan | null>(null)
   const {
     search,
     status,
@@ -127,7 +137,7 @@ export default function PlansPage() {
         header: 'Avance',
         cell: ({ row }) => (
           <ScoreProgress
-            value={row.original.progress}
+            value={planProgress(row.original)}
             max={100}
             decimals={0}
             tone="primary"
@@ -150,6 +160,17 @@ export default function PlansPage() {
     ],
     [],
   )
+
+  const rowActions: DataTableAction<Plan>[] = canDelete
+    ? [
+        {
+          label: 'Eliminar',
+          icon: <Trash2 className="size-4" />,
+          onClick: (row) => setDeleteTarget(row),
+          variant: 'destructive',
+        },
+      ]
+    : []
 
   return (
     <>
@@ -194,6 +215,7 @@ export default function PlansPage() {
         searchPlaceholder="Buscar por docente o título..."
         emptyMessage="No hay planes de mejoramiento que coincidan."
         onRowClick={(row) => navigate(`/planes/${row.id}`)}
+        rowActions={rowActions}
         toolbar={
           <>
             <Select
@@ -254,6 +276,8 @@ export default function PlansPage() {
           </>
         }
       />
+
+      <DeletePlanDialog plan={deleteTarget} onOpenChange={() => setDeleteTarget(null)} />
     </>
   )
 }

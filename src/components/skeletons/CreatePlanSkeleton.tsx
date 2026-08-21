@@ -144,7 +144,7 @@ function Panel({
   children: React.ReactNode
 }) {
   return (
-    <section className="border-border bg-background space-y-4 rounded-md border p-6">
+    <section className="border-border bg-card space-y-4 rounded-md border p-6">
       <div className="space-y-2">
         <Skeleton className={cn('h-5', headingWidth)} />
 

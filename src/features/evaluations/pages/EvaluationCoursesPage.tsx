@@ -2,21 +2,41 @@ import { Info } from 'lucide-react'
 import { useRoute } from 'wouter'
 
 import { BackButton } from '@/components/common/BackButton'
+import { DataTableFilters, type FilterConfig } from '@/components/common/DataTableFilters'
 import { PageTitle } from '@/components/common/PageTitle'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
+import { useModalityFilter } from '@/hooks/useModalityFilter'
+import { MODALITIES } from '@/lib/modality'
 import { useGetEvaluation } from '../api'
-import { EvaluationCoursesReview } from '../components'
+import { EvaluationCoursesReview, ModalityNotice } from '../components'
+
+/** The review's only filter, offered through the shared "Filtros" panel. */
+const FILTERS: FilterConfig[] = [
+  {
+    type: 'select',
+    name: 'modality',
+    label: 'Modalidad',
+    placeholder: 'Todas',
+    options: MODALITIES.map(({ value, label }) => ({ value, label })),
+    clearable: true,
+  },
+]
 
 /**
  * Review step that follows an evaluation upload: lists the materias the PDF
- * extraction produced so the director can fix the names it cut off.
+ * extraction produced so the director can fix the names it cut off. An
+ * evaluation can hold a presencial and a distancia document, so the list can be
+ * read one modality at a time (`?modality=`) — handy right after uploading the
+ * second one, to review only what it added.
  * Route: `/evaluaciones/:id/materias`.
  */
 export default function EvaluationCoursesPage() {
   const [, params] = useRoute('/evaluaciones/:id/materias')
   const evaluationId = params?.id ? Number(params.id) : undefined
+
+  const { modality, setModality } = useModalityFilter()
 
   const { data, isLoading } = useGetEvaluation(evaluationId)
   const evaluation = data?.data
@@ -51,9 +71,21 @@ export default function EvaluationCoursesPage() {
 
   return (
     <>
-      <PageTitle>Revisar materias · {evaluation.academic_period_name}</PageTitle>
+      <PageTitle
+        action={
+          <DataTableFilters
+            filters={FILTERS}
+            values={{ modality }}
+            onChange={(values) => setModality(values.modality as string | undefined)}
+          />
+        }
+      >
+        Revisar materias · {evaluation.academic_period_name}
+      </PageTitle>
 
       <div className="space-y-5">
+        <ModalityNotice modality={modality} />
+
         <Alert className="border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-200">
           <Info className="size-4" aria-hidden="true" />
           <AlertTitle>Corrige los nombres que el PDF haya cortado</AlertTitle>
@@ -81,7 +113,10 @@ export default function EvaluationCoursesPage() {
             El procesamiento de esta evaluación falló, así que no hay materias que revisar.
           </p>
         ) : (
-          <EvaluationCoursesReview periodCode={evaluation.academic_period_code} />
+          <EvaluationCoursesReview
+            periodCode={evaluation.academic_period_code}
+            modality={modality}
+          />
         )}
       </div>
     </>

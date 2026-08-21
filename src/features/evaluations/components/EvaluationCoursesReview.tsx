@@ -13,6 +13,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { useUpdateCourse } from '@/features/courses'
 import type { DepartmentSubjectAverage } from '@/features/stats'
 import { statsKeys, useGetDepartmentPeriodRangeSubjects } from '@/features/stats'
+import type { CourseModality } from '@/lib/modality'
 import { cn } from '@/lib/utils'
 
 /** Page size of the underlying subjects report — its maximum. */
@@ -68,6 +69,12 @@ function toExtractedCourses(subjects: DepartmentSubjectAverage[]): ExtractedCour
 export interface EvaluationCoursesReviewProps {
   /** Academic period the evaluation belongs to (e.g. `2024-1`). */
   periodCode?: string
+  /**
+   * Narrows the list to the materias taught in one modality. Owned by the
+   * caller — the page around this list decides whether that filter exists and
+   * where it is shown.
+   */
+  modality?: CourseModality
   className?: string
 }
 
@@ -79,14 +86,31 @@ export interface EvaluationCoursesReviewProps {
  *
  * @example
  * <EvaluationCoursesReview periodCode={evaluation.academic_period_code} />
+ *
+ * @example
+ * <EvaluationCoursesReview periodCode={periodCode} modality="DISTANCIA" />
  */
-export function EvaluationCoursesReview({ periodCode, className }: EvaluationCoursesReviewProps) {
+export function EvaluationCoursesReview({
+  periodCode,
+  modality,
+  className,
+}: EvaluationCoursesReviewProps) {
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [debouncedSearch] = useDebounce(search, 400)
   const [renamedIds, setRenamedIds] = useState<number[]>([])
 
   const resetPage = useDebouncedCallback(() => setPage(1), 400)
+
+  // A new modality is a different set of materias: page 3 of the previous one
+  // means nothing here. Adjusted during render (not in an effect) so the
+  // request below already goes out with the corrected page.
+  const [appliedModality, setAppliedModality] = useState(modality)
+
+  if (modality !== appliedModality) {
+    setAppliedModality(modality)
+    setPage(1)
+  }
 
   const queryClient = useQueryClient()
   const { mutateAsync: updateCourse } = useUpdateCourse()
@@ -97,6 +121,7 @@ export function EvaluationCoursesReview({ periodCode, className }: EvaluationCou
     page,
     limit: PAGE_SIZE,
     search: debouncedSearch,
+    modality,
   })
 
   const subjects = data?.data
