@@ -5,6 +5,7 @@ export { default as PlanDetailPage } from './pages/PlanDetailPage'
 export { default as PlansPage } from './pages/PlansPage'
 
 export { TeacherPlanAction } from './components/TeacherPlanAction'
+export { DeletePlanDialog } from './components/DeletePlanDialog'
 export { PlanDocuments } from './components/PlanDocuments'
 export { PlanEvidences } from './components/PlanEvidences'
 export { PlanCheckpoints } from './components/PlanCheckpoints'
@@ -27,6 +28,7 @@ export {
   useGetPlans,
   useGetTeacherCourses,
   useGetTeacherPlanHistory,
+  useDeletePlan,
   useUploadPlanDocument,
 } from './api'
 

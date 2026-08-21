@@ -83,6 +83,10 @@ async function updatePlan(planId: number, payload: UpdatePlanInput): Promise<Res
   return api.put(`/improvement-plans/${planId}`, payload)
 }
 
+async function deletePlan(planId: number): Promise<void> {
+  return api.delete(`/improvement-plans/${planId}`)
+}
+
 async function upsertCaseReport(
   planId: number,
   payload: CaseReportInput,
@@ -423,6 +427,33 @@ export function useUpdatePlan(planId: number) {
   return useMutation({
     mutationFn: (payload: UpdatePlanInput) => updatePlan(planId, payload),
     onSuccess: refresh,
+  })
+}
+
+/**
+ * Removes a plan for good, with everything hanging off it. Only the director of
+ * its department may: the API turns anyone else away.
+ *
+ * The plan is gone, so its detail cache goes with it instead of being
+ * refetched — a refetch would only 404 and paint an error over a page the
+ * caller is already navigating away from.
+ *
+ * @example
+ * const remove = useDeletePlan()
+ * remove.mutate(plan.id, { onSuccess: () => navigate('/planes') })
+ */
+export function useDeletePlan() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (planId: number) => deletePlan(planId),
+    onSuccess: async (_data, planId) => {
+      queryClient.removeQueries({ queryKey: plansKeys.detail(planId) })
+      queryClient.removeQueries({ queryKey: plansKeys.evidenceRequests(planId) })
+
+      await queryClient.invalidateQueries({ queryKey: plansKeys.lists() })
+      await queryClient.invalidateQueries({ queryKey: plansKeys.mine() })
+    },
   })
 }
 
