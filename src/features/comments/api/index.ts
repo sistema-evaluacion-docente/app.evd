@@ -3,6 +3,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import type { ResponseAPI } from '@/@types/Response'
 import api from '@/config/axios'
 import type { TeacherComment } from '@/features/teachers'
+import type { CourseModality } from '@/lib/modality'
 
 interface CommentListParams {
   page: number
@@ -12,6 +13,7 @@ interface CommentListParams {
   risk_level?: number
   pedagogical_category_id?: number
   search?: string
+  modality?: CourseModality
 }
 
 /** Raw request functions. Not exported — call through the hooks below. */
@@ -25,6 +27,7 @@ async function getComments(params: CommentListParams): Promise<ResponseAPI<Teach
   if (params.pedagogical_category_id)
     query['pedagogical_category_id'] = params.pedagogical_category_id
   if (params.search) query['search'] = params.search
+  if (params.modality) query['modality'] = params.modality
 
   return api.get('/comments/', { params: query })
 }
@@ -37,8 +40,8 @@ export const commentsKeys = {
 
 /**
  * Fetches the paginated list of comments across teachers, filtered by
- * academic period, teacher, risk level, pedagogical category and/or free
- * text (`GET /comments/`).
+ * academic period, teacher, risk level, pedagogical category, modality
+ * and/or free text (`GET /comments/`).
  *
  * @example
  * const { data, isPending } = useGetComments({ page, limit, academicPeriodId, search });
@@ -51,6 +54,7 @@ export function useGetComments({
   riskLevel,
   pedagogicalCategoryId,
   search = '',
+  modality,
   enabled = true,
 }: {
   page?: number
@@ -60,13 +64,24 @@ export function useGetComments({
   riskLevel?: number
   pedagogicalCategoryId?: number
   search?: string
+  /** Narrows the list to the comments left on groups of one modality. */
+  modality?: CourseModality
   /** Set to false while a required filter (e.g. the period) hasn't resolved yet. */
   enabled?: boolean
 } = {}) {
   return useQuery({
     queryKey: [
       ...commentsKeys.lists(),
-      { page, limit, academicPeriodId, teacherId, riskLevel, pedagogicalCategoryId, search },
+      {
+        page,
+        limit,
+        academicPeriodId,
+        teacherId,
+        riskLevel,
+        pedagogicalCategoryId,
+        search,
+        modality,
+      },
     ],
     queryFn: () =>
       getComments({
@@ -77,6 +92,7 @@ export function useGetComments({
         risk_level: riskLevel,
         pedagogical_category_id: pedagogicalCategoryId,
         search,
+        modality,
       }),
     staleTime: 60_000,
     placeholderData: keepPreviousData,
