@@ -7,6 +7,13 @@ export const MODALITIES: { value: CourseModality; label: string }[] = [
   { value: 'DISTANCIA', label: 'Distancia' },
 ]
 
+/** Value a modality filter carries while it is not narrowing anything. */
+export const ALL_MODALITIES = 'ALL'
+
+/** Segments of a modality filter: every modality, plus "all of them". */
+export const MODALITY_SEGMENTS: { value: CourseModality | typeof ALL_MODALITIES; label: string }[] =
+  [{ value: ALL_MODALITIES, label: 'Todas' }, ...MODALITIES]
+
 /** Reading label per modality, for badges, filters and messages. */
 export const MODALITY_LABEL: Record<CourseModality, string> = {
   PRESENCIAL: 'Presencial',
