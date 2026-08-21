@@ -5,6 +5,7 @@ import type {
   EvidenceStatus,
   Plan,
   PlanCheckpoint,
+  PlanDocument,
   PlanEvidence,
   PlanStatus,
 } from '../types'
@@ -128,8 +129,13 @@ const CHECKPOINT_SHORT_LABEL: Record<CheckpointStage, string> = {
   SEGUNDO_SEGUIMIENTO: 'Semanas 15/16',
 }
 
-/** A seguimiento counts as recorded once it carries a date or any observation. */
-function isCheckpointRecorded(checkpoint: PlanCheckpoint): boolean {
+/**
+ * A seguimiento counts as recorded once it carries a date or any observation.
+ *
+ * @example
+ * isCheckpointRecorded(plan.checkpoints[0]) // → true
+ */
+export function isCheckpointRecorded(checkpoint: PlanCheckpoint): boolean {
   return (
     Boolean(checkpoint.scheduled_date) ||
     checkpoint.aspect_notes.some((note) => Boolean(note.note?.trim()))
@@ -153,6 +159,71 @@ export function followupFormatStage(plan: Plan): string | null {
   }
 
   return null
+}
+
+/**
+ * What the progress of a plan is read from. The relations are optional on
+ * purpose: the list endpoints are free to answer without them, and a bar in a
+ * table is not worth throwing over.
+ */
+type PlanProgressInput = Pick<Plan, 'status'> & {
+  documents?: PlanDocument[]
+  checkpoints?: PlanCheckpoint[]
+}
+
+/** The Ficha de acuerdo signed and filed is what puts the plan into force. */
+export function hasSignedActa(plan: Pick<PlanProgressInput, 'documents'>): boolean {
+  return (plan.documents ?? []).some(
+    (document) => document.format_type === 'FORMATO_2' && document.has_signed,
+  )
+}
+
+/** How many of the two cuts of the semester are already written up. */
+function recordedCheckpoints(plan: Pick<PlanProgressInput, 'checkpoints'>): number {
+  const checkpoints = plan.checkpoints ?? []
+
+  return CHECKPOINT_ORDER.filter((stage) => {
+    const checkpoint = checkpoints.find((entry) => entry.stage === stage)
+
+    return checkpoint ? isCheckpointRecorded(checkpoint) : false
+  }).length
+}
+
+/** The milestones a plan passes through, in the order it reaches them. */
+const PROGRESS_MILESTONES = 4
+
+/**
+ * How far along the plan is, as a percentage of the work the director actually
+ * does: sign the agreement, record the two seguimientos, close the plan.
+ *
+ * Deliberately not `plan.progress`, which the API computes as the share of
+ * commitments marked CUMPLIDO. That is *compliance*, and it only moves once the
+ * plan is verified against the next period's results — so it reads 0% for the
+ * whole semester and tells nobody where the plan stands. A closed plan is done
+ * whatever its cuts say, so closing takes it straight to 100%.
+ *
+ * @example
+ * planProgress(plan) // → 75 (firmado + los dos seguimientos, sin cerrar)
+ */
+export function planProgress(plan: PlanProgressInput): number {
+  if (isPlanClosed(plan.status)) return 100
+
+  const reached = (hasSignedActa(plan) ? 1 : 0) + recordedCheckpoints(plan)
+
+  return Math.round((100 * reached) / PROGRESS_MILESTONES)
+}
+
+/** What that percentage stands for, for the bar to say it out loud on hover. */
+export function planProgressStage(plan: PlanProgressInput): string {
+  if (isPlanClosed(plan.status)) return 'Plan cerrado'
+
+  const recorded = recordedCheckpoints(plan)
+
+  if (recorded === CHECKPOINT_ORDER.length) return 'Seguimientos completos · falta cerrar el plan'
+  if (recorded === 1) return 'Primer seguimiento registrado'
+  if (hasSignedActa(plan)) return 'Acuerdo firmado · sin seguimientos todavía'
+
+  return 'Acuerdo sin firmar'
 }
 
 /** How complete a drafted commitment is. */
