@@ -16,8 +16,19 @@ export interface GenerateReportPdfButtonProps {
   label?: string
   /** No extension — `.pdf` is appended. */
   fileName: string
-  /** One ref per chart card to snapshot; keys are passed through to `buildDocument`. */
-  chartRefs: Record<string, RefObject<HTMLElement | null>>
+  /**
+   * One ref per chart card to snapshot; keys are passed through to
+   * `buildDocument`. Accepts a function instead of a plain object for charts
+   * that only exist in the DOM once `beforeCapture` runs (e.g. behind a
+   * list/chart toggle it just switched on): a plain object is evaluated at
+   * render time and would freeze in whatever refs existed *before* the
+   * click, which is empty for a chart that hasn't mounted yet — a function
+   * is called fresh, after `beforeCapture` resolves, so it sees the chart
+   * that's actually there by then.
+   */
+  chartRefs:
+    | Record<string, RefObject<HTMLElement | null>>
+    | (() => Record<string, RefObject<HTMLElement | null>>)
   /** Assembles the `<PdfPage>` document once every chart has been captured. */
   buildDocument: (images: Record<string, string>) => PdfDocumentElement
   /**
@@ -28,6 +39,16 @@ export interface GenerateReportPdfButtonProps {
    * button.
    */
   disabled?: boolean
+  /**
+   * Runs before charts are captured — e.g. to switch an on-screen toggle to
+   * whichever view actually holds the chart, wait a couple of frames for it
+   * to render and measure, and hand back a cleanup to run afterwards
+   * (restoring the toggle) regardless of success or failure. A chart that's
+   * never been visible on screen (rendered off-screen purely to capture it)
+   * measures and paints unreliably — this exists so callers can capture the
+   * real, already-working on-screen chart instead.
+   */
+  beforeCapture?: () => Promise<(() => void) | void> | (() => void) | void
   className?: string
 }
 
@@ -59,6 +80,7 @@ export function GenerateReportPdfButton({
   chartRefs,
   buildDocument,
   disabled,
+  beforeCapture,
   className,
 }: GenerateReportPdfButtonProps) {
   const [isGenerating, setIsGenerating] = useState(false)
@@ -70,8 +92,12 @@ export function GenerateReportPdfButton({
     const wasDark = root.classList.contains('dark')
     if (wasDark) root.classList.remove('dark')
 
+    let restore: (() => void) | void = undefined
     try {
-      const entries = Object.entries(chartRefs)
+      restore = (await beforeCapture?.()) ?? undefined
+
+      const resolvedChartRefs = typeof chartRefs === 'function' ? chartRefs() : chartRefs
+      const entries = Object.entries(resolvedChartRefs)
       const captured = await Promise.all(
         entries.map(async ([key, ref]) => {
           if (!ref.current) throw new Error(`No se encontró la gráfica "${key}" para capturar.`)
@@ -82,9 +108,11 @@ export function GenerateReportPdfButton({
 
       const blob = await pdf(buildDocument(images)).toBlob()
       downloadBlob(blob, `${fileName}.pdf`)
-    } catch {
+    } catch (error) {
+      console.error(error)
       toast.error('No se pudo generar el PDF. Intenta de nuevo.')
     } finally {
+      restore?.()
       if (wasDark) root.classList.add('dark')
       setIsGenerating(false)
     }
