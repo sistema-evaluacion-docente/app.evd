@@ -59,9 +59,12 @@ async function analyzeEvaluation(evaluationId: number): Promise<ResponseAPI<Eval
   return api.post(`/evaluations/${evaluationId}/analyze`)
 }
 
-async function uploadEvaluation(file: File): Promise<ResponseAPI<EvaluationRecord>> {
+async function uploadEvaluation(files: File[]): Promise<ResponseAPI<EvaluationRecord>> {
   const formData = new FormData()
-  formData.append('file', file)
+
+  // Repeated `file` fields — the endpoint takes an array, one PDF per
+  // modality, and reads the modality out of each document.
+  for (const file of files) formData.append('file', file)
 
   return api.post('/evaluations/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
@@ -341,16 +344,18 @@ export function useAnalyzeEvaluation() {
 }
 
 /**
- * Uploads a teacher evaluation PDF (`POST /evaluations/upload`) as
- * multipart/form-data. Resolves with the created evaluation, whose id is used
- * to open the progress WebSocket channel.
+ * Uploads the teacher evaluation PDFs of one period (`POST /evaluations/upload`)
+ * as multipart/form-data — one document, or one per modality (presencial and
+ * distancia), which the backend merges into a single evaluation. Resolves with
+ * the created evaluation, whose id is used to open the progress WebSocket
+ * channel.
  *
  * @example
  * const { mutate: upload, isPending } = useUploadEvaluation();
- * upload(file);
+ * upload([presencial, distancia]);
  */
 export function useUploadEvaluation() {
   return useMutation({
-    mutationFn: (file: File) => uploadEvaluation(file),
+    mutationFn: (files: File[]) => uploadEvaluation(files),
   })
 }
