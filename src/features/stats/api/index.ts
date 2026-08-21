@@ -2,6 +2,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query'
 
 import type { ResponseAPI } from '@/@types/Response'
 import api from '@/config/axios'
+import type { CourseModality } from '@/lib/modality'
 import type {
   DepartmentPeriodRangeStats,
   DepartmentSubjectAverage,
@@ -16,6 +17,7 @@ interface DepartmentPeriodRangeSubjectsParams {
   search?: string
   sortBy?: string
   teacherName?: string
+  modality?: CourseModality
 }
 
 /** Raw request functions. Not exported — call through the hooks below. */
@@ -37,6 +39,7 @@ async function getDepartmentPeriodRangeSubjects({
   search,
   sortBy,
   teacherName,
+  modality,
 }: DepartmentPeriodRangeSubjectsParams): Promise<ResponseAPI<DepartmentSubjectAverage[]>> {
   return api.get('/stats/departments/period-range/subjects', {
     params: {
@@ -46,7 +49,8 @@ async function getDepartmentPeriodRangeSubjects({
       limit,
       search: search || undefined,
       sort_by: sortBy || undefined,
-      teacher_name: teacherName,
+      teacher_name: teacherName || undefined,
+      modality: modality || undefined,
     },
   })
 }
@@ -74,11 +78,12 @@ export const statsKeys = {
     search?: string,
     sortBy?: string,
     teacherName?: string,
+    modality?: CourseModality,
   ) =>
     [
       ...statsKeys.all,
       'department-period-range-subjects',
-      { startPeriod, endPeriod, page, limit, search, sortBy, teacherName },
+      { startPeriod, endPeriod, page, limit, search, sortBy, teacherName, modality },
     ] as const,
   courseTeachersComparison: (courseCode: string, period: string) =>
     [...statsKeys.all, 'course-teachers-comparison', courseCode, period] as const,
@@ -136,6 +141,7 @@ export function useGetDepartmentPeriodRangeSubjects({
   search,
   sortBy,
   teacherName,
+  modality,
 }: {
   startPeriod?: string
   endPeriod?: string
@@ -144,6 +150,7 @@ export function useGetDepartmentPeriodRangeSubjects({
   search?: string
   sortBy?: string
   teacherName?: string
+  modality?: CourseModality
 }) {
   return useQuery({
     queryKey: statsKeys.departmentPeriodRangeSubjects(
@@ -154,6 +161,7 @@ export function useGetDepartmentPeriodRangeSubjects({
       search,
       sortBy,
       teacherName,
+      modality,
     ),
     queryFn: () =>
       getDepartmentPeriodRangeSubjects({
@@ -164,6 +172,7 @@ export function useGetDepartmentPeriodRangeSubjects({
         search,
         sortBy,
         teacherName,
+        modality,
       }),
     enabled: Boolean(startPeriod) && Boolean(endPeriod),
     placeholderData: keepPreviousData,

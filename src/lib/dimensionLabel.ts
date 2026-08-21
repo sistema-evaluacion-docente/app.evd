@@ -7,22 +7,22 @@ const DIMENSION_META: Record<string, { label: string; key: string; color: string
   'Desarrollo del Conocimiento': {
     label: 'Desarrollo del Conocimiento',
     key: 'conocimiento',
-    color: 'var(--color-chart-1)',
+    color: '#3c8dbc',
   },
   'Desempeño Docente': {
     label: 'Desempeño Docente',
     key: 'desempeno',
-    color: 'var(--color-chart-2)',
-  },
-  'Integración Interpersonal': {
-    label: 'Integración Interpersonal',
-    key: 'relaciones',
-    color: 'var(--color-chart-3)',
+    color: '#7c3aed',
   },
   'Procesos de Evaluación': {
     label: 'Procesos de Evaluación',
     key: 'evaluacion',
-    color: 'var(--color-chart-4)',
+    color: '#0d9488',
+  },
+  'Integración Interpersonal': {
+    label: 'Integración Interpersonal',
+    key: 'relaciones',
+    color: '#db2777',
   },
 }
 
@@ -59,7 +59,7 @@ export function dimensionKey(dimension: string) {
  * with the charts.
  *
  * @example
- * dimensionColor('Desempeño Docente') // "var(--color-chart-2)"
+ * dimensionColor('Desempeño Docente') // "#6d5fe8"
  */
 export function dimensionColor(dimension: string) {
   return DIMENSION_META[dimension]?.color ?? FALLBACK_COLOR

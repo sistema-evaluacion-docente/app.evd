@@ -5,7 +5,7 @@ import { Link, useLocation } from 'wouter'
 import AppLayoutSkeleton from '@/components/skeletons/AppLayoutSkeleton'
 import { Button } from '@/components/ui/button'
 import { SidebarProvider } from '@/components/ui/sidebar'
-import securityConfig from '@/config/security'
+import { isAuthorizedForPage } from '@/config/security'
 import { UserNotAuth } from '@/features/auth'
 import useAuth from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
@@ -18,15 +18,6 @@ export interface AppLayoutProps {
   mainClassName?: string
   header?: AppHeaderProps
   title?: string
-}
-
-function isAuthorizedForPage(path: string, role: string | null): boolean {
-  const pageConfig = securityConfig.pages.find(
-    (page) =>
-      (path === page.path || path.startsWith(page.path + '/')) && page.roles?.includes(role ?? ''),
-  )
-
-  return Boolean(pageConfig)
 }
 
 export function AppLayout({
@@ -52,6 +43,7 @@ export function AppLayout({
     <SidebarProvider>
       <AppLayoutContent
         authorized={authorized}
+        role={selectedRole}
         mainClassName={mainClassName}
         header={header}
         title={title}
@@ -65,20 +57,28 @@ export function AppLayout({
 interface AppLayoutContentProps {
   children: ReactNode
   authorized: boolean
+  /** Passed to the breadcrumb so it only links what this role can open. */
+  role: string | null
   mainClassName?: string
   header?: AppHeaderProps
   title?: string
 }
 
-function AppLayoutContent({ children, authorized, mainClassName, header }: AppLayoutContentProps) {
+function AppLayoutContent({
+  children,
+  authorized,
+  role,
+  mainClassName,
+  header,
+}: AppLayoutContentProps) {
   return (
     <>
       <AppSidebar />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <AppHeader showBreadcrumb={true} breadcrumb={<AutoBreadcrumb />} {...header} />
+        <AppHeader showBreadcrumb={true} breadcrumb={<AutoBreadcrumb role={role} />} {...header} />
 
-        <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="dark:bg-background relative flex min-h-0 flex-1 flex-col overflow-hidden bg-[#fafafa]">
           <main
             className={cn(
               'relative mx-auto w-full flex-1 overflow-y-auto px-4 py-6 lg:px-8 lg:py-8',

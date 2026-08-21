@@ -5,6 +5,7 @@ import { ScoreBadge } from '@/components/common/ScoreBadge'
 import { TransitionLink } from '@/components/common/TransitionLink'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { CATEGORIES, categoryLabel, UNCATEGORIZED } from '@/lib/categoryLabel'
 import { cn } from '@/lib/utils'
 import type { DepartmentPeriodRangeStats } from '../types'
 
@@ -14,6 +15,8 @@ const COMMENTS_RISK_LEVELS = [
   { key: 'MEDIO', label: 'Comentarios de riesgo medio' },
   { key: 'ALTO', label: 'Comentarios de riesgo alto' },
 ] as const
+
+const ANALYZABLE_CATEGORIES = CATEGORIES.filter((category) => category.code !== UNCATEGORIZED)
 
 export interface DepartmentStatsHeroProps {
   stats: DepartmentPeriodRangeStats
@@ -98,7 +101,7 @@ export function DepartmentStatsHero({ stats, commentsHref, className }: Departme
 
       {stats.comments_risk_counts && (
         <div>
-          <div className="flex items-center justify-between gap-3 px-6 py-3">
+          <div className="bg-muted/40 flex items-center justify-between gap-3 px-6 py-3">
             <p className="text-muted-foreground flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
               <MessageSquareText className="size-4 shrink-0" aria-hidden="true" />
               Comentarios por nivel de riesgo
@@ -110,7 +113,7 @@ export function DepartmentStatsHero({ stats, commentsHref, className }: Departme
                 size="sm"
                 nativeButton={false}
                 render={<TransitionLink href={commentsHref} />}
-                className="bg-background"
+                className="bg-background hover:border-primary hover:bg-primary hover:text-primary-foreground"
               >
                 Ver comentarios
               </Button>
@@ -127,6 +130,27 @@ export function DepartmentStatsHero({ stats, commentsHref, className }: Departme
                   )}
                 >
                   {stats.comments_risk_counts?.[key] ?? '—'}
+                </span>
+              </Fact>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {stats.comments_pedagogical_category_counts && (
+        <div>
+          <div className="bg-muted/40 flex items-center justify-between gap-3 px-6 py-3">
+            <p className="text-muted-foreground flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
+              <MessageSquareText className="size-4 shrink-0" aria-hidden="true" />
+              Comentarios por categoría pedagógica
+            </p>
+          </div>
+
+          <div className="divide-border border-border grid grid-cols-4 divide-x border-t">
+            {ANALYZABLE_CATEGORIES.map((category) => (
+              <Fact key={category.code} label={categoryLabel(category.code)}>
+                <span className="num text-2xl font-semibold tabular-nums">
+                  {stats.comments_pedagogical_category_counts?.[category.code] ?? '—'}
                 </span>
               </Fact>
             ))}

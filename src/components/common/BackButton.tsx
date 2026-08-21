@@ -46,7 +46,7 @@ export function BackButton({
   fallbackHref,
   onBack,
   children,
-  variant = 'outline',
+  variant = 'link',
   size = 'sm',
   className,
   ...props
@@ -69,7 +69,7 @@ export function BackButton({
       variant={variant}
       size={size}
       onClick={handleClick}
-      className={cn(className)}
+      className={cn(className, "p-0")}
       {...props}
     >
       {Icon && <Icon className="size-4" aria-hidden="true" />}

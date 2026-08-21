@@ -17,7 +17,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (loggedIn) {
-      navigate('/')
+      navigate('/home')
     }
   }, [loggedIn, navigate])
 
@@ -28,9 +28,9 @@ export default function LoginPage() {
   return (
     <div className="relative min-h-screen overflow-hidden">
       <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-        <div className="from-brand-50/70 via-background to-background absolute inset-0 bg-gradient-to-b" />
-        <div className="bg-brand-100/60 absolute -top-40 left-1/2 h-[32rem] w-[32rem] -translate-x-1/2 rounded-full blur-3xl" />
-        <div className="bg-secondary-100/50 absolute right-[12%] bottom-[8%] h-56 w-56 rounded-full blur-3xl" />
+        <div className="from-brand-50/70 via-background to-background dark:from-brand-900/20 absolute inset-0 bg-gradient-to-b" />
+        <div className="bg-brand-100/60 dark:bg-brand-900/25 absolute -top-40 left-1/2 h-[32rem] w-[32rem] -translate-x-1/2 rounded-full blur-3xl" />
+        <div className="bg-secondary-100/50 dark:bg-secondary-900/20 absolute right-[12%] bottom-[8%] h-56 w-56 rounded-full blur-3xl" />
       </div>
 
       <main className="relative grid min-h-screen place-items-center px-6 py-12">

@@ -1,5 +1,6 @@
 import { ChevronRight } from 'lucide-react'
 
+import { ScoreLegend } from '@/components/common/ScoreLegend'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Skeleton } from '@/components/ui/skeleton'
 import { dimensionColor } from '@/lib/dimensionLabel'
@@ -104,9 +105,13 @@ export function TeacherQuestionMatrix({
 
   return (
     <section className={className}>
-      <h2 className="text-muted-foreground mb-3 text-xs font-medium tracking-wide uppercase">
-        Detalle por pregunta
-      </h2>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+          Detalle por pregunta
+        </h2>
+
+        <ScoreLegend />
+      </div>
 
       <div className="border-border bg-background rounded-md border">
         {isPending ? (

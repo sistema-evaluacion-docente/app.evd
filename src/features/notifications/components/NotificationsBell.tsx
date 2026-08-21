@@ -2,85 +2,12 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Skeleton } from '@/components/ui/skeleton'
-import { AlertTriangle, Bell, CheckCheck, CheckCircle, Info, XCircle } from 'lucide-react'
+import { Bell } from 'lucide-react'
 import { useState } from 'react'
 
 import { TransitionLink } from '@/components/common/TransitionLink'
-import formatDate from '@/lib/formatDate'
 import { useNotifications } from '../hooks/useNotifications'
-import type { Notification, NotificationType } from '../types/Notification'
-
-function getNotificationIcon(type: NotificationType) {
-  switch (type) {
-    case 'info':
-      return <Info className="size-4 text-blue-500" />
-    case 'warning':
-      return <AlertTriangle className="size-4 text-amber-500" />
-    case 'error':
-      return <XCircle className="size-4 text-red-500" />
-    case 'success':
-      return <CheckCircle className="size-4 text-green-500" />
-    default:
-      return <Info className="text-muted-foreground size-4" />
-  }
-}
-
-function NotificationItem({
-  notification,
-  onMarkAsRead,
-  onNavigate,
-}: {
-  notification: Notification
-  onMarkAsRead: (id: number) => void
-  /** Called after following the notification's link, e.g. to close the popover. */
-  onNavigate: () => void
-}) {
-  const body = (
-    <>
-      <div className="flex-shrink-0 pt-0.5">{getNotificationIcon(notification.type)}</div>
-
-      <div className="min-w-0 flex-1 space-y-1">
-        <p className="text-sm leading-tight font-medium">{notification.title}</p>
-        <p className="text-muted-foreground line-clamp-2 text-xs">{notification.message}</p>
-        <p className="text-muted-foreground text-xs">{formatDate(notification.created_at)}</p>
-      </div>
-    </>
-  )
-
-  return (
-    <div
-      className={`flex gap-3 rounded border-b p-3 transition-colors ${
-        notification.read
-          ? 'bg-muted/50 border-transparent opacity-70'
-          : 'bg-background border-border'
-      }`}
-    >
-      {notification.link ? (
-        <TransitionLink
-          href={notification.link}
-          className="flex min-w-0 flex-1 gap-3"
-          onClick={onNavigate}
-        >
-          {body}
-        </TransitionLink>
-      ) : (
-        <div className="flex min-w-0 flex-1 gap-3">{body}</div>
-      )}
-
-      {!notification.read && (
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          onClick={() => onMarkAsRead(notification.id)}
-          className="flex-shrink-0"
-          aria-label="Marcar como leída"
-        >
-          <CheckCheck className="size-3.5" />
-        </Button>
-      )}
-    </div>
-  )
-}
+import { NotificationItem } from './NotificationItem'
 
 /**
  * Bell button that opens a popover with the current user's notifications.
@@ -153,6 +80,16 @@ export function NotificationsBell() {
                 ))}
               </div>
             )}
+          </div>
+
+          <div className="border-t px-4 py-2.5 text-center">
+            <TransitionLink
+              href="/notificaciones"
+              className="text-primary text-xs font-medium hover:underline"
+              onClick={() => setOpen(false)}
+            >
+              Ver todas las notificaciones
+            </TransitionLink>
           </div>
         </div>
       </PopoverContent>

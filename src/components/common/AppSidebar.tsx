@@ -12,15 +12,18 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import {
+  Bell,
   Building2,
   ClipboardCheck,
   Clock,
+  FileChartColumnIncreasing,
   FileText,
   Layers,
   LayoutGrid,
   Library,
   LogOut,
   Logs,
+  MessagesSquare,
   Settings,
   UserSearch,
   Users,
@@ -35,12 +38,15 @@ import Logo from './Logo'
 const DEFAULT_ICON = FileText
 
 const MENU_ICON_BY_PATH: Record<string, typeof DEFAULT_ICON> = {
+  '/home': FileChartColumnIncreasing,
   '/dashboard': LayoutGrid,
+  '/notificaciones': Bell,
   '/periodos': Clock,
   '/periodos/materias': Layers,
   '/evaluaciones': ClipboardCheck,
   '/docentes': Users,
   '/materias': Layers,
+  '/comentarios': MessagesSquare,
   '/admin/facultades': Building2,
   '/admin/departamentos': Library,
   '/admin/periodos': Clock,
@@ -102,6 +108,8 @@ export function AppSidebar() {
             <SidebarMenu>
               {items.map((item) => {
                 const Icon = MENU_ICON_BY_PATH[item.path] ?? DEFAULT_ICON
+
+                if (item.path === '/home' && selectedRole === 'ADMIN') return null
 
                 return (
                   <SidebarMenuItem key={item.path}>

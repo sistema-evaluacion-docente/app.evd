@@ -2,6 +2,7 @@ import { ArrowUpRight, ChevronRight } from 'lucide-react'
 import { Link } from 'wouter'
 
 import { ScoreBadge } from '@/components/common/ScoreBadge'
+import { ScoreLegend } from '@/components/common/ScoreLegend'
 import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import type { CourseDetail, TeacherDetail } from '../types'
@@ -35,9 +36,10 @@ interface TeacherCourseResultsProps {
 export function TeacherCourseResults({ teacher, getCourseHref }: TeacherCourseResultsProps) {
   return (
     <section className="border-border bg-background rounded-md border">
-      <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
-        Resultados por asignatura
-      </h2>
+      <div className="border-border flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4">
+        <h2 className="text-sm font-medium">Resultados por asignatura</h2>
+        <ScoreLegend />
+      </div>
 
       <div className="divide-border divide-y">
         {teacher.courses.map((course) => {

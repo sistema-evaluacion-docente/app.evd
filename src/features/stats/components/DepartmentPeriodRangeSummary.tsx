@@ -233,6 +233,10 @@ export function DepartmentPeriodRangeSummary({
         </div>
       </PageTitle>
 
+      <p className="text-foreground text-sm font-bold">
+        Tomado de: Evaluación docente generado por DIVISIST (División de Sistemas)
+      </p>
+
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <Switch id={compareRangeId} checked={compareRange} onCheckedChange={setCompareRange} />

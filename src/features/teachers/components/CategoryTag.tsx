@@ -90,9 +90,11 @@ export function CategoryTag({
               color:
                 variant === 'text'
                   ? `color-mix(in srgb, ${color} 80%, var(--color-muted-foreground))`
-                  : color,
+                  : variant === 'soft'
+                    ? `color-mix(in srgb, ${color} 60%, var(--color-foreground))`
+                    : color,
               backgroundColor:
-                variant === 'soft' ? `color-mix(in srgb, ${color} 12%, transparent)` : undefined,
+                variant === 'soft' ? `color-mix(in srgb, ${color} 18%, transparent)` : undefined,
               borderColor:
                 variant === 'outline' ? `color-mix(in srgb, ${color} 40%, transparent)` : undefined,
             }

@@ -456,6 +456,7 @@ function CommentRow({
         showGutter={false}
         showCourse={showCourse}
         showScores={false}
+        showDetail={false}
         clampLines={3}
         className="min-w-0 flex-1 hover:bg-transparent"
       />

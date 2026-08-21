@@ -4,13 +4,14 @@ import { PeriodAverageTrend } from '@/features/periods'
 import { DepartmentPeriodRangeSummary } from '@/features/stats'
 import { TeacherPeriodInsights } from '@/features/teachers'
 import useAuth from '@/hooks/useAuth'
+import { useNavigate } from '@/hooks/useNavigate'
 
 function TeacherDashboard() {
   return (
     <>
       <PageTitle>Mi resumen</PageTitle>
 
-      <div className="bg-background space-y-8 rounded p-4">
+      <div className="space-y-8 rounded">
         <PeriodAverageTrend />
 
         <TeacherPeriodInsights />
@@ -21,6 +22,8 @@ function TeacherDashboard() {
 
 export default function DashboardPage() {
   const { selectedRole } = useAuth()
+
+  const navigate = useNavigate()
 
   if (selectedRole === 'DOCENTE') {
     return <TeacherDashboard />
@@ -35,7 +38,8 @@ export default function DashboardPage() {
   }
 
   if (selectedRole === 'ADMIN') {
-    return <p>Resumen de la facultad</p>
+    navigate('/admin/logs')
+    return
   }
 
   return <UserNotAuth />

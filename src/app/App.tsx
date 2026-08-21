@@ -1,6 +1,7 @@
 import { Route, Switch } from 'wouter'
 
 import { AppLayout } from '@/components/common/AppLayout'
+import { AboutPage } from '@/features/about'
 import { LogsPage, SettingsPage } from '@/features/admin'
 import { LoginPage } from '@/features/auth'
 import { CommentsPage } from '@/features/comments'
@@ -8,6 +9,7 @@ import { DashboardPage } from '@/features/dashboard'
 import { DepartmentsPage } from '@/features/departments'
 import { DirectorsPage } from '@/features/directors'
 import {
+  EvaluationCoursesPage,
   EvaluationDetailPage,
   EvaluationDimensionsPage,
   EvaluationLogsPanel,
@@ -17,6 +19,7 @@ import {
 } from '@/features/evaluations'
 import { FacultiesPage } from '@/features/faculties'
 import { NotFoundPage } from '@/features/not-found'
+import { NotificationsPage } from '@/features/notifications'
 import {
   AdminPeriodsPage,
   PeriodCourseDetailPage,
@@ -41,9 +44,17 @@ function App() {
       <Switch>
         <Route path="/login" component={LoginPage} />
 
-        <Route path="/">
+        <Route path="/" component={AboutPage} />
+
+        <Route path="/home">
           <AppLayout>
             <DashboardPage />
+          </AppLayout>
+        </Route>
+
+        <Route path="/notificaciones">
+          <AppLayout>
+            <NotificationsPage />
           </AppLayout>
         </Route>
 
@@ -164,6 +175,12 @@ function App() {
         <Route path="/evaluaciones/:id/pdf">
           <AppLayout>
             <EvaluationPdfPage />
+          </AppLayout>
+        </Route>
+
+        <Route path="/evaluaciones/:id/materias">
+          <AppLayout>
+            <EvaluationCoursesPage />
           </AppLayout>
         </Route>
 

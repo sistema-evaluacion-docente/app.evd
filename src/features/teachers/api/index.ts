@@ -3,6 +3,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import type { ResponseAPI } from '@/@types/Response'
 import api from '@/config/axios'
 import { useAuthStore } from '@/features/auth'
+import type { CourseModality } from '@/lib/modality'
 import type {
   CourseHistoryOut,
   TeacherComment,
@@ -23,6 +24,7 @@ interface TeacherListParams {
   contract_type?: string
   sort_by?: string
   has_average?: boolean
+  modality?: CourseModality
 }
 
 /** Raw request functions. Not exported — call through the hooks below. */
@@ -42,6 +44,7 @@ async function getTeachersWithAverages(
   if (params.contract_type) query['contract_type'] = params.contract_type
   if (params.sort_by) query['sort_by'] = params.sort_by
   if (params.has_average !== undefined) query['has_average'] = params.has_average
+  if (params.modality) query['modality'] = params.modality
 
   return api.get('/teachers/with-averages', { params: query })
 }
@@ -143,6 +146,17 @@ async function updateComment(
   return api.patch(`/comments/${commentId}`, payload)
 }
 
+/** Raw PDF (not the JSON envelope) with a teacher's pages extracted from the
+ *  department's evaluation report for one period. */
+async function getTeacherEvaluationReportBlob(
+  teacherId: number,
+  evaluationId: number,
+): Promise<Blob> {
+  return api.get(`/teachers/${teacherId}/evaluations/${evaluationId}/report`, {
+    responseType: 'blob',
+  }) as unknown as Promise<Blob>
+}
+
 /** Query-key factory so list invalidations stay consistent. */
 export const teachersKeys = {
   all: ['teachers'] as const,
@@ -182,6 +196,7 @@ export function useGetTeachers({
   contractType,
   sortBy,
   hasAverage,
+  modality,
 }: {
   page?: number
   limit?: number
@@ -193,6 +208,8 @@ export function useGetTeachers({
   contractType?: string
   sortBy?: string
   hasAverage?: boolean
+  /** Narrows the averages to the groups taught in one modality. */
+  modality?: CourseModality
 }) {
   const authDepartmentId = useAuthStore((state) => state.user?.department_id) ?? undefined
   const resolvedDepartmentId =
@@ -211,6 +228,7 @@ export function useGetTeachers({
           contract_type: contractType,
           sort_by: sortBy,
           has_average: hasAverage,
+          modality,
         }
       : null
 
@@ -227,6 +245,7 @@ export function useGetTeachers({
         contractType,
         sortBy,
         hasAverage,
+        modality,
       },
     ],
     queryFn: () => getTeachersWithAverages(params!),
@@ -458,6 +477,38 @@ export function useUpdateComment() {
       queryClient.invalidateQueries({
         predicate: (query) => query.queryKey.includes('comments'),
       })
+    },
+  })
+}
+
+/**
+ * Fetches a teacher's evaluation report PDF for one period
+ * (`GET /teachers/{teacher_id}/evaluations/{evaluation_id}/report`) and
+ * resolves to an object URL ready to open — an imperative action, not
+ * cached data, so it's a mutation rather than a query. The backend enforces
+ * who can see which report (a teacher only their own, a director only their
+ * department); on a 403/404 the caller gets the rejected `ApiError` to show
+ * a precise message.
+ *
+ * @example
+ * const downloadReport = useDownloadTeacherEvaluationReport()
+ * downloadReport.mutate(
+ *   { teacherId, evaluationId },
+ *   { onSuccess: (url) => window.open(url, '_blank') },
+ * )
+ */
+export function useDownloadTeacherEvaluationReport() {
+  return useMutation({
+    mutationFn: async ({
+      teacherId,
+      evaluationId,
+    }: {
+      teacherId: number
+      evaluationId: number
+    }) => {
+      const blob = await getTeacherEvaluationReportBlob(teacherId, evaluationId)
+
+      return URL.createObjectURL(blob)
     },
   })
 }

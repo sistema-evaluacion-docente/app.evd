@@ -1,7 +1,9 @@
 import { Toaster } from '@/components/ui/sonner.tsx'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { AuthInitializer } from '@/features/auth/components/AuthInitializer'
+
 import '@fontsource-variable/figtree/wght.css'
+import '@fontsource-variable/host-grotesk/wght.css'
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ThemeProvider } from 'next-themes'

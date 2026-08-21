@@ -9,18 +9,12 @@ import { CommentCard, type CommentCardProps } from './CommentCard'
 export interface CommentListProps {
   comments: TeacherComment[]
   isLoading?: boolean
-  /** Error message; when set, the list renders an inline error instead of items. */
   error?: string | null
-  /** `list` is a hairline-ruled stream, `grid` a two-column reading layout. */
   layout?: 'list' | 'grid'
-  /** Props forwarded to every default-rendered `CommentCard`. */
   commentProps?: Omit<CommentCardProps, 'comment' | 'index'>
-  /** Full control over each item; overrides `commentProps`. */
   renderComment?: (comment: TeacherComment, index: number) => ReactNode
-  /** Custom empty state; takes precedence over `emptyMessage`. */
   emptyState?: ReactNode
   emptyMessage?: string
-  /** Number of skeletons shown while loading. Defaults to 3. */
   skeletonCount?: number
   className?: string
 }
@@ -79,13 +73,24 @@ export function CommentList({
         className,
       )}
     >
-      {comments.map((comment, index) =>
-        renderComment ? (
-          <div key={comment.id}>{renderComment(comment, index)}</div>
+      {comments.map((comment, index) => {
+        const style = { animationDelay: `${Math.min(index, 8) * 60}ms` }
+
+        return renderComment ? (
+          <div key={comment.id} className="animate-rise" style={style}>
+            {renderComment(comment, index)}
+          </div>
         ) : (
-          <CommentCard key={comment.id} comment={comment} index={index} {...commentProps} />
-        ),
-      )}
+          <CommentCard
+            key={comment.id}
+            comment={comment}
+            index={index}
+            className="animate-rise"
+            style={style}
+            {...commentProps}
+          />
+        )
+      })}
     </div>
   )
 }

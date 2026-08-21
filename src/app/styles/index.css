@@ -1,13 +1,18 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
-/* @import '@fontsource-variable/geist'; */
 
 @custom-variant dark (&:is(.dark *));
 
 @theme {
   --font-sans: 'Figtree Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'Figtree Variable', ui-monospace, monospace;
+
+  /* Landing institucional (/acerca): serif de publicación académica para
+     titulares y monoespaciada real para cifras y notación. */
+  --font-display:
+    'Host Grotesk Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-numeric: 'Geist Mono Variable', ui-monospace, SFMono-Regular, monospace;
 
   /* Brand — primary red #dd4b39 */
   --color-brand-50: #fdf3f1;
@@ -103,6 +108,16 @@ body {
   margin: 0;
   font-size: 17px;
 }
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+} */
 
 body {
   font-family: var(--font-sans);
@@ -286,6 +301,94 @@ body {
   --sidebar-accent-foreground: #e4e6ea;
   --sidebar-border: #2a2f3a;
   --sidebar-ring: var(--color-brand-500);
+}
+
+.hero {
+  height: 380px;
+}
+
+@media (min-width: 400px) {
+  .hero {
+    height: 420px;
+  }
+}
+
+@media (min-width: 500px) {
+  .hero {
+    height: 500px;
+  }
+}
+
+@media (min-width: 650px) {
+  .hero {
+    height: 550px;
+  }
+}
+
+@media (min-width: 750px) {
+  .hero {
+    height: 650px;
+  }
+}
+
+@media (min-width: 875px) {
+  .hero {
+    height: 750px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .hero {
+    height: calc(100dvh - 68px);
+  }
+}
+
+/* Landing /acerca — la ilustración del hero entra desde abajo al cargar. */
+.hero-image {
+  animation: hero-rise 1s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+}
+
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(90px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Landing /acerca — bloques que aparecen al entrar en viewport.
+   El atributo data-visible lo pone <Reveal> en AboutPage.tsx. */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+}
+
+.reveal[data-visible='true'] {
+  animation: reveal 0.75s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-image,
+  .reveal,
+  .reveal[data-visible='true'] {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @layer base {

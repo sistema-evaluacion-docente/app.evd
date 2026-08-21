@@ -82,7 +82,7 @@ export function PeriodAverageTrend({
   if (!effectiveTeacherId) return null
 
   return (
-    <section className={className}>
+    <section className={`${className} bg-card border-border rounded-md border p-4`}>
       {title && (
         <h2 className="text-muted-foreground mb-3 text-xs font-medium tracking-wide uppercase">
           {title}

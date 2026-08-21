@@ -65,7 +65,7 @@ describe('AppLayout', () => {
   it('renders the children when the role is authorized for the route', () => {
     mockAuth({ selectedRole: 'ADMIN' })
 
-    renderAt('/')
+    renderAt('/home')
 
     expect(screen.getByText('Contenido protegido')).toBeInTheDocument()
   })

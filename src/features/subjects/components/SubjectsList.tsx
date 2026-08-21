@@ -1,4 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Input } from '@/components/ui/input'
@@ -6,22 +7,39 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { cn } from '@/lib/utils'
 import { useQueryClient } from '@tanstack/react-query'
-import { ArrowUpRight, ChevronRight, Pencil, Search, Users } from 'lucide-react'
+import {
+  ArrowUpRight,
+  Building2,
+  ChevronRight,
+  Monitor,
+  Pencil,
+  Search,
+  UserSearch,
+  Users,
+  type LucideIcon,
+} from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { useDebounce, useDebouncedCallback } from 'use-debounce'
+import { useSearchParams } from 'wouter'
 
-import { DataTableFilters, type SortField } from '@/components/common/DataTableFilters'
+import {
+  DataTableFilters,
+  type FilterConfig,
+  type SortField,
+} from '@/components/common/DataTableFilters'
 import { DynamicFormDrawer, type FieldConfig } from '@/components/common/DynamicFormDrawer'
 import { InlineError } from '@/components/common/InlineError'
 import { PeriodSelect } from '@/components/common/PeriodSelect'
 import { ScoreBadge } from '@/components/common/ScoreBadge'
+import { ScoreLegend } from '@/components/common/ScoreLegend'
 import { TransitionLink } from '@/components/common/TransitionLink'
 import { useUpdateCourse } from '@/features/courses'
 import { useGetAcademicPeriods } from '@/features/periods'
 import type { DepartmentSubjectAverage, DepartmentSubjectGroup } from '@/features/stats'
 import { statsKeys, useGetDepartmentPeriodRangeSubjects } from '@/features/stats'
 import { courseTeacherHref } from '@/features/teachers'
+import { MODALITIES, parseModality, type CourseModality } from '@/lib/modality'
 import { subjectComparisonHref } from '../config'
 
 /** The materia currently open in the rename drawer. */
@@ -36,6 +54,18 @@ const SORT_FIELDS: SortField[] = [
   { value: 'teacher_count', label: 'Docentes' },
 ]
 
+const FILTERS: FilterConfig[] = [
+  { type: 'sort', name: 'sortBy', fields: SORT_FIELDS, clearable: true },
+  {
+    type: 'select',
+    name: 'modality',
+    label: 'Modalidad',
+    placeholder: 'Todas',
+    options: MODALITIES.map(({ value, label }) => ({ value, label })),
+    clearable: true,
+  },
+]
+
 /**
  * Paginated list of the director's own department's subjects ("materias")
  * for a single selected academic period. Rows are grouped by materia name —
@@ -44,12 +74,17 @@ const SORT_FIELDS: SortField[] = [
  * name). Expanding a name reveals the real course codes underneath it, and
  * only within one code — its teachers are genuinely comparable — does
  * "Ver detalle" (one teacher) or "Comparar" (two or more) show up. A materia
- * with a single teacher overall skips straight to their materia report.
+ * with a single teacher overall skips straight to their materia report. A
+ * second, independent search box filters by teacher name instead of materia
+ * name — narrowing which materias show up to the ones that teacher is part
+ * of, with the averages recalculated for just their groups (backend-side);
+ * other teachers still show alongside them once a materia matches.
  *
  * @example
  * <SubjectsList />
  */
 export function SubjectsList({ className }: { className?: string }) {
+  const [searchParams, setSearchParams] = useSearchParams()
   const { data: periodsData, isPending: isPeriodsPending } = useGetAcademicPeriods()
 
   const periods = periodsData?.data ?? []
@@ -58,10 +93,30 @@ export function SubjectsList({ className }: { className?: string }) {
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [debouncedSearch] = useDebounce(search, 400)
+  const [teacherSearch, setTeacherSearch] = useState('')
+  const [debouncedTeacherSearch] = useDebounce(teacherSearch, 400)
   const [sortBy, setSortBy] = useState<string | undefined>(undefined)
   const [editTarget, setEditTarget] = useState<EditCourseTarget | null>(null)
 
+  // The URL owns the modality so the filtered list can be linked and shared;
+  // the other filters are transient enough to live in local state.
+  const modality = parseModality(searchParams.get('modality'))
+
   const resetPage = useDebouncedCallback(() => setPage(1), 400)
+
+  const handleModalityChange = (next?: CourseModality) => {
+    setSearchParams(
+      (previous) => {
+        const params = new URLSearchParams(previous)
+
+        if (next) params.set('modality', next)
+        else params.delete('modality')
+
+        return params
+      },
+      { replace: true },
+    )
+  }
 
   const queryClient = useQueryClient()
   const { mutate: updateCourse, isPending: isUpdating } = useUpdateCourse()
@@ -79,9 +134,8 @@ export function SubjectsList({ className }: { className?: string }) {
 
   const handleUpdateSubmit = (values: Record<string, string>) => {
     if (!editTarget) return
-
     updateCourse(
-      { courseId: editTarget.id, payload: { name: values.name } },
+      { courseId: editTarget.id, payload: { name: values.name.toUpperCase() } },
       {
         onSuccess: () => {
           toast.success('Materia actualizada exitosamente')
@@ -101,7 +155,9 @@ export function SubjectsList({ className }: { className?: string }) {
     page,
     limit: 10,
     search: debouncedSearch,
+    teacherName: debouncedTeacherSearch,
     sortBy,
+    modality,
   })
 
   const subjects = data?.data ?? []
@@ -147,16 +203,38 @@ export function SubjectsList({ className }: { className?: string }) {
           />
         </div>
 
+        <div className="relative">
+          <UserSearch
+            aria-hidden="true"
+            className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
+          />
+
+          <Input
+            type="text"
+            value={teacherSearch}
+            onChange={(event) => {
+              setTeacherSearch(event.target.value)
+              resetPage()
+            }}
+            placeholder="Buscar docente..."
+            aria-label="Buscar docente"
+            className="bg-background h-9 w-56 pl-9 shadow-none"
+          />
+        </div>
+
         <DataTableFilters
-          filters={[{ type: 'sort', name: 'sortBy', fields: SORT_FIELDS, clearable: true }]}
-          values={{ sortBy }}
+          filters={FILTERS}
+          values={{ sortBy, modality }}
           onChange={(values) => {
             setSortBy(values.sortBy as string | undefined)
+            handleModalityChange(parseModality(values.modality as string | undefined))
             resetPage()
           }}
         />
 
         {isFetching && <Spinner className="text-muted-foreground size-4" />}
+
+        <ScoreLegend className="ml-auto" />
       </div>
 
       {error && <InlineError message={error.message} />}
@@ -235,6 +313,31 @@ export function SubjectsList({ className }: { className?: string }) {
   )
 }
 
+/** Reading label and icon per modality reported by the API. */
+const MODALITY_DISPLAY: Record<string, { label: string; icon: LucideIcon } | undefined> = {
+  PRESENCIAL: { label: 'Presencial', icon: Building2 },
+  DISTANCIA: { label: 'Distancia', icon: Monitor },
+}
+
+/**
+ * How a single group is taught. A modality the frontend doesn't know yet is
+ * printed as it comes rather than dropped, so a value added backend-side still
+ * shows up; a group without one renders nothing at all.
+ */
+function ModalityBadge({ modality }: { modality?: CourseModality | null }) {
+  if (!modality) return null
+
+  const display = MODALITY_DISPLAY[modality]
+  const Icon = display?.icon
+
+  return (
+    <Badge variant="outline" className="text-muted-foreground">
+      {Icon && <Icon aria-hidden="true" />}
+      {display?.label ?? modality}
+    </Badge>
+  )
+}
+
 /** Groups within a materia name, partitioned by their real course code. */
 interface CourseCodeGroup {
   code: string
@@ -281,7 +384,7 @@ function SubjectRow({
 
   return (
     <Collapsible className="group/row">
-      <div className="hover:bg-muted/40 muted group flex w-full items-center justify-between gap-4 px-6 transition-colors">
+      <div className="hover:bg-muted/40 muted group hover:border-primary flex w-full items-center justify-between gap-4 border-l-2 border-transparent px-6 transition-colors">
         <CollapsibleTrigger className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 py-4 text-left">
           <ChevronRight
             aria-hidden="true"
@@ -290,6 +393,10 @@ function SubjectRow({
 
           <div className="min-w-0">
             <p className="truncate text-sm font-medium">{subject.course_name}</p>
+            <p className="text-muted-foreground text-xs">
+              {groups.length} docente{groups.length === 1 ? '' : 's'} · {codeGroups.length} código
+              {codeGroups.length === 1 ? '' : 's'}
+            </p>
           </div>
         </CollapsibleTrigger>
 
@@ -342,12 +449,14 @@ function CourseCodeRow({
           soleGroup.academic_period_code,
           soleGroup.group_name,
         )}
-        className="hover:bg-muted/40 group flex w-full items-center justify-between gap-4 py-3 pr-6 pl-12 text-left transition-colors"
+        className="hover:bg-muted/40 group hover:border-primary flex w-full items-center justify-between gap-4 border-l-2 border-transparent py-3 pr-6 pl-12 text-left transition-colors"
       >
-        <div className="min-w-0">
-          <p className="group-hover:text-primary truncate text-sm font-medium transition-colors">
+        <div className="flex min-w-0 items-center gap-2">
+          <p className="group-hover:text-primary min-w-0 truncate text-sm font-medium transition-colors">
             {code} - {soleGroup.group_name}
           </p>
+
+          <ModalityBadge modality={soleGroup.modality} />
         </div>
 
         <div className="flex shrink-0 items-center gap-4">
@@ -364,7 +473,7 @@ function CourseCodeRow({
 
   return (
     <Collapsible>
-      <CollapsibleTrigger className="hover:bg-muted/40 group flex w-full cursor-pointer items-center justify-between gap-4 py-3 pr-6 pl-12 text-left transition-colors">
+      <CollapsibleTrigger className="hover:bg-muted/40 group hover:border-primary flex w-full cursor-pointer items-center justify-between gap-4 border-l-2 border-transparent py-3 pr-6 pl-12 text-left transition-colors">
         <div className="flex min-w-0 items-center gap-3">
           <ChevronRight
             aria-hidden="true"
@@ -373,7 +482,7 @@ function CourseCodeRow({
 
           <div className="min-w-0">
             <p className="truncate text-sm font-medium">{code}</p>
-            {/* <p className="text-muted-foreground text-xs">{groups.length} docentes</p> */}
+            <p className="text-muted-foreground text-xs">{groups.length} docentes</p>
           </div>
         </div>
       </CollapsibleTrigger>
@@ -386,6 +495,7 @@ function CourseCodeRow({
               variant="outline"
               size="xs"
               nativeButton={false}
+              className="hover:border-primary hover:bg-primary hover:text-primary-foreground"
               render={
                 <TransitionLink
                   href={subjectComparisonHref(code, groups[0].academic_period_code, courseName)}
@@ -420,9 +530,13 @@ function TeacherGroupRow({ group }: { group: DepartmentSubjectGroup }) {
         <div>
           <p className="truncate text-xs">{group.teacher_name}</p>
 
-          <p className="text-muted-foreground truncate text-sm">
-            {group.course_code} - {group.group_name}
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-muted-foreground min-w-0 truncate text-sm">
+              {group.course_code} - {group.group_name}
+            </p>
+
+            <ModalityBadge modality={group.modality} />
+          </div>
         </div>
       </div>
 

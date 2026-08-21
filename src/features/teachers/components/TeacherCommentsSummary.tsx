@@ -124,10 +124,11 @@ export function TeacherCommentsSummary({
       previousCounts?.categoryCounts[category.code] ?? (previousCounts ? 0 : undefined),
   }))
 
-  const topComment = comments.reduce<TeacherComment | undefined>(
-    (max, comment) => (!max || comment.risk_score > max.risk_score ? comment : max),
-    undefined,
-  )
+  const topComment = comments.reduce<TeacherComment | undefined>((max, comment) => {
+    if (comment.risk_score == null) return max
+    if (!max || max.risk_score == null || comment.risk_score > max.risk_score) return comment
+    return max
+  }, undefined)
 
   const aiStatus: AiStatus | null | undefined = commentsData?.ai_status
   const aiStatusConfig = aiStatus ? AI_STATUS_DISPLAY[aiStatus] : undefined

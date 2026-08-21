@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { DimensionComparisonChart } from '@/components/common/DimensionComparisonChart'
 import { PageTitle } from '@/components/common/PageTitle'
 import { PeriodSelect, type PeriodSelectOption } from '@/components/common/PeriodSelect'
-import { Skeleton } from '@/components/ui/skeleton'
+import TeacherMateriasSkeleton from '@/components/skeletons/TeacherMateriasSkeleton'
 import { useAuthStore } from '@/features/auth'
 import { TeacherCourseResults, useGetTeacherDetail } from '@/features/teachers'
 import { useGetTeacherHistory } from '../api'
@@ -63,7 +63,7 @@ export default function TeacherMateriasPage() {
   return (
     <>
       {isHistoryPending ? (
-        <Skeleton className="h-9 w-48" />
+        <TeacherMateriasSkeleton withHeader />
       ) : periods.length === 0 ? (
         <p className="text-muted-foreground py-10 text-center text-sm">
           Aún no tiene evaluaciones registradas.
@@ -84,7 +84,7 @@ export default function TeacherMateriasPage() {
           </PageTitle>
 
           {isLoading ? (
-            <Skeleton className="h-64 w-full rounded-md" />
+            <TeacherMateriasSkeleton />
           ) : !teacher ? (
             <p className="text-muted-foreground py-10 text-center text-sm">
               No se encontraron materias para este periodo.
