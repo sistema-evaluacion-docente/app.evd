@@ -3,8 +3,8 @@ import { useId, useRef, useState } from 'react'
 import { Link, useRoute } from 'wouter'
 
 import { BackButton } from '@/components/common/BackButton'
-import { GenerateReportPdfButton } from '@/components/common/GenerateReportPdfButton'
 import { DataTableFilters, type FilterConfig } from '@/components/common/DataTableFilters'
+import { GenerateReportPdfButton } from '@/components/common/GenerateReportPdfButton'
 import { PageTitle } from '@/components/common/PageTitle'
 import { PdfChartImage } from '@/components/common/pdf/PdfChartImage'
 import { PdfFactGrid } from '@/components/common/pdf/PdfFactGrid'
@@ -15,27 +15,24 @@ import { ScoreBadge } from '@/components/common/ScoreBadge'
 import EvaluationDetailSkeleton from '@/components/skeletons/EvaluationDetailSkeleton'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { Spinner } from '@/components/ui/spinner'
 import { Switch } from '@/components/ui/switch'
 import { useAcademicPeriodsStore } from '@/features/periods'
 import { TeacherAveragesTable, useGetTeachers } from '@/features/teachers'
-import { useNavigate } from '@/hooks/useNavigate'
-import formatDate from '@/lib/formatDate'
-import { formatPdfAverage } from '@/lib/pdf/formatPdfAverage'
-import { Spinner } from '@/components/ui/spinner'
-import { useAcademicPeriodsStore } from '@/features/periods'
-import { TeacherAveragesTable } from '@/features/teachers'
 import { useModalityFilter } from '@/hooks/useModalityFilter'
 import { useNavigate } from '@/hooks/useNavigate'
+import formatDate from '@/lib/formatDate'
 import { MODALITIES } from '@/lib/modality'
+import { formatPdfAverage } from '@/lib/pdf/formatPdfAverage'
 import { cn } from '@/lib/utils'
 import { useGetEvaluation } from '../api'
-import { AI_STATUS_DISPLAY, EVALUATION_STATUS_DISPLAY } from '../config'
 import {
   EvaluationDimensionDetailCard,
   EvaluationDimensionsChart,
   EvaluationOverview,
   ModalityNotice,
 } from '../components'
+import { AI_STATUS_DISPLAY, EVALUATION_STATUS_DISPLAY } from '../config'
 import type { EvaluationDimensionDetail } from '../types'
 
 /** The report's only filter, offered through the shared "Filtros" panel. */
