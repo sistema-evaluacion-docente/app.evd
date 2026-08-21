@@ -9,6 +9,7 @@ import { ScoreProgress } from '@/components/common/ScoreProgress'
 import formatDate from '@/lib/formatDate'
 import { useGetMyPlans } from '../api'
 import { ActaStatusBadge, PlanStatusBadge } from '../components/PlanStatusBadge'
+import { planProgress } from '../lib/planStatus'
 import type { Plan } from '../types'
 
 const PAGE_SIZE = 10
@@ -77,7 +78,7 @@ export default function MyPlansPage() {
         header: 'Avance',
         cell: ({ row }) => (
           <ScoreProgress
-            value={row.original.progress}
+            value={planProgress(row.original)}
             max={100}
             decimals={0}
             tone="primary"

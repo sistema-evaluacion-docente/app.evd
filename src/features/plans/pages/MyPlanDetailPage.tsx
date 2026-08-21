@@ -1,18 +1,18 @@
 import { useRoute } from 'wouter'
-import { Download, Info } from 'lucide-react'
+import { Download, Info, Stamp } from 'lucide-react'
 
 import { PageTitle } from '@/components/common/PageTitle'
 import { ScoreProgress } from '@/components/common/ScoreProgress'
+import PlanDetailSkeleton from '@/components/skeletons/PlanDetailSkeleton'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
 import formatDate from '@/lib/formatDate'
 import { InlineError } from '@/components/common/InlineError'
 import { useDownloadDocument, useGetMyPlans, useGetPlanIndicators } from '../api'
 import { PlanCheckpoints } from '../components/PlanCheckpoints'
 import { PlanEvidences } from '../components/PlanEvidences'
 import { ActaStatusBadge, PlanStatusBadge } from '../components/PlanStatusBadge'
-import { PLAN_FORMATS } from '../lib/planStatus'
+import { PLAN_FORMATS, planProgress, planProgressStage } from '../lib/planStatus'
 import type { Plan } from '../types'
 
 /**
@@ -30,7 +30,7 @@ export default function MyPlanDetailPage() {
   const planId = params?.id ? Number(params.id) : undefined
 
   const { data, isPending } = useGetMyPlans()
-  const { data: indicatorsResponse } = useGetPlanIndicators()
+  const { data: indicatorsResponse, isPending: aspectsPending } = useGetPlanIndicators()
 
   const plans = data?.data ?? []
   const aspects = indicatorsResponse?.data?.aspects ?? []
@@ -41,10 +41,7 @@ export default function MyPlanDetailPage() {
     return (
       <>
         <PageTitle>Mi plan de mejoramiento</PageTitle>
-        <div className="space-y-4">
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-40 w-full" />
-        </div>
+        <PlanDetailSkeleton />
       </>
     )
   }
@@ -141,7 +138,7 @@ export default function MyPlanDetailPage() {
       </section>
 
       {/* A teacher reads the follow-ups but doesn't fill them in. */}
-      <PlanCheckpoints plan={plan} aspects={aspects} canManage={false} />
+      <PlanCheckpoints plan={plan} aspects={aspects} canManage={false} isLoading={aspectsPending} />
 
       <PlanEvidences plan={plan} canManage={false} />
 
@@ -173,13 +170,17 @@ function PlanSummary({ plan }: { plan: Plan }) {
         </div>
 
         <div className="min-w-48">
-          <p className="text-muted-foreground mb-1 text-xs tracking-wide uppercase">Avance</p>
+          <div className="mb-1 flex items-baseline justify-between gap-3">
+            <p className="text-muted-foreground text-xs tracking-wide uppercase">Avance</p>
+            <p className="num text-sm font-semibold">{planProgress(plan)}%</p>
+          </div>
           <ScoreProgress
-            value={plan.progress}
+            value={planProgress(plan)}
             max={100}
             decimals={0}
             interactive={false}
             label="Avance del plan"
+            tooltipContent={planProgressStage(plan)}
           />
         </div>
       </div>
@@ -192,9 +193,11 @@ function PlanSummary({ plan }: { plan: Plan }) {
         </p>
       )}
 
-      {plan.acta_number && (
-        <p className="text-muted-foreground border-t px-6 py-3 text-sm">
-          Acta N.º <span className="num font-semibold">{plan.acta_number}</span>
+      {(plan.acta_number || plan.acta_date) && (
+        <p className="text-muted-foreground flex flex-wrap items-center gap-2 border-t px-6 py-3 text-sm">
+          <Stamp className="size-4 shrink-0" aria-hidden="true" />
+          Acta N.º{' '}
+          <span className="num text-foreground font-semibold">{plan.acta_number ?? '—'}</span>
           {plan.acta_date && ` · ${formatDate(plan.acta_date, 'D [de] MMMM [de] YYYY')}`}
         </p>
       )}
