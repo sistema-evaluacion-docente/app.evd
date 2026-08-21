@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Select,
   SelectContent,
@@ -36,6 +37,7 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { useFileUpload } from '@/hooks/useFileUpload'
 import formatDate, { isPastDate, todayISO } from '@/lib/formatDate'
+import { openPendingTab } from '@/lib/openPendingTab'
 import { cn } from '@/lib/utils'
 import {
   useAddEvidenceComment,
@@ -72,7 +74,7 @@ export function PlanEvidences({ plan, canManage }: PlanEvidencesProps) {
 
   return (
     <section className="border-border bg-background overflow-hidden rounded-md border">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4 bg-muted/90">
         <div>
           <h2 className="font-semibold">Evidencias</h2>
           <p className="text-muted-foreground text-sm">
@@ -89,7 +91,7 @@ export function PlanEvidences({ plan, canManage }: PlanEvidencesProps) {
       </header>
 
       {isPending ? (
-        <p className="text-muted-foreground px-6 py-4 text-sm">Cargando…</p>
+        <EvidenceRequestsSkeleton />
       ) : requests.length === 0 ? (
         <p className="text-muted-foreground px-6 py-4 text-sm">
           Aún no se han solicitado evidencias en este plan.
@@ -172,19 +174,10 @@ function RequestBlock({
    * the tab is opened first — while the click is still a user gesture, or the
    * popup blocker eats it — and the blob is pushed into it once it lands.
    */
-  function previewInNewTab(evidenceId: number) {
-    const tab = window.open('', '_blank')
+  function previewInNewTab(evidenceId: number, name: string) {
+    const tab = openPendingTab(`Abriendo ${name}…`)
 
-    preview.mutate(evidenceId, {
-      onSuccess: (url) => {
-        if (tab) tab.location.href = url
-        else window.open(url, '_blank')
-
-        // The tab holds the file by now; keeping the blob alive only leaks it.
-        window.setTimeout(() => URL.revokeObjectURL(url), 60_000)
-      },
-      onError: () => tab?.close(),
-    })
+    preview.mutate(evidenceId, { onSuccess: tab.settle, onError: tab.fail })
   }
 
   return (
@@ -226,7 +219,7 @@ function RequestBlock({
                 <div className="min-w-0 flex-1">
                   <button
                     type="button"
-                    onClick={() => previewInNewTab(evidence.id)}
+                    onClick={() => previewInNewTab(evidence.id, name)}
                     disabled={preview.isPending && preview.variables === evidence.id}
                     title={`Previsualizar ${name} en una pestaña nueva`}
                     className="block max-w-full cursor-pointer truncate text-sm underline-offset-2 hover:underline disabled:cursor-default disabled:opacity-60"
@@ -581,5 +574,42 @@ function NewRequestDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  )
+}
+
+/** Widths of the fake request titles, so the placeholder reads as a list. */
+const REQUEST_LINES = ['w-64', 'w-52']
+
+/**
+ * The evidence loop arrives from its own request, later than the plan around
+ * it. Drawing the rows it will fill keeps the section from collapsing to a
+ * single line of text and then jumping open.
+ */
+function EvidenceRequestsSkeleton() {
+  return (
+    <ul className="divide-border divide-y" role="status" aria-busy="true">
+      <span className="sr-only">Cargando las evidencias…</span>
+
+      {REQUEST_LINES.map((width) => (
+        <li key={width} className="space-y-3 px-6 py-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="space-y-1.5">
+              <Skeleton className={`h-4 ${width}`} />
+              <Skeleton className="h-3 w-40" />
+            </div>
+            <Skeleton className="h-8 w-24 rounded-md" />
+          </div>
+
+          <div className="border-border flex items-center gap-3 rounded-md border px-3 py-2">
+            <Skeleton className="size-4 shrink-0 rounded-sm" />
+            <div className="flex-1 space-y-1.5">
+              <Skeleton className="h-3.5 w-48" />
+              <Skeleton className="h-3 w-32" />
+            </div>
+            <Skeleton className="h-5 w-24 rounded-full" />
+          </div>
+        </li>
+      ))}
+    </ul>
   )
 }
