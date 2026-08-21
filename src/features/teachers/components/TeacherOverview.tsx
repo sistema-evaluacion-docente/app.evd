@@ -12,7 +12,6 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { dimensionColor } from '@/lib/dimensionLabel'
 import { getScoreToneClass } from '@/lib/scoreTone'
 import type { TeacherDetail } from '../types'
-import { TeacherReportDownloadButton } from './TeacherReportDownloadButton'
 
 interface TeacherOverviewProps {
   teacher: TeacherDetail
@@ -78,22 +77,8 @@ export function TeacherOverview({ teacher, extraActions }: TeacherOverviewProps)
           </p>
 
           <div className="flex items-center gap-4">
-            {teacher.group_count > 0 && (
-              <p className="text-brand-700/70 dark:text-brand-300/70 text-xs tracking-wide uppercase">
-                <span className="num text-brand-700 dark:text-brand-200 font-bold">
-                  {teacher.group_count}
-                </span>{' '}
-                {teacher.group_count === 1 ? 'grupo evaluado' : 'grupos evaluados'}
-              </p>
-            )}
-
-            <TeacherReportDownloadButton
-              teacherId={teacher.teacher_id}
-              evaluationId={teacher.evaluation_id}
-              className="bg-background"
-            />
-
             {extraActions}
+
             <Button
               variant="outline"
               size="sm"
