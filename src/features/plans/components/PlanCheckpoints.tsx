@@ -1,22 +1,34 @@
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { CalendarCheck } from 'lucide-react'
+import { CalendarCheck, Pencil } from 'lucide-react'
 
 import { DatePicker } from '@/components/common/DatePicker'
 import { LoadingButton } from '@/components/common/LoadingButton'
 import { Required } from '@/components/common/Required'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { useUpdateCheckpoint } from '../api'
 import { checkpointErrors, checkpointFieldId, focusField } from '../lib/planValidation'
-import { CHECKPOINT_HINT, CHECKPOINT_LABEL, CHECKPOINT_ORDER } from '../lib/planStatus'
+import {
+  CHECKPOINT_HINT,
+  CHECKPOINT_LABEL,
+  CHECKPOINT_ORDER,
+  isCheckpointRecorded,
+} from '../lib/planStatus'
 import type { Plan, PlanAspect, PlanCheckpoint } from '../types'
 
 interface PlanCheckpointsProps {
   plan: Plan
   aspects: PlanAspect[]
   canManage: boolean
+  /**
+   * Whether the aspect catalogue is still on its way. The aspects arrive from
+   * their own request, so without this the section would claim there is nothing
+   * to follow up on while it waits — a lie that reads as a broken plan.
+   */
+  isLoading?: boolean
 }
 
 /**
@@ -26,7 +38,12 @@ interface PlanCheckpointsProps {
  * @example
  * <PlanCheckpoints plan={plan} aspects={aspects} canManage={isDirector} />
  */
-export function PlanCheckpoints({ plan, aspects, canManage }: PlanCheckpointsProps) {
+export function PlanCheckpoints({
+  plan,
+  aspects,
+  canManage,
+  isLoading = false,
+}: PlanCheckpointsProps) {
   const ordered = CHECKPOINT_ORDER.map((stage) =>
     plan.checkpoints.find((checkpoint) => checkpoint.stage === stage),
   ).filter((checkpoint): checkpoint is PlanCheckpoint => Boolean(checkpoint))
@@ -46,7 +63,7 @@ export function PlanCheckpoints({ plan, aspects, canManage }: PlanCheckpointsPro
 
   return (
     <section className="border-border bg-background overflow-hidden rounded-md border">
-      <header className="border-b px-6 py-4">
+      <header className="border-b px-6 py-4 bg-muted/90">
         <h2 className="font-semibold">Seguimientos</h2>
         <p className="text-muted-foreground text-sm">
           El plan tiene dos cortes de seguimiento durante el semestre. Al guardar uno, el Formato 3
@@ -54,7 +71,9 @@ export function PlanCheckpoints({ plan, aspects, canManage }: PlanCheckpointsPro
         </p>
       </header>
 
-      {tracked.length === 0 ? (
+      {isLoading ? (
+        <CheckpointsSkeleton />
+      ) : tracked.length === 0 ? (
         <p className="text-muted-foreground px-6 py-4 text-sm">
           No hay compromisos a los que hacer seguimiento todavía.
         </p>
@@ -160,6 +179,11 @@ function CheckpointBlock({
 
   const filled = checkpoint.aspect_notes.filter((note) => note.note?.trim()).length
 
+  // Once the cut is on the record the button stops asking for it and offers to
+  // correct it instead — "Registrar" on a seguimiento already written up reads
+  // as if nothing had been saved.
+  const recorded = isCheckpointRecorded(checkpoint)
+
   return (
     <div className="space-y-3 px-6 py-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -179,7 +203,8 @@ function CheckpointBlock({
 
           {canManage && !editing && (
             <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
-              Registrar
+              {recorded && <Pencil className="size-3.5" aria-hidden="true" />}
+              {recorded ? 'Editar' : 'Registrar'}
             </Button>
           )}
         </div>
@@ -266,6 +291,32 @@ function CheckpointBlock({
           })}
         </ul>
       )}
+    </div>
+  )
+}
+
+/** Two cuts' worth of placeholder rows, drawn where the real ones will land. */
+function CheckpointsSkeleton() {
+  return (
+    <div className="divide-border divide-y" role="status" aria-busy="true">
+      <span className="sr-only">Cargando los seguimientos…</span>
+
+      {CHECKPOINT_ORDER.map((stage) => (
+        <div key={stage} className="space-y-3 px-6 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="space-y-1.5">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-3 w-56" />
+            </div>
+            <Skeleton className="h-3 w-32" />
+          </div>
+
+          <div className="space-y-1.5">
+            <Skeleton className="h-3.5 w-10/12" />
+            <Skeleton className="h-3.5 w-7/12" />
+          </div>
+        </div>
+      ))}
     </div>
   )
 }
