@@ -62,8 +62,8 @@ export function PlanCheckpoints({
   )
 
   return (
-    <section className="border-border bg-background overflow-hidden rounded-md border">
-      <header className="border-b px-6 py-4 bg-muted/50">
+    <section className="border-border bg-card overflow-hidden rounded-md border">
+      <header className="bg-muted/50 border-b px-6 py-4">
         <h2 className="font-semibold">Seguimientos</h2>
         <p className="text-muted-foreground text-sm">
           El plan tiene dos cortes de seguimiento durante el semestre. Al guardar uno, el Formato 3

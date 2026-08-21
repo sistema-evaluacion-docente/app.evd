@@ -62,7 +62,7 @@ function CreatePlanSkeleton({ withTeacher = false }: { withTeacher?: boolean }) 
 
       <Panel headingWidth="w-36" descriptionWidths={['w-full', 'w-2/3']}>
         {ASPECTS.map((aspect) => (
-          <div key={aspect} className="border-border bg-background rounded-md border">
+          <div key={aspect} className="border-border rounded-md border">
             <div className="bg-muted/40 flex items-center justify-between gap-3 border-b px-4 py-2.5">
               <Skeleton className={cn('h-3.5', INDICATOR_LINES[aspect])} />
               <Skeleton className="h-3.5 w-32 shrink-0" />
@@ -144,7 +144,7 @@ function Panel({
   children: React.ReactNode
 }) {
   return (
-    <section className="border-border bg-muted/50 space-y-4 rounded-md border p-6">
+    <section className="border-border bg-card space-y-4 rounded-md border p-6">
       <div className="space-y-2">
         <Skeleton className={cn('h-5', headingWidth)} />
 

@@ -253,7 +253,7 @@ export function IndicatorPicker({
           ))}
 
           {uncategorized.length > 0 && (
-            <Collapsible className="border-border bg-background rounded-md border border-dashed">
+            <Collapsible className="border-border rounded-md border border-dashed">
               <CollapsibleTrigger className="group bg-muted/50 flex w-full cursor-pointer items-center gap-2 px-4 py-3 text-left">
                 <ChevronRight
                   className="text-muted-foreground size-4 shrink-0 transition-transform group-data-panel-open:rotate-90"
@@ -346,7 +346,7 @@ function DimensionBlock({
   const scope = subjectKey === SUBJECT_ALL ? null : subjectKey
 
   return (
-    <Collapsible className="border-border bg-background rounded-md border">
+    <Collapsible className="border-border rounded-md border">
       <div className="bg-muted/50 flex items-center justify-between gap-3 px-4 py-3">
         <CollapsibleTrigger className="group flex flex-1 cursor-pointer items-center gap-2 text-left">
           <ChevronRight

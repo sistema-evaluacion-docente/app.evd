@@ -29,7 +29,7 @@ function PlanDetailSkeleton({ withAvatar = false }: { withAvatar?: boolean }) {
 
       <Skeleton className="h-8 w-28" />
 
-      <section className="border-border bg-background overflow-hidden rounded-md border">
+      <section className="border-border bg-card overflow-hidden rounded-md border">
         <div className="flex flex-wrap items-start justify-between gap-4 p-6">
           <div className="flex min-w-0 items-center gap-3">
             {withAvatar && <Skeleton className="size-12 shrink-0 rounded-full" />}
@@ -124,7 +124,7 @@ function Panel({
   children: React.ReactNode
 }) {
   return (
-    <section className="border-border bg-background overflow-hidden rounded-md border">
+    <section className="border-border bg-card overflow-hidden rounded-md border">
       <header className="space-y-2 border-b px-6 py-4">
         <Skeleton className={cn('h-4', headingWidth)} />
         <Skeleton className={cn('h-3', subheadingWidth)} />

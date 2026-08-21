@@ -61,7 +61,7 @@ export default function MyPlanDetailPage() {
 
       <PlanSummary plan={plan} />
 
-      <section className="border-border bg-background overflow-hidden rounded-md border">
+      <section className="border-border bg-card overflow-hidden rounded-md border">
         <header className="border-b px-6 py-4">
           <h2 className="font-semibold">Qué debo mejorar</h2>
           <p className="text-muted-foreground text-sm">
@@ -149,7 +149,7 @@ export default function MyPlanDetailPage() {
 
 function PlanSummary({ plan }: { plan: Plan }) {
   return (
-    <section className="border-border bg-background overflow-hidden rounded-md border">
+    <section className="border-border bg-card overflow-hidden rounded-md border">
       <div className="flex flex-wrap items-start justify-between gap-4 p-6">
         <div className="min-w-0">
           <h2 className="truncate text-lg font-semibold">{plan.title}</h2>
@@ -223,7 +223,7 @@ function MyPlanDocuments({ plan }: { plan: Plan }) {
   if (available.length === 0) return null
 
   return (
-    <section className="border-border bg-background overflow-hidden rounded-md border">
+    <section className="border-border bg-card overflow-hidden rounded-md border">
       <header className="border-b px-6 py-4">
         <h2 className="font-semibold">Documentos</h2>
         <p className="text-muted-foreground text-sm">Formatos del plan acordado.</p>

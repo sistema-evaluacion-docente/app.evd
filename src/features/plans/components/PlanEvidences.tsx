@@ -73,8 +73,8 @@ export function PlanEvidences({ plan, canManage }: PlanEvidencesProps) {
   const requests = data?.data ?? []
 
   return (
-    <section className="border-border bg-background overflow-hidden rounded-md border">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4 bg-muted/50">
+    <section className="border-border bg-card overflow-hidden rounded-md border">
+      <header className="bg-muted/50 flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4">
         <div>
           <h2 className="font-semibold">Evidencias</h2>
           <p className="text-muted-foreground text-sm">

@@ -25,7 +25,7 @@ export function PlanCaseReportUpload({ file, onFileChange }: PlanCaseReportUploa
   const { error, handleFile } = useFileUpload({ onValidFile: onFileChange })
 
   return (
-    <section className="border-border bg-muted/30 space-y-4 rounded-md border p-6">
+    <section className="border-border bg-card space-y-4 rounded-md border p-6">
       <div>
         <h2 className="font-semibold">Formato 1 · Caso reportado</h2>
         <p className="text-muted-foreground text-sm">

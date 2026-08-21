@@ -74,7 +74,7 @@ export default function PlanDetailPage() {
     <div className="space-y-6 pb-8">
       <BackButton href="/planes" className="mb-2" />
 
-      <section className="border-border bg-background overflow-hidden rounded-md border">
+      <section className="border-border bg-card overflow-hidden rounded-md border">
         <div className="flex flex-wrap items-start justify-between gap-4 p-6">
           <div className="flex min-w-0 items-center gap-3">
             <Avatar className="size-12">
@@ -163,8 +163,8 @@ export default function PlanDetailPage() {
         )}
       </section>
 
-      <section className="border-border bg-background overflow-hidden rounded-md border">
-        <header className="border-b px-6 py-4 bg-muted/50">
+      <section className="border-border bg-card overflow-hidden rounded-md border">
+        <header className="bg-muted/50 border-b px-6 py-4">
           <h2 className="font-semibold">Compromisos</h2>
           <p className="text-muted-foreground text-sm">
             {plan.items.length === 0
@@ -213,8 +213,8 @@ export default function PlanDetailPage() {
       </section>
 
       {plan.courses.length > 0 && (
-        <section className="border-border bg-background overflow-hidden rounded-md border">
-          <header className="border-b px-6 py-4 bg-muted/50">
+        <section className="border-border bg-card overflow-hidden rounded-md border">
+          <header className="bg-muted/50 border-b px-6 py-4">
             <h2 className="font-semibold">Asignaturas</h2>
           </header>
           <ul className="divide-border divide-y">

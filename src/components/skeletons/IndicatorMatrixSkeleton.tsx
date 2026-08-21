@@ -26,7 +26,7 @@ export function IndicatorMatrixSkeleton({
   return (
     <div className={cn('space-y-4', className)}>
       {Array.from({ length: blocks }, (_, index) => (
-        <div key={index} className="border-border bg-background rounded-md border">
+        <div key={index} className="border-border rounded-md border">
           <div className="bg-muted/40 flex items-center justify-between gap-3 border-b px-4 py-2.5">
             <Skeleton className="h-3.5 w-40" />
             <Skeleton className="h-3.5 w-12" />
