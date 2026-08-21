@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
     fontSize: 7,
     fontFamily: 'Helvetica-Bold',
     color: pdfColors.ink500,
-    textTransform: 'uppercase',
+    lineHeight: 1.3,
   },
   cell: { padding: 6, fontSize: 8, color: pdfColors.ink900 },
 })

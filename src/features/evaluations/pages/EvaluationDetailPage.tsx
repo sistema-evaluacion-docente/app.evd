@@ -19,6 +19,7 @@ import { useAcademicPeriodsStore } from '@/features/periods'
 import { TeacherAveragesTable, useGetTeachers } from '@/features/teachers'
 import { useNavigate } from '@/hooks/useNavigate'
 import formatDate from '@/lib/formatDate'
+import { formatPdfAverage } from '@/lib/pdf/formatPdfAverage'
 import { useGetEvaluation } from '../api'
 import { AI_STATUS_DISPLAY, EVALUATION_STATUS_DISPLAY } from '../config'
 import {
@@ -129,6 +130,7 @@ export default function EvaluationDetailPage() {
         actions={
           <>
             <GenerateReportPdfButton
+              label="Descargar reporte de la evaluación"
               fileName={reportFileName}
               disabled={includeTeachers && isTeachersPending}
               chartRefs={{ dimensions: dimensionsCardRef }}
@@ -140,7 +142,10 @@ export default function EvaluationDetailPage() {
                   <PdfFactGrid
                     facts={[
                       { label: 'Periodo', value: periodLabel },
-                      { label: 'Promedio general', value: evaluation.overall_average.toFixed(2) },
+                      {
+                        label: 'Promedio general',
+                        value: formatPdfAverage(evaluation.overall_average),
+                      },
                       { label: 'Docentes evaluados', value: String(evaluation.count) },
                     ]}
                     columns={3}
@@ -165,7 +170,7 @@ export default function EvaluationDetailPage() {
                   {currentDimensions?.map((dimension) => (
                     <PdfSection
                       key={dimension.dimension}
-                      title={`${dimension.dimension} — Promedio ${(dimension.average ?? 0).toFixed(2)}`}
+                      title={`${dimension.dimension} — Promedio ${formatPdfAverage(dimension.average)}`}
                       noBreak={false}
                     >
                       <PdfTable
@@ -175,7 +180,7 @@ export default function EvaluationDetailPage() {
                         ]}
                         rows={dimension.questions.map((question) => [
                           `${question.code}. ${question.text}`,
-                          (question.average ?? 0).toFixed(2),
+                          formatPdfAverage(question.average),
                         ])}
                       />
                     </PdfSection>
@@ -195,7 +200,7 @@ export default function EvaluationDetailPage() {
                           teacher.user.name,
                           teacher.institutional_code || '—',
                           teacher.contract_type || '—',
-                          teacher.overall_average.toFixed(2),
+                          formatPdfAverage(teacher.overall_average),
                           String(teacher.high_risk_comments_count ?? '—'),
                         ])}
                       />

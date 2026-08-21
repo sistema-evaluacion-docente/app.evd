@@ -1,4 +1,5 @@
 import { CalendarRange, TrendingDown, TrendingUp } from 'lucide-react'
+import type { ReactNode } from 'react'
 
 import { ScoreBadge } from '@/components/common/ScoreBadge'
 import { ScoreLegend } from '@/components/common/ScoreLegend'
@@ -13,6 +14,8 @@ import { TeacherReportDownloadButton } from './TeacherReportDownloadButton'
 
 interface TeacherOverviewProps {
   teacher: TeacherDetail
+  /** Extra action(s) rendered next to "Descargar evaluación", e.g. the director's custom PDF report button. */
+  extraActions?: ReactNode
 }
 
 /**
@@ -25,7 +28,7 @@ interface TeacherOverviewProps {
  * @example
  * <TeacherOverview teacher={teacher} />
  */
-export function TeacherOverview({ teacher }: TeacherOverviewProps) {
+export function TeacherOverview({ teacher, extraActions }: TeacherOverviewProps) {
   const dimensionDeltas = teacher.previous_period
     ? teacher.dimensions
         .map((dimension) => {
@@ -87,6 +90,8 @@ export function TeacherOverview({ teacher }: TeacherOverviewProps) {
               evaluationId={teacher.evaluation_id}
               className="bg-background"
             />
+
+            {extraActions}
           </div>
         </div>
 

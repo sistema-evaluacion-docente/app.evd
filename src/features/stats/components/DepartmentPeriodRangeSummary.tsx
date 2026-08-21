@@ -15,6 +15,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { Switch } from '@/components/ui/switch'
 import { useGetAcademicPeriods } from '@/features/periods'
 import { CATEGORIES, categoryLabel, UNCATEGORIZED } from '@/lib/categoryLabel'
+import { formatPdfAverage } from '@/lib/pdf/formatPdfAverage'
 import { pdfColors } from '@/lib/pdf/pdfColors'
 import { cn } from '@/lib/utils'
 import { useGetDepartmentPeriodRangeStats } from '../api'
@@ -229,7 +230,7 @@ export function DepartmentPeriodRangeSummary({
   const generalFacts = stats
     ? [
         { label: 'Departamento', value: stats.department_name },
-        { label: 'Promedio general', value: stats.overall_average.toFixed(2) },
+        { label: 'Promedio general', value: formatPdfAverage(stats.overall_average) },
         { label: 'Periodo evaluado', value: periodLabel || stats.start_period_code },
       ]
     : []
@@ -268,8 +269,9 @@ export function DepartmentPeriodRangeSummary({
 
         <div className="flex flex-wrap items-center gap-3 font-normal">
           <GenerateReportPdfButton
+            label="Descargar reporte del departamento"
             fileName={reportFileName ?? 'Resumen-Departamento'}
-            className={!stats ? 'pointer-events-none opacity-50' : undefined}
+            disabled={!stats}
             chartRefs={{
               comments: commentsCardRef,
               ...(showTrendChart ? { trend: trendCardRef } : {}),
