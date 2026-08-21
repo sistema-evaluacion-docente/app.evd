@@ -98,7 +98,7 @@ export function SegmentedControl<T extends string>({
       role="radiogroup"
       aria-label={ariaLabel}
       onKeyDown={handleKeyDown}
-      className={cn('bg-muted border inline-flex items-center gap-0.5 rounded-md p-0.5', className)}
+      className={cn('bg-muted inline-flex items-center gap-0.5 rounded-md border p-0.5', className)}
     >
       {options.map((option, index) => {
         const isSelected = option.value === value
