@@ -1,14 +1,24 @@
 import { ListChecks } from 'lucide-react'
-import { Link, useRoute } from 'wouter'
+import { Link, useRoute, useSearchParams } from 'wouter'
 
 import { BackButton } from '@/components/common/BackButton'
 import { PageTitle } from '@/components/common/PageTitle'
 import { ScoreBadge } from '@/components/common/ScoreBadge'
 import EvaluationDetailSkeleton from '@/components/skeletons/EvaluationDetailSkeleton'
 import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Spinner } from '@/components/ui/spinner'
 import { useAcademicPeriodsStore } from '@/features/periods'
 import { TeacherAveragesTable } from '@/features/teachers'
 import { useNavigate } from '@/hooks/useNavigate'
+import { MODALITIES, MODALITY_LABEL, parseModality } from '@/lib/modality'
+import { cn } from '@/lib/utils'
 import { useGetEvaluation } from '../api'
 import {
   EvaluationDimensionDetailCard,
@@ -17,18 +27,71 @@ import {
 } from '../components'
 import type { EvaluationDimensionDetail } from '../types'
 
+/** Value the modality select carries while no modality is filtering. */
+const ALL_MODALITIES = 'ALL'
+
 /**
- * Full page displaying the summary of a single evaluation.
+ * Full page displaying the summary of a single evaluation, optionally narrowed
+ * to one modality — an evaluation can hold a presencial and a distancia
+ * document, and reading them apart is what tells the two cohorts' results
+ * apart. The filter lives in the URL (`?modality=`) so a narrowed report can be
+ * linked and shared.
  * Route: `/evaluaciones/:id` where `:id` is the evaluation id.
  */
 export default function EvaluationDetailPage() {
   const [, params] = useRoute('/evaluaciones/:id')
+  const [searchParams, setSearchParams] = useSearchParams()
   const evaluationId = params?.id ? Number(params.id) : undefined
   const navigate = useNavigate()
   const periods = useAcademicPeriodsStore((state) => state.periods)
 
-  const { data, isLoading } = useGetEvaluation(evaluationId)
+  const modality = parseModality(searchParams.get('modality'))
+
+  const { data, isLoading, isPlaceholderData } = useGetEvaluation(evaluationId, modality)
   const evaluation = data?.data
+
+  // The report for the modality just picked is still in flight: the one on
+  // screen is the previous one, so it dims instead of collapsing into the
+  // page skeleton. The select stays clickable — that is how you get back.
+  const isSwitching = isPlaceholderData
+
+  const handleModalityChange = (value: string | null) => {
+    const selected = parseModality(value)
+
+    setSearchParams(
+      (previous) => {
+        const next = new URLSearchParams(previous)
+
+        if (selected) next.set('modality', selected)
+        else next.delete('modality')
+
+        return next
+      },
+      { replace: true },
+    )
+  }
+
+  const modalitySelect = (
+    <div className="flex items-center gap-2">
+      {isSwitching && <Spinner aria-label="Cargando" className="text-muted-foreground size-4" />}
+
+      <Select value={modality ?? ALL_MODALITIES} onValueChange={handleModalityChange}>
+        <SelectTrigger size="sm" aria-label="Modalidad" className="bg-background w-fit">
+          <SelectValue>{modality ? MODALITY_LABEL[modality] : 'Todas las modalidades'}</SelectValue>
+        </SelectTrigger>
+
+        <SelectContent>
+          <SelectItem value={ALL_MODALITIES}>Todas las modalidades</SelectItem>
+
+          {MODALITIES.map((entry) => (
+            <SelectItem key={entry.value} value={entry.value}>
+              {entry.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  )
 
   if (isLoading) return <EvaluationDetailSkeleton />
 
@@ -74,23 +137,30 @@ export default function EvaluationDetailPage() {
     }))
 
   return (
-    <div className="space-y-6">
+    <div
+      aria-busy={isSwitching}
+      className={cn('space-y-6 transition-opacity', isSwitching && 'opacity-60')}
+    >
       <BackButton href="/evaluaciones" label="Volver a evaluaciones" className="mb-4" />
 
       <EvaluationOverview
         evaluation={evaluation}
         pdfHref={`/evaluaciones/${evaluation.id}/pdf`}
         actions={
-          <Button
-            variant="outline"
-            size="sm"
-            nativeButton={false}
-            render={<Link href={`/evaluaciones/${evaluation.id}/materias`} />}
-            className="bg-background"
-          >
-            <ListChecks className="size-4" aria-hidden="true" />
-            Revisar materias
-          </Button>
+          <>
+            {modalitySelect}
+
+            <Button
+              variant="outline"
+              size="sm"
+              nativeButton={false}
+              render={<Link href={`/evaluaciones/${evaluation.id}/materias`} />}
+              className="bg-background"
+            >
+              <ListChecks className="size-4" aria-hidden="true" />
+              Revisar materias
+            </Button>
+          </>
         }
       />
 
@@ -157,6 +227,7 @@ export default function EvaluationDetailPage() {
       <TeacherAveragesTable
         departmentId={evaluation.department_id}
         defaultPeriodId={evaluation.academic_period_id}
+        modality={modality}
         onTeacherClick={(teacher, periodId) => {
           const period = periods.find((p) => p.id === periodId)
           navigate(`/docentes/${teacher.id}?period=${period?.name}`)
