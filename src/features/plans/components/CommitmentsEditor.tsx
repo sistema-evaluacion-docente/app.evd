@@ -67,7 +67,7 @@ export function CommitmentsEditor({
   return (
     <div className="space-y-4">
       {filled.map((aspect) => (
-        <section key={aspect.aspect} className="border-border rounded-md border">
+        <section key={aspect.aspect} className="border-border bg-background rounded-md border">
           <header className="bg-muted/40 border-b px-4 py-2.5">
             <h3 className="text-sm font-semibold">
               <span className="text-muted-foreground num mr-1.5">{aspect.aspect}.</span>
@@ -95,7 +95,7 @@ export function CommitmentsEditor({
       ))}
 
       {orphans.length > 0 && (
-        <section className="border-border rounded-md border border-dashed">
+        <section className="border-border bg-background rounded-md border border-dashed">
           <header className="bg-muted/40 border-b px-4 py-2.5">
             <h3 className="text-sm font-semibold">Sin aspecto asignado</h3>
             <p className="text-muted-foreground text-xs">

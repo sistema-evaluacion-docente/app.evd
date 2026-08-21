@@ -80,7 +80,7 @@ export function PlanDocuments({ plan, canManage }: PlanDocumentsProps) {
 
   return (
     <section className="border-border bg-background overflow-hidden rounded-md border">
-      <header className="bg-muted/90 flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4">
+      <header className="bg-muted/50 flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4">
         <div>
           <h2 className="font-semibold">Formatos oficiales</h2>
           <p className="text-muted-foreground text-sm">

@@ -164,7 +164,7 @@ export default function PlanDetailPage() {
       </section>
 
       <section className="border-border bg-background overflow-hidden rounded-md border">
-        <header className="border-b px-6 py-4 bg-muted/90">
+        <header className="border-b px-6 py-4 bg-muted/50">
           <h2 className="font-semibold">Compromisos</h2>
           <p className="text-muted-foreground text-sm">
             {plan.items.length === 0
@@ -214,7 +214,7 @@ export default function PlanDetailPage() {
 
       {plan.courses.length > 0 && (
         <section className="border-border bg-background overflow-hidden rounded-md border">
-          <header className="border-b px-6 py-4 bg-muted/90">
+          <header className="border-b px-6 py-4 bg-muted/50">
             <h2 className="font-semibold">Asignaturas</h2>
           </header>
           <ul className="divide-border divide-y">

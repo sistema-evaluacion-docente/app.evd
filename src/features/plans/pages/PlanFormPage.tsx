@@ -845,7 +845,7 @@ function PlanForm({
         </div>
       )}
 
-      <section className="border-border bg-background space-y-4 rounded-md border p-6">
+      <section className="border-border bg-muted/30 space-y-4 rounded-md border p-6">
         <h2 className="font-semibold">1. Docente y periodo</h2>
 
         {isEdit ? (
@@ -965,7 +965,7 @@ function PlanForm({
           the page down when it appears. */}
       {teacherId != null && !candidate && candidatesLoading && (
         <section
-          className="border-border bg-background space-y-4 rounded-md border p-6"
+          className="border-border bg-muted/30 space-y-4 rounded-md border p-6"
           role="status"
           aria-busy="true"
         >
@@ -978,7 +978,7 @@ function PlanForm({
       )}
 
       {candidate && !actaLocked && (
-        <section className="border-border bg-background space-y-4 rounded-md border p-6">
+        <section className="border-border bg-muted/30 space-y-4 rounded-md border p-6">
           <div>
             <h2 className="font-semibold">2. Indicadores y comentarios</h2>
             <p className="text-muted-foreground text-sm">
@@ -1009,7 +1009,7 @@ function PlanForm({
         </section>
       )}
 
-      <section className="border-border bg-background space-y-4 rounded-md border p-6">
+      <section className="border-border bg-muted/30 space-y-4 rounded-md border p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="font-semibold">3. Compromisos</h2>
@@ -1117,7 +1117,7 @@ function PlanForm({
       </section>
 
       {teacherId != null && (
-        <section className="border-border bg-background space-y-4 rounded-md border p-6">
+        <section className="border-border bg-muted/30 space-y-4 rounded-md border p-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="font-semibold">4. Asignaturas</h2>
@@ -1231,7 +1231,7 @@ function PlanForm({
 
       {!isEdit && <PlanCaseReportUpload file={caseReport} onFileChange={setCaseReport} />}
 
-      <section className="border-border bg-background space-y-4 rounded-md border p-6">
+      <section className="border-border bg-muted/30 space-y-4 rounded-md border p-6">
         <h2 className="font-semibold">5. Datos del plan</h2>
 
         <div className="space-y-1.5">
