@@ -11,7 +11,6 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
 import { isAuthorizedForPage } from '@/config/security'
-import useAuth from '@/hooks/useAuth'
 import { useNavigate } from '@/hooks/useNavigate'
 
 const SEGMENT_LABELS: Record<string, string> = {
@@ -41,6 +40,15 @@ const SEGMENT_LABELS: Record<string, string> = {
   pdf: 'Documento',
 }
 
+export interface AutoBreadcrumbProps {
+  /**
+   * Role the trail is rendered for. Crumbs this role can't open are printed as
+   * plain text instead of links. Omit to link every crumb — the trail then
+   * makes no claim about permissions.
+   */
+  role?: string | null
+}
+
 interface Crumb {
   label: string
   href: string
@@ -61,11 +69,14 @@ function isNumericId(segment: string): boolean {
  *
  * @example
  * <AutoBreadcrumb />
+ *
+ * @example
+ * // Only links the crumbs a teacher may actually open.
+ * <AutoBreadcrumb role={selectedRole} />
  */
-export function AutoBreadcrumb() {
+export function AutoBreadcrumb({ role }: AutoBreadcrumbProps = {}) {
   const [location] = useLocation()
   const navigate = useNavigate()
-  const { selectedRole } = useAuth()
 
   const items = useMemo(() => {
     const segments = location.split('/').filter(Boolean)
@@ -133,7 +144,11 @@ export function AutoBreadcrumb() {
             <BreadcrumbSeparator />
 
             <BreadcrumbItem>
-              {item.isCurrent || !isAuthorizedForPage(item.href, selectedRole) ? (
+              {item.isCurrent || (role != null && !isAuthorizedForPage(item.href, role)) ? (
+                // A crumb the role can't open — e.g. "Evaluaciones" above the
+                // teacher's own PDF — is plain text: linking it would only
+                // lead to the "unauthorized" screen.
+
                 <BreadcrumbPage
                   className={item.isCurrent ? 'text-foreground font-medium' : undefined}
                 >
