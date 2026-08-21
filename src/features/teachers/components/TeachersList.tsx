@@ -10,14 +10,24 @@ import { DynamicFormDrawer, type FieldConfig } from '@/components/common/Dynamic
 import { PeriodSelect } from '@/components/common/PeriodSelect'
 import { useAuthStore } from '@/features/auth'
 import { useAcademicPeriodsStore } from '@/features/periods'
+import { useModalityFilter } from '@/hooks/useModalityFilter'
 import { useNavigate } from '@/hooks/useNavigate'
 import { useTableFilters } from '@/hooks/useTableFilters'
+import { MODALITIES } from '@/lib/modality'
 import { useGetTeachers, useUpdateTeacher } from '../api'
 import { CONTRACT_TYPES, TEACHER_SORT_FIELDS } from '../config'
 import type { TeacherRecord } from '../types'
 import { teacherColumns } from './columns'
 
 const filterConfig: FilterConfig[] = [
+  {
+    type: 'select',
+    name: 'modality',
+    label: 'Modalidad',
+    placeholder: 'Todas',
+    options: MODALITIES.map(({ value, label }) => ({ value, label })),
+    clearable: true,
+  },
   {
     type: 'boolean',
     name: 'active',
@@ -68,6 +78,7 @@ export function TeachersList() {
   const [editTarget, setEditTarget] = useState<TeacherRecord | null>(null)
   // const [editDepartmentOpen, se
   // tEditDepartmentOpen] = useState(false)
+  const { modality, setModality } = useModalityFilter()
   const { filters, setFilters } = useTableFilters('teachers', {
     active: true,
     hasAverage: true,
@@ -85,6 +96,7 @@ export function TeachersList() {
     hasAverage: debouncedFilters.hasAverage as boolean | undefined,
     contractType: debouncedFilters.contractType as string | undefined,
     sortBy: debouncedFilters.sortBy as string | undefined,
+    modality,
   })
   const { mutate: updateTeacher, isPending: isUpdating } = useUpdateTeacher()
 
@@ -231,9 +243,14 @@ export function TeachersList() {
     setPagination((prev) => ({ ...prev, pageIndex: 0 }))
   }, 400)
 
-  const handleFiltersChange = (newFilters: Record<string, unknown>) => {
-    setFilters(newFilters)
-    resetPage()
+  const handleFiltersChange = ({ modality: nextModality, ...rest }: Record<string, unknown>) => {
+    setFilters(rest)
+    setModality(nextModality as string | undefined)
+
+    // A modality change swaps the whole result set, so page 1 has to travel
+    // with the very next request instead of 400ms later.
+    if (nextModality === modality) resetPage()
+    else setPagination((prev) => ({ ...prev, pageIndex: 0 }))
   }
 
   const periodsStore = useAcademicPeriodsStore()
@@ -298,7 +315,10 @@ export function TeachersList() {
             />
             <DataTableFilters
               filters={filterConfig}
-              values={filters}
+              // The modality lives in the URL, the rest in the table's own
+              // state; the panel reads them as one set of values and hands
+              // them back the same way, so they are split again here.
+              values={{ ...filters, modality }}
               onChange={handleFiltersChange}
             />
           </div>
