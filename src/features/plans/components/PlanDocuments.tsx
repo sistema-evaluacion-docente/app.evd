@@ -1,5 +1,15 @@
 import { useState } from 'react'
-import { ChevronDown, Download, FileText, FileType2, Paperclip, Trash2, Upload } from 'lucide-react'
+import {
+  ChevronDown,
+  Download,
+  FileText,
+  FileType2,
+  Info,
+  Paperclip,
+  Trash2,
+  Upload,
+  X,
+} from 'lucide-react'
 
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { FileDropzone } from '@/components/common/FileDropzone'
@@ -21,6 +31,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import formatDate from '@/lib/formatDate'
+import { openPendingTab } from '@/lib/openPendingTab'
 import {
   useDeleteSignedDocument,
   useDownloadDocument,
@@ -63,10 +74,13 @@ interface PlanDocumentsProps {
  */
 export function PlanDocuments({ plan, canManage }: PlanDocumentsProps) {
   const followupStage = followupFormatStage(plan)
+  // Good news, not a warning: it is dismissed for the session once read, and
+  // comes back on the next visit for whoever hasn't seen it.
+  const [noticeDismissed, setNoticeDismissed] = useState(false)
 
   return (
     <section className="border-border bg-background overflow-hidden rounded-md border">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4 bg-muted/90">
         <div>
           <h2 className="font-semibold">Formatos oficiales</h2>
           <p className="text-muted-foreground text-sm">
@@ -77,11 +91,25 @@ export function PlanDocuments({ plan, canManage }: PlanDocumentsProps) {
         <ActaStatusBadge status={plan.acta_status} />
       </header>
 
-      {plan.acta_locked && (
-        <p className="bg-amber-50 px-6 py-2 text-sm text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
-          Acuerdo firmado: el plan está en vigencia y el contenido del acta ya no se modifica. El
-          seguimiento sigue su curso.
-        </p>
+      {plan.acta_locked && !noticeDismissed && (
+        <div className="flex items-start gap-2.5 bg-emerald-50 px-6 py-2.5 text-sm text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200">
+          <Info className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+
+          <p className="flex-1">
+            Acuerdo firmado: el plan está en vigencia y el contenido del acta ya no se modifica. El
+            seguimiento sigue su curso.
+          </p>
+
+          <Button
+            size="icon-xs"
+            variant="ghost"
+            onClick={() => setNoticeDismissed(true)}
+            aria-label="Cerrar el aviso"
+            className="-my-0.5 shrink-0 hover:bg-emerald-100 dark:hover:bg-emerald-900/40"
+          >
+            <X className="size-3.5" aria-hidden="true" />
+          </Button>
+        </div>
       )}
 
       <ul className="divide-border divide-y">
@@ -177,18 +205,9 @@ function FormatRow({
    * blocker eats it — and the blob is pushed into it once it lands.
    */
   function previewInNewTab() {
-    const tab = window.open('', '_blank')
+    const tab = openPendingTab(`Abriendo ${signedName}…`)
 
-    previewSigned.mutate(format.slug, {
-      onSuccess: (url) => {
-        if (tab) tab.location.href = url
-        else window.open(url, '_blank')
-
-        // The tab holds the file by now; keeping the blob alive only leaks it.
-        window.setTimeout(() => URL.revokeObjectURL(url), 60_000)
-      },
-      onError: () => tab?.close(),
-    })
+    previewSigned.mutate(format.slug, { onSuccess: tab.settle, onError: tab.fail })
   }
 
   return (
