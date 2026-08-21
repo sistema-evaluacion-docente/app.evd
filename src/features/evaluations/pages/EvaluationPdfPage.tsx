@@ -5,16 +5,10 @@ import { BackButton } from '@/components/common/BackButton'
 import { PageTitle } from '@/components/common/PageTitle'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/features/auth'
-import type { CourseModality } from '@/features/stats'
 import { ApiError } from '@/lib/apiError'
+import { MODALITIES, MODALITY_LABEL, type CourseModality } from '@/lib/modality'
 import { EvaluationPdfViewer } from '../components'
 import { useEvaluationPdfUrl } from '../hooks'
-
-/** The two documents an evaluation can carry, in the order they are offered. */
-const MODALITIES: { value: CourseModality; label: string }[] = [
-  { value: 'PRESENCIAL', label: 'Presencial' },
-  { value: 'DISTANCIA', label: 'Distancia' },
-]
 
 /**
  * Turns the API failure into what the reader can actually do about it. With a
@@ -88,7 +82,7 @@ export default function EvaluationPdfPage() {
   const evaluationId = params?.id ? Number(params.id) : undefined
 
   const [modality, setModality] = useState<CourseModality>('PRESENCIAL')
-  const modalityLabel = MODALITIES.find((entry) => entry.value === modality)?.label
+  const modalityLabel = MODALITY_LABEL[modality]
 
   const { url, isPending, isError, error } = useEvaluationPdfUrl({
     evaluationId,
