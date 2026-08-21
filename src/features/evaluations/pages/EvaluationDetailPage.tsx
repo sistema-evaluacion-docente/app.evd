@@ -1,18 +1,12 @@
-import { ListChecks } from 'lucide-react'
+import { Filter, ListChecks } from 'lucide-react'
 import { Link, useRoute, useSearchParams } from 'wouter'
 
 import { BackButton } from '@/components/common/BackButton'
 import { PageTitle } from '@/components/common/PageTitle'
 import { ScoreBadge } from '@/components/common/ScoreBadge'
+import { SegmentedControl } from '@/components/common/SegmentedControl'
 import EvaluationDetailSkeleton from '@/components/skeletons/EvaluationDetailSkeleton'
 import { Button } from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Spinner } from '@/components/ui/spinner'
 import { useAcademicPeriodsStore } from '@/features/periods'
 import { TeacherAveragesTable } from '@/features/teachers'
@@ -27,8 +21,11 @@ import {
 } from '../components'
 import type { EvaluationDimensionDetail } from '../types'
 
-/** Value the modality select carries while no modality is filtering. */
+/** Value the control carries while no modality is filtering. */
 const ALL_MODALITIES = 'ALL'
+
+/** Segments offered by the modality filter: every modality, plus "all". */
+const MODALITY_SEGMENTS = [{ value: ALL_MODALITIES, label: 'Todas' }, ...MODALITIES]
 
 /**
  * Full page displaying the summary of a single evaluation, optionally narrowed
@@ -55,7 +52,8 @@ export default function EvaluationDetailPage() {
   // page skeleton. The select stays clickable — that is how you get back.
   const isSwitching = isPlaceholderData
 
-  const handleModalityChange = (value: string | null) => {
+  const handleModalityChange = (value: string) => {
+    // Anything that isn't a modality — the "Todas" segment — clears the filter.
     const selected = parseModality(value)
 
     setSearchParams(
@@ -71,25 +69,21 @@ export default function EvaluationDetailPage() {
     )
   }
 
-  const modalitySelect = (
+  const modalityNotice = modality
+    ? `Mostrando solo los resultados de la modalidad ${MODALITY_LABEL[modality].toLowerCase()}.`
+    : 'Mostrando los resultados de todas las modalidades.'
+
+  const modalityFilter = (
     <div className="flex items-center gap-2">
       {isSwitching && <Spinner aria-label="Cargando" className="text-muted-foreground size-4" />}
 
-      <Select value={modality ?? ALL_MODALITIES} onValueChange={handleModalityChange}>
-        <SelectTrigger size="sm" aria-label="Modalidad" className="bg-background w-fit">
-          <SelectValue>{modality ? MODALITY_LABEL[modality] : 'Todas las modalidades'}</SelectValue>
-        </SelectTrigger>
-
-        <SelectContent>
-          <SelectItem value={ALL_MODALITIES}>Todas las modalidades</SelectItem>
-
-          {MODALITIES.map((entry) => (
-            <SelectItem key={entry.value} value={entry.value}>
-              {entry.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <SegmentedControl
+        ariaLabel="Modalidad"
+        options={MODALITY_SEGMENTS}
+        value={modality ?? ALL_MODALITIES}
+        onValueChange={handleModalityChange}
+        size="sm"
+      />
     </div>
   )
 
@@ -141,15 +135,22 @@ export default function EvaluationDetailPage() {
       aria-busy={isSwitching}
       className={cn('space-y-6 transition-opacity', isSwitching && 'opacity-60')}
     >
-      <BackButton href="/evaluaciones" label="Volver a evaluaciones" className="mb-4" />
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <BackButton href="/evaluaciones" label="Volver a evaluaciones" className="mb-4" />
+
+        {modalityFilter}
+      </div>
+
+      <p aria-live="polite" className="text-muted-foreground -mt-2 flex items-center gap-2 text-sm">
+        <Filter aria-hidden="true" className="size-3.5 shrink-0" />
+        {modalityNotice}
+      </p>
 
       <EvaluationOverview
         evaluation={evaluation}
         pdfHref={`/evaluaciones/${evaluation.id}/pdf`}
         actions={
           <>
-            {modalitySelect}
-
             <Button
               variant="outline"
               size="sm"
