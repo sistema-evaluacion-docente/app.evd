@@ -2,24 +2,29 @@ import { CheckCircle2, Info, ListChecks } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
-import { FileDropzone } from '@/components/common/FileDropzone'
+import { InlineError } from '@/components/common/InlineError'
+import { MultiFileDropzone } from '@/components/common/MultiFileDropzone'
 import { TransitionLink } from '@/components/common/TransitionLink'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { useFileUpload } from '@/hooks/useFileUpload'
+import { useMultiFileUpload } from '@/hooks/useFileUpload'
 import { useNavigate } from '@/hooks/useNavigate'
 
 import { evaluationsKeys, useUploadEvaluation } from '../api'
 import { useEvaluationLogs } from '../hooks'
 
 /**
- * Form that uploads the teacher-evaluation PDF of a period: file picker with
- * PDF/10 MB validation, an informational notice linking to the teacher upload
- * page, and submit/cancel actions. On success it opens the progress WebSocket
- * so the global `FloatingLogs` panel streams the processing logs, and swaps
- * the picker for the review step — the PDF cuts long materia names off, so
- * the director is sent straight to correcting them.
+ * Form that uploads the teacher-evaluation PDFs of a period: a picker taking up
+ * to two documents (presencial and distancia) with PDF/10 MB validation, an
+ * informational notice linking to the teacher upload page, and submit/cancel
+ * actions. Only one document is required — the backend reads the modality out
+ * of each PDF, so either one can travel alone — but both must belong to the
+ * same academic period and department, since they are merged into a single
+ * evaluation. On success it opens the progress WebSocket so the global
+ * `FloatingLogs` panel streams the processing logs, and swaps the picker for
+ * the review step — the PDF cuts long materia names off, so the director is
+ * sent straight to correcting them.
  *
  * @example
  * <EvaluationUploadForm />
@@ -28,16 +33,15 @@ export function EvaluationUploadForm() {
   const navigate = useNavigate()
   const { connect } = useEvaluationLogs()
   const upload = useUploadEvaluation()
-  const { file, error, handleFile } = useFileUpload()
+  const { files, error, addFiles, removeFile } = useMultiFileUpload({ maxFiles: 2 })
   const [uploadedId, setUploadedId] = useState<number | null>(null)
 
   const uploadError = upload.error?.message || null
-  const displayedError = error ?? uploadError
 
   const handleSubmit = () => {
-    if (!file) return
+    if (files.length === 0) return
 
-    upload.mutate(file, {
+    upload.mutate(files, {
       onSuccess: (result) => {
         setUploadedId(result.data.id)
 
@@ -58,7 +62,8 @@ export function EvaluationUploadForm() {
         <CardTitle>Subir evaluación docente</CardTitle>
         <CardDescription>
           Carga el PDF con las evaluaciones de los docentes de tu departamento para el período
-          académico.
+          académico. Si tu departamento evalúa en las dos modalidades, puedes cargar los dos
+          documentos de presencial y distancia en una sola evaluación.
         </CardDescription>
       </CardHeader>
 
@@ -102,14 +107,30 @@ export function EvaluationUploadForm() {
               </AlertDescription>
             </Alert>
 
-            <FileDropzone
-              file={file}
-              error={displayedError}
-              onFileChange={handleFile}
+            <MultiFileDropzone
+              label="PDF de la evaluación (uno o dos)"
+              files={files}
+              error={error}
+              onFilesAdded={addFiles}
+              onRemove={removeFile}
+              maxFiles={2}
               disabled={upload.isPending}
               isUploading={upload.isPending}
-              subtitle="Arrastra y suelta o haz clic · Máximo 10 MB"
+              title="Selecciona uno o dos PDF"
+              subtitle="Arrastra y suelta o haz clic · Máximo 10 MB por archivo"
             />
+
+            <p className="text-muted-foreground text-sm">
+              Con un solo documento basta. El segundo es opcional y solo tiene sentido si tu
+              departamento evalúa en las dos modalidades: la modalidad se detecta del contenido del
+              PDF, así que da igual en qué orden los cargues. Si cargas los dos,{' '}
+              <span className="text-foreground font-medium">
+                deben ser del mismo periodo académico y del mismo departamento
+              </span>
+              : se procesan juntos como una sola evaluación.
+            </p>
+
+            {uploadError && <InlineError message={uploadError} />}
 
             <div className="flex items-center justify-end gap-3">
               <Button
@@ -121,7 +142,11 @@ export function EvaluationUploadForm() {
                 Cancelar
               </Button>
 
-              <Button type="button" onClick={handleSubmit} disabled={!file || upload.isPending}>
+              <Button
+                type="button"
+                onClick={handleSubmit}
+                disabled={files.length === 0 || upload.isPending}
+              >
                 {upload.isPending ? 'Subiendo…' : 'Subir evaluación'}
               </Button>
             </div>
