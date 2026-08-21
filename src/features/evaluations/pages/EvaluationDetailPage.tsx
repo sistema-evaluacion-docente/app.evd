@@ -176,7 +176,7 @@ export default function EvaluationDetailPage() {
                       <PdfTable
                         columns={[
                           { header: 'Pregunta', width: '78%' },
-                          { header: 'Promedio', width: '22%', align: 'right' },
+                          { header: 'Promedio', width: '22%', align: 'center' },
                         ]}
                         rows={dimension.questions.map((question) => [
                           `${question.code}. ${question.text}`,
@@ -193,8 +193,8 @@ export default function EvaluationDetailPage() {
                           { header: 'Docente', width: '38%' },
                           { header: 'Código', width: '14%' },
                           { header: 'Tipo de contrato', width: '20%' },
-                          { header: 'Promedio', width: '14%', align: 'right' },
-                          { header: 'Riesgo alto', width: '14%', align: 'right' },
+                          { header: 'Promedio', width: '14%', align: 'center' },
+                          { header: 'Riesgo alto', width: '14%', align: 'center' },
                         ]}
                         rows={allTeachers.map((teacher) => [
                           teacher.user.name,

@@ -6,7 +6,7 @@ export interface PdfTableColumn {
   header: string
   /** Column width as a CSS-style percentage string, e.g. `'40%'`. Defaults to an even split. */
   width?: string
-  align?: 'left' | 'right'
+  align?: 'left' | 'center' | 'right'
 }
 
 export interface PdfTableProps {
@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
  *
  * @example
  * <PdfTable
- *   columns={[{ header: 'Docente', width: '50%' }, { header: 'Promedio', align: 'right' }]}
+ *   columns={[{ header: 'Docente', width: '50%' }, { header: 'Promedio', align: 'center' }]}
  *   rows={teachers.map((t) => [t.user.name, t.overall_average.toFixed(2)])}
  * />
  */

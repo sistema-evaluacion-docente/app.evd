@@ -41,3 +41,23 @@ export const pdfDimensionColors: Record<string, string> = {
   'Procesos de Evaluación': '#0d9488',
   'Integración Interpersonal': '#db2777',
 }
+
+/**
+ * Resolves a comment's risk-level name (e.g. `TeacherComment.risk_level.name`,
+ * which arrives with inconsistent casing) to its semaphore color.
+ *
+ * @example
+ * pdfRiskColor(comment.risk_level?.name) // pdfColors.riskHigh, or undefined
+ */
+export function pdfRiskColor(name: string | undefined): string | undefined {
+  switch (name?.toUpperCase()) {
+    case 'BAJO':
+      return pdfColors.riskLow
+    case 'MEDIO':
+      return pdfColors.riskMedium
+    case 'ALTO':
+      return pdfColors.riskHigh
+    default:
+      return undefined
+  }
+}

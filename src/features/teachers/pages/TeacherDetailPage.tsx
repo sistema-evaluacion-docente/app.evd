@@ -101,8 +101,8 @@ export default function TeacherDetailPage() {
       chartRefs={{ dimensions: dimensionsChartRef, trend: trendChartRef }}
       buildDocument={(images) => (
         <PdfPage
-          title={`Reporte del docente (${teacher.name})`}
-          subtitle={`Periodo: ${teacher.period_name}`}
+          title="Reporte del docente"
+          subtitle={`${teacher.name} · Periodo: ${teacher.period_name}`}
         >
           <PdfFactGrid
             facts={[
@@ -130,11 +130,11 @@ export default function TeacherDetailPage() {
               columns={[
                 { header: 'Materia', width: '20%' },
                 { header: 'Grupo', width: '18%' },
-                { header: 'Promedio', width: '10%', align: 'right' },
+                { header: 'Promedio', width: '10%', align: 'center' },
                 ...dimensionNames.map((name) => ({
                   header: SHORT_DIMENSION_LABEL[name] ?? name,
                   width: dimensionColumnWidth,
-                  align: 'right' as const,
+                  align: 'center' as const,
                 })),
               ]}
               rows={teacher.courses.map((course) => [
