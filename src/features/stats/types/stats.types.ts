@@ -1,5 +1,6 @@
 import type { AiStatus } from '@/features/evaluations'
 import type { CourseHistoryQuestion } from '@/features/teachers'
+import type { CourseModality } from '@/lib/modality'
 
 /** Minimal reference to an academic period embedded in a stats report. */
 export interface StatsPeriodRef {
@@ -22,9 +23,6 @@ export interface DepartmentDimensionAverage {
   /** 0–1 or 0–100 score, see `formatPercent`. */
   percentage: number
 }
-
-/** How a group is taught, as reported by the API. */
-export type CourseModality = 'PRESENCIAL' | 'DISTANCIA'
 
 /** One group behind a course's aggregated average — a specific course code, teacher, period and group. */
 export interface DepartmentSubjectGroup {
