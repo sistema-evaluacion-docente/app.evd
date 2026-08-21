@@ -1,5 +1,6 @@
 import { AlertTriangle, Check, ChevronRight, CircleCheck, HelpCircle, Plus, X } from 'lucide-react'
 
+import { DimensionDot } from '@/components/common/DimensionDot'
 import { ScoreBadge } from '@/components/common/ScoreBadge'
 import {
   SelectLoadingLabel,
@@ -259,6 +260,7 @@ export function IndicatorPicker({
                   className="text-muted-foreground size-4 shrink-0 transition-transform group-data-panel-open:rotate-90"
                   aria-hidden="true"
                 />
+                <DimensionDot />
                 <span className="text-sm font-medium">Sin categoría</span>
                 <span className="text-muted-foreground num text-xs">
                   {uncategorized.length} comentario{uncategorized.length === 1 ? '' : 's'}
@@ -353,6 +355,7 @@ function DimensionBlock({
             className="text-muted-foreground size-4 shrink-0 transition-transform group-data-panel-open:rotate-90"
             aria-hidden="true"
           />
+          <DimensionDot dimension={dimension.dimension} />
           <span className="text-sm font-medium">{dimension.dimension}</span>
           {dimension.below_threshold && (
             <Badge className="bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300">

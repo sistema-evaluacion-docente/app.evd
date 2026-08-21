@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { ChevronRight, Lightbulb, Trash2 } from 'lucide-react'
 
+import { DimensionDot } from '@/components/common/DimensionDot'
 import { Required } from '@/components/common/Required'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -69,9 +70,12 @@ export function CommitmentsEditor({
       {filled.map((aspect) => (
         <section key={aspect.aspect} className="border-border rounded-md border">
           <header className="bg-muted/40 border-b px-4 py-2.5">
-            <h3 className="text-sm font-semibold">
-              <span className="text-muted-foreground num mr-1.5">{aspect.aspect}.</span>
-              {aspect.label}
+            <h3 className="flex items-center gap-2 text-sm font-semibold">
+              <DimensionDot dimension={aspect.dimension} />
+              <span>
+                <span className="text-muted-foreground num mr-1.5">{aspect.aspect}.</span>
+                {aspect.label}
+              </span>
             </h3>
           </header>
 
@@ -97,7 +101,10 @@ export function CommitmentsEditor({
       {orphans.length > 0 && (
         <section className="border-border rounded-md border border-dashed">
           <header className="bg-muted/40 border-b px-4 py-2.5">
-            <h3 className="text-sm font-semibold">Sin aspecto asignado</h3>
+            <h3 className="flex items-center gap-2 text-sm font-semibold">
+              <DimensionDot />
+              Sin aspecto asignado
+            </h3>
             <p className="text-muted-foreground text-xs">
               Estos compromisos no se imprimirán en los formatos hasta que elijas un aspecto.
             </p>
