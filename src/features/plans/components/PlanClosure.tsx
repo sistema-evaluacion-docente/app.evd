@@ -84,7 +84,7 @@ export function PlanClosure({ plan, canManage }: PlanClosureProps) {
 
   return (
     <section className="border-border bg-background overflow-hidden rounded-md border">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4 bg-muted/90">
         <div>
           <h2 className="flex items-center gap-2 font-semibold">
             <Gavel className="text-muted-foreground size-4" aria-hidden="true" />
@@ -216,7 +216,7 @@ export function PlanClosure({ plan, canManage }: PlanClosureProps) {
 export function PlanClosedSummary({ plan }: { plan: Plan }) {
   return (
     <section className="border-border bg-background overflow-hidden rounded-md border">
-      <header className="border-b px-6 py-4">
+      <header className="border-b px-6 py-4 bg-muted/90">
         <h2 className="flex items-center gap-2 font-semibold">
           <Gavel className="text-muted-foreground size-4" aria-hidden="true" />
           Plan cerrado
