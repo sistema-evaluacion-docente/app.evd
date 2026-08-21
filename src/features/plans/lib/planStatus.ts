@@ -5,6 +5,8 @@ import type {
   EvidenceStatus,
   Plan,
   PlanCheckpoint,
+  PlanDocument,
+  PlanEvidence,
   PlanStatus,
 } from '../types'
 
@@ -77,6 +79,37 @@ export const REQUEST_STATUS_CLASS: Record<EvidenceRequestStatus, string> = {
   RECHAZADA: DANGER,
 }
 
+/**
+ * How a submitted evidence is called: the name it was uploaded under.
+ *
+ * `PlanEvidence` has no filename of its own — unlike `PlanDocument`, the API
+ * doesn't keep the one on disk — so the name travels in `description`, which
+ * the attach dialog fills in from the file. Older entries were uploaded before
+ * that, hence the fallback on the row's own id.
+ *
+ * @example
+ * evidenceLabel({ id: 12, description: 'listas_asistencia.pdf' })
+ * // → 'listas_asistencia.pdf'
+ */
+export function evidenceLabel(evidence: Pick<PlanEvidence, 'id' | 'description'>): string {
+  return evidence.description?.trim() || `Evidencia #${evidence.id}`
+}
+
+/**
+ * The name to save it under. The label is free text the teacher can edit, so
+ * the extension is put back when it isn't already there — the API only ever
+ * serves these as PDFs.
+ *
+ * @example
+ * evidenceFileName({ id: 12, description: 'Listas de asistencia' })
+ * // → 'Listas de asistencia.pdf'
+ */
+export function evidenceFileName(evidence: Pick<PlanEvidence, 'id' | 'description'>): string {
+  const label = evidenceLabel(evidence)
+
+  return label.toLowerCase().endsWith('.pdf') ? label : `${label}.pdf`
+}
+
 /** The official form defines exactly two follow-ups per semester. */
 export const CHECKPOINT_LABEL: Record<CheckpointStage, string> = {
   PRIMER_SEGUIMIENTO: 'Primer seguimiento',
@@ -88,10 +121,7 @@ export const CHECKPOINT_HINT: Record<CheckpointStage, string> = {
   SEGUNDO_SEGUIMIENTO: 'Semanas 15 y/o 16 desde el inicio del plan',
 }
 
-export const CHECKPOINT_ORDER: CheckpointStage[] = [
-  'PRIMER_SEGUIMIENTO',
-  'SEGUNDO_SEGUIMIENTO',
-]
+export const CHECKPOINT_ORDER: CheckpointStage[] = ['PRIMER_SEGUIMIENTO', 'SEGUNDO_SEGUIMIENTO']
 
 /** How far Formato 3 has been carried, said the way the form names its columns. */
 const CHECKPOINT_SHORT_LABEL: Record<CheckpointStage, string> = {
@@ -99,8 +129,13 @@ const CHECKPOINT_SHORT_LABEL: Record<CheckpointStage, string> = {
   SEGUNDO_SEGUIMIENTO: 'Semanas 15/16',
 }
 
-/** A seguimiento counts as recorded once it carries a date or any observation. */
-function isCheckpointRecorded(checkpoint: PlanCheckpoint): boolean {
+/**
+ * A seguimiento counts as recorded once it carries a date or any observation.
+ *
+ * @example
+ * isCheckpointRecorded(plan.checkpoints[0]) // → true
+ */
+export function isCheckpointRecorded(checkpoint: PlanCheckpoint): boolean {
   return (
     Boolean(checkpoint.scheduled_date) ||
     checkpoint.aspect_notes.some((note) => Boolean(note.note?.trim()))
@@ -125,6 +160,74 @@ export function followupFormatStage(plan: Plan): string | null {
 
   return null
 }
+
+/**
+ * What the progress of a plan is read from. The relations are optional on
+ * purpose: the list endpoints are free to answer without them, and a bar in a
+ * table is not worth throwing over.
+ */
+type PlanProgressInput = Pick<Plan, 'status'> & {
+  documents?: PlanDocument[]
+  checkpoints?: PlanCheckpoint[]
+}
+
+/** The Ficha de acuerdo signed and filed is what puts the plan into force. */
+export function hasSignedActa(plan: Pick<PlanProgressInput, 'documents'>): boolean {
+  return (plan.documents ?? []).some(
+    (document) => document.format_type === 'FORMATO_2' && document.has_signed,
+  )
+}
+
+/** How many of the two cuts of the semester are already written up. */
+function recordedCheckpoints(plan: Pick<PlanProgressInput, 'checkpoints'>): number {
+  const checkpoints = plan.checkpoints ?? []
+
+  return CHECKPOINT_ORDER.filter((stage) => {
+    const checkpoint = checkpoints.find((entry) => entry.stage === stage)
+
+    return checkpoint ? isCheckpointRecorded(checkpoint) : false
+  }).length
+}
+
+/** The milestones a plan passes through, in the order it reaches them. */
+const PROGRESS_MILESTONES = 4
+
+/**
+ * How far along the plan is, as a percentage of the work the director actually
+ * does: sign the agreement, record the two seguimientos, close the plan.
+ *
+ * Deliberately not `plan.progress`, which the API computes as the share of
+ * commitments marked CUMPLIDO. That is *compliance*, and it only moves once the
+ * plan is verified against the next period's results — so it reads 0% for the
+ * whole semester and tells nobody where the plan stands. A closed plan is done
+ * whatever its cuts say, so closing takes it straight to 100%.
+ *
+ * @example
+ * planProgress(plan) // → 75 (firmado + los dos seguimientos, sin cerrar)
+ */
+export function planProgress(plan: PlanProgressInput): number {
+  if (isPlanClosed(plan.status)) return 100
+
+  const reached = (hasSignedActa(plan) ? 1 : 0) + recordedCheckpoints(plan)
+
+  return Math.round((100 * reached) / PROGRESS_MILESTONES)
+}
+
+/** What that percentage stands for, for the bar to say it out loud on hover. */
+export function planProgressStage(plan: PlanProgressInput): string {
+  if (isPlanClosed(plan.status)) return 'Plan cerrado'
+
+  const recorded = recordedCheckpoints(plan)
+
+  if (recorded === CHECKPOINT_ORDER.length) return 'Seguimientos completos · falta cerrar el plan'
+  if (recorded === 1) return 'Primer seguimiento registrado'
+  if (hasSignedActa(plan)) return 'Acuerdo firmado · sin seguimientos todavía'
+
+  return 'Acuerdo sin firmar'
+}
+
+/** How complete a drafted commitment is. */
+export type CommitmentState = 'complete' | 'missing-description' | 'missing-commitment'
 
 /** A plan is closed when its status is any of the terminal ones. */
 export function isPlanClosed(status: PlanStatus): boolean {
@@ -156,4 +259,32 @@ export const PLAN_FORMATS = [
 /** Stable key for an indicator, matching how the API identifies it. */
 export function indicatorKey(targetType: string, targetRef: string | null): string {
   return `${targetType}:${targetRef ?? ''}`
+}
+
+/**
+ * How complete a drafted commitment is, for the card that holds it to say so.
+ *
+ * Only the description is required by the form itself — `commitment` is
+ * nullable on the API — but the Ficha de acuerdo can't be signed until at least
+ * one commitment carries its text, so an empty one is still worth flagging.
+ *
+ * @example
+ * commitmentState({ description: 'Metodología (3.10)', commitment: '' })
+ * // → 'missing-commitment'
+ */
+export function commitmentState(item: {
+  description: string
+  commitment: string
+}): CommitmentState {
+  if (item.description.trim().length === 0) return 'missing-description'
+  if (item.commitment.trim().length === 0) return 'missing-commitment'
+
+  return 'complete'
+}
+
+/** Whether every commitment of the list is filled in, for the section counter. */
+export function countCompleteCommitments(
+  items: { description: string; commitment: string }[],
+): number {
+  return items.filter((item) => commitmentState(item) === 'complete').length
 }

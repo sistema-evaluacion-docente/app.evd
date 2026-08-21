@@ -1,11 +1,6 @@
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import type {
-  ActaStatus,
-  EvidenceRequestStatus,
-  EvidenceStatus,
-  PlanStatus,
-} from '../types'
+import type { ActaStatus, EvidenceRequestStatus, EvidenceStatus, PlanStatus } from '../types'
 import {
   ACTA_STATUS_CLASS,
   ACTA_STATUS_LABEL,
@@ -30,24 +25,14 @@ interface PlanStatusBadgeProps {
  */
 export function PlanStatusBadge({ status, className }: PlanStatusBadgeProps) {
   return (
-    <Badge className={cn(PLAN_STATUS_CLASS[status], className)}>
-      {PLAN_STATUS_LABEL[status]}
-    </Badge>
+    <Badge className={cn(PLAN_STATUS_CLASS[status], className)}>{PLAN_STATUS_LABEL[status]}</Badge>
   )
 }
 
 /** Lifecycle of the acta — independent from the plan status. */
-export function ActaStatusBadge({
-  status,
-  className,
-}: {
-  status: ActaStatus
-  className?: string
-}) {
+export function ActaStatusBadge({ status, className }: { status: ActaStatus; className?: string }) {
   return (
-    <Badge className={cn(ACTA_STATUS_CLASS[status], className)}>
-      {ACTA_STATUS_LABEL[status]}
-    </Badge>
+    <Badge className={cn(ACTA_STATUS_CLASS[status], className)}>{ACTA_STATUS_LABEL[status]}</Badge>
   )
 }
 

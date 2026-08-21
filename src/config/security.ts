@@ -28,7 +28,7 @@ const securityConfig: { pages: SecurityPage[] } = {
     },
     {
       path: '/mis-planes',
-      name: 'Mi plan de mejoramiento',
+      name: 'Mis planes de mejoramiento',
       roles: ['DOCENTE'],
     },
     {

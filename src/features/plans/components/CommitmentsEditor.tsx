@@ -1,5 +1,7 @@
+import { useMemo } from 'react'
 import { ChevronRight, Lightbulb, Trash2 } from 'lucide-react'
 
+import { Required } from '@/components/common/Required'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -13,6 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { commitmentFieldId, isMeasurable, itemsInPaintedOrder } from '../lib/planValidation'
 import type { DraftItem, PlanAspect } from '../types'
 
 interface CommitmentsEditorProps {
@@ -20,74 +23,78 @@ interface CommitmentsEditorProps {
   aspects: PlanAspect[]
   onChange: (key: string, patch: Partial<DraftItem>) => void
   onRemove: (key: string) => void
-  /** Adds an empty qualitative commitment under a given aspect. */
-  onAddQualitative: (aspect: number) => void
+  /** Ids of the fields to paint red; the page decides when one enters the set. */
+  invalidFields: ReadonlySet<string>
+  /** Leaving a required field empty is what makes it red the first time. */
+  onFieldBlur: (id: string) => void
   disabled?: boolean
 }
 
 /**
- * The commitments of a plan, laid out as the five sections of the official
- * forms: the four evaluation dimensions plus "Observaciones de los Estudiantes".
- * Each row keeps the indicator description and the commitment apart, because
+ * The commitments of a plan, laid out as the sections of the official forms:
+ * the four evaluation dimensions plus "Observaciones de los Estudiantes". Each
+ * row keeps the indicator description and the commitment apart, because
  * Formato 2 prints them as two separate blocks.
  *
+ * Only the aspects the director actually picked something for are drawn. Empty
+ * ones used to be listed with a "sin compromisos" line each, which filled the
+ * page with sections nobody was going to touch.
+ *
  * @example
- * <CommitmentsEditor items={items} aspects={aspects} onChange={patch} onRemove={remove} />
+ * <CommitmentsEditor items={items} aspects={aspects} onChange={patch} onRemove={remove}
+ *   invalidFields={invalid} onFieldBlur={touch} />
  */
 export function CommitmentsEditor({
   items,
   aspects,
   onChange,
   onRemove,
-  onAddQualitative,
+  invalidFields,
+  onFieldBlur,
   disabled = false,
 }: CommitmentsEditorProps) {
+  const filled = aspects.filter((aspect) => items.some((item) => item.aspect === aspect.aspect))
+  const orphans = items.filter((item) => item.aspect == null)
+
+  // The cards are numbered across the whole plan, not within their section: the
+  // aspects are a way of laying the list out, not five separate lists, and
+  // three cards all titled "Compromiso 1" leave nothing to point at out loud.
+  const numbers = useMemo(
+    () => new Map(itemsInPaintedOrder(items, aspects).map((item, index) => [item.key, index + 1])),
+    [items, aspects],
+  )
+
   return (
     <div className="space-y-4">
-      {aspects.map((aspect) => {
-        const aspectItems = items.filter((item) => item.aspect === aspect.aspect)
+      {filled.map((aspect) => (
+        <section key={aspect.aspect} className="border-border rounded-md border">
+          <header className="bg-muted/40 border-b px-4 py-2.5">
+            <h3 className="text-sm font-semibold">
+              <span className="text-muted-foreground num mr-1.5">{aspect.aspect}.</span>
+              {aspect.label}
+            </h3>
+          </header>
 
-        return (
-          <section key={aspect.aspect} className="border-border rounded-md border">
-            <header className="bg-muted/40 flex items-center justify-between gap-3 border-b px-4 py-2.5">
-              <h3 className="text-sm font-semibold">
-                <span className="text-muted-foreground num mr-1.5">{aspect.aspect}.</span>
-                {aspect.label}
-              </h3>
+          <ul className="space-y-3 p-3">
+            {items
+              .filter((item) => item.aspect === aspect.aspect)
+              .map((item) => (
+                <CommitmentRow
+                  key={item.key}
+                  item={item}
+                  number={numbers.get(item.key) ?? 0}
+                  onChange={onChange}
+                  onRemove={onRemove}
+                  invalidFields={invalidFields}
+                  onFieldBlur={onFieldBlur}
+                  disabled={disabled}
+                />
+              ))}
+          </ul>
+        </section>
+      ))}
 
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                onClick={() => onAddQualitative(aspect.aspect)}
-                disabled={disabled}
-              >
-                Añadir compromiso
-              </Button>
-            </header>
-
-            {aspectItems.length === 0 ? (
-              <p className="text-muted-foreground px-4 py-3 text-sm">
-                Sin compromisos en este aspecto.
-              </p>
-            ) : (
-              <ul className="divide-border divide-y">
-                {aspectItems.map((item) => (
-                  <CommitmentRow
-                    key={item.key}
-                    item={item}
-                    onChange={onChange}
-                    onRemove={onRemove}
-                    disabled={disabled}
-                  />
-                ))}
-              </ul>
-            )}
-          </section>
-        )
-      })}
-
-      {items.some((item) => item.aspect == null) && (
+      {orphans.length > 0 && (
         <section className="border-border rounded-md border border-dashed">
           <header className="bg-muted/40 border-b px-4 py-2.5">
             <h3 className="text-sm font-semibold">Sin aspecto asignado</h3>
@@ -96,20 +103,21 @@ export function CommitmentsEditor({
             </p>
           </header>
 
-          <ul className="divide-border divide-y">
-            {items
-              .filter((item) => item.aspect == null)
-              .map((item) => (
-                <CommitmentRow
-                  key={item.key}
-                  item={item}
-                  onChange={onChange}
-                  onRemove={onRemove}
-                  disabled={disabled}
-                  showAspectPicker
-                  aspects={aspects}
-                />
-              ))}
+          <ul className="space-y-3 p-3">
+            {orphans.map((item) => (
+              <CommitmentRow
+                key={item.key}
+                item={item}
+                number={numbers.get(item.key) ?? 0}
+                onChange={onChange}
+                onRemove={onRemove}
+                invalidFields={invalidFields}
+                onFieldBlur={onFieldBlur}
+                disabled={disabled}
+                showAspectPicker
+                aspects={aspects}
+              />
+            ))}
           </ul>
         </section>
       )}
@@ -119,44 +127,40 @@ export function CommitmentsEditor({
 
 function CommitmentRow({
   item,
+  number,
   onChange,
   onRemove,
+  invalidFields,
+  onFieldBlur,
   disabled,
   showAspectPicker = false,
   aspects = [],
 }: {
   item: DraftItem
+  /** Position in the plan as a whole: the card is titled "Compromiso N". */
+  number: number
   onChange: (key: string, patch: Partial<DraftItem>) => void
   onRemove: (key: string) => void
+  invalidFields: ReadonlySet<string>
+  onFieldBlur: (id: string) => void
   disabled: boolean
   showAspectPicker?: boolean
   aspects?: PlanAspect[]
 }) {
-  const isMeasurable = item.target_type === 'DIMENSION' || item.target_type === 'QUESTION'
+  const descriptionId = commitmentFieldId.description(item.key)
+  const commitmentId = commitmentFieldId.commitment(item.key)
+  const targetId = commitmentFieldId.target(item.key)
+  const aspectId = commitmentFieldId.aspect(item.key)
 
   return (
-    <li className="space-y-3 px-4 py-3">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1 space-y-1.5">
-          <div className="flex flex-wrap items-center gap-2">
-            <Label htmlFor={`desc-${item.key}`} className="text-xs">
-              Descripción del indicador comprometido
-            </Label>
-            {item.source_subject_label && (
-              <Badge variant="outline" className="font-normal">
-                {item.source_subject_label}
-              </Badge>
-            )}
-          </div>
-          <Textarea
-            id={`desc-${item.key}`}
-            value={item.description}
-            onChange={(event) => onChange(item.key, { description: event.target.value })}
-            rows={2}
-            disabled={disabled}
-            placeholder="Describe la situación detectada"
-          />
-        </div>
+    // The card is one closed grey block with white fields inside: stacked on a
+    // white page they blurred into one another, and a director filling several
+    // in a row could not tell where one ended and the next began.
+    <li className="bg-muted border-border space-y-3 rounded-md border p-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-semibold">
+          Compromiso <span className="num">{number}</span>
+        </p>
 
         <Button
           type="button"
@@ -164,21 +168,84 @@ function CommitmentRow({
           variant="ghost"
           onClick={() => onRemove(item.key)}
           disabled={disabled}
-          aria-label="Quitar compromiso"
-          className="mt-5 shrink-0"
+          aria-label={`Quitar compromiso ${number}`}
+          className="shrink-0"
         >
           <Trash2 className="size-4" aria-hidden="true" />
         </Button>
       </div>
 
+      {showAspectPicker && (
+        <div className="space-y-1.5">
+          <Label htmlFor={aspectId} className="text-xs">
+            Aspecto del formato <Required />
+          </Label>
+          <Select
+            value={item.aspect}
+            onValueChange={(value) => onChange(item.key, { aspect: value as number | null })}
+            disabled={disabled}
+          >
+            <SelectTrigger
+              id={aspectId}
+              className="bg-background w-full max-w-md"
+              aria-invalid={invalidFields.has(aspectId)}
+              onBlur={() => onFieldBlur(aspectId)}
+            >
+              <SelectValue placeholder="Elige el aspecto…">
+                {item.aspect != null
+                  ? `${item.aspect}. ${
+                      aspects.find((aspect) => aspect.aspect === item.aspect)?.label ?? ''
+                    }`
+                  : undefined}
+              </SelectValue>
+            </SelectTrigger>
+
+            <SelectContent>
+              {aspects.map((aspect) => (
+                <SelectItem key={aspect.aspect} value={aspect.aspect}>
+                  {aspect.aspect}. {aspect.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       <div className="space-y-1.5">
-        <Label htmlFor={`commit-${item.key}`} className="text-xs">
-          Compromiso
+        <div className="flex flex-wrap items-center gap-2">
+          <Label htmlFor={descriptionId} className="text-xs">
+            Descripción del indicador comprometido <Required />
+          </Label>
+          {item.source_subject_label && (
+            <Badge variant="outline" className="bg-background font-normal">
+              {item.source_subject_label}
+            </Badge>
+          )}
+        </div>
+        <Textarea
+          id={descriptionId}
+          className="bg-background"
+          value={item.description}
+          onChange={(event) => onChange(item.key, { description: event.target.value })}
+          onBlur={() => onFieldBlur(descriptionId)}
+          aria-invalid={invalidFields.has(descriptionId)}
+          rows={2}
+          disabled={disabled}
+          placeholder="Describe la situación detectada"
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor={commitmentId} className="text-xs">
+          Compromiso <Required />
         </Label>
         <Textarea
-          id={`commit-${item.key}`}
+          id={commitmentId}
+          className="bg-background"
           value={item.commitment}
           onChange={(event) => onChange(item.key, { commitment: event.target.value })}
+          onBlur={() => onFieldBlur(commitmentId)}
+          aria-invalid={invalidFields.has(commitmentId)}
           rows={2}
           disabled={disabled}
           placeholder="Acción concreta que se compromete a realizar el docente"
@@ -186,24 +253,28 @@ function CommitmentRow({
       </div>
 
       <div className="flex flex-wrap items-end gap-3">
-        {isMeasurable && (
+        {isMeasurable(item) && (
           <div className="space-y-1.5">
-            <Label htmlFor={`target-${item.key}`} className="text-xs">
-              Meta esperada
+            <Label htmlFor={targetId} className="text-xs">
+              Meta esperada <Required />
             </Label>
             <Input
-              id={`target-${item.key}`}
+              id={targetId}
               type="number"
               step="0.1"
               min="0"
               max="5"
-              className="w-28"
+              className="bg-background w-28"
+              // Starts empty on purpose: seeded with the threshold it read as
+              // already decided and nobody looked at it again.
               value={item.target_value ?? ''}
               onChange={(event) =>
                 onChange(item.key, {
                   target_value: event.target.value === '' ? null : Number(event.target.value),
                 })
               }
+              onBlur={() => onFieldBlur(targetId)}
+              aria-invalid={invalidFields.has(targetId)}
               disabled={disabled}
             />
           </div>
@@ -214,38 +285,6 @@ function CommitmentRow({
             Valor actual:{' '}
             <span className="num font-semibold">{item.baseline_value.toFixed(2)}</span>
           </p>
-        )}
-
-        {showAspectPicker && (
-          <div className="space-y-1.5">
-            <Label htmlFor={`aspect-${item.key}`} className="text-xs">
-              Aspecto del formato
-            </Label>
-            <Select
-              value={item.aspect}
-              onValueChange={(value) => onChange(item.key, { aspect: value as number | null })}
-              disabled={disabled}
-            >
-              <SelectTrigger id={`aspect-${item.key}`} className="w-64">
-                <SelectValue placeholder="Sin asignar">
-                  {item.aspect != null
-                    ? `${item.aspect}. ${
-                        aspects.find((aspect) => aspect.aspect === item.aspect)?.label ?? ''
-                      }`
-                    : undefined}
-                </SelectValue>
-              </SelectTrigger>
-
-              <SelectContent>
-                <SelectItem value={null}>Sin asignar</SelectItem>
-                {aspects.map((aspect) => (
-                  <SelectItem key={aspect.aspect} value={aspect.aspect}>
-                    {aspect.aspect}. {aspect.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
         )}
       </div>
 

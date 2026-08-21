@@ -44,23 +44,23 @@ Look for `vitest.config.ts` / a `test` block in `vite.config.ts` and a setup fil
 // vitest.config.ts (or the `test` block in vite.config.ts)
 export default defineConfig({
   test: {
-    environment: "jsdom",
-    setupFiles: "./src/test/setup.ts",
+    environment: 'jsdom',
+    setupFiles: './src/test/setup.ts',
     globals: true,
     css: false,
   },
-});
+})
 ```
 
 ```ts
 // src/test/setup.ts
-import "@testing-library/jest-dom/vitest";
-import { cleanup } from "@testing-library/react";
-import { afterEach } from "vitest";
+import '@testing-library/jest-dom/vitest'
+import { cleanup } from '@testing-library/react'
+import { afterEach } from 'vitest'
 
 afterEach(() => {
-  cleanup();
-});
+  cleanup()
+})
 ```
 
 ### Test utilities (`src/test/`)
@@ -69,9 +69,9 @@ Centralize shared test scaffolding here — don't rebuild providers in every tes
 
 ```tsx
 // src/test/render.tsx
-import { render, type RenderOptions } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { ReactElement, ReactNode } from "react";
+import { render, type RenderOptions } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import type { ReactElement, ReactNode } from 'react'
 
 function createTestQueryClient() {
   return new QueryClient({
@@ -79,25 +79,18 @@ function createTestQueryClient() {
       queries: { retry: false, gcTime: Infinity },
       mutations: { retry: false },
     },
-  });
+  })
 }
 
 function AllProviders({ children }: { children: ReactNode }) {
-  return (
-    <QueryClientProvider client={createTestQueryClient()}>
-      {children}
-    </QueryClientProvider>
-  );
+  return <QueryClientProvider client={createTestQueryClient()}>{children}</QueryClientProvider>
 }
 
-export function renderWithProviders(
-  ui: ReactElement,
-  options?: Omit<RenderOptions, "wrapper">,
-) {
-  return render(ui, { wrapper: AllProviders, ...options });
+export function renderWithProviders(ui: ReactElement, options?: Omit<RenderOptions, 'wrapper'>) {
+  return render(ui, { wrapper: AllProviders, ...options })
 }
 
-export * from "@testing-library/react";
+export * from '@testing-library/react'
 ```
 
 Use `renderWithProviders` for anything that touches React Query. Wrap with wouter's `<Router>` too if the component under test uses routing (`useLocation`, `<Link>`, etc.) — add that to `AllProviders` or a separate `renderWithRouter` helper if only some tests need it.
@@ -110,14 +103,14 @@ Plain Vitest, no rendering, no mocks needed.
 
 ```ts
 // lib/date.test.ts
-import { describe, it, expect } from "vitest";
-import { formatDate } from "./date";
+import { describe, it, expect } from 'vitest'
+import { formatDate } from './date'
 
-describe("formatDate", () => {
-  it("formats an ISO date as DD/MM/YYYY", () => {
-    expect(formatDate("2024-03-05T00:00:00Z")).toBe("05/03/2024");
-  });
-});
+describe('formatDate', () => {
+  it('formats an ISO date as DD/MM/YYYY', () => {
+    expect(formatDate('2024-03-05T00:00:00Z')).toBe('05/03/2024')
+  })
+})
 ```
 
 ### `features/*/api/` — service layer
@@ -126,22 +119,22 @@ Mock the underlying SDK (Firebase), not your own function. This is the one place
 
 ```ts
 // features/users/api/users.api.test.ts
-import { describe, it, expect, vi } from "vitest";
-import { getUsers } from "./users.api";
+import { describe, it, expect, vi } from 'vitest'
+import { getUsers } from './users.api'
 
-vi.mock("firebase/firestore", () => ({
+vi.mock('firebase/firestore', () => ({
   collection: vi.fn(),
   getDocs: vi.fn().mockResolvedValue({
-    docs: [{ id: "1", data: () => ({ name: "Ada" }) }],
+    docs: [{ id: '1', data: () => ({ name: 'Ada' }) }],
   }),
-}));
+}))
 
-describe("getUsers", () => {
-  it("maps Firestore docs into User objects with id", async () => {
-    const result = await getUsers();
-    expect(result).toEqual([{ id: "1", name: "Ada" }]);
-  });
-});
+describe('getUsers', () => {
+  it('maps Firestore docs into User objects with id', async () => {
+    const result = await getUsers()
+    expect(result).toEqual([{ id: '1', name: 'Ada' }])
+  })
+})
 ```
 
 ### `features/*/hooks/` — React Query hooks
@@ -195,38 +188,41 @@ Render with `renderWithProviders` (add `<Router>` from wouter if needed), mock t
 
 ```tsx
 // features/users/components/UserList.test.tsx
-import { describe, it, expect, vi } from "vitest";
-import { screen } from "@testing-library/react";
-import { renderWithProviders } from "@/test/render";
-import { UserList } from "./UserList";
-import { useGetUsers } from "../hooks/useGetUsers";
+import { describe, it, expect, vi } from 'vitest'
+import { screen } from '@testing-library/react'
+import { renderWithProviders } from '@/test/render'
+import { UserList } from './UserList'
+import { useGetUsers } from '../hooks/useGetUsers'
 
-vi.mock("../hooks/useGetUsers");
+vi.mock('../hooks/useGetUsers')
 
-describe("UserList", () => {
-  it("shows a loading state while fetching", () => {
+describe('UserList', () => {
+  it('shows a loading state while fetching', () => {
     vi.mocked(useGetUsers).mockReturnValue({
       isLoading: true,
       data: undefined,
-    } as ReturnType<typeof useGetUsers>);
+    } as ReturnType<typeof useGetUsers>)
 
-    renderWithProviders(<UserList />);
+    renderWithProviders(<UserList />)
 
-    expect(screen.getByText(/loading/i)).toBeInTheDocument();
-  });
+    expect(screen.getByText(/loading/i)).toBeInTheDocument()
+  })
 
-  it("renders one item per user once loaded", () => {
+  it('renders one item per user once loaded', () => {
     vi.mocked(useGetUsers).mockReturnValue({
       isLoading: false,
-      data: [{ id: "1", name: "Ada" }, { id: "2", name: "Grace" }],
-    } as ReturnType<typeof useGetUsers>);
+      data: [
+        { id: '1', name: 'Ada' },
+        { id: '2', name: 'Grace' },
+      ],
+    } as ReturnType<typeof useGetUsers>)
 
-    renderWithProviders(<UserList />);
+    renderWithProviders(<UserList />)
 
-    expect(screen.getByText("Ada")).toBeInTheDocument();
-    expect(screen.getByText("Grace")).toBeInTheDocument();
-  });
-});
+    expect(screen.getByText('Ada')).toBeInTheDocument()
+    expect(screen.getByText('Grace')).toBeInTheDocument()
+  })
+})
 ```
 
 Query priority (highest to lowest, per Testing Library's own guidance): `getByRole` > `getByLabelText` > `getByPlaceholderText` > `getByText` > `getByTestId` (last resort — only when there's genuinely no accessible way to target the element).
@@ -237,24 +233,24 @@ Use fake timers and advance them explicitly instead of adding arbitrary `await` 
 
 ```tsx
 // features/users/hooks/useUserSearch.test.ts
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
-import { useUserSearch } from "./useUserSearch";
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { renderHook, act } from '@testing-library/react'
+import { useUserSearch } from './useUserSearch'
 
-describe("useUserSearch", () => {
-  beforeEach(() => vi.useFakeTimers());
-  afterEach(() => vi.useRealTimers());
+describe('useUserSearch', () => {
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => vi.useRealTimers())
 
-  it("only updates debouncedSearch after the delay elapses", () => {
-    const { result } = renderHook(() => useUserSearch());
+  it('only updates debouncedSearch after the delay elapses', () => {
+    const { result } = renderHook(() => useUserSearch())
 
-    act(() => result.current.setSearch("ada"));
-    expect(result.current.debouncedSearch).toBe("");
+    act(() => result.current.setSearch('ada'))
+    expect(result.current.debouncedSearch).toBe('')
 
-    act(() => vi.advanceTimersByTime(300));
-    expect(result.current.debouncedSearch).toBe("ada");
-  });
-});
+    act(() => vi.advanceTimersByTime(300))
+    expect(result.current.debouncedSearch).toBe('ada')
+  })
+})
 ```
 
 ### Zustand stores
@@ -263,19 +259,19 @@ Test the store directly (it's just a hook/function), reset state between tests. 
 
 ```ts
 // features/cart/store.test.ts
-import { describe, it, expect, beforeEach } from "vitest";
-import { useCartStore } from "./store";
+import { describe, it, expect, beforeEach } from 'vitest'
+import { useCartStore } from './store'
 
-describe("useCartStore", () => {
+describe('useCartStore', () => {
   beforeEach(() => {
-    useCartStore.setState(useCartStore.getInitialState());
-  });
+    useCartStore.setState(useCartStore.getInitialState())
+  })
 
-  it("increments item count when addItem is called", () => {
-    useCartStore.getState().addItem({ id: "1", price: 10 });
-    expect(useCartStore.getState().items).toHaveLength(1);
-  });
-});
+  it('increments item count when addItem is called', () => {
+    useCartStore.getState().addItem({ id: '1', price: 10 })
+    expect(useCartStore.getState().items).toHaveLength(1)
+  })
+})
 ```
 
 (If the store predates `getInitialState`, capture the initial state manually and reset to that snapshot in `beforeEach` instead.)

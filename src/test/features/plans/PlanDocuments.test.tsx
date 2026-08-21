@@ -22,11 +22,7 @@ vi.mock('@/features/plans/api', () => ({
   useUploadSignedDocument: vi.fn(),
 }))
 
-function checkpoint(
-  id: number,
-  stage: PlanCheckpoint['stage'],
-  note?: string,
-): PlanCheckpoint {
+function checkpoint(id: number, stage: PlanCheckpoint['stage'], note?: string): PlanCheckpoint {
   return {
     id,
     plan_id: 7,
@@ -65,10 +61,7 @@ function buildPlan(overrides: Partial<Plan> = {}): Plan {
     acta_date: '2026-03-03',
     items: [{ id: 1, commitment: 'Rediseñar las guías' }],
     documents: [],
-    checkpoints: [
-      checkpoint(11, 'PRIMER_SEGUIMIENTO'),
-      checkpoint(12, 'SEGUNDO_SEGUIMIENTO'),
-    ],
+    checkpoints: [checkpoint(11, 'PRIMER_SEGUIMIENTO'), checkpoint(12, 'SEGUNDO_SEGUIMIENTO')],
     ...overrides,
   } as unknown as Plan
 }
@@ -92,9 +85,12 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
-/** The row of one of the three forms, found by the heading it carries. */
+/**
+ * The row of one of the three forms, found by the heading it carries. Scoped to
+ * the heading itself: the Formato 1 row also names the form on its own button.
+ */
 function rowOf(name: RegExp) {
-  return screen.getByText(name).closest('li') as HTMLElement
+  return screen.getByText(name, { selector: 'p' }).closest('li') as HTMLElement
 }
 
 describe('PlanDocuments', () => {
@@ -110,7 +106,7 @@ describe('PlanDocuments', () => {
 
     render(<PlanDocuments plan={buildPlan()} canManage />)
 
-    const row = rowOf(/Formato 1/)
+    const row = rowOf(/Formato 2/)
 
     expect(within(row).queryByRole('button', { name: /Word/ })).not.toBeInTheDocument()
 
@@ -139,7 +135,7 @@ describe('PlanDocuments', () => {
 
     render(<PlanDocuments plan={buildPlan()} canManage={false} />)
 
-    await user.click(within(rowOf(/Formato 1/)).getByRole('button', { name: /Descargar/ }))
+    await user.click(within(rowOf(/Formato 2/)).getByRole('button', { name: /Descargar/ }))
 
     expect(await screen.findByRole('menuitem', { name: /Formato PDF/ })).toBeInTheDocument()
     expect(screen.queryByRole('menuitem', { name: /Formato Word/ })).not.toBeInTheDocument()
@@ -221,6 +217,109 @@ describe('PlanDocuments', () => {
       await user.click(screen.getByRole('button', { name: 'Eliminar' }))
 
       expect(mutate).toHaveBeenCalledWith('formato-3', expect.anything())
+    })
+  })
+
+  describe('el Formato 1 · caso reportado', () => {
+    const attached = () =>
+      buildPlan({
+        documents: [
+          planDocument({
+            format_type: 'FORMATO_1',
+            signed_filename: 'caso-reportado-sistemas.pdf',
+            signed_at: '2026-03-01T10:00:00Z',
+            has_generated: true,
+            has_signed: true,
+          }),
+        ],
+      })
+
+    it('no ofrece descargarlo mientras no haya nada adjunto', () => {
+      render(<PlanDocuments plan={buildPlan()} canManage />)
+
+      // Nadie genera este formato: llega hecho por correo y aquí solo se archiva,
+      // así que no hay nada que bajar hasta que alguien lo suba.
+      expect(
+        within(rowOf(/Formato 1/)).queryByRole('button', { name: /Descargar/ }),
+      ).not.toBeInTheDocument()
+    })
+
+    it('una vez adjunto solo entrega el PDF que se subió, sin Word', async () => {
+      const user = userEvent.setup()
+
+      render(<PlanDocuments plan={attached()} canManage />)
+
+      const row = rowOf(/Formato 1/)
+
+      expect(
+        within(row).getByRole('button', { name: /Descargar caso-reportado-sistemas\.pdf/ }),
+      ).toBeInTheDocument()
+      expect(within(row).queryByRole('button', { name: /^Descargar$/ })).not.toBeInTheDocument()
+
+      await user.click(
+        within(row).getByRole('button', { name: /Descargar caso-reportado-sistemas\.pdf/ }),
+      )
+
+      expect(screen.queryByRole('menuitem', { name: /Word/ })).not.toBeInTheDocument()
+    })
+
+    it('no pide firmarlo: el caso llega ya firmado del programa', () => {
+      render(<PlanDocuments plan={buildPlan()} canManage />)
+
+      const row = rowOf(/Formato 1/)
+
+      expect(within(row).queryByRole('button', { name: /Subir firmado/ })).not.toBeInTheDocument()
+      expect(within(row).getByRole('button', { name: /Adjuntar Formato 1/ })).toBeInTheDocument()
+    })
+
+    it('sigue ofreciendo adjuntarlo cuando el plan se creó sin él', async () => {
+      const user = userEvent.setup()
+
+      render(<PlanDocuments plan={buildPlan()} canManage />)
+
+      await user.click(within(rowOf(/Formato 1/)).getByRole('button', { name: /Adjuntar/ }))
+
+      expect(await screen.findByText(/Adjuntar Formato 1 · Caso reportado/)).toBeInTheDocument()
+      expect(screen.queryByText(/escaneado con las firmas/)).not.toBeInTheDocument()
+    })
+
+    it('una vez adjunto lo muestra para abrirlo, sin hablar de firma', () => {
+      render(<PlanDocuments plan={attached()} canManage />)
+
+      const row = rowOf(/Formato 1/)
+
+      expect(within(row).getByText('caso-reportado-sistemas.pdf')).toBeInTheDocument()
+      expect(within(row).getByText(/Adjuntado el/)).toBeInTheDocument()
+      expect(within(row).queryByText(/Firmado el/)).not.toBeInTheDocument()
+      expect(
+        within(row).getByRole('button', { name: /Descargar caso-reportado-sistemas\.pdf/ }),
+      ).toBeInTheDocument()
+    })
+
+    it('los Formatos 2 y 3 sí siguen pidiendo la versión firmada', () => {
+      render(<PlanDocuments plan={buildPlan()} canManage />)
+
+      expect(
+        within(rowOf(/Formato 2/)).getByRole('button', { name: /Subir firmado/ }),
+      ).toBeInTheDocument()
+      expect(
+        within(rowOf(/Formato 3/)).getByRole('button', { name: /Subir firmado/ }),
+      ).toBeInTheDocument()
+    })
+
+    it('al quitarlo no amenaza con pedir otra firma', async () => {
+      const user = userEvent.setup()
+
+      render(<PlanDocuments plan={attached()} canManage />)
+
+      await user.click(
+        within(rowOf(/Formato 1/)).getByRole('button', {
+          name: /Eliminar caso-reportado-sistemas\.pdf/,
+        }),
+      )
+
+      expect(await screen.findByText(/¿Eliminar el PDF adjunto\?/)).toBeInTheDocument()
+      expect(screen.getByText(/Podrás volver a adjuntarlo/)).toBeInTheDocument()
     })
   })
 
@@ -315,8 +414,20 @@ describe('PlanDocuments · el acuerdo se firma, no se cierra', () => {
     expect(within(rowOf(/Formato 3/)).getByRole('button', { name: /Subir firmado/ })).toBeEnabled()
   })
 
+  it('el aviso de vigencia se puede cerrar una vez leído', async () => {
+    const user = userEvent.setup()
+
+    render(<PlanDocuments plan={buildPlan({ acta_locked: true })} canManage />)
+
+    await user.click(screen.getByRole('button', { name: 'Cerrar el aviso' }))
+
+    expect(screen.queryByText(/el plan está en vigencia/)).not.toBeInTheDocument()
+  })
+
   it('avisa de que el plan está en vigencia cuando el acuerdo ya está firmado', () => {
-    render(<PlanDocuments plan={buildPlan({ acta_locked: true, acta_status: 'FIRMADA' })} canManage />)
+    render(
+      <PlanDocuments plan={buildPlan({ acta_locked: true, acta_status: 'FIRMADA' })} canManage />,
+    )
 
     expect(screen.getByText(/el plan está en vigencia/)).toBeInTheDocument()
   })

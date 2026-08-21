@@ -125,7 +125,6 @@ describe('picking drives the asignaturas', () => {
         suggestions: [],
       },
       SUBJECT,
-      3.5,
     )
 
     const manual: DraftCourse = {
@@ -157,14 +156,15 @@ describe('picking drives the asignaturas', () => {
         suggestions: [],
       },
       null,
-      3.5,
     )
 
     const courses = mergeCourses([], coursesOfSubject(null, [SUBJECT, OTHER_SUBJECT]))
 
     expect(pruneCourses(courses, [draft])).toHaveLength(2)
     expect(draft.baseline_value).toBe(2.9)
-    expect(draft.target_value).toBe(3.5)
+    // Empty on purpose: the meta esperada is the director's to decide, and
+    // seeded with the threshold nobody ever looked at it again.
+    expect(draft.target_value).toBeNull()
   })
 })
 

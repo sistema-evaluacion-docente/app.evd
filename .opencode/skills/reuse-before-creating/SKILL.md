@@ -5,7 +5,7 @@ description: Use this skill at the START of every task that involves writing new
 
 # Reuse Before Creating
 
-Before writing a single new component, hook, api function, util, type, or store, do a discovery pass over the existing codebase. Only create something new once you've confirmed nothing suitable already exists — and if something *close* exists, extend it instead of duplicating it. This applies on top of, and before, whatever the current task's other skills (e.g. `react-feature-sliced-architecture`, `react-testing-vitest`) tell you to build.
+Before writing a single new component, hook, api function, util, type, or store, do a discovery pass over the existing codebase. Only create something new once you've confirmed nothing suitable already exists — and if something _close_ exists, extend it instead of duplicating it. This applies on top of, and before, whatever the current task's other skills (e.g. `react-feature-sliced-architecture`, `react-testing-vitest`) tell you to build.
 
 ## Why this matters
 
@@ -16,23 +16,24 @@ Duplicated components/hooks/utils are the fastest way this codebase rots: two sl
 Do this for **every** artifact you're about to create — component, hook, api function, util, type, store — not just once per task.
 
 1. **Search by intent, not by the exact name you're about to use.** Search for the concept in multiple phrasings before concluding nothing exists:
-   - What it *does*: "debounce", "format date", "empty state", "period selector", "pagination"
-   - What it's *for*: the domain noun ("teacher", "user", "period") combined with the action ("get", "list", "create", "filter")
+   - What it _does_: "debounce", "format date", "empty state", "period selector", "pagination"
+   - What it's _for_: the domain noun ("teacher", "user", "period") combined with the action ("get", "list", "create", "filter")
    - Common synonyms: `loading` / `spinner` / `skeleton`; `error` / `fallback`; `card` / `item` / `row`; `select` / `picker` / `dropdown`
 
 2. **Look in the right places for each artifact type:**
-   | Looking for... | Search first in... |
-   |---|---|
-   | Component (generic/shared) | `components/` |
-   | Component (domain-specific) | `features/<relevant-feature>/components/`, and skim sibling features for a similar pattern (e.g. another feature's "detail page" layout) |
-   | Custom hook (React Query) | `features/*/hooks/` — same domain feature first, then similar features |
-   | Custom hook (other, e.g. debounce/search/filter wrappers) | `features/*/hooks/`, `lib/` |
-   | Api/service function | `features/<feature>/api/` |
-   | Util/formatter/helper | `lib/` first, always — this is its whole purpose |
-   | Type/interface | `features/<feature>/types/`, `lib/types.ts` or equivalent shared types file |
-   | Zustand store | co-located feature store, or a shared `store/`/`config/` location if it's app-wide |
-   | Route/path constant | `config/routes.ts` |
-   | Query key factory | next to the feature's query hooks (see `react-feature-sliced-architecture`) |
+
+   | Looking for...                                            | Search first in...                                                                                                                       |
+   | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+   | Component (generic/shared)                                | `components/`                                                                                                                            |
+   | Component (domain-specific)                               | `features/<relevant-feature>/components/`, and skim sibling features for a similar pattern (e.g. another feature's "detail page" layout) |
+   | Custom hook (React Query)                                 | `features/*/hooks/` — same domain feature first, then similar features                                                                   |
+   | Custom hook (other, e.g. debounce/search/filter wrappers) | `features/*/hooks/`, `lib/`                                                                                                              |
+   | Api/service function                                      | `features/<feature>/api/`                                                                                                                |
+   | Util/formatter/helper                                     | `lib/` first, always — this is its whole purpose                                                                                         |
+   | Type/interface                                            | `features/<feature>/types/`, `lib/types.ts` or equivalent shared types file                                                              |
+   | Zustand store                                             | co-located feature store, or a shared `store/`/`config/` location if it's app-wide                                                       |
+   | Route/path constant                                       | `config/routes.ts`                                                                                                                       |
+   | Query key factory                                         | next to the feature's query hooks (see `react-feature-sliced-architecture`)                                                              |
 
 3. **Use real search, not memory or assumption.** Grep/search the codebase (filenames, exported symbol names, and text content) rather than assuming something does or doesn't exist. If the project is large, search iteratively: broad term first, then narrow based on what turns up.
 
@@ -62,6 +63,7 @@ Do this for **every** artifact you're about to create — component, hook, api f
 ## Reporting back
 
 At the end of the task, briefly state:
+
 - What you reused as-is.
 - What you extended (and what you added to it).
 - What you created new, and why nothing existing covered it.

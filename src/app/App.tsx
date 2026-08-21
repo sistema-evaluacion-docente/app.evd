@@ -27,7 +27,13 @@ import {
   PeriodsPage,
   TeacherMateriasPage,
 } from '@/features/periods'
-import { MyPlansPage, PlanDetailPage, PlanFormPage, PlansPage } from '@/features/plans'
+import {
+  MyPlanDetailPage,
+  MyPlansPage,
+  PlanDetailPage,
+  PlanFormPage,
+  PlansPage,
+} from '@/features/plans'
 import { SubjectComparisonPage, SubjectsPage, SubjectTeacherDetailPage } from '@/features/subjects'
 import { TeacherDetailPage, TeachersPage, TeacherUploadPage } from '@/features/teachers'
 import { UsersPage } from '@/features/users'
@@ -121,6 +127,12 @@ function App() {
         <Route path="/mis-planes">
           <AppLayout>
             <MyPlansPage />
+          </AppLayout>
+        </Route>
+
+        <Route path="/mis-planes/:id">
+          <AppLayout>
+            <MyPlanDetailPage />
           </AppLayout>
         </Route>
 
