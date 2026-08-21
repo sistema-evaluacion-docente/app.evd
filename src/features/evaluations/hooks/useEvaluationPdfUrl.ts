@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react'
 
-import type { CourseModality } from '@/features/stats'
+import type { CourseModality } from '@/lib/modality'
 import { useGetEvaluationPdf, useGetTeacherEvaluationReport } from '../api'
 
 export interface EvaluationPdfUrlParams {
