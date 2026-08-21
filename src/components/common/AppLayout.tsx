@@ -43,6 +43,7 @@ export function AppLayout({
     <SidebarProvider>
       <AppLayoutContent
         authorized={authorized}
+        role={selectedRole}
         mainClassName={mainClassName}
         header={header}
         title={title}
@@ -56,18 +57,26 @@ export function AppLayout({
 interface AppLayoutContentProps {
   children: ReactNode
   authorized: boolean
+  /** Passed to the breadcrumb so it only links what this role can open. */
+  role: string | null
   mainClassName?: string
   header?: AppHeaderProps
   title?: string
 }
 
-function AppLayoutContent({ children, authorized, mainClassName, header }: AppLayoutContentProps) {
+function AppLayoutContent({
+  children,
+  authorized,
+  role,
+  mainClassName,
+  header,
+}: AppLayoutContentProps) {
   return (
     <>
       <AppSidebar />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <AppHeader showBreadcrumb={true} breadcrumb={<AutoBreadcrumb />} {...header} />
+        <AppHeader showBreadcrumb={true} breadcrumb={<AutoBreadcrumb role={role} />} {...header} />
 
         <div className="dark:bg-background relative flex min-h-0 flex-1 flex-col overflow-hidden bg-[#fafafa]">
           <main
