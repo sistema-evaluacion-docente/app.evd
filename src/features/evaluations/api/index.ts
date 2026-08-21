@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 import type { ResponseAPI } from '@/@types/Response'
 import api from '@/config/axios'
 import { useAuthStore } from '@/features/auth'
-import type { CourseModality } from '@/features/stats'
+import type { CourseModality } from '@/lib/modality'
 import type { EvaluationDimensionsDetail, EvaluationRecord, EvaluationStatusUpdate } from '../types'
 
 interface EvaluationListParams {
@@ -41,8 +41,11 @@ async function getEvaluationByPeriod(periodId: number): Promise<ResponseAPI<Eval
   return api.get(`/evaluations/by-period/${periodId}`)
 }
 
-async function getEvaluationById(evaluationId: number): Promise<ResponseAPI<EvaluationRecord>> {
-  return api.get(`/evaluations/${evaluationId}`)
+async function getEvaluationById(
+  evaluationId: number,
+  modality?: CourseModality,
+): Promise<ResponseAPI<EvaluationRecord>> {
+  return api.get(`/evaluations/${evaluationId}`, { params: { modality } })
 }
 
 async function updateEvaluationStatus(
@@ -110,7 +113,8 @@ export const evaluationsKeys = {
   all: ['evaluations'] as const,
   lists: () => [...evaluationsKeys.all, 'list'] as const,
   detail: (periodId: number) => [...evaluationsKeys.all, 'detail', periodId] as const,
-  byId: (evaluationId: number) => [...evaluationsKeys.all, 'byId', evaluationId] as const,
+  byId: (evaluationId: number, modality?: CourseModality) =>
+    [...evaluationsKeys.all, 'byId', evaluationId, modality] as const,
   pdf: (evaluationId: number, modality?: CourseModality) =>
     [...evaluationsKeys.all, 'pdf', evaluationId, modality] as const,
   teacherReport: (teacherId: number, evaluationId: number) =>
@@ -200,14 +204,25 @@ export function useGetEvaluationByPeriod(periodId?: number) {
  * progress WebSocket is the fast path; this is the fallback for when it never
  * connects.
  *
+ * `modality` narrows the report to the groups taught in it; omit it to read
+ * the evaluation whole, both modalities together. Changing it keeps the
+ * previous report on screen until the new one lands (`isPlaceholderData`
+ * marks that window), so the switch reads as a refresh, not a reload.
+ *
  * @example
  * const { data, isLoading } = useGetEvaluation(evaluationId);
+ *
+ * @example
+ * const { data } = useGetEvaluation(evaluationId, 'DISTANCIA');
  */
-export function useGetEvaluation(evaluationId?: number) {
+export function useGetEvaluation(evaluationId?: number, modality?: CourseModality) {
   return useQuery({
-    queryKey: evaluationsKeys.byId(evaluationId ?? 0),
-    queryFn: () => getEvaluationById(evaluationId!),
+    queryKey: evaluationsKeys.byId(evaluationId ?? 0, modality),
+    queryFn: () => getEvaluationById(evaluationId!, modality),
     enabled: evaluationId != null,
+    // Switching modality re-keys the query; without this the page would fall
+    // back to its full skeleton for a report it is already showing.
+    placeholderData: keepPreviousData,
     staleTime: 60_000,
     refetchInterval: (query) =>
       query.state.data?.data?.status === 'PROCESSING' ? EVALUATION_POLL_INTERVAL : false,
