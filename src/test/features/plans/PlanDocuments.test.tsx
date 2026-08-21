@@ -106,7 +106,7 @@ describe('PlanDocuments', () => {
 
     render(<PlanDocuments plan={buildPlan()} canManage />)
 
-    const row = rowOf(/Formato 1/)
+    const row = rowOf(/Formato 2/)
 
     expect(within(row).queryByRole('button', { name: /Word/ })).not.toBeInTheDocument()
 
@@ -135,7 +135,7 @@ describe('PlanDocuments', () => {
 
     render(<PlanDocuments plan={buildPlan()} canManage={false} />)
 
-    await user.click(within(rowOf(/Formato 1/)).getByRole('button', { name: /Descargar/ }))
+    await user.click(within(rowOf(/Formato 2/)).getByRole('button', { name: /Descargar/ }))
 
     expect(await screen.findByRole('menuitem', { name: /Formato PDF/ })).toBeInTheDocument()
     expect(screen.queryByRole('menuitem', { name: /Formato Word/ })).not.toBeInTheDocument()
@@ -233,6 +233,35 @@ describe('PlanDocuments', () => {
           }),
         ],
       })
+
+    it('no ofrece descargarlo mientras no haya nada adjunto', () => {
+      render(<PlanDocuments plan={buildPlan()} canManage />)
+
+      // Nadie genera este formato: llega hecho por correo y aquí solo se archiva,
+      // así que no hay nada que bajar hasta que alguien lo suba.
+      expect(
+        within(rowOf(/Formato 1/)).queryByRole('button', { name: /Descargar/ }),
+      ).not.toBeInTheDocument()
+    })
+
+    it('una vez adjunto solo entrega el PDF que se subió, sin Word', async () => {
+      const user = userEvent.setup()
+
+      render(<PlanDocuments plan={attached()} canManage />)
+
+      const row = rowOf(/Formato 1/)
+
+      expect(
+        within(row).getByRole('button', { name: /Descargar caso-reportado-sistemas\.pdf/ }),
+      ).toBeInTheDocument()
+      expect(within(row).queryByRole('button', { name: /^Descargar$/ })).not.toBeInTheDocument()
+
+      await user.click(
+        within(row).getByRole('button', { name: /Descargar caso-reportado-sistemas\.pdf/ }),
+      )
+
+      expect(screen.queryByRole('menuitem', { name: /Word/ })).not.toBeInTheDocument()
+    })
 
     it('no pide firmarlo: el caso llega ya firmado del programa', () => {
       render(<PlanDocuments plan={buildPlan()} canManage />)

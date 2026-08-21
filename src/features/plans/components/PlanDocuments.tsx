@@ -80,7 +80,7 @@ export function PlanDocuments({ plan, canManage }: PlanDocumentsProps) {
 
   return (
     <section className="border-border bg-background overflow-hidden rounded-md border">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4 bg-muted/90">
+      <header className="bg-muted/90 flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4">
         <div>
           <h2 className="font-semibold">Formatos oficiales</h2>
           <p className="text-muted-foreground text-sm">
@@ -229,38 +229,44 @@ function FormatRow({
       </div>
 
       <div className="flex shrink-0 flex-wrap items-center gap-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <LoadingButton
-                size="sm"
-                pending={download.isPending || downloadWord.isPending}
-                pendingLabel="Descargando…"
-              >
-                <Download className="size-4" aria-hidden="true" />
-                Descargar
-                <ChevronDown className="size-3.5" aria-hidden="true" />
-              </LoadingButton>
-            }
-          />
+        {/* The caso reportado is never rendered by us — it arrives by email
+            already made and signed, and is only filed here. So there is nothing
+            to generate and nothing to offer until it has been attached; from
+            then on the chip below hands over the very PDF that was uploaded. */}
+        {!isCaseReport && (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <LoadingButton
+                  size="sm"
+                  pending={download.isPending || downloadWord.isPending}
+                  pendingLabel="Descargando…"
+                >
+                  <Download className="size-4" aria-hidden="true" />
+                  Descargar
+                  <ChevronDown className="size-3.5" aria-hidden="true" />
+                </LoadingButton>
+              }
+            />
 
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => download.mutate(format.slug)}>
-              <FileText className="size-4" aria-hidden="true" />
-              Formato PDF
-            </DropdownMenuItem>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => download.mutate(format.slug)}>
+                <FileText className="size-4" aria-hidden="true" />
+                Formato PDF
+              </DropdownMenuItem>
 
-            {/* Rendered on the fly from the plan as it stands: the working copy
+              {/* Rendered on the fly from the plan as it stands: the working copy
                 the director corrects before printing it for signature. The API
                 keeps it to managers, so the teacher is not offered it. */}
-            {canManage && (
-              <DropdownMenuItem onClick={() => downloadWord.mutate(format.slug)}>
-                <FileType2 className="size-4" aria-hidden="true" />
-                Formato Word
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+              {canManage && (
+                <DropdownMenuItem onClick={() => downloadWord.mutate(format.slug)}>
+                  <FileType2 className="size-4" aria-hidden="true" />
+                  Formato Word
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
 
         {record?.has_signed ? (
           <div className="border-border bg-muted/40 flex max-w-full items-center gap-1 rounded-md border py-1 pr-1 pl-2.5">
