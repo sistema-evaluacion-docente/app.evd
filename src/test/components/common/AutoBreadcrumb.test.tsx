@@ -62,7 +62,40 @@ describe('AutoBreadcrumb', () => {
 
     await user.click(screen.getByText('Inicio'))
 
-    expect(history.at(-1)).toBe('/')
+    expect(history.at(-1)).toBe('/home')
+  })
+
+  it('links every crumb when no role is given', () => {
+    renderAt('/evaluaciones/12/pdf')
+
+    expect(screen.getByText('Evaluaciones')).toHaveClass('cursor-pointer')
+  })
+
+  it('prints a crumb the role cannot open as plain text', () => {
+    const { hook } = memoryLocation({ path: '/evaluaciones/12/pdf', record: true })
+
+    render(
+      <Router hook={hook}>
+        <AutoBreadcrumb role="DOCENTE" />
+      </Router>,
+    )
+
+    // The teacher reaches their own PDF, but not the evaluations section
+    // above it — that crumb must not offer a link into a page they can't open.
+    expect(screen.getByText('Evaluaciones')).not.toHaveClass('cursor-pointer')
+    expect(screen.getByText('Documento')).toBeInTheDocument()
+  })
+
+  it('keeps linking the crumbs the role can open', () => {
+    const { hook } = memoryLocation({ path: '/evaluaciones/12/pdf', record: true })
+
+    render(
+      <Router hook={hook}>
+        <AutoBreadcrumb role="DIRECTOR DE DEPARTAMENTO" />
+      </Router>,
+    )
+
+    expect(screen.getByText('Evaluaciones')).toHaveClass('cursor-pointer')
   })
 
   it('navigates to an intermediate segment when clicked', async () => {
