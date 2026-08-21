@@ -2,15 +2,27 @@ import { Info } from 'lucide-react'
 import { useRoute } from 'wouter'
 
 import { BackButton } from '@/components/common/BackButton'
+import { DataTableFilters, type FilterConfig } from '@/components/common/DataTableFilters'
 import { PageTitle } from '@/components/common/PageTitle'
-import { SegmentedControl } from '@/components/common/SegmentedControl'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { useModalityFilter } from '@/hooks/useModalityFilter'
-import { ALL_MODALITIES, MODALITY_SEGMENTS } from '@/lib/modality'
+import { MODALITIES } from '@/lib/modality'
 import { useGetEvaluation } from '../api'
 import { EvaluationCoursesReview, ModalityNotice } from '../components'
+
+/** The review's only filter, offered through the shared "Filtros" panel. */
+const FILTERS: FilterConfig[] = [
+  {
+    type: 'select',
+    name: 'modality',
+    label: 'Modalidad',
+    placeholder: 'Todas',
+    options: MODALITIES.map(({ value, label }) => ({ value, label })),
+    clearable: true,
+  },
+]
 
 /**
  * Review step that follows an evaluation upload: lists the materias the PDF
@@ -61,12 +73,10 @@ export default function EvaluationCoursesPage() {
     <>
       <PageTitle
         action={
-          <SegmentedControl
-            ariaLabel="Modalidad"
-            options={MODALITY_SEGMENTS}
-            value={modality ?? ALL_MODALITIES}
-            onValueChange={setModality}
-            size="sm"
+          <DataTableFilters
+            filters={FILTERS}
+            values={{ modality }}
+            onChange={(values) => setModality(values.modality as string | undefined)}
           />
         }
       >
