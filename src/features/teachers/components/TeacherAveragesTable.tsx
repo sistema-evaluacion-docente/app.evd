@@ -10,6 +10,7 @@ import {
   type SortField,
 } from '@/components/common/DataTableFilters'
 import { PeriodSelect } from '@/components/common/PeriodSelect'
+import type { CourseModality } from '@/lib/modality'
 import { useGetTeachers } from '../api'
 import { CONTRACT_TYPES, TEACHER_SORT_FIELDS } from '../config'
 import type { TeacherRecord } from '../types'
@@ -37,6 +38,12 @@ export interface TeacherAveragesTableProps {
   defaultSortBy?: string
   /** Initial rows per page. Defaults to 10. */
   defaultPageSize?: number
+  /**
+   * Narrows the averages to the groups taught in one modality. Owned by the
+   * caller — the page around this table decides whether that filter exists
+   * and where it is shown.
+   */
+  modality?: CourseModality
   /**
    * Called when a row is clicked, with the currently selected period id (so
    * the caller can link to that teacher's detail for the same period). Omit
@@ -80,6 +87,7 @@ export function TeacherAveragesTable({
   sortFields = TEACHER_SORT_FIELDS,
   defaultSortBy = 'overall_average_desc',
   defaultPageSize = 10,
+  modality,
   onTeacherClick,
   searchPlaceholder = 'Buscar docente...',
   emptyMessage = 'No hay docentes con promedio en este periodo.',
@@ -101,6 +109,17 @@ export function TeacherAveragesTable({
     setPagination((prev) => ({ ...prev, pageIndex: 0 }))
   }, 400)
 
+  // A new modality is a different set of teachers: page 3 of the previous one
+  // means nothing here, and asking for it would answer with an empty page.
+  // Adjusted during render (not in an effect) so the request below already
+  // goes out with the corrected page.
+  const [appliedModality, setAppliedModality] = useState(modality)
+
+  if (modality !== appliedModality) {
+    setAppliedModality(modality)
+    setPagination((prev) => (prev.pageIndex === 0 ? prev : { ...prev, pageIndex: 0 }))
+  }
+
   const { data, isPending, isFetching } = useGetTeachers({
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
@@ -109,6 +128,7 @@ export function TeacherAveragesTable({
     search: debouncedSearch,
     contractType,
     sortBy,
+    modality,
   })
 
   const teachers = data?.data ?? []
