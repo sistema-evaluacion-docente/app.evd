@@ -36,13 +36,10 @@ import { ScoreLegend } from '@/components/common/ScoreLegend'
 import { TransitionLink } from '@/components/common/TransitionLink'
 import { useUpdateCourse } from '@/features/courses'
 import { useGetAcademicPeriods } from '@/features/periods'
-import type {
-  CourseModality,
-  DepartmentSubjectAverage,
-  DepartmentSubjectGroup,
-} from '@/features/stats'
+import type { DepartmentSubjectAverage, DepartmentSubjectGroup } from '@/features/stats'
 import { statsKeys, useGetDepartmentPeriodRangeSubjects } from '@/features/stats'
 import { courseTeacherHref } from '@/features/teachers'
+import { MODALITIES, parseModality, type CourseModality } from '@/lib/modality'
 import { subjectComparisonHref } from '../config'
 
 /** The materia currently open in the rename drawer. */
@@ -57,9 +54,6 @@ const SORT_FIELDS: SortField[] = [
   { value: 'teacher_count', label: 'Docentes' },
 ]
 
-/** Query-string values the modality filter accepts, in the API's own spelling. */
-const MODALITIES: CourseModality[] = ['PRESENCIAL', 'DISTANCIA']
-
 const FILTERS: FilterConfig[] = [
   { type: 'sort', name: 'sortBy', fields: SORT_FIELDS, clearable: true },
   {
@@ -67,20 +61,10 @@ const FILTERS: FilterConfig[] = [
     name: 'modality',
     label: 'Modalidad',
     placeholder: 'Todas',
-    options: [
-      { label: 'Presencial', value: 'PRESENCIAL' },
-      { label: 'Distancia', value: 'DISTANCIA' },
-    ],
+    options: MODALITIES.map(({ value, label }) => ({ value, label })),
     clearable: true,
   },
 ]
-
-/** Reads `?modality=` off the URL, ignoring anything that isn't a real modality. */
-function parseModality(raw: string | null): CourseModality | undefined {
-  const value = raw?.toUpperCase()
-
-  return MODALITIES.find((modality) => modality === value)
-}
 
 /**
  * Paginated list of the director's own department's subjects ("materias")
@@ -243,7 +227,7 @@ export function SubjectsList({ className }: { className?: string }) {
           values={{ sortBy, modality }}
           onChange={(values) => {
             setSortBy(values.sortBy as string | undefined)
-            handleModalityChange(parseModality((values.modality as string | undefined) ?? null))
+            handleModalityChange(parseModality(values.modality as string | undefined))
             resetPage()
           }}
         />
