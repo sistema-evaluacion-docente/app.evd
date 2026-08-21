@@ -23,6 +23,9 @@ export interface DepartmentDimensionAverage {
   percentage: number
 }
 
+/** How a group is taught, as reported by the API. */
+export type CourseModality = 'PRESENCIAL' | 'DISTANCIA'
+
 /** One group behind a course's aggregated average — a specific course code, teacher, period and group. */
 export interface DepartmentSubjectGroup {
   academic_group_id: number
@@ -36,6 +39,8 @@ export interface DepartmentSubjectGroup {
   academic_period_code: string
   overall_average: number
   respondent_count: number
+  /** Missing on groups the backend hasn't classified yet. */
+  modality?: CourseModality | null
 }
 
 /** One pedagogical dimension's average for a teacher, in a subject comparison. */

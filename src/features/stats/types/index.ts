@@ -1,4 +1,5 @@
 export type {
+  CourseModality,
   DepartmentDimensionAverage,
   DepartmentPeriodAverage,
   DepartmentPeriodRangeStats,
