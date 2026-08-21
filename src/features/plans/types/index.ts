@@ -190,7 +190,6 @@ export interface Plan {
   program_director_observations: string | null
   has_acta: boolean
   progress: number
-  suggested_result: string | null
   items: PlanItem[]
   checkpoints: PlanCheckpoint[]
   evidences: PlanEvidence[]
