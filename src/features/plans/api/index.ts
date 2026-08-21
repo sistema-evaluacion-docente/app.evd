@@ -114,10 +114,6 @@ async function closePlan(planId: number, payload: ClosePlanInput): Promise<Respo
   return api.post(`/improvement-plans/${planId}/close`, payload)
 }
 
-async function evaluatePlan(planId: number): Promise<ResponseAPI<Plan>> {
-  return api.post(`/improvement-plans/${planId}/evaluate`)
-}
-
 async function uploadSignedDocument(
   planId: number,
   format: PlanFormatSlug,
@@ -495,12 +491,6 @@ export function useClosePlan(planId: number) {
     mutationFn: (payload: ClosePlanInput) => closePlan(planId, payload),
     onSuccess: refresh,
   })
-}
-
-export function useEvaluatePlan(planId: number) {
-  const refresh = usePlanRefresh(planId)
-
-  return useMutation({ mutationFn: () => evaluatePlan(planId), onSuccess: refresh })
 }
 
 export function useUploadSignedDocument(planId: number) {
