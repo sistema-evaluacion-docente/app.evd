@@ -3,20 +3,28 @@ import { useRoute } from 'wouter'
 
 import { BackButton } from '@/components/common/BackButton'
 import { PageTitle } from '@/components/common/PageTitle'
+import { SegmentedControl } from '@/components/common/SegmentedControl'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
+import { useModalityFilter } from '@/hooks/useModalityFilter'
+import { ALL_MODALITIES, MODALITY_SEGMENTS } from '@/lib/modality'
 import { useGetEvaluation } from '../api'
-import { EvaluationCoursesReview } from '../components'
+import { EvaluationCoursesReview, ModalityNotice } from '../components'
 
 /**
  * Review step that follows an evaluation upload: lists the materias the PDF
- * extraction produced so the director can fix the names it cut off.
+ * extraction produced so the director can fix the names it cut off. An
+ * evaluation can hold a presencial and a distancia document, so the list can be
+ * read one modality at a time (`?modality=`) — handy right after uploading the
+ * second one, to review only what it added.
  * Route: `/evaluaciones/:id/materias`.
  */
 export default function EvaluationCoursesPage() {
   const [, params] = useRoute('/evaluaciones/:id/materias')
   const evaluationId = params?.id ? Number(params.id) : undefined
+
+  const { modality, setModality } = useModalityFilter()
 
   const { data, isLoading } = useGetEvaluation(evaluationId)
   const evaluation = data?.data
@@ -51,9 +59,23 @@ export default function EvaluationCoursesPage() {
 
   return (
     <>
-      <PageTitle>Revisar materias · {evaluation.academic_period_name}</PageTitle>
+      <PageTitle
+        action={
+          <SegmentedControl
+            ariaLabel="Modalidad"
+            options={MODALITY_SEGMENTS}
+            value={modality ?? ALL_MODALITIES}
+            onValueChange={setModality}
+            size="sm"
+          />
+        }
+      >
+        Revisar materias · {evaluation.academic_period_name}
+      </PageTitle>
 
       <div className="space-y-5">
+        <ModalityNotice modality={modality} />
+
         <Alert className="border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-200">
           <Info className="size-4" aria-hidden="true" />
           <AlertTitle>Corrige los nombres que el PDF haya cortado</AlertTitle>
@@ -81,7 +103,10 @@ export default function EvaluationCoursesPage() {
             El procesamiento de esta evaluación falló, así que no hay materias que revisar.
           </p>
         ) : (
-          <EvaluationCoursesReview periodCode={evaluation.academic_period_code} />
+          <EvaluationCoursesReview
+            periodCode={evaluation.academic_period_code}
+            modality={modality}
+          />
         )}
       </div>
     </>
