@@ -1,31 +1,39 @@
-import { Filter, ListChecks } from 'lucide-react'
-import { Link, useRoute, useSearchParams } from 'wouter'
+import { ListChecks } from 'lucide-react'
+import { Link, useRoute } from 'wouter'
 
 import { BackButton } from '@/components/common/BackButton'
+import { DataTableFilters, type FilterConfig } from '@/components/common/DataTableFilters'
 import { PageTitle } from '@/components/common/PageTitle'
 import { ScoreBadge } from '@/components/common/ScoreBadge'
-import { SegmentedControl } from '@/components/common/SegmentedControl'
 import EvaluationDetailSkeleton from '@/components/skeletons/EvaluationDetailSkeleton'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { useAcademicPeriodsStore } from '@/features/periods'
 import { TeacherAveragesTable } from '@/features/teachers'
+import { useModalityFilter } from '@/hooks/useModalityFilter'
 import { useNavigate } from '@/hooks/useNavigate'
-import { MODALITIES, MODALITY_LABEL, parseModality } from '@/lib/modality'
+import { MODALITIES } from '@/lib/modality'
 import { cn } from '@/lib/utils'
 import { useGetEvaluation } from '../api'
 import {
   EvaluationDimensionDetailCard,
   EvaluationDimensionsChart,
   EvaluationOverview,
+  ModalityNotice,
 } from '../components'
 import type { EvaluationDimensionDetail } from '../types'
 
-/** Value the control carries while no modality is filtering. */
-const ALL_MODALITIES = 'ALL'
-
-/** Segments offered by the modality filter: every modality, plus "all". */
-const MODALITY_SEGMENTS = [{ value: ALL_MODALITIES, label: 'Todas' }, ...MODALITIES]
+/** The report's only filter, offered through the shared "Filtros" panel. */
+const FILTERS: FilterConfig[] = [
+  {
+    type: 'select',
+    name: 'modality',
+    label: 'Modalidad',
+    placeholder: 'Todas',
+    options: MODALITIES.map(({ value, label }) => ({ value, label })),
+    clearable: true,
+  },
+]
 
 /**
  * Full page displaying the summary of a single evaluation, optionally narrowed
@@ -37,52 +45,28 @@ const MODALITY_SEGMENTS = [{ value: ALL_MODALITIES, label: 'Todas' }, ...MODALIT
  */
 export default function EvaluationDetailPage() {
   const [, params] = useRoute('/evaluaciones/:id')
-  const [searchParams, setSearchParams] = useSearchParams()
   const evaluationId = params?.id ? Number(params.id) : undefined
   const navigate = useNavigate()
   const periods = useAcademicPeriodsStore((state) => state.periods)
 
-  const modality = parseModality(searchParams.get('modality'))
+  const { modality, setModality } = useModalityFilter()
 
   const { data, isLoading, isPlaceholderData } = useGetEvaluation(evaluationId, modality)
   const evaluation = data?.data
 
   // The report for the modality just picked is still in flight: the one on
-  // screen is the previous one, so it dims instead of collapsing into the
-  // page skeleton. The select stays clickable — that is how you get back.
+  // screen is the previous one, so it dims instead of collapsing into the page
+  // skeleton. The filter stays reachable — that is how you get back.
   const isSwitching = isPlaceholderData
-
-  const handleModalityChange = (value: string) => {
-    // Anything that isn't a modality — the "Todas" segment — clears the filter.
-    const selected = parseModality(value)
-
-    setSearchParams(
-      (previous) => {
-        const next = new URLSearchParams(previous)
-
-        if (selected) next.set('modality', selected)
-        else next.delete('modality')
-
-        return next
-      },
-      { replace: true },
-    )
-  }
-
-  const modalityNotice = modality
-    ? `Mostrando solo los resultados de la modalidad ${MODALITY_LABEL[modality].toLowerCase()}.`
-    : 'Mostrando los resultados de todas las modalidades.'
 
   const modalityFilter = (
     <div className="flex items-center gap-2">
       {isSwitching && <Spinner aria-label="Cargando" className="text-muted-foreground size-4" />}
 
-      <SegmentedControl
-        ariaLabel="Modalidad"
-        options={MODALITY_SEGMENTS}
-        value={modality ?? ALL_MODALITIES}
-        onValueChange={handleModalityChange}
-        size="sm"
+      <DataTableFilters
+        filters={FILTERS}
+        values={{ modality }}
+        onChange={(values) => setModality(values.modality as string | undefined)}
       />
     </div>
   )
@@ -141,10 +125,7 @@ export default function EvaluationDetailPage() {
         {modalityFilter}
       </div>
 
-      <p aria-live="polite" className="text-muted-foreground -mt-2 flex items-center gap-2 text-sm">
-        <Filter aria-hidden="true" className="size-3.5 shrink-0" />
-        {modalityNotice}
-      </p>
+      <ModalityNotice modality={modality} className="-mt-2" />
 
       <EvaluationOverview
         evaluation={evaluation}
