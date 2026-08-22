@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
-import { useAuthStore } from '@/features/auth'
+import { ROLE, useAuthStore } from '@/features/auth'
 import { useGetPlans, useGetPlanPeriods } from '../api'
 import { DeletePlanDialog } from '../components/DeletePlanDialog'
 import { usePlansFilters } from '../hooks/usePlansFilters'
@@ -42,9 +42,9 @@ export default function PlansPage() {
   const [, navigate] = useLocation()
 
   // Deleting a plan undoes an agreement with a teacher, so it belongs to the
-  // director who made it — the API turns anyone else away regardless.
-  const roles = useAuthStore((state) => state.user?.roles) ?? []
-  const canDelete = roles.includes('DIRECTOR DE DEPARTAMENTO')
+  // director who made it — the API turns anyone else away regardless. Gated on
+  // the active role, like every other screen of the app.
+  const canDelete = useAuthStore((state) => state.selectedRole) === ROLE.DEPARTMENT_DIRECTOR
 
   /** The plan waiting for its deletion to be confirmed, if any. */
   const [deleteTarget, setDeleteTarget] = useState<Plan | null>(null)

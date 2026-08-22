@@ -3,7 +3,7 @@ import { useLocation } from 'wouter'
 
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useAuthStore } from '@/features/auth'
+import { ROLE, useAuthStore } from '@/features/auth'
 import { cn } from '@/lib/utils'
 import { useGetPlans } from '../api'
 import { PlanStatusBadge } from './PlanStatusBadge'
@@ -43,9 +43,9 @@ export function TeacherPlanAction({
   className,
 }: TeacherPlanActionProps) {
   const [, navigate] = useLocation()
-  const roles = useAuthStore((state) => state.user?.roles) ?? []
-  // Only the department director runs improvement plans.
-  const canManage = roles.includes('DIRECTOR DE DEPARTAMENTO')
+  // Only the department director runs improvement plans, and only while that is
+  // the role they are signed in as.
+  const canManage = useAuthStore((state) => state.selectedRole) === ROLE.DEPARTMENT_DIRECTOR
 
   const { data, isPending } = useGetPlans({ teacherId, limit: 5 })
   const plans = data?.data ?? []

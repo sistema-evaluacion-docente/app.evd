@@ -9,7 +9,7 @@ import PlanDetailSkeleton from '@/components/skeletons/PlanDetailSkeleton'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { useAuthStore } from '@/features/auth'
+import { ROLE, useAuthStore } from '@/features/auth'
 import formatDate from '@/lib/formatDate'
 import { useGetPlan, useGetPlanIndicators } from '../api'
 import { PlanCheckpoints } from '../components/PlanCheckpoints'
@@ -35,10 +35,14 @@ export default function PlanDetailPage() {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const planId = params?.id ? Number(params.id) : undefined
 
-  const roles = useAuthStore((state) => state.user?.roles) ?? []
   // Improvement plans belong to the department director, start to finish: they
   // agree them, sign them, follow them up and close them.
-  const canManage = roles.includes('DIRECTOR DE DEPARTAMENTO')
+  //
+  // Read off `selectedRole` and not off every role the account holds: that is
+  // the one `AppLayout` gates the routes with, so a director who switched to
+  // "Docente" would otherwise still be offered controls the rest of the app has
+  // already decided they are not using right now.
+  const canManage = useAuthStore((state) => state.selectedRole) === ROLE.DEPARTMENT_DIRECTOR
 
   const { data, isPending } = useGetPlan(planId)
   const { data: indicatorsResponse, isPending: aspectsPending } = useGetPlanIndicators()
@@ -245,11 +249,7 @@ export default function PlanDetailPage() {
 
       <PlanDocuments plan={plan} canManage={canManage} />
 
-      {closed ? (
-        <PlanClosedSummary plan={plan} />
-      ) : (
-        <PlanClosure plan={plan} canManage={canManage} />
-      )}
+      {closed ? <PlanClosedSummary plan={plan} /> : canManage && <PlanClosure plan={plan} />}
 
       {/* Only once the plan is settled, or once the answer already arrived: on
           a plan still running it would say nothing but "we are waiting". */}
