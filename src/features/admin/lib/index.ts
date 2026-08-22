@@ -1,0 +1,1 @@
+export { isDepartmentOwnedSetting } from './settingScope'
