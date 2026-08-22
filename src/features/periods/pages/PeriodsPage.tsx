@@ -7,7 +7,7 @@ import { PeriodsList } from '../components'
 export default function PeriodsPage() {
   return (
     <>
-      <PageTitle>Mis Periodos</PageTitle>
+      <PageTitle>Mis periodos</PageTitle>
 
       <PeriodsList />
     </>

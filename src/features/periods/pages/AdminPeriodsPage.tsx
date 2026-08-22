@@ -73,7 +73,7 @@ export function AdminPeriodsPage() {
           />
         }
       >
-        Periodos Académicos
+        Periodos académicos
       </PageTitle>
 
       <PeriodsList />

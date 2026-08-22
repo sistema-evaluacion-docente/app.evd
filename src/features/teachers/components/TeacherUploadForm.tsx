@@ -104,7 +104,7 @@ export function TeacherUploadForm() {
           <CardTitle>Cargar docentes</CardTitle>
 
           <CardDescription>
-            Sube un archivo CSV o XLSX con los docentes de tu departamento para el período
+            Sube un archivo CSV o XLSX con los docentes de tu departamento para el periodo
             académico.
           </CardDescription>
         </CardHeader>

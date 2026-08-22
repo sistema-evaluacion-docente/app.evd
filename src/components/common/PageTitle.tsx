@@ -8,23 +8,14 @@ import { cn } from '@/lib/utils'
 interface PageTitleProps {
   children: ReactNode
   className?: string
-  /** Function run when the action button (far right of the title) is clicked. */
   onAction?: () => void
-  /** Label of the action button. Defaults to "Nuevo". */
   actionLabel?: string
-  /** Icon of the action button. Defaults to `Plus`. */
   actionIcon?: LucideIcon
-  /** Custom action element rendered instead of the default button. Takes precedence over `onAction`. */
   action?: ReactNode
-  /** Function run when the secondary action button is clicked. */
   onSecondaryAction?: () => void
-  /** Label of the secondary action button. */
   secondaryActionLabel?: string
-  /** Icon of the secondary action button. */
   secondaryActionIcon?: LucideIcon
-  /** Custom secondary action element rendered instead of the default button. Takes precedence over `onSecondaryAction`. */
   secondaryAction?: ReactNode
-  /** Whether to show a "go back" button that returns the user to the previous page. Defaults to `true`. */
   backButton?: boolean
 }
 
@@ -37,7 +28,7 @@ interface PageTitleProps {
  * <PageTitle>Evaluaciones</PageTitle>
  *
  * @example
- * <PageTitle className="mb-6">Mis Períodos</PageTitle>
+ * <PageTitle className="mb-6">Mis periodos</PageTitle>
  *
  * @example
  * <PageTitle onAction={() => openDrawer()} actionLabel="Nueva evaluación">

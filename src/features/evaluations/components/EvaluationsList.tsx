@@ -117,7 +117,7 @@ export function EvaluationsList() {
 
   const rowActions: DataTableAction<EvaluationRecord>[] = [
     {
-      label: 'Ver Detalle',
+      label: 'Ver detalle',
       icon: <Eye className="size-4" />,
       onClick: (row) => {
         navigate(`/evaluaciones/${row.id}`)
