@@ -10,6 +10,7 @@ export { PlanDocuments } from './components/PlanDocuments'
 export { PlanEvidences } from './components/PlanEvidences'
 export { PlanCheckpoints } from './components/PlanCheckpoints'
 export { PlanClosedSummary, PlanClosure } from './components/PlanClosure'
+export { PlanVerification } from './components/PlanVerification'
 export {
   ActaStatusBadge,
   EvidenceRequestBadge,
