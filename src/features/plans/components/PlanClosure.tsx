@@ -141,13 +141,15 @@ export function PlanClosure({ plan, canManage }: PlanClosureProps) {
                 <Label
                   key={option.value}
                   htmlFor={`result-${option.value}`}
-                  onClick={() => setResult(option.value)}
                   className="flex cursor-pointer items-start gap-2.5"
                 >
+                  {/* `border-foreground` and not a literal black: on the dark
+                      card a black ring is invisible, and an unchecked radio
+                      nobody can make out is a control that isn't there. */}
                   <RadioGroupItem
                     value={option.value}
                     id={`result-${option.value}`}
-                    className="border-2 border-black"
+                    className="border-foreground border-2"
                   />
                   <span className="grid gap-0.5">
                     <span>{option.label}</span>
