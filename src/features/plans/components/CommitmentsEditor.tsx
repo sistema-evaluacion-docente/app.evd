@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { memo, useMemo } from 'react'
 import { ChevronRight, Lightbulb, Trash2 } from 'lucide-react'
 
 import { FieldError } from '@/components/common/FieldError'
@@ -19,6 +19,14 @@ import { Textarea } from '@/components/ui/textarea'
 import { fieldErrorId } from '@/lib/fieldErrorId'
 import { commitmentFieldId, isMeasurable, itemsInPaintedOrder } from '../lib/planValidation'
 import type { DraftItem, PlanAspect } from '../types'
+
+/**
+ * Shared empty list for the rows that don't show the aspect picker.
+ *
+ * A `[]` default parameter would be a new array on every render, and the rows
+ * are memoised — one fresh prop is all it takes to redraw every card.
+ */
+const NO_ASPECTS: PlanAspect[] = []
 
 interface CommitmentsEditorProps {
   items: DraftItem[]
@@ -91,7 +99,10 @@ export function CommitmentsEditor({
                   number={numbers.get(item.key) ?? 0}
                   onChange={onChange}
                   onRemove={onRemove}
-                  invalidFields={invalidFields}
+                  descriptionError={invalidFields.get(commitmentFieldId.description(item.key))}
+                  commitmentError={invalidFields.get(commitmentFieldId.commitment(item.key))}
+                  targetError={invalidFields.get(commitmentFieldId.target(item.key))}
+                  aspectError={invalidFields.get(commitmentFieldId.aspect(item.key))}
                   onFieldBlur={onFieldBlur}
                   disabled={disabled}
                 />
@@ -117,7 +128,10 @@ export function CommitmentsEditor({
                 number={numbers.get(item.key) ?? 0}
                 onChange={onChange}
                 onRemove={onRemove}
-                invalidFields={invalidFields}
+                descriptionError={invalidFields.get(commitmentFieldId.description(item.key))}
+                commitmentError={invalidFields.get(commitmentFieldId.commitment(item.key))}
+                targetError={invalidFields.get(commitmentFieldId.target(item.key))}
+                aspectError={invalidFields.get(commitmentFieldId.aspect(item.key))}
                 onFieldBlur={onFieldBlur}
                 disabled={disabled}
                 showAspectPicker
@@ -131,23 +145,37 @@ export function CommitmentsEditor({
   )
 }
 
-function CommitmentRow({
+/**
+ * One commitment card.
+ *
+ * Memoised, and given its own errors as plain strings rather than the map of
+ * every field in the form: the map is rebuilt on each keystroke, so sharing it
+ * would redraw all the cards while only one of them is being typed into.
+ */
+const CommitmentRow = memo(function CommitmentRow({
   item,
   number,
   onChange,
   onRemove,
-  invalidFields,
+  descriptionError,
+  commitmentError,
+  targetError,
+  aspectError,
   onFieldBlur,
   disabled,
   showAspectPicker = false,
-  aspects = [],
+  aspects = NO_ASPECTS,
 }: {
   item: DraftItem
   /** Position in the plan as a whole: the card is titled "Compromiso N". */
   number: number
   onChange: (key: string, patch: Partial<DraftItem>) => void
   onRemove: (key: string) => void
-  invalidFields: ReadonlyMap<string, string>
+  /** What each field is missing, or `undefined` while it is fine. */
+  descriptionError?: string
+  commitmentError?: string
+  targetError?: string
+  aspectError?: string
   onFieldBlur: (id: string) => void
   disabled: boolean
   showAspectPicker?: boolean
@@ -194,8 +222,8 @@ function CommitmentRow({
             <SelectTrigger
               id={aspectId}
               className="bg-background w-full max-w-md"
-              aria-invalid={invalidFields.has(aspectId)}
-              aria-describedby={invalidFields.has(aspectId) ? fieldErrorId(aspectId) : undefined}
+              aria-invalid={Boolean(aspectError)}
+              aria-describedby={aspectError ? fieldErrorId(aspectId) : undefined}
               onBlur={() => onFieldBlur(aspectId)}
             >
               <SelectValue placeholder="Elige el aspecto…">
@@ -216,7 +244,7 @@ function CommitmentRow({
             </SelectContent>
           </Select>
 
-          <FieldError fieldId={aspectId} message={invalidFields.get(aspectId)} />
+          <FieldError fieldId={aspectId} message={aspectError} />
         </div>
       )}
 
@@ -237,16 +265,14 @@ function CommitmentRow({
           value={item.description}
           onChange={(event) => onChange(item.key, { description: event.target.value })}
           onBlur={() => onFieldBlur(descriptionId)}
-          aria-invalid={invalidFields.has(descriptionId)}
-          aria-describedby={
-            invalidFields.has(descriptionId) ? fieldErrorId(descriptionId) : undefined
-          }
+          aria-invalid={Boolean(descriptionError)}
+          aria-describedby={descriptionError ? fieldErrorId(descriptionId) : undefined}
           rows={2}
           disabled={disabled}
           placeholder="Describe la situación detectada"
         />
 
-        <FieldError fieldId={descriptionId} message={invalidFields.get(descriptionId)} />
+        <FieldError fieldId={descriptionId} message={descriptionError} />
       </div>
 
       <div className="space-y-1.5">
@@ -259,16 +285,14 @@ function CommitmentRow({
           value={item.commitment}
           onChange={(event) => onChange(item.key, { commitment: event.target.value })}
           onBlur={() => onFieldBlur(commitmentId)}
-          aria-invalid={invalidFields.has(commitmentId)}
-          aria-describedby={
-            invalidFields.has(commitmentId) ? fieldErrorId(commitmentId) : undefined
-          }
+          aria-invalid={Boolean(commitmentError)}
+          aria-describedby={commitmentError ? fieldErrorId(commitmentId) : undefined}
           rows={2}
           disabled={disabled}
           placeholder="Acción concreta que se compromete a realizar el docente"
         />
 
-        <FieldError fieldId={commitmentId} message={invalidFields.get(commitmentId)} />
+        <FieldError fieldId={commitmentId} message={commitmentError} />
       </div>
 
       <div className="flex flex-wrap items-end gap-3">
@@ -293,12 +317,12 @@ function CommitmentRow({
                 })
               }
               onBlur={() => onFieldBlur(targetId)}
-              aria-invalid={invalidFields.has(targetId)}
-              aria-describedby={invalidFields.has(targetId) ? fieldErrorId(targetId) : undefined}
+              aria-invalid={Boolean(targetError)}
+              aria-describedby={targetError ? fieldErrorId(targetId) : undefined}
               disabled={disabled}
             />
 
-            <FieldError fieldId={targetId} message={invalidFields.get(targetId)} />
+            <FieldError fieldId={targetId} message={targetError} />
           </div>
         )}
 
@@ -362,4 +386,4 @@ function CommitmentRow({
       )}
     </li>
   )
-}
+})
