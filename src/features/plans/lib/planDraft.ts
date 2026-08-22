@@ -15,30 +15,24 @@ import { STUDENT_COMMENTS_ASPECT } from './commentGroups'
 import { courseKey, SUBJECT_ALL } from './indicatorMatrix'
 import { indicatorKey } from './planStatus'
 
-let draftSeq = 0
-
-function nextKey(): string {
-  draftSeq += 1
-  return `draft-${draftSeq}`
-}
-
 /**
- * Moves the key counter past the ones already in use.
+ * Key of a drafted row, unique for as long as the form is open.
  *
- * The counter starts over on every page load, so commitments restored from a
- * saved draft come back holding keys this module would hand out again — and two
- * rows sharing a key means editing one edits the other. Call this with whatever
- * is seeded in before the form can add anything of its own.
- *
- * @example
- * reserveDraftKeys(draft.items) // keys 'draft-1'…'draft-4' → next is 'draft-5'
+ * Random and not a running counter: a counter starts over on every page load,
+ * so a commitment restored from a saved draft came back holding a key the next
+ * one would be handed again — and two rows sharing a key means editing one
+ * edits the other. Guarding against that took a reservation pass over the
+ * restored rows, run from the middle of a render; drawing the key out of thin
+ * air removes both.
  */
-export function reserveDraftKeys(items: { key: string }[]): void {
-  for (const item of items) {
-    const match = /^draft-(\d+)$/.exec(item.key)
-
-    if (match) draftSeq = Math.max(draftSeq, Number(match[1]))
+function nextKey(): string {
+  // `randomUUID` is only there in a secure context. The app is served over one,
+  // but a plain-http preview must not lose the form over it.
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return `draft-${crypto.randomUUID()}`
   }
+
+  return `draft-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
 }
 
 /**
