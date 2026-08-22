@@ -156,6 +156,77 @@ export interface PlanEvidenceRequest {
   updated_at: string | null
 }
 
+/**
+ * What the following semester says about a plan.
+ *
+ * The plan is closed when the Formato 3 is signed, before the grades that
+ * would prove the teacher improved exist. This arrives afterwards, when the
+ * evaluation of the verification period is uploaded, and never rewrites the
+ * closing the director signed: `result` is what the grades say, `Plan.status`
+ * is what was signed.
+ */
+export type VerificationResult = 'MEJORO' | 'NO_MEJORO' | 'SIN_DATOS'
+
+/** The same indicator in one subject of the verification period. */
+export interface PlanVerificationCourse {
+  id: number
+  academic_group_id: number | null
+  course_name: string | null
+  course_code: string | null
+  group_name: string | null
+  result_value: number | null
+  met: boolean
+}
+
+/** One agreed target, measured again. */
+export interface PlanVerificationItem {
+  id: number
+  item_id: number | null
+  target_type: TargetType
+  target_ref: string | null
+  target_value: number | null
+  /**
+   * The teacher's average over all their groups of the period — the figure the
+   * acta agreed on. `null` when that period has no grades for the indicator,
+   * which leaves `met` null instead of failing the commitment for missing data.
+   */
+  result_value: number | null
+  met: boolean | null
+  /** Per subject, so a shortcoming that moved to another course is still seen. */
+  courses: PlanVerificationCourse[]
+}
+
+/**
+ * A student comment that brings back the complaint a qualitative commitment
+ * was meant to settle.
+ *
+ * `is_alert` is the ALTO ones: MEDIO is kept as context so the trend is not
+ * lost, but it never raises an alert.
+ */
+export interface PlanVerificationComment {
+  id: number
+  item_id: number | null
+  comment_id: number
+  original_text: string | null
+  pedagogical_category_id: number | null
+  category_name: string | null
+  risk_level_name: string | null
+  is_alert: boolean
+}
+
+export interface PlanVerification {
+  id: number
+  plan_id: number
+  period_id: number
+  period_code: string | null
+  result: VerificationResult
+  scores_verified_at: string | null
+  comments_verified_at: string | null
+  items: PlanVerificationItem[]
+  comment_findings: PlanVerificationComment[]
+  created_at: string | null
+}
+
 export interface Plan {
   id: number
   teacher_id: number
@@ -190,6 +261,8 @@ export interface Plan {
   program_director_observations: string | null
   has_acta: boolean
   progress: number
+  /** Null until the verification period's grades are uploaded. */
+  verification: PlanVerification | null
   items: PlanItem[]
   checkpoints: PlanCheckpoint[]
   evidences: PlanEvidence[]
