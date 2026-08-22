@@ -1,7 +1,7 @@
 import { ShieldAlert } from 'lucide-react'
 import { type ReactNode, Suspense } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
-import { Link, useLocation } from 'wouter'
+import { Link, Redirect, useLocation, useSearchParams } from 'wouter'
 import AppLayoutSkeleton from '@/components/skeletons/AppLayoutSkeleton'
 import { RouteError } from './RouteError'
 import { RouteFallback } from './RouteFallback'
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { isAuthorizedForPage } from '@/config/security'
 import { UserNotAuth } from '@/features/auth'
+import { nextParamFor } from '@/features/auth/lib/nextPath'
 import useAuth from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
 import { AppHeader, type AppHeaderProps } from './AppHeader'
@@ -29,13 +30,17 @@ export function AppLayout({
   title,
 }: AppLayoutProps) {
   const [location] = useLocation()
-  const { isLoading, selectedRole, loggedIn } = useAuth()
+  const [searchParams] = useSearchParams()
+  const { isLoading, selectedRole, loggedIn, user } = useAuth()
 
   if (isLoading) {
     return <AppLayoutSkeleton />
   }
 
-  if (!isLoading && !loggedIn) {
+  if (!loggedIn) {
+    if (!user) {
+      return <Redirect to={`/login?${nextParamFor(location, searchParams.toString())}`} replace />
+    }
     return <UserNotAuth />
   }
 

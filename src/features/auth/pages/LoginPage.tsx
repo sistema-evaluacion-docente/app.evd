@@ -1,25 +1,34 @@
 import { useEffect } from 'react'
+import { useSearchParams } from 'wouter'
 
 import AppLayoutSkeleton from '@/components/skeletons/AppLayoutSkeleton'
 import { useNavigate } from '@/hooks/useNavigate'
 import { LoginForm } from '../components/LoginForm'
+import { NEXT_PARAM, resolveNextPath } from '../lib/nextPath'
 import { useAuthStore } from '../store/useAuthStore'
 
 /**
  * Login page: full-viewport centered composition with a soft layered
- * background. Shows a skeleton while the auth session is being restored and
- * redirects to the home page once the user is authenticated.
+ * background. Shows a skeleton while the auth session is being restored and,
+ * once the user is authenticated, sends them on to wherever they were headed —
+ * the plan in an email link, say — or to the dashboard when they just came here
+ * to sign in. `resolveNextPath` is what decides which, and refuses anything it
+ * cannot vouch for.
  */
 export default function LoginPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const isLoading = useAuthStore((s) => s.isLoading)
   const loggedIn = useAuthStore((s) => s.loggedIn)
+  const selectedRole = useAuthStore((s) => s.selectedRole)
+
+  const next = searchParams.get(NEXT_PARAM)
 
   useEffect(() => {
     if (loggedIn) {
-      navigate('/home')
+      navigate(resolveNextPath(next, selectedRole))
     }
-  }, [loggedIn, navigate])
+  }, [loggedIn, navigate, next, selectedRole])
 
   if (isLoading) {
     return <AppLayoutSkeleton />
