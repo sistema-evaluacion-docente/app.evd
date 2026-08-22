@@ -1,7 +1,6 @@
-import { Building2, Info, Undo2 } from 'lucide-react'
+import { Building2, Info } from 'lucide-react'
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
 import type { Setting } from '@/features/admin'
 import { isDepartmentOwnedSetting } from '@/features/admin'
 
@@ -22,11 +21,7 @@ interface SuggestedActionsScopeNoticeProps {
  * @example
  * <SuggestedActionsScopeNotice setting={setting} onReset={reset} />
  */
-export function SuggestedActionsScopeNotice({
-  setting,
-  onReset,
-  isResetting = false,
-}: SuggestedActionsScopeNoticeProps) {
+export function SuggestedActionsScopeNotice({ setting }: SuggestedActionsScopeNoticeProps) {
   if (setting && isDepartmentOwnedSetting(setting)) {
     return (
       <Alert className="mb-4">
@@ -37,18 +32,6 @@ export function SuggestedActionsScopeNotice({
         <AlertDescription>
           Estas acciones se ofrecen al redactar los planes de mejoramiento de tu departamento.
         </AlertDescription>
-
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="mt-3 w-fit"
-          onClick={onReset}
-          disabled={isResetting}
-        >
-          <Undo2 aria-hidden="true" className="size-4" />
-          {isResetting ? 'Restaurando...' : 'Volver a las institucionales'}
-        </Button>
       </Alert>
     )
   }
