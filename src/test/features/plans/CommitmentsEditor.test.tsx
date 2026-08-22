@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
 import { CommitmentsEditor } from '@/features/plans/components/CommitmentsEditor'
-import { buildBlankDraft, reserveDraftKeys } from '@/features/plans/lib/planDraft'
+import { buildBlankDraft } from '@/features/plans/lib/planDraft'
 import type { DraftItem, PlanAspect } from '@/features/plans/types'
 
 const ASPECTS: PlanAspect[] = [
@@ -155,23 +155,20 @@ describe('CommitmentsEditor', () => {
   })
 })
 
-describe('reserveDraftKeys', () => {
-  it('hands out keys past the ones a restored draft already holds', () => {
-    // A reload restarts the counter, so a restored 'draft-9000' would otherwise
-    // be handed out a second time and two rows would edit as one.
-    reserveDraftKeys([{ key: 'draft-9000' }, { key: 'draft-42' }, { key: 'group:12' }])
+describe('claves de los compromisos en borrador', () => {
+  it('no repite una clave', () => {
+    // Dos filas con la misma clave se editan como una sola.
+    const keys = new Set(Array.from({ length: 500 }, () => buildBlankDraft(1).key))
 
-    expect(buildBlankDraft(1).key).toBe('draft-9001')
+    expect(keys.size).toBe(500)
   })
 
-  it('ignores keys that were never ours to count', () => {
-    const before = Number(/^draft-(\d+)$/.exec(buildBlankDraft(1).key)?.[1])
+  it('no choca con las que trae un borrador guardado', () => {
+    // Recargar la página no puede volver a repartir una clave que un compromiso
+    // restaurado ya tiene — incluidas las del contador que se usaba antes.
+    const restored = ['draft-1', 'draft-42', 'draft-9000']
+    const fresh = Array.from({ length: 200 }, () => buildBlankDraft(1).key)
 
-    reserveDraftKeys([{ key: 'code:MAT101::A' }, { key: 'manual-2-1699999999' }])
-
-    const after = Number(/^draft-(\d+)$/.exec(buildBlankDraft(1).key)?.[1])
-
-    // Nothing there was a draft key, so the counter just carries on forward.
-    expect(after).toBeGreaterThan(before)
+    expect(fresh.some((key) => restored.includes(key))).toBe(false)
   })
 })

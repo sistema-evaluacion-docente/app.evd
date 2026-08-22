@@ -10,10 +10,16 @@ import type { Plan } from '@/features/plans/types'
 
 vi.mock('@/features/plans/api', () => ({ useGetPlans: vi.fn() }))
 
-let roles = ['DIRECTOR DE DEPARTAMENTO']
+/** The role the director is signed in as, which is what gates the actions. */
+let selectedRole = 'DIRECTOR DE DEPARTAMENTO'
 
 vi.mock('@/features/auth', () => ({
-  useAuthStore: (selector: (state: unknown) => unknown) => selector({ user: { roles } }),
+  ROLE: {
+    ADMIN: 'ADMIN',
+    TEACHER: 'DOCENTE',
+    DEPARTMENT_DIRECTOR: 'DIRECTOR DE DEPARTAMENTO',
+  },
+  useAuthStore: (selector: (state: unknown) => unknown) => selector({ selectedRole }),
 }))
 
 const PLAN = {
@@ -45,7 +51,7 @@ function renderAction({
 }
 
 afterEach(() => {
-  roles = ['DIRECTOR DE DEPARTAMENTO']
+  selectedRole = 'DIRECTOR DE DEPARTAMENTO'
   vi.clearAllMocks()
 })
 
@@ -80,7 +86,7 @@ describe('TeacherPlanAction', () => {
   })
 
   it('shows nothing at all to a teacher looking at a profile', () => {
-    roles = ['DOCENTE']
+    selectedRole = 'DOCENTE'
     renderAction()
 
     expect(screen.queryByRole('button', { name: 'Ver historial' })).not.toBeInTheDocument()

@@ -50,6 +50,11 @@ vi.mock('sonner', () => ({
 }))
 
 vi.mock('@/features/auth', () => ({
+  ROLE: {
+    ADMIN: 'ADMIN',
+    TEACHER: 'DOCENTE',
+    DEPARTMENT_DIRECTOR: 'DIRECTOR DE DEPARTAMENTO',
+  },
   useAuthStore: (selector: (state: unknown) => unknown) =>
     selector({ user: { department_name: 'Ingeniería de Sistemas' } }),
 }))
