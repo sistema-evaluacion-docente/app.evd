@@ -21,8 +21,6 @@ import type { CloseResult, Plan } from '../types'
 
 interface PlanClosureProps {
   plan: Plan
-  /** Closing a plan belongs to the director who followed it up. */
-  canManage: boolean
 }
 
 const RESULT_OPTIONS: { value: CloseResult; label: string; hint: string }[] = [
@@ -48,17 +46,20 @@ const RESULT_OPTIONS: { value: CloseResult; label: string; hint: string }[] = [
  * exist yet at this point: that verification runs on its own once those grades
  * are uploaded, and never gates the closing.
  *
+ * Closing a plan belongs to the director who followed it up, so the caller is
+ * the one that decides whether to draw it at all — it used to take a
+ * `canManage` flag and answer it by rendering nothing, which meant mounting a
+ * dialog, its state and its mutation for a teacher who could never open it.
+ *
  * @example
- * <PlanClosure plan={plan} canManage={isDirector} />
+ * {canManage && <PlanClosure plan={plan} />}
  */
-export function PlanClosure({ plan, canManage }: PlanClosureProps) {
+export function PlanClosure({ plan }: PlanClosureProps) {
   const [open, setOpen] = useState(false)
   const [result, setResult] = useState<CloseResult | null>(null)
   const [reason, setReason] = useState('')
 
   const closePlan = useClosePlan(plan.id)
-
-  if (!canManage) return null
 
   const followup = plan.documents.find((entry) => entry.format_type === 'FORMATO_3')
   const signedFollowup = Boolean(followup?.has_signed)
