@@ -1,4 +1,4 @@
-import { type SubmitEvent, useMemo, useState } from 'react'
+import { type SubmitEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useRoute, useSearchParams } from 'wouter'
 import { toast } from 'sonner'
 import { AlertTriangle, Cloud, Layers, Plus, RotateCcw, Save, X } from 'lucide-react'
@@ -82,7 +82,6 @@ import {
   planCoursesToDrafts,
   planItemsToDrafts,
   pruneCourses,
-  reserveDraftKeys,
   subjectOfComment,
   type IndicatorPick,
 } from '../lib/planDraft'
@@ -255,10 +254,6 @@ export default function PlanFormPage() {
         }
 
   const seeded: PlanFormInitial = restored ? { ...initial, ...restoredFields(restored) } : initial
-
-  // The key counter starts over on every load; without this a commitment added
-  // after restoring would be handed a key a restored one already holds.
-  if (restored) reserveDraftKeys([...seeded.items, ...seeded.courses])
 
   return (
     <PlanForm
@@ -492,24 +487,46 @@ function PlanForm({
   const pickerScope =
     workbench.effectiveSubjectKey === SUBJECT_ALL ? null : workbench.effectiveSubjectKey
 
+  /**
+   * Keyed on the ids themselves, not on `items`: the array is rebuilt on every
+   * keystroke inside a commitment, and a fresh `Set` on each of those would
+   * re-render the whole picker for a change it does not care about.
+   */
+  const selectionKey = items
+    .map((item) =>
+      isEdit && item.target_ref != null
+        ? indicatorSelectionId(pickerScope, item.target_type, item.target_ref)
+        : item.selection_id,
+    )
+    .join('\u0000')
+
   const selectedIds = useMemo(
-    () =>
-      new Set(
-        items.map((item) =>
-          isEdit && item.target_ref != null
-            ? indicatorSelectionId(pickerScope, item.target_type, item.target_ref)
-            : item.selection_id,
-        ),
-      ),
-    [items, isEdit, pickerScope],
+    () => new Set(selectionKey ? selectionKey.split('\u0000') : []),
+    [selectionKey],
   )
 
+  /**
+   * The commitments as they stand right now, for the handlers below.
+   *
+   * Those are handed to memoised children, so their identity has to survive a
+   * keystroke inside a commitment — which is exactly when `items` changes.
+   * Written after the commit and only ever read from an event, so what a
+   * handler sees is always the array the screen was last painted from.
+   */
+  const itemsRef = useRef(items)
+
+  useEffect(() => {
+    itemsRef.current = items
+  }, [items])
+
   /** Identity a drafted commitment is matched by when toggling it off. */
-  function matchKeyOf(item: DraftItem): string {
-    return isEdit && item.target_ref != null
-      ? indicatorKey(item.target_type, item.target_ref)
-      : item.selection_id
-  }
+  const matchKeyOf = useCallback(
+    (item: DraftItem): string =>
+      isEdit && item.target_ref != null
+        ? indicatorKey(item.target_type, item.target_ref)
+        : item.selection_id,
+    [isEdit],
+  )
 
   function resetPicking() {
     setItems([])
@@ -517,41 +534,51 @@ function PlanForm({
     setSubjectKey(SUBJECT_ALL)
   }
 
-  function toggleIndicator(pick: IndicatorPick) {
-    const subject = workbench.activeSubject
-    const id = indicatorSelectionId(subject?.key ?? null, pick.target_type, pick.target_ref)
-    const matchKey = isEdit ? indicatorKey(pick.target_type, pick.target_ref) : id
+  const toggleIndicator = useCallback(
+    (pick: IndicatorPick) => {
+      const subject = workbench.activeSubject
+      const id = indicatorSelectionId(subject?.key ?? null, pick.target_type, pick.target_ref)
+      const matchKey = isEdit ? indicatorKey(pick.target_type, pick.target_ref) : id
+      const current = itemsRef.current
 
-    if (items.some((item) => matchKeyOf(item) === matchKey)) {
-      const next = items.filter((item) => matchKeyOf(item) !== matchKey)
+      if (current.some((item) => matchKeyOf(item) === matchKey)) {
+        const next = current.filter((item) => matchKeyOf(item) !== matchKey)
 
-      setItems(next)
-      setCourses((current) => pruneCourses(current, next))
-      return
-    }
+        setItems(next)
+        setCourses((courses) => pruneCourses(courses, next))
+        return
+      }
 
-    setItems((current) => [...current, buildIndicatorDraft(pick, subject)])
-    // Picked at teacher level, the commitment covers every asignatura he taught
-    // — not only the ones the "solo indicadores bajos" filter left standing.
-    setCourses((current) => mergeCourses(current, coursesOfSubject(subject, workbench.allSubjects)))
-  }
+      setItems((items) => [...items, buildIndicatorDraft(pick, subject)])
+      // Picked at teacher level, the commitment covers every asignatura he taught
+      // — not only the ones the "solo indicadores bajos" filter left standing.
+      setCourses((courses) =>
+        mergeCourses(courses, coursesOfSubject(subject, workbench.allSubjects)),
+      )
+    },
+    [isEdit, matchKeyOf, workbench.activeSubject, workbench.allSubjects],
+  )
 
-  function toggleComment(comment: TeacherComment) {
-    const id = commentSelectionId(comment.id)
+  const toggleComment = useCallback(
+    (comment: TeacherComment) => {
+      const id = commentSelectionId(comment.id)
+      const current = itemsRef.current
 
-    if (items.some((item) => item.selection_id === id)) {
-      const next = items.filter((item) => item.selection_id !== id)
+      if (current.some((item) => item.selection_id === id)) {
+        const next = current.filter((item) => item.selection_id !== id)
 
-      setItems(next)
-      setCourses((current) => pruneCourses(current, next))
-      return
-    }
+        setItems(next)
+        setCourses((courses) => pruneCourses(courses, next))
+        return
+      }
 
-    const subject = subjectOfComment(comment, workbench.allSubjects)
+      const subject = subjectOfComment(comment, workbench.allSubjects)
 
-    setItems((current) => [...current, buildCommentDraft(comment, subject)])
-    setCourses((current) => mergeCourses(current, coursesOfSubject(subject, [])))
-  }
+      setItems((items) => [...items, buildCommentDraft(comment, subject)])
+      setCourses((courses) => mergeCourses(courses, coursesOfSubject(subject, [])))
+    },
+    [workbench.allSubjects],
+  )
 
   function addQualitative(aspect: number) {
     setItems((current) => [...current, buildBlankDraft(aspect)])
@@ -562,16 +589,16 @@ function PlanForm({
     setCourses((current) => mergeCourses(current, coursesOfSubject(null, workbench.allSubjects)))
   }
 
-  function patchItem(key: string, patch: Partial<DraftItem>) {
+  const patchItem = useCallback((key: string, patch: Partial<DraftItem>) => {
     setItems((current) => current.map((item) => (item.key === key ? { ...item, ...patch } : item)))
-  }
+  }, [])
 
-  function removeItem(key: string) {
-    const next = items.filter((item) => item.key !== key)
+  const removeItem = useCallback((key: string) => {
+    const next = itemsRef.current.filter((item) => item.key !== key)
 
     setItems(next)
-    setCourses((current) => pruneCourses(current, next))
-  }
+    setCourses((courses) => pruneCourses(courses, next))
+  }, [])
 
   /**
    * Adds one of the asignaturas the teacher actually taught, code and group
@@ -681,9 +708,9 @@ function PlanForm({
     [errors, showAllErrors, touched],
   )
 
-  function markTouched(id: string) {
+  const markTouched = useCallback((id: string) => {
     setTouched((current) => (current.has(id) ? current : new Set(current).add(id)))
-  }
+  }, [])
 
   /** Where the teacher select stands, so the trigger can say it out loud. */
   const noPeriodYet = periodId == null
