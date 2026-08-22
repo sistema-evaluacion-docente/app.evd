@@ -27,3 +27,4 @@ dist-ssr
 
 # Docker
 .env.local
+.claude
