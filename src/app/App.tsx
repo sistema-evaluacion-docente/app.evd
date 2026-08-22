@@ -35,6 +35,7 @@ import {
   PlansPage,
 } from '@/features/plans'
 import { SubjectComparisonPage, SubjectsPage, SubjectTeacherDetailPage } from '@/features/subjects'
+import { SuggestedActionsPage } from '@/features/suggested-actions'
 import { TeacherDetailPage, TeachersPage, TeacherUploadPage } from '@/features/teachers'
 import { UsersPage } from '@/features/users'
 
@@ -157,6 +158,12 @@ function App() {
         <Route path="/planes/:id">
           <AppLayout>
             <PlanDetailPage />
+          </AppLayout>
+        </Route>
+
+        <Route path="/acciones">
+          <AppLayout>
+            <SuggestedActionsPage />
           </AppLayout>
         </Route>
 

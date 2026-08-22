@@ -1,11 +1,7 @@
-import { useMemo } from 'react'
-import { ChevronRight, Lightbulb, Trash2 } from 'lucide-react'
-
 import { DimensionDot } from '@/components/common/DimensionDot'
 import { Required } from '@/components/common/Required'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -16,12 +12,22 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { Trash2 } from 'lucide-react'
+import { useMemo } from 'react'
+
+import type { SuggestedAction } from '@/features/suggested-actions/types'
 import { commitmentFieldId, isMeasurable, itemsInPaintedOrder } from '../lib/planValidation'
 import type { DraftItem, PlanAspect } from '../types'
+import { CommitmentSuggestions } from './CommitmentSuggestions'
 
 interface CommitmentsEditorProps {
   items: DraftItem[]
   aspects: PlanAspect[]
+  /**
+   * The department's default improvement actions (`/acciones`). Offered on the
+   * commitments whose aspect they were written for.
+   */
+  defaultActions?: SuggestedAction[]
   onChange: (key: string, patch: Partial<DraftItem>) => void
   onRemove: (key: string) => void
   /** Ids of the fields to paint red; the page decides when one enters the set. */
@@ -48,6 +54,7 @@ interface CommitmentsEditorProps {
 export function CommitmentsEditor({
   items,
   aspects,
+  defaultActions = [],
   onChange,
   onRemove,
   invalidFields,
@@ -64,6 +71,22 @@ export function CommitmentsEditor({
     () => new Map(itemsInPaintedOrder(items, aspects).map((item, index) => [item.key, index + 1])),
     [items, aspects],
   )
+
+  const actionsByAspect = useMemo(() => {
+    const grouped = new Map<number, SuggestedAction[]>()
+
+    for (const action of defaultActions) {
+      const bucket = grouped.get(action.aspect)
+
+      if (bucket) bucket.push(action)
+      else grouped.set(action.aspect, [action])
+    }
+
+    return grouped
+  }, [defaultActions])
+
+  const actionsFor = (item: DraftItem) =>
+    item.aspect == null ? [] : (actionsByAspect.get(item.aspect) ?? [])
 
   return (
     <div className="space-y-4">
@@ -92,6 +115,7 @@ export function CommitmentsEditor({
                   invalidFields={invalidFields}
                   onFieldBlur={onFieldBlur}
                   disabled={disabled}
+                  departmentActions={actionsFor(item)}
                 />
               ))}
           </ul>
@@ -121,6 +145,7 @@ export function CommitmentsEditor({
                 invalidFields={invalidFields}
                 onFieldBlur={onFieldBlur}
                 disabled={disabled}
+                departmentActions={actionsFor(item)}
                 showAspectPicker
                 aspects={aspects}
               />
@@ -140,6 +165,7 @@ function CommitmentRow({
   invalidFields,
   onFieldBlur,
   disabled,
+  departmentActions,
   showAspectPicker = false,
   aspects = [],
 }: {
@@ -151,6 +177,7 @@ function CommitmentRow({
   invalidFields: ReadonlySet<string>
   onFieldBlur: (id: string) => void
   disabled: boolean
+  departmentActions: SuggestedAction[]
   showAspectPicker?: boolean
   aspects?: PlanAspect[]
 }) {
@@ -295,37 +322,11 @@ function CommitmentRow({
         )}
       </div>
 
-      {item.suggestions.length > 0 && (
-        <Collapsible className="text-muted-foreground text-xs">
-          <CollapsibleTrigger className="group flex cursor-pointer items-center gap-1.5">
-            <ChevronRight
-              aria-hidden="true"
-              className="size-3.5 shrink-0 transition-transform group-data-panel-open:rotate-90"
-            />
-            <Lightbulb className="size-3.5" aria-hidden="true" />
-            Acciones sugeridas ({item.suggestions.length})
-          </CollapsibleTrigger>
-
-          <CollapsibleContent>
-            <ul className="mt-1.5 space-y-1 pl-5">
-              {item.suggestions.map((suggestion) => (
-                <li key={suggestion} className="list-disc">
-                  <Button
-                    type="button"
-                    variant="link"
-                    size="sm"
-                    disabled={disabled}
-                    className="h-auto justify-start px-0 py-0 text-left text-xs font-normal whitespace-normal"
-                    onClick={() => onChange(item.key, { commitment: suggestion })}
-                  >
-                    {suggestion}
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          </CollapsibleContent>
-        </Collapsible>
-      )}
+      <CommitmentSuggestions
+        departmentActions={departmentActions}
+        onPick={(commitment) => onChange(item.key, { commitment })}
+        disabled={disabled}
+      />
 
       {item.comment_previews.length > 0 && (
         <div className="border-border space-y-1 border-l-2 pl-3">

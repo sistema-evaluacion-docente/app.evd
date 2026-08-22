@@ -37,6 +37,10 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { useAuthStore } from '@/features/auth'
+// Deep-imported from the feature's `api` barrel rather than its root on
+// purpose: `features/suggested-actions` imports `features/plans` for the
+// aspect catalogue, so going through the barrel would close an import cycle.
+import { useGetSuggestedActions } from '@/features/suggested-actions/api'
 import type { TeacherComment } from '@/features/teachers/types'
 import formatDate, { todayISO } from '@/lib/formatDate'
 import { cn } from '@/lib/utils'
@@ -401,6 +405,11 @@ function PlanForm({
   const [showAllErrors, setShowAllErrors] = useState(false)
 
   const aspects = useMemo(() => indicators.aspects ?? [], [indicators])
+
+  // The department's own default wordings, offered inside each commitment.
+  // Never blocks the page: a department that has set none simply gets no
+  // suggestions, and every field is still written by hand as before.
+  const { actions: defaultActions } = useGetSuggestedActions()
 
   /** The period the caller came from, else the most recent evaluated one. */
   const periodId = useMemo(() => {
@@ -1074,6 +1083,7 @@ function PlanForm({
           <CommitmentsEditor
             items={items}
             aspects={aspects}
+            defaultActions={defaultActions}
             onChange={patchItem}
             onRemove={removeItem}
             invalidFields={invalidFields}

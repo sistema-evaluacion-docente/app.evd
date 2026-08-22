@@ -5,6 +5,12 @@ import { getToken } from '@/features/auth'
 import { ApiError, extractApiErrorMessage } from '@/lib/apiError'
 import { API_URL } from '.'
 
+declare module 'axios' {
+  export interface AxiosRequestConfig {
+    skipErrorToast?: boolean
+  }
+}
+
 const api = axios.create({
   baseURL: API_URL,
   headers: {
@@ -34,7 +40,7 @@ api.interceptors.response.use(
     if (body && typeof body === 'object' && (body as Record<string, unknown>).status === 'error') {
       const message = extractApiErrorMessage(body) || 'Ocurrió un error inesperado'
 
-      toast.error(message)
+      if (!response.config.skipErrorToast) toast.error(message)
 
       return Promise.reject(
         new ApiError(message, {
@@ -56,7 +62,7 @@ api.interceptors.response.use(
       message = raw && raw !== 'Network Error' ? raw : 'Ocurrió un error inesperado'
     }
 
-    toast.error(message)
+    if (!error?.config?.skipErrorToast) toast.error(message)
 
     return Promise.reject(
       new ApiError(message, {

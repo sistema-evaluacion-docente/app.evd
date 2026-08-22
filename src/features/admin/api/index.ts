@@ -1,11 +1,19 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  keepPreviousData,
+  queryOptions,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 
 import type { ResponseAPI } from '@/@types/Response'
 import api from '@/config/axios'
+import { ApiError } from '@/lib/apiError'
 import type {
   AuditLog,
   AuditLogDetail,
   AuditLogParams,
+  CreateSettingPayload,
   Setting,
   SettingHistory,
   SettingHistoryParams,
@@ -35,8 +43,35 @@ async function getSettings(params: SettingParams): Promise<ResponseAPI<Setting[]
   const query: Record<string, unknown> = { page: params.page, limit: params.limit }
 
   if (params.search) query['search'] = params.search
+  if (params.value_type) query['value_type'] = params.value_type
+  if (params.department_id != null) query['department_id'] = params.department_id
+  if (params.include_global != null) query['include_global'] = params.include_global
 
   return api.get('/settings/', { params: query })
+}
+
+async function getSettingByKey(key: string, departmentId?: number): Promise<Setting | null> {
+  try {
+    const response: ResponseAPI<Setting> = await api.get(
+      `/settings/by-key/${encodeURIComponent(key)}`,
+      {
+        params: departmentId != null ? { department_id: departmentId } : undefined,
+        skipErrorToast: true,
+      },
+    )
+
+    return response.data
+  } catch (error) {
+    // A key nobody has configured yet is the starting state of a settings
+    // screen, not a failure — every other status still reaches the caller.
+    if (error instanceof ApiError && error.status === 404) return null
+
+    throw error
+  }
+}
+
+async function createSetting(payload: CreateSettingPayload): Promise<ResponseAPI<Setting>> {
+  return api.post('/settings/', payload)
 }
 
 async function updateSetting(
@@ -68,6 +103,30 @@ export const auditLogsKeys = {
 export const settingsKeys = {
   all: ['settings'] as const,
   lists: () => [...settingsKeys.all, 'list'] as const,
+  byKey: (key: string, departmentId?: number) =>
+    [...settingsKeys.all, 'by-key', key, departmentId ?? null] as const,
+}
+
+/**
+ * Query options for the setting in effect for a key — the department's own
+ * value when it has one, the institutional value otherwise, and `null` when
+ * neither exists yet (`GET /settings/by-key/{key}`). A DIRECTOR is pinned to
+ * their own department, so `departmentId` is only meaningful for an ADMIN.
+ *
+ * Shared as options rather than a hook so the same fetch can be awaited
+ * imperatively (`queryClient.fetchQuery`) before a write, which is how a
+ * caller checks nobody else changed the value in the meantime.
+ *
+ * @example
+ * const { data: setting } = useQuery(settingByKeyQueryOptions('improvement_plan.suggested_actions'));
+ */
+export function settingByKeyQueryOptions(key: string, departmentId?: number) {
+  return queryOptions({
+    queryKey: settingsKeys.byKey(key, departmentId),
+    queryFn: () => getSettingByKey(key, departmentId),
+    staleTime: 60_000,
+    retry: false,
+  })
 }
 
 /** Query-key factory for a single setting's change history. */
@@ -146,16 +205,63 @@ export function useGetSettings({
   page = 1,
   limit = 10,
   search = '',
+  valueType,
+  departmentId,
+  includeGlobal,
 }: {
   page?: number
   limit?: number
   search?: string
+  valueType?: string
+  departmentId?: number
+  includeGlobal?: boolean
 } = {}) {
   return useQuery({
-    queryKey: [...settingsKeys.lists(), { page, limit, search }],
-    queryFn: () => getSettings({ page, limit, search }),
+    queryKey: [
+      ...settingsKeys.lists(),
+      { page, limit, search, valueType, departmentId, includeGlobal },
+    ],
+    queryFn: () =>
+      getSettings({
+        page,
+        limit,
+        search,
+        value_type: valueType,
+        department_id: departmentId,
+        include_global: includeGlobal,
+      }),
     staleTime: 60_000,
     placeholderData: keepPreviousData,
+  })
+}
+
+/**
+ * Resolves the setting in effect for a key — see `settingByKeyQueryOptions`.
+ * `data` is `null` when the key has never been configured.
+ *
+ * @example
+ * const { data: setting, isPending } = useGetSettingByKey('improvement_plan.suggested_actions');
+ */
+export function useGetSettingByKey(key: string, departmentId?: number) {
+  return useQuery(settingByKeyQueryOptions(key, departmentId))
+}
+
+/**
+ * Creates a setting (`POST /settings/`). A DIRECTOR uses it to override an
+ * institutional value with one of their own — the backend attaches their
+ * department. Invalidates the settings list on success.
+ *
+ * @example
+ * const { mutate: createSetting } = useCreateSetting();
+ * createSetting({ key: 'max_hours', value: '40', value_type: 'STRING' });
+ */
+export function useCreateSetting() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: CreateSettingPayload) => createSetting(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: settingsKeys.all })
+    },
   })
 }
 
@@ -173,7 +279,7 @@ export function useUpdateSetting() {
     mutationFn: ({ settingId, payload }: { settingId: number; payload: UpdateSettingPayload }) =>
       updateSetting(settingId, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: settingsKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: settingsKeys.all })
     },
   })
 }
@@ -191,7 +297,7 @@ export function useDeleteSetting() {
   return useMutation({
     mutationFn: (settingId: number) => deleteSetting(settingId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: settingsKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: settingsKeys.all })
     },
   })
 }
