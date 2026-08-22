@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { ChevronRight, Lightbulb, Trash2 } from 'lucide-react'
 
+import { FieldError } from '@/components/common/FieldError'
 import { Required } from '@/components/common/Required'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -15,6 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { fieldErrorId } from '@/lib/fieldErrorId'
 import { commitmentFieldId, isMeasurable, itemsInPaintedOrder } from '../lib/planValidation'
 import type { DraftItem, PlanAspect } from '../types'
 
@@ -23,8 +25,12 @@ interface CommitmentsEditorProps {
   aspects: PlanAspect[]
   onChange: (key: string, patch: Partial<DraftItem>) => void
   onRemove: (key: string) => void
-  /** Ids of the fields to paint red; the page decides when one enters the set. */
-  invalidFields: ReadonlySet<string>
+  /**
+   * The fields to paint red, each against what is missing from it. The page
+   * decides when one enters the map; the message is what the field says out
+   * loud once it is in there.
+   */
+  invalidFields: ReadonlyMap<string, string>
   /** Leaving a required field empty is what makes it red the first time. */
   onFieldBlur: (id: string) => void
   disabled?: boolean
@@ -141,7 +147,7 @@ function CommitmentRow({
   number: number
   onChange: (key: string, patch: Partial<DraftItem>) => void
   onRemove: (key: string) => void
-  invalidFields: ReadonlySet<string>
+  invalidFields: ReadonlyMap<string, string>
   onFieldBlur: (id: string) => void
   disabled: boolean
   showAspectPicker?: boolean
@@ -189,6 +195,7 @@ function CommitmentRow({
               id={aspectId}
               className="bg-background w-full max-w-md"
               aria-invalid={invalidFields.has(aspectId)}
+              aria-describedby={invalidFields.has(aspectId) ? fieldErrorId(aspectId) : undefined}
               onBlur={() => onFieldBlur(aspectId)}
             >
               <SelectValue placeholder="Elige el aspecto…">
@@ -208,6 +215,8 @@ function CommitmentRow({
               ))}
             </SelectContent>
           </Select>
+
+          <FieldError fieldId={aspectId} message={invalidFields.get(aspectId)} />
         </div>
       )}
 
@@ -229,10 +238,15 @@ function CommitmentRow({
           onChange={(event) => onChange(item.key, { description: event.target.value })}
           onBlur={() => onFieldBlur(descriptionId)}
           aria-invalid={invalidFields.has(descriptionId)}
+          aria-describedby={
+            invalidFields.has(descriptionId) ? fieldErrorId(descriptionId) : undefined
+          }
           rows={2}
           disabled={disabled}
           placeholder="Describe la situación detectada"
         />
+
+        <FieldError fieldId={descriptionId} message={invalidFields.get(descriptionId)} />
       </div>
 
       <div className="space-y-1.5">
@@ -246,10 +260,15 @@ function CommitmentRow({
           onChange={(event) => onChange(item.key, { commitment: event.target.value })}
           onBlur={() => onFieldBlur(commitmentId)}
           aria-invalid={invalidFields.has(commitmentId)}
+          aria-describedby={
+            invalidFields.has(commitmentId) ? fieldErrorId(commitmentId) : undefined
+          }
           rows={2}
           disabled={disabled}
           placeholder="Acción concreta que se compromete a realizar el docente"
         />
+
+        <FieldError fieldId={commitmentId} message={invalidFields.get(commitmentId)} />
       </div>
 
       <div className="flex flex-wrap items-end gap-3">
@@ -275,8 +294,11 @@ function CommitmentRow({
               }
               onBlur={() => onFieldBlur(targetId)}
               aria-invalid={invalidFields.has(targetId)}
+              aria-describedby={invalidFields.has(targetId) ? fieldErrorId(targetId) : undefined}
               disabled={disabled}
             />
+
+            <FieldError fieldId={targetId} message={invalidFields.get(targetId)} />
           </div>
         )}
 

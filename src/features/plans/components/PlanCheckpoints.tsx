@@ -3,12 +3,14 @@ import { toast } from 'sonner'
 import { CalendarCheck, Pencil } from 'lucide-react'
 
 import { DatePicker } from '@/components/common/DatePicker'
+import { FieldError } from '@/components/common/FieldError'
 import { LoadingButton } from '@/components/common/LoadingButton'
 import { Required } from '@/components/common/Required'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
+import { fieldErrorId } from '@/lib/fieldErrorId'
 import { useUpdateCheckpoint } from '../api'
 import { checkpointErrors, checkpointFieldId, focusField } from '../lib/planValidation'
 import {
@@ -129,10 +131,12 @@ function CheckpointBlock({
     [checkpoint.id, date, aspects, notes],
   )
 
-  const invalidFields = useMemo(
+  const invalidFields = useMemo<ReadonlyMap<string, string>>(
     () =>
-      new Set(
-        errors.filter((error) => showAllErrors || touched.has(error.id)).map((error) => error.id),
+      new Map(
+        errors
+          .filter((error) => showAllErrors || touched.has(error.id))
+          .map((error) => [error.id, error.message]),
       ),
     [errors, showAllErrors, touched],
   )
@@ -221,7 +225,17 @@ function CheckpointBlock({
               value={date}
               onChange={setDate}
               invalid={invalidFields.has(checkpointFieldId.date(checkpoint.id))}
+              describedBy={
+                invalidFields.has(checkpointFieldId.date(checkpoint.id))
+                  ? fieldErrorId(checkpointFieldId.date(checkpoint.id))
+                  : undefined
+              }
               onBlur={() => markTouched(checkpointFieldId.date(checkpoint.id))}
+            />
+
+            <FieldError
+              fieldId={checkpointFieldId.date(checkpoint.id)}
+              message={invalidFields.get(checkpointFieldId.date(checkpoint.id))}
             />
           </div>
 
@@ -242,8 +256,11 @@ function CheckpointBlock({
                   }
                   onBlur={() => markTouched(noteId)}
                   aria-invalid={invalidFields.has(noteId)}
+                  aria-describedby={invalidFields.has(noteId) ? fieldErrorId(noteId) : undefined}
                   placeholder="Observación de este aspecto en el seguimiento"
                 />
+
+                <FieldError fieldId={noteId} message={invalidFields.get(noteId)} />
               </div>
             )
           })}
