@@ -35,7 +35,7 @@ const RESULT_OPTIONS: { value: CloseResult; label: string; hint: string }[] = [
     value: 'NO_CUMPLIDO',
     label: 'No cumplido',
     hint: 'Quedaron compromisos sin alcanzar.',
-  }
+  },
 ]
 
 /**
