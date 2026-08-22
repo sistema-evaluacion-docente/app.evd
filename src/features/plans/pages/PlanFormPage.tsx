@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
+import { type SubmitEvent, useMemo, useState } from 'react'
 import { useLocation, useRoute, useSearchParams } from 'wouter'
 import { toast } from 'sonner'
 import { AlertTriangle, Cloud, Layers, Plus, RotateCcw, Save, X } from 'lucide-react'
 
 import { Combobox } from '@/components/common/Combobox'
 import { DatePicker } from '@/components/common/DatePicker'
+import { FieldError } from '@/components/common/FieldError'
 import { InlineError } from '@/components/common/InlineError'
 import { PageTitle } from '@/components/common/PageTitle'
 import { Required } from '@/components/common/Required'
@@ -39,6 +40,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useAuthStore } from '@/features/auth'
 import type { TeacherComment } from '@/features/teachers/types'
 import formatDate, { todayISO } from '@/lib/formatDate'
+import { fieldErrorId } from '@/lib/fieldErrorId'
 import { cn } from '@/lib/utils'
 import {
   useCreatePlan,
@@ -661,14 +663,20 @@ function PlanForm({
   )
 
   /**
-   * The errors worth painting right now. A field the director hasn't reached
-   * yet is not a mistake — it goes red once they leave it empty, or once they
-   * try to save.
+   * The errors worth painting right now, each against the id of the control it
+   * belongs to. A field the director hasn't reached yet is not a mistake — it
+   * goes red once they leave it empty, or once they try to save.
+   *
+   * The message travels with the id rather than being looked up again in the
+   * markup: red alone is not an error message, so every field that turns red
+   * also has to be able to say why, in words.
    */
-  const invalidFields = useMemo(
+  const invalidFields = useMemo<ReadonlyMap<string, string>>(
     () =>
-      new Set(
-        errors.filter((error) => showAllErrors || touched.has(error.id)).map((error) => error.id),
+      new Map(
+        errors
+          .filter((error) => showAllErrors || touched.has(error.id))
+          .map((error) => [error.id, error.message]),
       ),
     [errors, showAllErrors, touched],
   )
@@ -713,6 +721,15 @@ function PlanForm({
         program_name: programName.trim() || undefined,
         order: index,
       }))
+  }
+
+  // `SubmitEvent` and not `FormEvent`: the latter is deprecated in the React 19
+  // types ("FormEvent doesn't actually exist") because it never mapped to a real
+  // DOM event. `onSubmit` is typed `SubmitEventHandler`, so this is the type the
+  // prop actually hands over.
+  function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
+    event.preventDefault()
+    submit()
   }
 
   function submit() {
@@ -811,7 +828,12 @@ function PlanForm({
   }
 
   return (
-    <div className="space-y-6">
+    // A real form, so Enter submits from any field and the browser hands the
+    // page the semantics it already assumes. `noValidate` because the meta
+    // esperada is a `number` input with a range: letting the browser stop the
+    // submit with a bubble of its own would hide the errors below, which are
+    // the ones that know about every other field too.
+    <form className="space-y-6" onSubmit={handleSubmit} noValidate>
       <PageTitle>{isEdit ? 'Editar plan de mejoramiento' : 'Nuevo plan de mejoramiento'}</PageTitle>
 
       {actaLocked && (
@@ -880,6 +902,9 @@ function PlanForm({
                   id="period"
                   className="w-40"
                   aria-invalid={invalidFields.has('period')}
+                  aria-describedby={
+                    invalidFields.has('period') ? fieldErrorId('period') : undefined
+                  }
                   onBlur={() => markTouched('period')}
                 >
                   <SelectValue placeholder="Periodo">{period?.code}</SelectValue>
@@ -893,6 +918,8 @@ function PlanForm({
                   ))}
                 </SelectContent>
               </Select>
+
+              <FieldError fieldId="period" message={invalidFields.get('period')} />
             </div>
 
             <div className="min-w-64 flex-1 space-y-1.5">
@@ -917,11 +944,14 @@ function PlanForm({
                 renderItem={(entry) => <CandidateOption candidate={entry} />}
                 disabled={noPeriodYet || noCandidates}
                 invalid={invalidFields.has('teacher')}
+                describedBy={invalidFields.has('teacher') ? fieldErrorId('teacher') : undefined}
                 loading={candidatesLoading}
                 loadingLabel="Cargando docentes…"
                 placeholder={teacherPlaceholder}
                 emptyMessage="Sin docentes que coincidan."
               />
+
+              <FieldError fieldId="teacher" message={invalidFields.get('teacher')} />
 
               {suggestedCount > 0 && (
                 <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
@@ -1247,7 +1277,10 @@ function PlanForm({
             onChange={(event) => setTitleOverride(event.target.value)}
             onBlur={() => markTouched('title')}
             aria-invalid={invalidFields.has('title')}
+            aria-describedby={invalidFields.has('title') ? fieldErrorId('title') : undefined}
           />
+
+          <FieldError fieldId="title" message={invalidFields.get('title')} />
         </div>
 
         <div className="space-y-1.5">
@@ -1274,8 +1307,11 @@ function PlanForm({
               options={FACULTY_NAMES}
               placeholder="Facultad"
               invalid={invalidFields.has('faculty')}
+              describedBy={invalidFields.has('faculty') ? fieldErrorId('faculty') : undefined}
               onBlur={() => markTouched('faculty')}
             />
+
+            <FieldError fieldId="faculty" message={invalidFields.get('faculty')} />
           </div>
 
           <div className="min-w-56 flex-1 space-y-1.5">
@@ -1288,8 +1324,14 @@ function PlanForm({
               onChange={(event) => setDepartmentOverride(event.target.value)}
               placeholder="Escríbelo"
               aria-invalid={invalidFields.has('department')}
+              aria-describedby={
+                invalidFields.has('department') ? fieldErrorId('department') : undefined
+              }
               onBlur={() => markTouched('department')}
             />
+
+            <FieldError fieldId="department" message={invalidFields.get('department')} />
+
             <p className="text-muted-foreground text-xs">
               Viene del registro del docente evaluado; corrígelo si el formato debe decir otra cosa.
             </p>
@@ -1306,8 +1348,11 @@ function PlanForm({
               options={programOptions}
               placeholder="Programa"
               invalid={invalidFields.has('program')}
+              describedBy={invalidFields.has('program') ? fieldErrorId('program') : undefined}
               onBlur={() => markTouched('program')}
             />
+
+            <FieldError fieldId="program" message={invalidFields.get('program')} />
           </div>
         </div>
 
@@ -1327,8 +1372,13 @@ function PlanForm({
               className="num"
               disabled={actaLocked}
               aria-invalid={invalidFields.has('acta-number')}
+              aria-describedby={
+                invalidFields.has('acta-number') ? fieldErrorId('acta-number') : undefined
+              }
               onBlur={() => markTouched('acta-number')}
             />
+
+            <FieldError fieldId="acta-number" message={invalidFields.get('acta-number')} />
           </div>
 
           <div className="min-w-56 space-y-1.5">
@@ -1341,8 +1391,11 @@ function PlanForm({
               onChange={setActaDate}
               disabled={actaLocked}
               invalid={invalidFields.has('acta-date')}
+              describedBy={invalidFields.has('acta-date') ? fieldErrorId('acta-date') : undefined}
               onBlur={() => markTouched('acta-date')}
             />
+
+            <FieldError fieldId="acta-date" message={invalidFields.get('acta-date')} />
           </div>
 
           <p className="text-muted-foreground w-full text-xs">
@@ -1384,7 +1437,7 @@ function PlanForm({
         </Button>
         {/* Never disabled: a dead button says nothing about what is missing.
             Pressing it is what points at the first empty field. */}
-        <Button onClick={submit} disabled={submission.isPending}>
+        <Button type="submit" disabled={submission.isPending}>
           <Save className="size-4" aria-hidden="true" />
           {submission.isPending
             ? isEdit
@@ -1395,6 +1448,6 @@ function PlanForm({
               : 'Crear plan'}
         </Button>
       </div>
-    </div>
+    </form>
   )
 }

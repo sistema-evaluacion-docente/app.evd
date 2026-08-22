@@ -16,7 +16,7 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoadingEmailLogin, setIsLoadingEmailLogin] = useState(false)
 
-  const handleLoginWithEmail = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleLoginWithEmail = (event: React.SubmitEvent<HTMLFormElement>) => {
     event.preventDefault()
 
     if (isLoadingEmailLogin) return

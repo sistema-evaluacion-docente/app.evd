@@ -152,7 +152,7 @@ export function DynamicFormDrawer({
     setValues((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: React.SubmitEvent<HTMLFormElement>) => {
     event.preventDefault()
     onSubmit(values)
   }

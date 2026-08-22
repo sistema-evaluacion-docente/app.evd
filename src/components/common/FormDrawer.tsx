@@ -17,7 +17,7 @@ interface FormDrawerProps {
   title: string;
   description?: string;
   children: ReactNode;
-  onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  onSubmit: (event: React.SubmitEvent<HTMLFormElement>) => void;
   isSubmitting?: boolean;
   submitLabel?: string;
   submitSubmittingLabel?: string;
