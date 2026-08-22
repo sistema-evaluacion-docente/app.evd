@@ -136,9 +136,14 @@ describe('PlanCheckpoints', () => {
 
     expect(mutate).not.toHaveBeenCalled()
     // El editor sigue abierto, con los tres campos en rojo.
-    expect(screen.getByRole('alert')).toHaveTextContent('Faltan 3 campos obligatorios')
+    expect(screen.getByText(/Faltan 3 campos obligatorios/)).toBeInTheDocument()
     for (const note of screen.getAllByRole('textbox')) {
       expect(note).toHaveAttribute('aria-invalid', 'true')
+      // El rojo no basta: cada campo dice además qué le falta, y lo dice de
+      // forma que un lector de pantalla lo lea junto con el campo.
+      const reason = document.getElementById(note.getAttribute('aria-describedby') ?? '')
+
+      expect(reason).toHaveTextContent('Falta la observación de este aspecto.')
     }
   })
 

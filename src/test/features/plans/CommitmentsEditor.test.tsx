@@ -15,7 +15,10 @@ function item(overrides: Partial<DraftItem> = {}): DraftItem {
   return { ...buildBlankDraft(1), ...overrides }
 }
 
-function renderEditor(items: DraftItem[], overrides: Partial<{ invalidFields: Set<string> }> = {}) {
+function renderEditor(
+  items: DraftItem[],
+  overrides: Partial<{ invalidFields: Map<string, string> }> = {},
+) {
   const onFieldBlur = vi.fn()
 
   render(
@@ -24,7 +27,7 @@ function renderEditor(items: DraftItem[], overrides: Partial<{ invalidFields: Se
       aspects={ASPECTS}
       onChange={vi.fn()}
       onRemove={vi.fn()}
-      invalidFields={overrides.invalidFields ?? new Set()}
+      invalidFields={overrides.invalidFields ?? new Map()}
       onFieldBlur={onFieldBlur}
     />,
   )
@@ -100,13 +103,30 @@ describe('CommitmentsEditor', () => {
   it('paints red only the fields the page says are already due', () => {
     const draft = item({ description: '', commitment: '' })
 
-    renderEditor([draft], { invalidFields: new Set([`commit-${draft.key}`]) })
+    renderEditor([draft], {
+      invalidFields: new Map([[`commit-${draft.key}`, 'Falta el compromiso.']]),
+    })
 
     expect(screen.getByLabelText(/Descripción del indicador/)).not.toHaveAttribute(
       'aria-invalid',
       'true',
     )
     expect(screen.getByLabelText(/^Compromiso/)).toHaveAttribute('aria-invalid', 'true')
+  })
+
+  it('says in words what is missing, and points the field at it', () => {
+    const draft = item({ description: '', commitment: '' })
+
+    renderEditor([draft], {
+      invalidFields: new Map([[`commit-${draft.key}`, 'Falta el compromiso.']]),
+    })
+
+    // Red alone is not an error message: the reason has to be readable, and
+    // reachable from the control for anyone who can't see the colour.
+    const message = screen.getByRole('alert')
+
+    expect(message).toHaveTextContent('Falta el compromiso.')
+    expect(screen.getByLabelText(/^Compromiso/)).toHaveAttribute('aria-describedby', message.id)
   })
 
   it('reports a required field left empty, which is what turns it red', async () => {

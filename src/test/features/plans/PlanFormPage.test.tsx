@@ -396,7 +396,8 @@ describe('PlanFormPage · creación', () => {
       'Faltan campos obligatorios por completar.',
       { description: 'Revisa los campos marcados en rojo.' },
     )
-    expect(screen.getByRole('alert')).toHaveTextContent(/Faltan \d+ campos obligatorios/)
+    // The summary, now one alert among the per-field ones below it.
+    expect(screen.getByText(/Faltan \d+ campos obligatorios/)).toBeInTheDocument()
     // No teacher yet, so that is the field the cursor is sent to. The scroll is
     // deferred a frame, so is the focus that rides along with it.
     await waitFor(() => expect(screen.getByRole('combobox', { name: 'Docente' })).toHaveFocus())
@@ -405,6 +406,49 @@ describe('PlanFormPage · creación', () => {
         .getByRole('combobox', { name: 'Docente' })
         .closest('[data-slot="combobox-input-group"]'),
     ).toHaveAttribute('aria-invalid', 'true')
+
+    // And red is not the only thing saying so: the field points at the reason
+    // in words, which is the half a screen reader and a colour-blind director
+    // both depend on.
+    const reason = screen.getByText('Selecciona un docente.')
+
+    expect(screen.getByRole('combobox', { name: 'Docente' })).toHaveAttribute(
+      'aria-describedby',
+      reason.id,
+    )
+  })
+
+  it('submits on Enter from a text field, like any form', async () => {
+    const createMutate = vi.fn()
+
+    mockQueries({ createMutate })
+
+    renderAt(<PlanFormPage />)
+
+    await userEvent.type(screen.getByLabelText(/Acta N/), '012{Enter}')
+
+    // The form is still incomplete, so Enter lands on the same validation the
+    // button runs — which is exactly the point: Enter *submitted*.
+    expect(createMutate).not.toHaveBeenCalled()
+    expect(vi.mocked(toast.warning)).toHaveBeenCalledWith(
+      'Faltan campos obligatorios por completar.',
+      { description: 'Revisa los campos marcados en rojo.' },
+    )
+  })
+
+  it('does not submit when Enter picks an option out of a combobox', async () => {
+    const createMutate = vi.fn()
+
+    mockQueries({ createMutate })
+
+    renderAt(<PlanFormPage />)
+
+    // Enter inside an open suggestion list belongs to the list, not to the
+    // form: choosing a faculty must not try to save the plan behind it.
+    await userEvent.type(screen.getByLabelText(/Facultad/), 'INGENIER{Enter}')
+
+    expect(createMutate).not.toHaveBeenCalled()
+    expect(vi.mocked(toast.warning)).not.toHaveBeenCalled()
   })
 
   it('paints the header of the format red too, and sends the cursor to the first of it', async () => {

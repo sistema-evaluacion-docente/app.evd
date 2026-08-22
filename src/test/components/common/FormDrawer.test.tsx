@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type { FormEvent } from 'react'
+import type { SubmitEvent } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
 import FormDrawer from '@/components/common/FormDrawer'
@@ -47,7 +47,7 @@ describe('FormDrawer', () => {
 
   it('runs onSubmit when the form is submitted', async () => {
     const user = userEvent.setup()
-    const onSubmit = vi.fn((event: FormEvent<HTMLFormElement>) => event.preventDefault())
+    const onSubmit = vi.fn((event: SubmitEvent<HTMLFormElement>) => event.preventDefault())
 
     render(
       <FormDrawer open onOpenChange={vi.fn()} title="Nuevo docente" onSubmit={onSubmit}>
