@@ -18,6 +18,7 @@ import { PlanClosedSummary, PlanClosure } from '../components/PlanClosure'
 import { PlanDocuments } from '../components/PlanDocuments'
 import { PlanEvidences } from '../components/PlanEvidences'
 import { ActaStatusBadge, PlanStatusBadge } from '../components/PlanStatusBadge'
+import { PlanVerification } from '../components/PlanVerification'
 import { hasSignedActa, isPlanClosed, planProgress, planProgressStage } from '../lib/planStatus'
 import type { PlanItem } from '../types'
 
@@ -248,6 +249,15 @@ export default function PlanDetailPage() {
         <PlanClosedSummary plan={plan} />
       ) : (
         <PlanClosure plan={plan} canManage={canManage} />
+      )}
+
+      {/* Only once the plan is settled, or once the answer already arrived: on
+          a plan still running it would say nothing but "we are waiting". */}
+      {(closed || plan.verification) && (
+        <PlanVerification
+          verification={plan.verification}
+          verificationPeriodCode={plan.verification_period_code}
+        />
       )}
 
       <DeletePlanDialog
