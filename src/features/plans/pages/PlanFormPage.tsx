@@ -1,7 +1,17 @@
 import { type SubmitEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useRoute, useSearchParams } from 'wouter'
 import { toast } from 'sonner'
-import { AlertTriangle, Cloud, Layers, Plus, RotateCcw, Save, X } from 'lucide-react'
+import {
+  AlertTriangle,
+  ChevronDown,
+  Cloud,
+  Layers,
+  NotebookPen,
+  Plus,
+  RotateCcw,
+  Save,
+  X,
+} from 'lucide-react'
 
 import { Combobox } from '@/components/common/Combobox'
 import { DatePicker } from '@/components/common/DatePicker'
@@ -18,11 +28,13 @@ import {
 import CreatePlanSkeleton from '@/components/skeletons/CreatePlanSkeleton'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
+import { LoadingButton } from '@/components/common/LoadingButton'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
@@ -31,7 +43,6 @@ import {
   Select,
   SelectContent,
   SelectItem,
-  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
@@ -57,15 +68,11 @@ import {
   useUploadPlanDocument,
 } from '../api'
 import { PlanCaseReportUpload } from '../components/PlanCaseReportUpload'
+import { PlanObservationsDialog } from '../components/PlanObservationsDialog'
 import { CommitmentDialog } from '../components/CommitmentDialog'
 import { CommitmentsEditor } from '../components/CommitmentsEditor'
 import { IndicatorPicker } from '../components/IndicatorPicker'
-import {
-  FACULTY_NAMES,
-  facultyOfProgram,
-  PROGRAM_NAMES,
-  programsOfFaculty,
-} from '../config/academicCatalog'
+import { facultyOfProgram, PROGRAM_NAMES, programsOfFaculty } from '../config/academicCatalog'
 import { usePlanWorkbench } from '../hooks/usePlanWorkbench'
 import { SUBJECT_ALL } from '../lib/indicatorMatrix'
 import { usePlanFormDraft } from '../hooks/usePlanFormDraft'
@@ -110,9 +117,6 @@ import type {
   PlanSubjectOption,
 } from '../types'
 
-/** Sentinel of the "añadir asignatura" select: takes every one of them at once. */
-const ALL_COURSES = 'ALL'
-
 /** Campos planos del formulario: sin sombra y con el borde siempre visible. */
 const FIELD_CLASS = 'border-border shadow-none'
 
@@ -121,15 +125,13 @@ type FormMode = 'create' | 'edit'
 /**
  * Seed of every field the form owns. The `*Override` ones are `null` while the
  * value is still derived from context, which is how the creation flow starts and
- * how a plan that never recorded, say, a faculty comes back for editing.
+ * how a plan that never recorded, say, a programme comes back for editing.
  */
 interface PlanFormInitial {
   periodId?: number
   teacherId?: number
   titleOverride: string | null
   description: string
-  facultyOverride: string | null
-  departmentOverride: string | null
   programOverride: string | null
   actaDate: string
   actaNumber: string
@@ -234,8 +236,6 @@ export default function PlanFormPage() {
           teacherId: plan.teacher_id,
           titleOverride: plan.title,
           description: plan.description ?? '',
-          facultyOverride: plan.faculty_name,
-          departmentOverride: plan.department_name,
           programOverride: plan.program_name,
           actaDate: plan.acta_date ?? plan.start_date ?? '',
           actaNumber: plan.acta_number ?? '',
@@ -250,8 +250,6 @@ export default function PlanFormPage() {
           teacherId: presetTeacher ? Number(presetTeacher) : undefined,
           titleOverride: null,
           description: '',
-          facultyOverride: null,
-          departmentOverride: null,
           programOverride: null,
           // The plan is drawn up the day the Consejo de Departamento approves it.
           actaDate: todayISO(),
@@ -320,8 +318,6 @@ function restoredFields(draft: PlanFormDraft): Partial<PlanFormInitial> {
     teacherId: draft.teacherId,
     titleOverride: draft.titleOverride,
     description: draft.description,
-    facultyOverride: draft.facultyOverride,
-    departmentOverride: draft.departmentOverride,
     programOverride: draft.programOverride,
     actaDate: draft.actaDate,
     actaNumber: draft.actaNumber,
@@ -370,10 +366,6 @@ function PlanForm({
   const [teacherId, setTeacherId] = useState<number | undefined>(initial.teacherId)
   const [titleOverride, setTitleOverride] = useState<string | null>(initial.titleOverride)
   const [description, setDescription] = useState(initial.description)
-  const [facultyOverride, setFacultyOverride] = useState<string | null>(initial.facultyOverride)
-  const [departmentOverride, setDepartmentOverride] = useState<string | null>(
-    initial.departmentOverride,
-  )
   const [programOverride, setProgramOverride] = useState<string | null>(initial.programOverride)
   // One date for both: the agreement starts the day the acta backing it is
   // signed. Formato 2 prints it as "FECHA" and Formato 3 as "Fecha".
@@ -384,6 +376,9 @@ function PlanForm({
     initial.departmentObservations,
   )
   const [programObservations, setProgramObservations] = useState(initial.programObservations)
+
+  /** Las tres observaciones viven detrás de un botón del paso 3. */
+  const [observationsOpen, setObservationsOpen] = useState(false)
 
   // Deliberately outside the autosaved snapshot: a File can't be serialised, so
   // it is re-picked after a reload rather than silently lost on submit.
@@ -507,14 +502,19 @@ function PlanForm({
   const title = titleOverride ?? defaultTitle
 
   // At UFPS the director's own "department" is named after the programme it
-  // serves, so it seeds PROGRAMA ACADÉMICO. Facultad and departamento académico
-  // come from the evaluated teacher's own record, which the candidates endpoint
-  // resolves for us; the faculty of the programme is only the last resort.
+  // serves, so it seeds PROGRAMA ACADÉMICO — la única de las tres que sigue
+  // siendo un campo, porque es la que el director puede querer corregir.
+  //
+  // Facultad y departamento académico ya no se preguntan: salen del registro
+  // del docente evaluado (o del plan guardado, al editar) y sólo se imprimen en
+  // el encabezado de los formatos, así que pedirlos era hacer escribir dos
+  // veces algo que el sistema ya sabe. Se muestran, ya resueltos, en el detalle
+  // del plan. La facultad del programa es el último recurso.
   const authDepartment = useAuthStore((state) => state.user?.department_name) ?? ''
   const programName = programOverride ?? authDepartment
-  const departmentName = departmentOverride ?? candidate?.department_name ?? ''
+  const departmentName = plan?.department_name ?? candidate?.department_name ?? ''
   const facultyName =
-    facultyOverride ?? candidate?.faculty_name ?? facultyOfProgram(programName)?.name ?? ''
+    plan?.faculty_name ?? candidate?.faculty_name ?? facultyOfProgram(programName)?.name ?? ''
 
   const programOptions = useMemo(
     () => (facultyName ? programsOfFaculty(facultyName) : PROGRAM_NAMES),
@@ -718,14 +718,19 @@ function PlanForm({
   /** Drives the counter of section 3, the reinforcement the director asked for. */
   const completeCount = useMemo(() => countCompleteCommitments(items), [items])
 
+  /** Cuántas observaciones hay escritas, para decirlo en el propio botón. */
+  const writtenObservations = [
+    councilObservations,
+    departmentObservations,
+    programObservations,
+  ].filter((value) => value.trim().length > 0).length
+
   /** Everything worth getting back after a reload. Nothing derived from a query. */
   const snapshot = {
     teacherId,
     periodId,
     titleOverride,
     description,
-    facultyOverride,
-    departmentOverride,
     programOverride,
     actaDate,
     actaNumber,
@@ -752,8 +757,6 @@ function PlanForm({
         items,
         aspects,
         courses,
-        facultyName,
-        departmentName,
         programName,
         actaNumber,
         actaDate,
@@ -767,8 +770,6 @@ function PlanForm({
       items,
       aspects,
       courses,
-      facultyName,
-      departmentName,
       programName,
       actaNumber,
       actaDate,
@@ -1171,7 +1172,7 @@ function PlanForm({
             </p>
           </div>
 
-          <div className="flex shrink-0 items-center gap-4">
+          <div className="flex shrink-0 flex-wrap items-center gap-3">
             {items.length > 0 && (
               <p className="text-muted-foreground text-sm" role="status">
                 <span className="num font-semibold">{completeCount}</span> de{' '}
@@ -1180,15 +1181,24 @@ function PlanForm({
               </p>
             )}
 
+            <Button type="button" variant="outline" onClick={() => setObservationsOpen(true)}>
+              <NotebookPen className="size-4" aria-hidden="true" />
+              Observaciones
+              {writtenObservations > 0 && (
+                <Badge variant="secondary" className="num ml-0.5 min-w-5 justify-center px-1.5">
+                  {writtenObservations}
+                </Badge>
+              )}
+            </Button>
+
             <DropdownMenu>
               <DropdownMenuTrigger
-                render={
-                  <Button variant="outline" size="sm" disabled={actaLocked}>
-                    <Plus className="size-4" aria-hidden="true" />
-                    Añadir compromiso manual
-                  </Button>
-                }
-              />
+                render={<Button type="button" variant="outline" disabled={actaLocked} />}
+              >
+                <Plus className="size-4" aria-hidden="true" />
+                Añadir compromiso
+                <ChevronDown className="text-muted-foreground size-4" aria-hidden="true" />
+              </DropdownMenuTrigger>
 
               <DropdownMenuContent align="end">
                 {aspects.map((aspect) => (
@@ -1229,45 +1239,6 @@ function PlanForm({
             disabled={actaLocked}
           />
         )}
-
-        <div className="space-y-4 border-t pt-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="council-obs">Observaciones del Consejo de Departamento</Label>
-            <Textarea
-              id="council-obs"
-              rows={3}
-              className={FIELD_CLASS}
-              value={councilObservations}
-              onChange={(event) => setCouncilObservations(event.target.value)}
-              placeholder="Se imprimen en el Formato 2, bajo los compromisos acordados"
-              disabled={actaLocked}
-            />
-          </div>
-
-          <div className="flex flex-wrap gap-4">
-            <div className="min-w-64 flex-1 space-y-1.5">
-              <Label htmlFor="department-obs">Observaciones del director de departamento</Label>
-              <Textarea
-                id="department-obs"
-                rows={2}
-                className={FIELD_CLASS}
-                value={departmentObservations}
-                onChange={(event) => setDepartmentObservations(event.target.value)}
-              />
-            </div>
-
-            <div className="min-w-64 flex-1 space-y-1.5">
-              <Label htmlFor="program-obs">Observaciones del director de programa</Label>
-              <Textarea
-                id="program-obs"
-                rows={2}
-                className={FIELD_CLASS}
-                value={programObservations}
-                onChange={(event) => setProgramObservations(event.target.value)}
-              />
-            </div>
-          </div>
-        </div>
       </section>
 
       {teacherId != null && (
@@ -1283,40 +1254,42 @@ function PlanForm({
             </div>
 
             {workbench.allSubjects.length > 0 && !actaLocked && (
-              <Select
-                value={null}
-                onValueChange={(value) => {
-                  if (value === ALL_COURSES) {
-                    addAllCourses()
-                    return
+              // Un botón con menú y no un `Select`: no guarda un valor, dispara
+              // una acción — el `value` estaba clavado en `null` y sólo se usaba
+              // el `onValueChange`. Ahora se lee igual que los otros dos
+              // disparadores del formulario, en vez de fingir ser un campo.
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <Button
+                      type="button"
+                      variant="outline"
+                      aria-busy={workbench.isLoading}
+                      disabled={workbench.isLoading}
+                      className={cn(workbench.isLoading && selectLoadingTriggerClass)}
+                    />
                   }
-                  const subject = addableSubjects.find((option) => option.key === value)
-
-                  if (subject) addSubjectCourse(subject)
-                }}
-                disabled={workbench.isLoading}
-              >
-                <SelectTrigger
-                  aria-label="Añadir asignatura"
-                  aria-busy={workbench.isLoading}
-                  className={cn('w-80', workbench.isLoading && selectLoadingTriggerClass)}
                 >
                   {workbench.isLoading ? (
                     <SelectLoadingLabel>Cargando asignaturas…</SelectLoadingLabel>
                   ) : (
-                    <SelectValue placeholder="Añadir asignatura…" />
+                    <>
+                      <Layers className="size-4" aria-hidden="true" />
+                      Añadir asignatura
+                      <ChevronDown className="text-muted-foreground size-4" aria-hidden="true" />
+                    </>
                   )}
-                </SelectTrigger>
+                </DropdownMenuTrigger>
 
-                <SelectContent>
+                <DropdownMenuContent align="end" className="max-h-80 w-80 overflow-y-auto">
                   {/* The usual case, so it leads the list instead of sitting in
                       a button of its own outside the field. */}
-                  <SelectItem value={ALL_COURSES}>
+                  <DropdownMenuItem onClick={addAllCourses}>
                     <Layers className="size-4" aria-hidden="true" />
                     Añadir todas las del docente
-                  </SelectItem>
+                  </DropdownMenuItem>
 
-                  <SelectSeparator />
+                  <DropdownMenuSeparator />
 
                   {addableSubjects.length === 0 ? (
                     <p className="text-muted-foreground px-2 py-1.5 text-sm">
@@ -1324,13 +1297,13 @@ function PlanForm({
                     </p>
                   ) : (
                     addableSubjects.map((subject) => (
-                      <SelectItem key={subject.key} value={subject.key}>
+                      <DropdownMenuItem key={subject.key} onClick={() => addSubjectCourse(subject)}>
                         {subject.label}
-                      </SelectItem>
+                      </DropdownMenuItem>
                     ))
                   )}
-                </SelectContent>
-              </Select>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
 
@@ -1419,51 +1392,13 @@ function PlanForm({
           />
         </div>
 
-        {/* The three columns the official forms print in their header. They are
-            free text on the API, so anything off-catalogue can still be typed. */}
-        <div className="flex flex-wrap gap-4">
-          <div className="min-w-56 flex-1 space-y-1.5">
-            <Label htmlFor="faculty">
-              Facultad <Required />
-            </Label>
-            <Combobox
-              id="faculty"
-              value={facultyName}
-              onValueChange={setFacultyOverride}
-              options={FACULTY_NAMES}
-              placeholder="Facultad"
-              invalid={invalidFields.has('faculty')}
-              describedBy={invalidFields.has('faculty') ? fieldErrorId('faculty') : undefined}
-              onBlur={() => markTouched('faculty')}
-            />
-
-            <FieldError fieldId="faculty" message={invalidFields.get('faculty')} />
-          </div>
-
-          <div className="min-w-56 flex-1 space-y-1.5">
-            <Label htmlFor="department">
-              Departamento académico <Required />
-            </Label>
-            <Input
-              id="department"
-              className={FIELD_CLASS}
-              value={departmentName}
-              onChange={(event) => setDepartmentOverride(event.target.value)}
-              placeholder="Escríbelo"
-              aria-invalid={invalidFields.has('department')}
-              aria-describedby={
-                invalidFields.has('department') ? fieldErrorId('department') : undefined
-              }
-              onBlur={() => markTouched('department')}
-            />
-
-            <FieldError fieldId="department" message={invalidFields.get('department')} />
-
-            <p className="text-muted-foreground text-xs">
-              Viene del registro del docente evaluado; corrígelo si el formato debe decir otra cosa.
-            </p>
-          </div>
-
+        {/* Lo que queda del encabezado de los formatos oficiales, junto al acto
+            administrativo que lo respalda: el programa académico, y el
+            "ACTO ADMINISTRATIVO: ACTA No. ___ FECHA: ___" que cierra la Ficha
+            de acuerdo, salido del Consejo de Departamento que aprueba el plan.
+            Facultad y departamento ya no se piden — se heredan del docente
+            evaluado y se leen en el detalle del plan. */}
+        <div className="flex flex-wrap gap-4 border-t pt-4">
           <div className="min-w-56 flex-1 space-y-1.5">
             <Label htmlFor="program">
               Programa académico <Required />
@@ -1481,12 +1416,7 @@ function PlanForm({
 
             <FieldError fieldId="program" message={invalidFields.get('program')} />
           </div>
-        </div>
 
-        {/* "ACTO ADMINISTRATIVO: ACTA No. ___ FECHA: ___" — the foot of the
-            Ficha de acuerdo. It comes from the Consejo de Departamento session
-            that approves the plan. */}
-        <div className="flex flex-wrap gap-4 border-t pt-4">
           <div className="min-w-40 space-y-1.5">
             <Label htmlFor="acta-number">
               Acta N.º <Required />
@@ -1529,12 +1459,6 @@ function PlanForm({
 
             <FieldError fieldId="acta-date" message={invalidFields.get('acta-date')} />
           </div>
-
-          <p className="text-muted-foreground w-full text-xs">
-            Del Consejo de Departamento que respalda el acuerdo. Es también la fecha de inicio del
-            plan: se imprime en la Ficha de acuerdo (Formato 2) y en el Plan de seguimiento (Formato
-            3), y hace falta para poder firmar el acta.
-          </p>
         </div>
       </section>
 
@@ -1567,22 +1491,35 @@ function PlanForm({
         >
           Cancelar
         </Button>
-        {/* Never disabled: a dead button says nothing about what is missing.
-            Pressing it is what points at the first empty field. */}
-        <Button type="submit" disabled={submission.isPending}>
+        {/* Never disabled while it can still be pressed: a dead button says
+            nothing about what is missing, and pressing it is what points at the
+            first empty field. `uploadCaseReport` is in the pending flag too —
+            the Formato 1 is uploaded after the plan is created, and that await
+            used to leave the button idle with nothing happening on screen. */}
+        <LoadingButton
+          type="submit"
+          pending={submission.isPending || uploadCaseReport.isPending}
+          pendingLabel={isEdit ? 'Guardando…' : 'Creando…'}
+        >
           <Save className="size-4" aria-hidden="true" />
-          {submission.isPending
-            ? isEdit
-              ? 'Guardando…'
-              : 'Creando…'
-            : isEdit
-              ? 'Guardar cambios'
-              : 'Crear plan'}
-        </Button>
+          {isEdit ? 'Guardar cambios' : 'Crear plan'}
+        </LoadingButton>
       </div>
 
       {/* Keyed on the draft so each commitment opens the dialog with a clean
           copy of itself, instead of an effect syncing prop to state. */}
+      <PlanObservationsDialog
+        open={observationsOpen}
+        onOpenChange={setObservationsOpen}
+        councilObservations={councilObservations}
+        onCouncilObservationsChange={setCouncilObservations}
+        departmentObservations={departmentObservations}
+        onDepartmentObservationsChange={setDepartmentObservations}
+        programObservations={programObservations}
+        onProgramObservationsChange={setProgramObservations}
+        councilDisabled={actaLocked}
+      />
+
       <CommitmentDialog
         key={pending?.draft.key ?? 'none'}
         draft={pending?.draft ?? null}
