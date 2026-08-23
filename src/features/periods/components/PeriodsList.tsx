@@ -1,7 +1,7 @@
 import type { PaginationState, SortingState } from '@tanstack/react-table'
 import { Eye } from 'lucide-react'
-import { useState } from 'react'
-import { useDebounce, useDebouncedCallback } from 'use-debounce'
+import { useMemo, useState } from 'react'
+import { useDebounce } from 'use-debounce'
 
 import { DataTable, type DataTableAction } from '@/components/common/DataTable'
 import { DataTableFilters, type FilterConfig } from '@/components/common/DataTableFilters'
@@ -26,10 +26,20 @@ const filterConfig: FilterConfig[] = [
   },
 ]
 
+/** La API tope 100 por página, y nadie acumula tantos periodos evaluados. */
+const HISTORY_LIMIT = 100
+
+const PAGE_SIZE = 10
+
 /**
- * Displays the list of evaluated periods of the authenticated teacher with
- * server-side search, sort, and pagination. Sorting is driven by the shared
- * `DataTableFilters` toolbar and persisted per table by `useTableFilters`.
+ * Displays the list of evaluated periods of the authenticated teacher.
+ *
+ * El orden lo resuelve la API; el buscador y la paginación, no. `search` en
+ * `GET /teachers/{id}/history` es el filtro genérico de la lista de docentes
+ * (viaja junto a `active`, `department_id` y `contract_type`), así que buscaba
+ * por el docente — uno solo, siempre el mismo — y nunca por el periodo: escribir
+ * "2024" no filtraba nada. El historial completo cabe en una página, de modo que
+ * se pide entero y se filtra aquí por código y nombre del periodo.
  *
  * @example
  * <PeriodsList />
@@ -38,27 +48,46 @@ export function PeriodsList() {
   const navigate = useNavigate()
   const teacherId = useAuthStore((state) => state.user?.teacher_id)
   const [search, setSearch] = useState('')
-  const [debouncedSearch] = useDebounce(search, 400)
   const [sorting, setSorting] = useState<SortingState>([])
-  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 })
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: PAGE_SIZE,
+  })
   const { filters, setFilters } = useTableFilters('periods-list', {
     sortBy: 'period_code_desc',
   })
   const [debouncedFilters] = useDebounce(filters, 400)
 
   const { data, isPending, isFetching } = useGetTeacherHistory({
-    page: pagination.pageIndex + 1,
-    limit: pagination.pageSize,
-    search: debouncedSearch,
+    page: 1,
+    limit: HISTORY_LIMIT,
     sort_by: (debouncedFilters.sortBy as HistorySortBy) || undefined,
   })
 
-  const periods = data?.data ?? []
-  const pageCount = data?.pagination?.pages ?? 1
+  const periods = useMemo(() => data?.data ?? [], [data])
 
-  const resetPage = useDebouncedCallback(() => {
-    setPagination((prev) => ({ ...prev, pageIndex: 0 }))
-  }, 400)
+  const filtered = useMemo(() => {
+    const query = search.trim().toLowerCase()
+
+    if (query.length === 0) return periods
+
+    return periods.filter(
+      (period) =>
+        period.period_code.toLowerCase().includes(query) ||
+        period.period_name?.toLowerCase().includes(query),
+    )
+  }, [periods, search])
+
+  const page = useMemo(() => {
+    const start = pagination.pageIndex * pagination.pageSize
+
+    return filtered.slice(start, start + pagination.pageSize)
+  }, [filtered, pagination])
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pagination.pageSize))
+
+  /** Una lista más corta puede no llegar a la página que se estaba mirando. */
+  const resetPage = () => setPagination((prev) => ({ ...prev, pageIndex: 0 }))
 
   const handleFiltersChange = (newFilters: Record<string, unknown>) => {
     setFilters(newFilters)
@@ -89,7 +118,7 @@ export function PeriodsList() {
   return (
     <DataTable
       columns={columns}
-      data={periods}
+      data={page}
       pageCount={pageCount}
       isLoading={isPending}
       isFetching={isFetching}
@@ -103,7 +132,11 @@ export function PeriodsList() {
       pagination={pagination}
       onPaginationChange={setPagination}
       searchPlaceholder="Buscar periodo..."
-      emptyMessage="Aún no tiene evaluaciones registradas."
+      emptyMessage={
+        periods.length === 0
+          ? 'Aún no tiene evaluaciones registradas.'
+          : 'No hay periodos que coincidan.'
+      }
       onRowClick={goToDetail}
       rowActions={rowActions}
       toolbar={
