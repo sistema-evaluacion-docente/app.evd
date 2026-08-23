@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useDebounce, useDebouncedCallback } from 'use-debounce'
 
 import { DataTableFilters, type FilterConfig } from '@/components/common/DataTableFilters'
@@ -7,13 +7,21 @@ import { PeriodSelect } from '@/components/common/PeriodSelect'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAuthStore } from '@/features/auth'
-import { CommentList, TeacherSelect } from '@/features/teachers'
+import { CommentCard, CommentList, TeacherSelect } from '@/features/teachers'
 import { useModalityFilter } from '@/hooks/useModalityFilter'
 import { useTableFilters } from '@/hooks/useTableFilters'
 import { CATEGORIES } from '@/lib/categoryLabel'
 import { MODALITIES } from '@/lib/modality'
 import { RISK_LEVELS } from '@/lib/riskLevel'
 import { useGetComments } from '../api'
+
+/** Reads the `#<comment id>` a link (e.g. a "riesgo alto" notification) may
+ *  have landed on, ignoring anything that isn't a usable comment id. */
+function commentIdFromHash(): number | undefined {
+  const id = Number(window.location.hash.slice(1))
+
+  return Number.isInteger(id) && id > 0 ? id : undefined
+}
 
 const filterConfig: FilterConfig[] = [
   {
@@ -47,6 +55,12 @@ interface CommentsListProps {
    * longer the reader's to choose.
    */
   riskLevel?: number
+  /**
+   * Preselects the "Docente" filter — e.g. a "riesgo alto" notification
+   * linking to one teacher's alerts. Just the initial value: the reader can
+   * still change or clear it afterwards.
+   */
+  initialTeacherId?: number
   /** Shown when no comment matches the current filters. */
   emptyMessage?: string
 }
@@ -64,14 +78,20 @@ interface CommentsListProps {
  * @example
  * // Only the high-risk comments, with no risk filter to loosen it.
  * <CommentsList riskLevel={3} emptyMessage="No hay comentarios de riesgo alto." />
+ *
+ * @example
+ * // Landed on from a "riesgo alto" notification, scoped to that teacher.
+ * <CommentsList riskLevel={3} initialTeacherId={teacherId} />
  */
 export function CommentsList({
   riskLevel,
+  initialTeacherId,
   emptyMessage = 'No hay comentarios que coincidan con los filtros aplicados.',
 }: CommentsListProps = {}) {
   const departmentId = useAuthStore((state) => state.user?.department_id)
   const [periodId, setPeriodId] = useState<number | undefined>(undefined)
-  const [teacherId, setTeacherId] = useState<number | undefined>(undefined)
+  const [teacherId, setTeacherId] = useState<number | undefined>(initialTeacherId)
+  const [highlightId, setHighlightId] = useState(commentIdFromHash)
   const [search, setSearch] = useState('')
   const [debouncedSearch] = useDebounce(search, 400)
   const [page, setPage] = useState(1)
@@ -110,6 +130,26 @@ export function CommentsList({
 
   const comments = data?.data ?? []
   const pages = data?.pagination?.pages ?? 1
+
+  // Scrolls to the comment a link (e.g. a "riesgo alto" notification) landed
+  // on, once it's actually rendered — only reachable when it's on the page
+  // the current filters/pagination happen to show. The highlight itself
+  // fades out on its own via `CommentCard`'s existing `transition-colors`.
+  useEffect(() => {
+    if (highlightId == null || isPending) return
+
+    const node = document.getElementById(String(highlightId))
+
+    if (!node) return
+
+    node.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    const timeout = setTimeout(() => setHighlightId(undefined), 2500)
+
+    return () => clearTimeout(timeout)
+    // `data`, not the derived `comments` array (a fresh `?? []` literal on
+    // every render data is still loading) — this only needs to re-run once
+    // the underlying query result actually changes.
+  }, [highlightId, isPending, data])
 
   if (!departmentId) {
     return (
@@ -181,8 +221,16 @@ export function CommentsList({
           comments={comments}
           isLoading={isPending}
           error={error ? error.message : null}
-          commentProps={{ showTeacher: true, showCourse: true }}
           emptyMessage={emptyMessage}
+          renderComment={(comment, index) => (
+            <CommentCard
+              comment={comment}
+              index={index}
+              showTeacher
+              showCourse
+              highlighted={comment.id === highlightId}
+            />
+          )}
         />
       </div>
 

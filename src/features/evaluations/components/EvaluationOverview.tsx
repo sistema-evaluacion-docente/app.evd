@@ -1,10 +1,11 @@
-import { CalendarRange, FileText } from 'lucide-react'
+import { CalendarRange, FileText, Sparkles } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link } from 'wouter'
 
 import { ScoreBadge } from '@/components/common/ScoreBadge'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Spinner } from '@/components/ui/spinner'
 import formatDate from '@/lib/formatDate'
 import { AI_STATUS_DISPLAY, EVALUATION_STATUS_DISPLAY } from '../config'
 import type { EvaluationRecord } from '../types'
@@ -15,6 +16,18 @@ export interface EvaluationOverviewProps {
   pdfHref?: string | null
   /** Extra actions rendered next to the PDF button. */
   actions?: ReactNode
+  /**
+   * Triggers the AI analysis. Omit to hide the action entirely (e.g. a
+   * read-only context). Shown as a button next to the "Análisis con IA" fact
+   * — rather than only inside a row-actions menu — whenever the evaluation
+   * is actually ready to be analyzed (`status === 'COMPLETED'` and
+   * `ai_status` is `PENDING` or `FAILED`), so the one thing to do about a
+   * "Pendiente"/"Fallido" badge is right next to it instead of buried in a
+   * menu the reader has to already know to open.
+   */
+  onAnalyze?: () => void
+  /** Whether the analysis request itself is in flight, on top of `ai_status === 'ANALYZING'`. */
+  isAnalyzing?: boolean
   className?: string
 }
 
@@ -28,15 +41,25 @@ export interface EvaluationOverviewProps {
  *
  * @example
  * <EvaluationOverview evaluation={evaluation} pdfHref={`/evaluaciones/${evaluation.id}/pdf`} />
+ *
+ * @example
+ * // With the AI analysis action surfaced next to its status.
+ * <EvaluationOverview evaluation={evaluation} onAnalyze={() => analyze(evaluation.id)} isAnalyzing={isPending} />
  */
 export function EvaluationOverview({
   evaluation,
   pdfHref,
   actions,
+  onAnalyze,
+  isAnalyzing,
   className,
 }: EvaluationOverviewProps) {
   const statusConfig = EVALUATION_STATUS_DISPLAY[evaluation.status]
   const aiStatusConfig = evaluation.ai_status ? AI_STATUS_DISPLAY[evaluation.ai_status] : undefined
+  const isCurrentlyAnalyzing = evaluation.ai_status === 'ANALYZING' || isAnalyzing
+  const canAnalyze =
+    evaluation.status === 'COMPLETED' &&
+    (evaluation.ai_status === 'PENDING' || evaluation.ai_status === 'FAILED')
 
   return (
     <section
@@ -115,7 +138,7 @@ export function EvaluationOverview({
         </Fact>
 
         <Fact label="Comentarios de alto riesgo">
-          <span className="num text-2xl font-semibold text-primary tabular-nums">
+          <span className="num text-primary text-2xl font-semibold tabular-nums">
             {evaluation.comments_risk_counts?.ALTO ?? '—'}
           </span>
         </Fact>
@@ -125,11 +148,29 @@ export function EvaluationOverview({
         </Fact>
 
         <Fact label="Análisis con IA">
-          {aiStatusConfig ? (
-            <Badge className={aiStatusConfig.className}>{aiStatusConfig.label}</Badge>
-          ) : (
-            <span className="text-muted-foreground text-sm">No disponible</span>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {aiStatusConfig ? (
+              <Badge className={aiStatusConfig.className}>
+                {isCurrentlyAnalyzing && <Spinner className="size-3" />}
+                {aiStatusConfig.label}
+              </Badge>
+            ) : (
+              <span className="text-muted-foreground text-sm">No disponible</span>
+            )}
+
+            {onAnalyze && canAnalyze && !isCurrentlyAnalyzing && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={onAnalyze}
+                className="bg-background h-7 px-2 text-xs"
+              >
+                <Sparkles className="size-3.5" aria-hidden="true" />
+                {evaluation.ai_status === 'FAILED' ? 'Reintentar' : 'Analizar'}
+              </Button>
+            )}
+          </div>
         </Fact>
       </div>
     </section>

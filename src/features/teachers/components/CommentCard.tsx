@@ -36,6 +36,13 @@ export interface CommentCardProps {
   showTeacher?: boolean
   /** Show the gutter numeral + risk rail. Defaults to `true` on `default`. */
   showGutter?: boolean
+  /**
+   * Tints the card, e.g. to land the reader's eye on the one comment a
+   * notification linked to (`#<comment.id>` in the URL). The card's own
+   * `id` attribute already matches `comment.id`, so the browser/router can
+   * scroll to it — this is the visual cue once it's in view.
+   */
+  highlighted?: boolean
   /** Clamp the comment body to N lines; `0` disables clamping. Defaults to `0`. */
   clampLines?: 0 | 2 | 3 | 4
   /**
@@ -84,6 +91,7 @@ export function CommentCard({
   showCourse = false,
   showTeacher = false,
   showGutter,
+  highlighted = false,
   clampLines = 0,
   showDetail = true,
   actions,
@@ -132,6 +140,7 @@ export function CommentCard({
         withGutter ? 'grid-cols-[1.5rem_1fr]' : 'grid-cols-1',
         isCompact ? 'py-3' : 'py-5',
         showDetail && 'hover:bg-muted/30',
+        highlighted && 'bg-primary/10',
         className,
       )}
       style={style}

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useDebounce } from 'use-debounce'
 
 import { categoryLabel } from '@/lib/categoryLabel'
-import type { TeacherCommentsCourse } from '../types'
+import type { TeacherComment, TeacherCommentsCourse } from '../types'
 
 /** A selectable filter option derived from the loaded comments. */
 export interface CommentFilterOption {
@@ -26,7 +26,8 @@ interface UseCommentFiltersOptions {
  * data, so no hardcoded catalogs are needed.
  *
  * @returns The filter state and setters, the derived option lists, and the
- * courses with their comments already filtered (empty courses removed).
+ * courses with their comments already filtered (empty courses removed) and
+ * sorted by risk score, highest first.
  *
  * @example
  * const { search, setSearch, riskLevels, filteredCourses } = useCommentFilters(data?.courses);
@@ -68,32 +69,34 @@ export function useCommentFilters(
     const term = debouncedSearch.trim().toLowerCase()
     const hasFilters = term !== '' || riskLevelId !== null || categoryId !== null
 
-    if (!hasFilters) return allCourses
-
     return allCourses
       .map((course) => ({
         ...course,
-        comments: course.comments.filter((comment) => {
-          if (riskLevelId !== null && comment.risk_level?.id !== riskLevelId) return false
+        comments: course.comments
+          .filter((comment) => {
+            if (!hasFilters) return true
 
-          if (
-            categoryId !== null &&
-            !comment.pedagogical_categories.some((category) => category.id === categoryId)
-          )
-            return false
+            if (riskLevelId !== null && comment.risk_level?.id !== riskLevelId) return false
 
-          if (term === '') return true
+            if (
+              categoryId !== null &&
+              !comment.pedagogical_categories.some((category) => category.id === categoryId)
+            )
+              return false
 
-          return [
-            comment.original_text,
-            comment.course_name,
-            comment.group_name,
-            ...comment.pedagogical_categories.map((category) => categoryLabel(category.name)),
-            comment.risk_level?.name,
-          ]
-            .filter((field): field is string => Boolean(field))
-            .some((field) => field.toLowerCase().includes(term))
-        }),
+            if (term === '') return true
+
+            return [
+              comment.original_text,
+              comment.course_name,
+              comment.group_name,
+              ...comment.pedagogical_categories.map((category) => categoryLabel(category.name)),
+              comment.risk_level?.name,
+            ]
+              .filter((field): field is string => Boolean(field))
+              .some((field) => field.toLowerCase().includes(term))
+          })
+          .sort(byRiskScoreDescending),
       }))
       .filter((course) => course.comments.length > 0)
   }, [allCourses, categoryId, debouncedSearch, riskLevelId])
@@ -127,6 +130,19 @@ export function useCommentFilters(
     isFiltered,
     reset,
   }
+}
+
+/**
+ * Highest `risk_score` first, so the comments most worth a reader's
+ * attention lead each course's list instead of sitting in upload order.
+ * Comments not yet classified (`risk_score == null`) sort last — there's no
+ * risk to rank them by yet.
+ */
+function byRiskScoreDescending(a: TeacherComment, b: TeacherComment): number {
+  if (a.risk_score == null) return b.risk_score == null ? 0 : 1
+  if (b.risk_score == null) return -1
+
+  return b.risk_score - a.risk_score
 }
 
 function countInto(
