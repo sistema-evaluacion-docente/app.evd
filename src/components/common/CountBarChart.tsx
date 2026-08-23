@@ -2,6 +2,7 @@ import { TrendingDown, TrendingUp } from 'lucide-react'
 
 import { computeCountDeltas, isRelevantDelta } from '@/lib/countDelta'
 import { cn } from '@/lib/utils'
+import { TREND_TEXT_CLASS } from '@/lib/trendTone'
 
 /** One segment of the bar: a stable key, its label, count, and an optional fixed color. */
 export interface CountBarChartEntry {
@@ -117,7 +118,7 @@ export function CountBarChart({
                   <span
                     className={cn(
                       'flex items-center gap-0.5 font-medium',
-                      delta.deltaPoints > 0 ? 'text-emerald-600' : 'text-red-600',
+                      TREND_TEXT_CLASS[delta.deltaPoints > 0 ? 'up' : 'down'],
                     )}
                   >
                     {delta.deltaPoints > 0 ? (

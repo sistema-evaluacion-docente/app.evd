@@ -8,14 +8,8 @@ import type { TeacherComparisonEntry } from '@/features/stats'
 import { CommentsPanel, useGetTeacherComments } from '@/features/teachers'
 import { CATEGORIES, categoryColor, categoryShortLabel } from '@/lib/categoryLabel'
 import { cn } from '@/lib/utils'
+import { RISK_LEVELS } from '@/lib/riskLevel'
 import { comparisonEntryKey } from '../config'
-
-/** Fixed status colors (good/warning/critical) — risk severity is a status job, not a teacher-identity color. */
-const RISK_LEVELS = [
-  { key: 'BAJO', label: 'Bajo', color: '#0ca30c' },
-  { key: 'MEDIO', label: 'Medio', color: '#fab219' },
-  { key: 'ALTO', label: 'Alto', color: '#d03b3b' },
-] as const
 
 export interface TeacherCommentsComparisonProps {
   entries: TeacherComparisonEntry[]
@@ -87,7 +81,7 @@ function TeacherCommentsRow({
 
   const riskSegments = RISK_LEVELS.map((level) => ({
     key: level.key,
-    label: level.label,
+    label: level.name,
     color: level.color,
     count: entry.comments_risk_counts[level.key],
   }))

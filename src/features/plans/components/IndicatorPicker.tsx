@@ -24,7 +24,7 @@ import { Switch } from '@/components/ui/switch'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { CommentCard } from '@/features/teachers/components/CommentCard'
 import type { TeacherComment } from '@/features/teachers/types'
-import { getScoreToneClass } from '@/lib/scoreTone'
+import { getScoreToneBadgeClass, getScoreToneClass, SCORE_TONE_BADGE_CLASS } from '@/lib/scoreTone'
 import { cn } from '@/lib/utils'
 import { type GroupedComments, visibleComments } from '../lib/commentGroups'
 import { SUBJECT_ALL } from '../lib/indicatorMatrix'
@@ -361,7 +361,18 @@ function DimensionBlock({
           <DimensionDot dimension={dimension.dimension} />
           <span className="text-sm font-medium">{dimension.dimension}</span>
           {dimension.below_threshold && (
-            <Badge className="bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300">
+            // Coloured by the average, not fixed red: "bajo" is the
+            // institutional cut (3.5) and the `ScoreBadge` two elements along
+            // reads 3.0/3.6, so a 3.55 used to show a red chip beside an amber
+            // score. The chip still says it is below; the colour says by how
+            // much.
+            <Badge
+              className={
+                dimension.average != null
+                  ? getScoreToneBadgeClass(dimension.average)
+                  : SCORE_TONE_BADGE_CLASS.danger
+              }
+            >
               Bajo
             </Badge>
           )}

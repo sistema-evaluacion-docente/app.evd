@@ -1,6 +1,12 @@
 import { Minus, TrendingDown, TrendingUp } from 'lucide-react'
 
-import { getScoreTone } from '@/lib/scoreTone'
+import { TREND_TEXT_CLASS } from '@/lib/trendTone'
+import {
+  DEFAULT_DANGER_MAX,
+  DEFAULT_SUCCESS_MIN,
+  getScoreTone,
+  SCORE_TONE_TEXT_CLASS,
+} from '@/lib/scoreTone'
 import { cn } from '@/lib/utils'
 
 type ScoreBadgeTone = 'auto' | 'success' | 'warning' | 'danger' | 'neutral'
@@ -54,10 +60,10 @@ export interface ScoreBadgeProps {
   showTrend?: boolean
 }
 
+// Spread rather than rewritten: the three semaphore tones are `scoreTone`'s to
+// decide, and only `neutral` — which is not a score at all — belongs here.
 const TONE_CLASS: Record<Exclude<ScoreBadgeTone, 'auto'>, string> = {
-  success: 'text-green-500',
-  warning: 'text-amber-500',
-  danger: 'text-red-500',
+  ...SCORE_TONE_TEXT_CLASS,
   neutral: 'text-foreground',
 }
 
@@ -77,12 +83,6 @@ const TREND_ICON: Record<ScoreTrendDirection, typeof TrendingUp> = {
   up: TrendingUp,
   down: TrendingDown,
   flat: Minus,
-}
-
-const TREND_TEXT_CLASS: Record<ScoreTrendDirection, string> = {
-  up: 'text-green-600 dark:text-green-400',
-  down: 'text-red-600 dark:text-red-400',
-  flat: 'text-muted-foreground',
 }
 
 const TREND_WORD: Record<ScoreTrendDirection, string> = {
@@ -130,8 +130,8 @@ export function ScoreBadge({
   decimals = 2,
   tone = 'auto',
   size = 'sm',
-  successMin = 3.6,
-  dangerMax = 3,
+  successMin = DEFAULT_SUCCESS_MIN,
+  dangerMax = DEFAULT_DANGER_MAX,
   placeholder = '—',
   className,
   previousValue,
@@ -173,9 +173,7 @@ export function ScoreBadge({
   const score = showMax ? (
     <span className={cn('inline-flex items-baseline', !showTrendBadge && className)}>
       {valueSpan}
-      <span className={cn('ml-1 font-normal', SIZE_CLASS[size])}>
-        /{max.toFixed(1)}
-      </span>
+      <span className={cn('ml-1 font-normal', SIZE_CLASS[size])}>/{max.toFixed(1)}</span>
     </span>
   ) : (
     valueSpan

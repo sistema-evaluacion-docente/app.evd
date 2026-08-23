@@ -37,6 +37,21 @@ export function isMeasurable(item: DraftItem): boolean {
   return item.target_type === 'DIMENSION' || item.target_type === 'QUESTION'
 }
 
+/** The institutional scale every evaluation score is read on. */
+export const SCORE_MIN = 0
+export const SCORE_MAX = 5
+
+/**
+ * Whether the description was written by the app rather than by the director: an
+ * indicator pick names the indicator it came from, a citation names the comment.
+ * Either way it is the identity of the row — what was measured, not what was
+ * agreed — so the editor prints it instead of offering it for editing. A
+ * commitment written from scratch has no such source and needs a name typed.
+ */
+export function hasDerivedTitle(item: DraftItem): boolean {
+  return item.target_ref != null || item.comment_ids.length > 0
+}
+
 function isBlank(value: string): boolean {
   return value.trim().length === 0
 }
@@ -51,6 +66,67 @@ export function itemsInPaintedOrder(items: DraftItem[], aspects: PlanAspect[]): 
   const grouped = aspects.flatMap((aspect) => items.filter((item) => item.aspect === aspect.aspect))
 
   return [...grouped, ...items.filter((item) => item.aspect == null)]
+}
+
+/**
+ * What one commitment still needs, in the order its card lays the fields out.
+ *
+ * Shared by `CommitmentDialog`, which refuses to save an incomplete commitment,
+ * and by `planFormErrors` below, which has to catch the ones a saved plan came
+ * back with — an older plan, or one whose acta was signed before a field was
+ * required. Both had their own copy of these four rules until the dialog
+ * existed; one of them was always going to drift.
+ *
+ * @example
+ * commitmentErrors(draft)[0] // → { id: 'commit-draft-3', message: 'Falta el compromiso.' }
+ */
+export function commitmentErrors(item: DraftItem): PlanFieldError[] {
+  const errors: PlanFieldError[] = []
+
+  if (item.aspect == null) {
+    errors.push({
+      id: commitmentFieldId.aspect(item.key),
+      message: 'Elige el aspecto del formato.',
+    })
+  }
+
+  if (isBlank(item.description)) {
+    errors.push({
+      id: commitmentFieldId.description(item.key),
+      message: 'Falta la descripción del indicador comprometido.',
+    })
+  }
+
+  if (isBlank(item.commitment)) {
+    errors.push({
+      id: commitmentFieldId.commitment(item.key),
+      message: 'Falta el compromiso.',
+    })
+  }
+
+  if (isMeasurable(item)) {
+    if (item.target_value == null) {
+      errors.push({
+        id: commitmentFieldId.target(item.key),
+        message: 'Falta la meta esperada.',
+      })
+    } else if (
+      Number.isNaN(item.target_value) ||
+      item.target_value < SCORE_MIN ||
+      item.target_value > SCORE_MAX
+    ) {
+      // The `min`/`max` on the input are a hint, not a guard: the form is
+      // `noValidate` — deliberately, so the browser's own bubble doesn't hide
+      // the errors that know about every other field — and typing over the
+      // spinner goes straight past them.
+      errors.push({
+        id: commitmentFieldId.target(item.key),
+        message: `La meta debe estar entre ${SCORE_MIN.toFixed(1)} y ${SCORE_MAX.toFixed(1)}.`,
+      })
+    }
+  }
+
+  return errors
 }
 
 /**
@@ -109,33 +185,7 @@ export function planFormErrors({
     }
 
     for (const item of itemsInPaintedOrder(items, aspects)) {
-      if (item.aspect == null) {
-        errors.push({
-          id: commitmentFieldId.aspect(item.key),
-          message: 'Elige el aspecto del formato.',
-        })
-      }
-
-      if (isBlank(item.description)) {
-        errors.push({
-          id: commitmentFieldId.description(item.key),
-          message: 'Falta la descripción del indicador comprometido.',
-        })
-      }
-
-      if (isBlank(item.commitment)) {
-        errors.push({
-          id: commitmentFieldId.commitment(item.key),
-          message: 'Falta el compromiso.',
-        })
-      }
-
-      if (isMeasurable(item) && item.target_value == null) {
-        errors.push({
-          id: commitmentFieldId.target(item.key),
-          message: 'Falta la meta esperada.',
-        })
-      }
+      errors.push(...commitmentErrors(item))
     }
   }
 

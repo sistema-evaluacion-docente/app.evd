@@ -5,9 +5,11 @@ import {
   checkpointErrors,
   checkpointFieldId,
   COMMITMENTS_ANCHOR_ID,
+  commitmentErrors,
   commitmentFieldId,
   COURSES_ANCHOR_ID,
   planFormErrors,
+  SCORE_MAX,
 } from '@/features/plans/lib/planValidation'
 import type { DraftCourse, DraftItem, PlanAspect } from '@/features/plans/types'
 
@@ -248,5 +250,52 @@ describe('checkpointErrors', () => {
     })
 
     expect(errors).toEqual([])
+  })
+})
+
+describe('commitmentErrors · la meta esperada', () => {
+  function measurable(overrides: Partial<DraftItem> = {}): DraftItem {
+    return {
+      ...buildIndicatorDraft(
+        {
+          target_type: 'DIMENSION',
+          target_ref: 'Desempeño Docente',
+          label: 'Desempeño Docente',
+          average: 3.2,
+          aspect: 2,
+          suggestions: [],
+        },
+        null,
+      ),
+      commitment: 'Rediseñar las guías',
+      ...overrides,
+    }
+  }
+
+  const messages = (item: DraftItem) => commitmentErrors(item).map((error) => error.message)
+
+  it('la pide cuando el indicador tiene nota que comparar', () => {
+    expect(messages(measurable({ target_value: null }))).toContain('Falta la meta esperada.')
+  })
+
+  it('rechaza una meta fuera de la escala institucional', () => {
+    // La universidad califica de 0.0 a 5.0; un 7 no significa nada contra eso.
+    expect(messages(measurable({ target_value: 7 }))).toContain(
+      'La meta debe estar entre 0.0 y 5.0.',
+    )
+    expect(messages(measurable({ target_value: -1 }))).toContain(
+      'La meta debe estar entre 0.0 y 5.0.',
+    )
+  })
+
+  it('acepta los dos extremos de la escala', () => {
+    expect(messages(measurable({ target_value: 0 }))).toEqual([])
+    expect(messages(measurable({ target_value: SCORE_MAX }))).toEqual([])
+  })
+
+  it('no se la pide a un compromiso sin nada que medir', () => {
+    const qualitative = { ...buildBlankDraft(1), commitment: 'Algo', description: 'Algo' }
+
+    expect(messages(qualitative as DraftItem)).toEqual([])
   })
 })

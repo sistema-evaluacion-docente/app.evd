@@ -1,52 +1,24 @@
 import { memo, useMemo } from 'react'
-import { Trash2 } from 'lucide-react'
+import { Pencil, Trash2 } from 'lucide-react'
 import { FieldError } from '@/components/common/FieldError'
 import { DimensionDot } from '@/components/common/DimensionDot'
-import { Required } from '@/components/common/Required'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
-import { fieldErrorId } from '@/lib/fieldErrorId'
-import type { SuggestedAction } from '@/features/suggested-actions/types'
 import { commitmentFieldId, isMeasurable, itemsInPaintedOrder } from '../lib/planValidation'
 import type { DraftItem, PlanAspect } from '../types'
-import { CommitmentSuggestions } from './CommitmentSuggestions'
-
-/**
- * Shared empty list for the rows that don't show the aspect picker.
- *
- * A `[]` default parameter would be a new array on every render, and the rows
- * are memoised — one fresh prop is all it takes to redraw every card.
- */
-const NO_ASPECTS: PlanAspect[] = []
 
 interface CommitmentsEditorProps {
   items: DraftItem[]
   aspects: PlanAspect[]
-  /**
-   * The department's default improvement actions (`/acciones`). Offered on the
-   * commitments whose aspect they were written for.
-   */
-  defaultActions?: SuggestedAction[]
-  onChange: (key: string, patch: Partial<DraftItem>) => void
+  /** Reopens the commitment in `CommitmentDialog`, where it is written. */
+  onEdit: (key: string) => void
   onRemove: (key: string) => void
   /**
    * The fields to paint red, each against what is missing from it. The page
-   * decides when one enters the map; the message is what the field says out
+   * decides when one enters the map; the message is what the card says out
    * loud once it is in there.
    */
   invalidFields: ReadonlyMap<string, string>
-  /** Leaving a required field empty is what makes it red the first time. */
-  onFieldBlur: (id: string) => void
   disabled?: boolean
 }
 
@@ -56,22 +28,25 @@ interface CommitmentsEditorProps {
  * row keeps the indicator description and the commitment apart, because
  * Formato 2 prints them as two separate blocks.
  *
+ * Reads rather than edits: the fields live in `CommitmentDialog`, which the
+ * picker opens the moment an indicator is added. Editing them here as well
+ * would mean two places to write the same commitment, and the scroll between
+ * the matrix and these cards is exactly what the dialog exists to remove.
+ *
  * Only the aspects the director actually picked something for are drawn. Empty
  * ones used to be listed with a "sin compromisos" line each, which filled the
  * page with sections nobody was going to touch.
  *
  * @example
- * <CommitmentsEditor items={items} aspects={aspects} onChange={patch} onRemove={remove}
- *   invalidFields={invalid} onFieldBlur={touch} />
+ * <CommitmentsEditor items={items} aspects={aspects} onEdit={openDialog} onRemove={remove}
+ *   invalidFields={invalid} />
  */
 export function CommitmentsEditor({
   items,
   aspects,
-  defaultActions = [],
-  onChange,
+  onEdit,
   onRemove,
   invalidFields,
-  onFieldBlur,
   disabled = false,
 }: CommitmentsEditorProps) {
   const filled = aspects.filter((aspect) => items.some((item) => item.aspect === aspect.aspect))
@@ -85,21 +60,17 @@ export function CommitmentsEditor({
     [items, aspects],
   )
 
-  const actionsByAspect = useMemo(() => {
-    const grouped = new Map<number, SuggestedAction[]>()
-
-    for (const action of defaultActions) {
-      const bucket = grouped.get(action.aspect)
-
-      if (bucket) bucket.push(action)
-      else grouped.set(action.aspect, [action])
-    }
-
-    return grouped
-  }, [defaultActions])
-
-  const actionsFor = (item: DraftItem) =>
-    item.aspect == null ? [] : (actionsByAspect.get(item.aspect) ?? [])
+  const rowProps = (item: DraftItem) => ({
+    item,
+    number: numbers.get(item.key) ?? 0,
+    onEdit,
+    onRemove,
+    descriptionError: invalidFields.get(commitmentFieldId.description(item.key)),
+    commitmentError: invalidFields.get(commitmentFieldId.commitment(item.key)),
+    targetError: invalidFields.get(commitmentFieldId.target(item.key)),
+    aspectError: invalidFields.get(commitmentFieldId.aspect(item.key)),
+    disabled,
+  })
 
   return (
     <div className="space-y-4">
@@ -119,20 +90,7 @@ export function CommitmentsEditor({
             {items
               .filter((item) => item.aspect === aspect.aspect)
               .map((item) => (
-                <CommitmentRow
-                  key={item.key}
-                  item={item}
-                  number={numbers.get(item.key) ?? 0}
-                  onChange={onChange}
-                  onRemove={onRemove}
-                  descriptionError={invalidFields.get(commitmentFieldId.description(item.key))}
-                  commitmentError={invalidFields.get(commitmentFieldId.commitment(item.key))}
-                  targetError={invalidFields.get(commitmentFieldId.target(item.key))}
-                  aspectError={invalidFields.get(commitmentFieldId.aspect(item.key))}
-                  onFieldBlur={onFieldBlur}
-                  disabled={disabled}
-                  departmentActions={actionsFor(item)}
-                />
+                <CommitmentRow key={item.key} {...rowProps(item)} />
               ))}
           </ul>
         </section>
@@ -152,22 +110,7 @@ export function CommitmentsEditor({
 
           <ul className="space-y-3 p-3">
             {orphans.map((item) => (
-              <CommitmentRow
-                key={item.key}
-                item={item}
-                number={numbers.get(item.key) ?? 0}
-                onChange={onChange}
-                onRemove={onRemove}
-                descriptionError={invalidFields.get(commitmentFieldId.description(item.key))}
-                commitmentError={invalidFields.get(commitmentFieldId.commitment(item.key))}
-                targetError={invalidFields.get(commitmentFieldId.target(item.key))}
-                aspectError={invalidFields.get(commitmentFieldId.aspect(item.key))}
-                onFieldBlur={onFieldBlur}
-                disabled={disabled}
-                departmentActions={actionsFor(item)}
-                showAspectPicker
-                aspects={aspects}
-              />
+              <CommitmentRow key={item.key} {...rowProps(item)} />
             ))}
           </ul>
         </section>
@@ -180,39 +123,32 @@ export function CommitmentsEditor({
  * One commitment card.
  *
  * Memoised, and given its own errors as plain strings rather than the map of
- * every field in the form: the map is rebuilt on each keystroke, so sharing it
- * would redraw all the cards while only one of them is being typed into.
+ * every field in the form: the map is rebuilt whenever anything in the page
+ * changes, so sharing it would redraw all the cards for an edit that belongs
+ * to one of them.
  */
 const CommitmentRow = memo(function CommitmentRow({
   item,
   number,
-  onChange,
+  onEdit,
   onRemove,
   descriptionError,
   commitmentError,
   targetError,
   aspectError,
-  onFieldBlur,
   disabled,
-  departmentActions,
-  showAspectPicker = false,
-  aspects = NO_ASPECTS,
 }: {
   item: DraftItem
   /** Position in the plan as a whole: the card is titled "Compromiso N". */
   number: number
-  onChange: (key: string, patch: Partial<DraftItem>) => void
+  onEdit: (key: string) => void
   onRemove: (key: string) => void
   /** What each field is missing, or `undefined` while it is fine. */
   descriptionError?: string
   commitmentError?: string
   targetError?: string
   aspectError?: string
-  onFieldBlur: (id: string) => void
   disabled: boolean
-  departmentActions: SuggestedAction[]
-  showAspectPicker?: boolean
-  aspects?: PlanAspect[]
 }) {
   const descriptionId = commitmentFieldId.description(item.key)
   const commitmentId = commitmentFieldId.commitment(item.key)
@@ -223,155 +159,91 @@ const CommitmentRow = memo(function CommitmentRow({
     // The card is one closed grey block with white fields inside: stacked on a
     // white page they blurred into one another, and a director filling several
     // in a row could not tell where one ended and the next began.
-    <li className="bg-muted border-border space-y-3 rounded-md border p-4">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-semibold">
-          Compromiso <span className="num">{number}</span>
-        </p>
+    <li className="bg-muted border-border space-y-2 rounded-md border p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 space-y-1">
+          <p className="text-muted-foreground text-xs">
+            Compromiso <span className="num">{number}</span>
+          </p>
 
-        <Button
-          type="button"
-          size="icon"
-          variant="ghost"
-          onClick={() => onRemove(item.key)}
-          disabled={disabled}
-          aria-label={`Quitar compromiso ${number}`}
-          className="shrink-0"
-        >
-          <Trash2 className="size-4" aria-hidden="true" />
-        </Button>
-      </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {/* `tabIndex` so a refused save can put the cursor on the card
+                even though nothing in it is a control any more; `outline-none`
+                so it doesn't grow a focus ring for it. */}
+            <p id={descriptionId} tabIndex={-1} className="text-sm font-semibold outline-none">
+              {item.description.trim() || 'Compromiso sin título'}
+            </p>
 
-      {showAspectPicker && (
-        <div className="space-y-1.5">
-          <Label htmlFor={aspectId} className="text-xs">
-            Aspecto del formato <Required />
-          </Label>
-          <Select
-            value={item.aspect}
-            onValueChange={(value) => onChange(item.key, { aspect: value as number | null })}
-            disabled={disabled}
-          >
-            <SelectTrigger
-              id={aspectId}
-              className="bg-background w-full max-w-md"
-              aria-invalid={Boolean(aspectError)}
-              aria-describedby={aspectError ? fieldErrorId(aspectId) : undefined}
-              onBlur={() => onFieldBlur(aspectId)}
-            >
-              <SelectValue placeholder="Elige el aspecto…">
-                {item.aspect != null
-                  ? `${item.aspect}. ${
-                      aspects.find((aspect) => aspect.aspect === item.aspect)?.label ?? ''
-                    }`
-                  : undefined}
-              </SelectValue>
-            </SelectTrigger>
+            {item.source_subject_label && (
+              <Badge variant="outline" className="bg-background font-normal">
+                {item.source_subject_label}
+              </Badge>
+            )}
+          </div>
 
-            <SelectContent>
-              {aspects.map((aspect) => (
-                <SelectItem key={aspect.aspect} value={aspect.aspect}>
-                  {aspect.aspect}. {aspect.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <FieldError fieldId={descriptionId} message={descriptionError} />
 
+          <span id={aspectId} tabIndex={-1} className="sr-only outline-none">
+            Aspecto del formato
+          </span>
           <FieldError fieldId={aspectId} message={aspectError} />
         </div>
-      )}
 
-      <div className="space-y-1.5">
-        <div className="flex flex-wrap items-center gap-2">
-          <Label htmlFor={descriptionId} className="text-xs">
-            Descripción del indicador comprometido <Required />
-          </Label>
-          {item.source_subject_label && (
-            <Badge variant="outline" className="bg-background font-normal">
-              {item.source_subject_label}
-            </Badge>
-          )}
-        </div>
-        <Textarea
-          id={descriptionId}
-          className="bg-background"
-          value={item.description}
-          onChange={(event) => onChange(item.key, { description: event.target.value })}
-          onBlur={() => onFieldBlur(descriptionId)}
-          aria-invalid={Boolean(descriptionError)}
-          aria-describedby={descriptionError ? fieldErrorId(descriptionId) : undefined}
-          rows={2}
-          disabled={disabled}
-          placeholder="Describe la situación detectada"
-        />
+        {!disabled && (
+          <div className="flex shrink-0 items-center gap-1">
+            <Button type="button" size="sm" variant="outline" onClick={() => onEdit(item.key)}>
+              <Pencil className="size-3.5" aria-hidden="true" />
+              Editar
+            </Button>
 
-        <FieldError fieldId={descriptionId} message={descriptionError} />
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              onClick={() => onRemove(item.key)}
+              aria-label={`Quitar compromiso ${number}`}
+            >
+              <Trash2 className="size-4" aria-hidden="true" />
+            </Button>
+          </div>
+        )}
       </div>
 
-      <div className="space-y-1.5">
-        <Label htmlFor={commitmentId} className="text-xs">
-          Compromiso <Required />
-        </Label>
-        <Textarea
-          id={commitmentId}
-          className="bg-background"
-          value={item.commitment}
-          onChange={(event) => onChange(item.key, { commitment: event.target.value })}
-          onBlur={() => onFieldBlur(commitmentId)}
-          aria-invalid={Boolean(commitmentError)}
-          aria-describedby={commitmentError ? fieldErrorId(commitmentId) : undefined}
-          rows={2}
-          disabled={disabled}
-          placeholder="Acción concreta que se compromete a realizar el docente"
-        />
+      <div>
+        <p id={commitmentId} tabIndex={-1} className="text-sm whitespace-pre-line outline-none">
+          {item.commitment.trim() || (
+            <span className="text-muted-foreground italic">Sin compromiso escrito todavía</span>
+          )}
+        </p>
 
         <FieldError fieldId={commitmentId} message={commitmentError} />
       </div>
 
-      <div className="flex flex-wrap items-end gap-3">
-        {isMeasurable(item) && (
-          <div className="space-y-1.5">
-            <Label htmlFor={targetId} className="text-xs">
-              Meta esperada <Required />
-            </Label>
-            <Input
-              id={targetId}
-              type="number"
-              step="0.1"
-              min="0"
-              max="5"
-              className="bg-background w-28"
-              // Starts empty on purpose: seeded with the threshold it read as
-              // already decided and nobody looked at it again.
-              value={item.target_value ?? ''}
-              onChange={(event) =>
-                onChange(item.key, {
-                  target_value: event.target.value === '' ? null : Number(event.target.value),
-                })
-              }
-              onBlur={() => onFieldBlur(targetId)}
-              aria-invalid={Boolean(targetError)}
-              aria-describedby={targetError ? fieldErrorId(targetId) : undefined}
-              disabled={disabled}
-            />
-
-            <FieldError fieldId={targetId} message={targetError} />
-          </div>
-        )}
-
-        {item.baseline_value != null && (
-          <p className="text-muted-foreground pb-2 text-xs">
-            Valor actual:{' '}
-            <span className="num font-semibold">{item.baseline_value.toFixed(2)}</span>
+      {(isMeasurable(item) || item.baseline_value != null) && (
+        <div>
+          <p className="text-muted-foreground text-xs">
+            {isMeasurable(item) && (
+              <span id={targetId} tabIndex={-1} className="outline-none">
+                Meta:{' '}
+                <span className="num text-foreground font-semibold">
+                  {item.target_value != null ? item.target_value.toFixed(2) : '—'}
+                </span>
+              </span>
+            )}
+            {isMeasurable(item) && item.baseline_value != null && ' · '}
+            {item.baseline_value != null && (
+              <>
+                Actual:{' '}
+                <span className="num text-foreground font-semibold">
+                  {item.baseline_value.toFixed(2)}
+                </span>
+              </>
+            )}
           </p>
-        )}
-      </div>
 
-      <CommitmentSuggestions
-        departmentActions={departmentActions}
-        onPick={(commitment) => onChange(item.key, { commitment })}
-        disabled={disabled}
-      />
+          <FieldError fieldId={targetId} message={targetError} />
+        </div>
+      )}
 
       {item.comment_previews.length > 0 && (
         <div className="border-border space-y-1 border-l-2 pl-3">

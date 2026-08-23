@@ -10,8 +10,12 @@ import type { SuggestedAction } from '@/features/suggested-actions/types'
 interface CommitmentSuggestionsProps {
   /** The department's defaults, already narrowed to this commitment's aspect. */
   departmentActions: SuggestedAction[]
-  /** Writes the picked wording into the commitment field. */
-  onPick: (commitment: string) => void
+  /**
+   * Hands back the wording that was picked. The caller decides how to merge it
+   * — `appendSuggestedAction` adds it to what is already written rather than
+   * replacing it, which is what this used to do.
+   */
+  onPick: (action: string) => void
   disabled?: boolean
 }
 
@@ -26,7 +30,7 @@ interface CommitmentSuggestionsProps {
  *
  * @example
  * <CommitmentSuggestions departmentActions={forThisAspect}
- *   onPick={(text) => onChange(item.key, { commitment: text })} />
+ *   onPick={(action) => patch({ commitment: appendSuggestedAction(item.commitment, action) })} />
  */
 export function CommitmentSuggestions({
   departmentActions,
