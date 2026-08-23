@@ -17,22 +17,23 @@ function item(overrides: Partial<DraftItem> = {}): DraftItem {
 
 function renderEditor(
   items: DraftItem[],
-  overrides: Partial<{ invalidFields: Map<string, string> }> = {},
+  overrides: Partial<{ invalidFields: Map<string, string>; disabled: boolean }> = {},
 ) {
-  const onFieldBlur = vi.fn()
+  const onEdit = vi.fn()
+  const onRemove = vi.fn()
 
   render(
     <CommitmentsEditor
       items={items}
       aspects={ASPECTS}
-      onChange={vi.fn()}
-      onRemove={vi.fn()}
+      onEdit={onEdit}
+      onRemove={onRemove}
       invalidFields={overrides.invalidFields ?? new Map()}
-      onFieldBlur={onFieldBlur}
+      disabled={overrides.disabled}
     />,
   )
 
-  return { onFieldBlur }
+  return { onEdit, onRemove }
 }
 
 describe('CommitmentsEditor', () => {
@@ -91,6 +92,26 @@ describe('CommitmentsEditor', () => {
     expect(screen.queryByRole('heading', { name: /Desempeño Docente/ })).not.toBeInTheDocument()
   })
 
+  it('reads the commitments instead of offering them for editing', () => {
+    renderEditor([item({ description: 'Metodología', commitment: 'Aplicar rúbricas' })])
+
+    // The fields live in `CommitmentDialog` now: two places to write the same
+    // commitment is exactly what the dialog was added to remove.
+    expect(screen.getByText('Metodología')).toBeInTheDocument()
+    expect(screen.getByText('Aplicar rúbricas')).toBeInTheDocument()
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+    expect(screen.queryByRole('spinbutton')).not.toBeInTheDocument()
+  })
+
+  it('reopens the commitment it was asked to edit', async () => {
+    const draft = item({ description: 'Metodología', commitment: 'Aplicar rúbricas' })
+    const { onEdit } = renderEditor([draft])
+
+    await userEvent.click(screen.getByRole('button', { name: 'Editar' }))
+
+    expect(onEdit).toHaveBeenCalledWith(draft.key)
+  })
+
   it('says nothing about a commitment still being filled in', () => {
     renderEditor([item({ description: 'Metodología', commitment: '' })])
 
@@ -100,58 +121,45 @@ describe('CommitmentsEditor', () => {
     expect(screen.queryByText('Completo')).not.toBeInTheDocument()
   })
 
-  it('paints red only the fields the page says are already due', () => {
-    const draft = item({ description: '', commitment: '' })
+  it('says in words what is missing, on the card the page will scroll to', () => {
+    const draft = item({ description: 'Metodología', commitment: '' })
 
     renderEditor([draft], {
       invalidFields: new Map([[`commit-${draft.key}`, 'Falta el compromiso.']]),
     })
 
-    expect(screen.getByLabelText(/Descripción del indicador/)).not.toHaveAttribute(
-      'aria-invalid',
-      'true',
-    )
-    expect(screen.getByLabelText(/^Compromiso/)).toHaveAttribute('aria-invalid', 'true')
+    // Nothing in the card is a control any more, so the anchor `focusField`
+    // aims at has to be the text itself.
+    expect(screen.getByRole('alert')).toHaveTextContent('Falta el compromiso.')
+    expect(document.getElementById(`commit-${draft.key}`)).toHaveAttribute('tabindex', '-1')
   })
 
-  it('says in words what is missing, and points the field at it', () => {
-    const draft = item({ description: '', commitment: '' })
+  it('shows the meta agreed on next to the score it starts from', () => {
+    renderEditor([
+      item({
+        target_type: 'DIMENSION',
+        target_ref: 'Desempeño Docente',
+        target_value: 4,
+        baseline_value: 3.2,
+        commitment: 'Aplicar rúbricas',
+      }),
+    ])
 
-    renderEditor([draft], {
-      invalidFields: new Map([[`commit-${draft.key}`, 'Falta el compromiso.']]),
-    })
-
-    // Red alone is not an error message: the reason has to be readable, and
-    // reachable from the control for anyone who can't see the colour.
-    const message = screen.getByRole('alert')
-
-    expect(message).toHaveTextContent('Falta el compromiso.')
-    expect(screen.getByLabelText(/^Compromiso/)).toHaveAttribute('aria-describedby', message.id)
+    expect(screen.getByText('4.00')).toBeInTheDocument()
+    expect(screen.getByText('3.20')).toBeInTheDocument()
   })
 
-  it('reports a required field left empty, which is what turns it red', async () => {
-    const draft = item()
-    const { onFieldBlur } = renderEditor([draft])
+  it('takes the buttons away once the acta is signed', () => {
+    renderEditor([item({ description: 'A', commitment: 'a' })], { disabled: true })
 
-    await userEvent.click(screen.getByLabelText(/^Compromiso/))
-    await userEvent.tab()
-
-    expect(onFieldBlur).toHaveBeenCalledWith(`commit-${draft.key}`)
+    expect(screen.queryByRole('button', { name: 'Editar' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Quitar compromiso/ })).not.toBeInTheDocument()
   })
 
-  it('starts the meta esperada empty, so the director has to decide it', () => {
-    const draft = item({ target_type: 'DIMENSION', target_ref: 'Desempeño Docente' })
-
-    renderEditor([draft])
-
-    expect(screen.getByLabelText(/Meta esperada/)).toHaveValue(null)
-  })
-
-  it('hands an aspect picker to the commitments that have none', () => {
-    renderEditor([item({ aspect: null, description: 'Suelto' })])
+  it('still groups the ones with no aspect apart, so they are not missed', () => {
+    renderEditor([item({ aspect: null, description: 'Suelto', commitment: 'x' })])
 
     expect(screen.getByRole('heading', { name: 'Sin aspecto asignado' })).toBeInTheDocument()
-    expect(screen.getByLabelText(/Aspecto del formato/)).toBeInTheDocument()
   })
 })
 

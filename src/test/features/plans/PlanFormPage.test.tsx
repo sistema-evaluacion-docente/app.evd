@@ -49,6 +49,20 @@ vi.mock('sonner', () => ({
   toast: { error: vi.fn(), warning: vi.fn(), success: vi.fn() },
 }))
 
+/**
+ * The department's default actions come through a `useQuery` of their own, and
+ * this file renders the page without a `QueryClientProvider` on purpose — what
+ * is under test is the form, not the settings endpoint behind the wordings.
+ */
+vi.mock('@/features/suggested-actions/api', () => ({
+  useGetSuggestedActions: () => ({
+    actions: [],
+    setting: null,
+    departmentId: 3,
+    isPending: false,
+  }),
+}))
+
 vi.mock('@/features/auth', () => ({
   ROLE: {
     ADMIN: 'ADMIN',
@@ -541,10 +555,67 @@ describe('PlanFormPage · creación', () => {
     await userEvent.click(screen.getByRole('button', { name: /Añadir compromiso manual/ }))
     await userEvent.click(await screen.findByRole('menuitem', { name: /Planeación del curso/ }))
 
+    // The commitment is written in the dialog, and only joins the plan — with
+    // the asignaturas it brings — once it is saved.
+    expect(screen.queryByText('Álgebra Lineal')).not.toBeInTheDocument()
+
+    await userEvent.type(screen.getByLabelText(/Título del compromiso/), 'Metodología')
+    await userEvent.type(screen.getByLabelText(/Descripción del compromiso/), 'Rediseñar las guías')
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+
     // A manual commitment is written at teacher level, so it covers all of them.
     expect(screen.getByText('Álgebra Lineal')).toBeInTheDocument()
     expect(screen.getByText('Cálculo I')).toBeInTheDocument()
     expect(screen.queryByText(/Todavía no hay asignaturas/)).not.toBeInTheDocument()
+  })
+
+  it('keeps letters out of the acta number', async () => {
+    mockQueries()
+
+    renderAt(<PlanFormPage />, '/planes/nuevo?teacher=7&period=2')
+
+    const field = screen.getByLabelText(/Acta N/)
+
+    await userEvent.type(field, 'Acta 012-B')
+
+    // "ACTA No. ___" on the official form is a number. Leading zeros are kept,
+    // which is why this is not a `number` input.
+    expect(field).toHaveValue('012')
+  })
+
+  it('saving a commitment does not also try to save the plan', async () => {
+    const createMutate = vi.fn()
+
+    mockQueries({ subjects: SUBJECTS, createMutate })
+
+    renderAt(<PlanFormPage />, '/planes/nuevo?teacher=7&period=2')
+
+    await userEvent.click(screen.getByRole('button', { name: /Añadir compromiso manual/ }))
+    await userEvent.click(await screen.findByRole('menuitem', { name: /Planeación del curso/ }))
+    await userEvent.type(screen.getByLabelText(/Título del compromiso/), 'Metodología')
+    await userEvent.type(screen.getByLabelText(/Descripción del compromiso/), 'Rediseñar')
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+
+    // React propagates events through its own tree, so the dialog's portal is
+    // no insulation: this submit used to reach the page's form and answer
+    // "faltan campos obligatorios" to someone who only saved one commitment.
+    expect(createMutate).not.toHaveBeenCalled()
+    expect(toast.warning).not.toHaveBeenCalled()
+  })
+
+  it('leaves nothing behind when the commitment dialog is cancelled', async () => {
+    mockQueries({ subjects: SUBJECTS })
+
+    renderAt(<PlanFormPage />, '/planes/nuevo?teacher=7&period=2')
+
+    await userEvent.click(screen.getByRole('button', { name: /Añadir compromiso manual/ }))
+    await userEvent.click(await screen.findByRole('menuitem', { name: /Planeación del curso/ }))
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+
+    // Picking used to drop a half-empty card into section 3 that the director
+    // then had to find and remove by hand.
+    expect(screen.getByText(/Todavía no hay compromisos/)).toBeInTheDocument()
+    expect(screen.getByText(/Todavía no hay asignaturas/)).toBeInTheDocument()
   })
 
   it('refuses a plan with no asignatura and puts the cursor on the gap it left', async () => {
@@ -818,8 +889,23 @@ describe('PlanFormPage · edición', () => {
 
     renderAt(<PlanFormPage />, '/planes/8/editar')
 
-    expect(screen.getByDisplayValue('Metodología — Álgebra (2.80)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Rediseñar las guías de clase')).toBeInTheDocument()
+    // The editor reads them now; the fields are in `CommitmentDialog`.
+    expect(screen.getByText('Metodología — Álgebra (2.80)')).toBeInTheDocument()
+    expect(screen.getByText('Rediseñar las guías de clase')).toBeInTheDocument()
+  })
+
+  it('reabre un compromiso guardado en el diálogo, con lo que ya decía', async () => {
+    mockQueries({ plan: savedPlan() })
+
+    renderAt(<PlanFormPage />, '/planes/8/editar')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Editar' }))
+
+    expect(await screen.findByLabelText(/Descripción del compromiso/)).toHaveValue(
+      'Rediseñar las guías de clase',
+    )
+    // El título es lo que se midió, no lo que se acordó: no se edita.
+    expect(screen.queryByLabelText(/Título del compromiso/)).not.toBeInTheDocument()
   })
 
   it('conserva el id de cada compromiso, para no recrearlo y perder sus evidencias', async () => {
