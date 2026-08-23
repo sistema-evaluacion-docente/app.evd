@@ -52,6 +52,11 @@ const securityConfig: { pages: SecurityPage[] } = {
       roles: ['DIRECTOR DE DEPARTAMENTO'],
     },
     {
+      path: '/alertas',
+      name: 'Alertas',
+      roles: ['DIRECTOR DE DEPARTAMENTO'],
+    },
+    {
       path: '/planes',
       name: 'Planes de mejoramiento',
       roles: ['DIRECTOR DE DEPARTAMENTO'],

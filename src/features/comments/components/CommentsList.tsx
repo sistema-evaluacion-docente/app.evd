@@ -40,6 +40,17 @@ const filterConfig: FilterConfig[] = [
   },
 ]
 
+interface CommentsListProps {
+  /**
+   * Pins the list to a single risk level (see `RISK_LEVELS`). The "Nivel de
+   * riesgo" filter is dropped from the panel when set, since the level is no
+   * longer the reader's to choose.
+   */
+  riskLevel?: number
+  /** Shown when no comment matches the current filters. */
+  emptyMessage?: string
+}
+
 /**
  * Displays the paginated list of comments (`GET /comments/`) of a selected
  * academic period, with server-side search and filters by teacher, risk
@@ -49,8 +60,15 @@ const filterConfig: FilterConfig[] = [
  *
  * @example
  * <CommentsList />
+ *
+ * @example
+ * // Only the high-risk comments, with no risk filter to loosen it.
+ * <CommentsList riskLevel={3} emptyMessage="No hay comentarios de riesgo alto." />
  */
-export function CommentsList() {
+export function CommentsList({
+  riskLevel,
+  emptyMessage = 'No hay comentarios que coincidan con los filtros aplicados.',
+}: CommentsListProps = {}) {
   const departmentId = useAuthStore((state) => state.user?.department_id)
   const [periodId, setPeriodId] = useState<number | undefined>(undefined)
   const [teacherId, setTeacherId] = useState<number | undefined>(undefined)
@@ -60,10 +78,19 @@ export function CommentsList() {
 
   const { modality, setModality } = useModalityFilter()
 
-  const { filters, setFilters } = useTableFilters('comments', {
-    riskLevel: undefined as number | undefined,
-    pedagogicalCategoryId: undefined as string | undefined,
-  })
+  const { filters, setFilters } = useTableFilters(
+    riskLevel ? `comments-risk-${riskLevel}` : 'comments',
+    {
+      riskLevel: undefined as number | undefined,
+      pedagogicalCategoryId: undefined as string | undefined,
+    },
+  )
+
+  const availableFilters = riskLevel
+    ? filterConfig.filter((filter) => filter.name !== 'riskLevel')
+    : filterConfig
+
+  const selectedRiskLevel = riskLevel ?? (filters.riskLevel ? Number(filters.riskLevel) : undefined)
 
   const resetPage = useDebouncedCallback(() => setPage(1), 400)
 
@@ -72,7 +99,7 @@ export function CommentsList() {
     limit: 10,
     academicPeriodId: periodId,
     teacherId,
-    riskLevel: filters.riskLevel ? Number(filters.riskLevel) : undefined,
+    riskLevel: selectedRiskLevel,
     pedagogicalCategoryId: filters.pedagogicalCategoryId
       ? Number(filters.pedagogicalCategoryId)
       : undefined,
@@ -132,7 +159,7 @@ export function CommentsList() {
         />
 
         <DataTableFilters
-          filters={filterConfig}
+          filters={availableFilters}
           // The modality lives in the URL, the rest in the table's own state;
           // the panel reads them as one set of values and hands them back the
           // same way, so they are split again here.
@@ -155,7 +182,7 @@ export function CommentsList() {
           isLoading={isPending}
           error={error ? error.message : null}
           commentProps={{ showTeacher: true, showCourse: true }}
-          emptyMessage="No hay comentarios que coincidan con los filtros aplicados."
+          emptyMessage={emptyMessage}
         />
       </div>
 

@@ -299,7 +299,7 @@ export function useGetPlan(planId?: number) {
   return useQuery({
     queryKey: plansKeys.detail(planId ?? 0),
     queryFn: () => getPlan(planId as number),
-    enabled: planId != null,
+    enabled: planId !== undefined,
   })
 }
 

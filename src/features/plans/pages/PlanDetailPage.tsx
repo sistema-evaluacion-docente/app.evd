@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import { Link, useLocation, useRoute } from 'wouter'
 import { Pencil, Stamp, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useRoute } from 'wouter'
 
 import { BackButton } from '@/components/common/BackButton'
 import { PageTitle } from '@/components/common/PageTitle'
@@ -10,10 +10,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ROLE, useAuthStore } from '@/features/auth'
+import { NotFoundPage } from '@/features/not-found'
+import { useNavigate } from '@/hooks/useNavigate'
 import formatDate from '@/lib/formatDate'
 import { useGetPlan, useGetPlanIndicators } from '../api'
-import { PlanCheckpoints } from '../components/PlanCheckpoints'
 import { DeletePlanDialog } from '../components/DeletePlanDialog'
+import { PlanCheckpoints } from '../components/PlanCheckpoints'
 import { PlanClosedSummary, PlanClosure } from '../components/PlanClosure'
 import { PlanDocuments } from '../components/PlanDocuments'
 import { PlanEvidences } from '../components/PlanEvidences'
@@ -30,10 +32,12 @@ import type { PlanItem } from '../types'
  * Route: `/planes/:id`
  */
 export default function PlanDetailPage() {
-  const [, navigate] = useLocation()
+  const navigate = useNavigate()
+
   const [, params] = useRoute('/planes/:id')
   const [confirmDelete, setConfirmDelete] = useState(false)
-  const planId = params?.id ? Number(params.id) : undefined
+
+  const planId = params?.id && !isNaN(Number(params.id)) ? Number(params.id) : undefined
 
   // Improvement plans belong to the department director, start to finish: they
   // agree them, sign them, follow them up and close them.
@@ -46,6 +50,10 @@ export default function PlanDetailPage() {
 
   const { data, isPending } = useGetPlan(planId)
   const { data: indicatorsResponse, isPending: aspectsPending } = useGetPlanIndicators()
+
+  if (!planId || (!isPending && !data)) {
+    return <NotFoundPage bgActive={false} />
+  }
 
   const plan = data?.data
   const aspects = indicatorsResponse?.data?.aspects ?? []

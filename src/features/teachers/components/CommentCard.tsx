@@ -135,6 +135,7 @@ export function CommentCard({
         className,
       )}
       style={style}
+      id={comment.id.toString()}
       onClick={showDetail ? handleCardClick : undefined}
     >
       {withGutter && (

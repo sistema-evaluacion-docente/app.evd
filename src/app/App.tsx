@@ -1,18 +1,20 @@
-import { lazy, Suspense } from 'react'
-import { Route, Switch } from 'wouter'
 import { AppLayout } from '@/components/common/AppLayout'
 import { RouteFallback } from '@/components/common/RouteFallback'
 import { EvaluationLogsPanel } from '@/features/evaluations/components/EvaluationLogsPanel'
+import { lazy, Suspense } from 'react'
+import { Route, Switch } from 'wouter'
+
+import AboutPage from '@/features/about/pages/AboutPage'
+import LoginPage from '@/features/auth/pages/LoginPage'
+import NotFoundPage from '@/features/not-found/pages/NotFoundPage'
 
 /**
  * Every page is loaded on demand.
  */
-const AboutPage = lazy(() => import('@/features/about/pages/AboutPage'))
-const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage'))
-const NotFoundPage = lazy(() => import('@/features/not-found/pages/NotFoundPage'))
 const DashboardPage = lazy(() => import('@/features/dashboard/pages/DashboardPage'))
 const NotificationsPage = lazy(() => import('@/features/notifications/pages/NotificationsPage'))
 const CommentsPage = lazy(() => import('@/features/comments/pages/CommentsPage'))
+const AlertsPage = lazy(() => import('@/features/comments/pages/AlertsPage'))
 const PeriodsPage = lazy(() => import('@/features/periods/pages/PeriodsPage'))
 const PeriodDetailPage = lazy(() => import('@/features/periods/pages/PeriodDetailPage'))
 const PeriodCourseDetailPage = lazy(() => import('@/features/periods/pages/PeriodCourseDetailPage'))
@@ -148,6 +150,12 @@ function App() {
             </AppLayout>
           </Route>
 
+          <Route path="/alertas">
+            <AppLayout>
+              <AlertsPage />
+            </AppLayout>
+          </Route>
+
           <Route path="/comentarios">
             <AppLayout>
               <CommentsPage />
@@ -274,7 +282,9 @@ function App() {
             </AppLayout>
           </Route>
 
-          <Route component={NotFoundPage} />
+          <Route>
+            <NotFoundPage />
+          </Route>
         </Switch>
       </Suspense>
       <EvaluationLogsPanel />

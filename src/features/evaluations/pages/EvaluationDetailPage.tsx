@@ -148,6 +148,8 @@ export default function EvaluationDetailPage() {
   const allTeachers = allTeachersData?.data ?? []
 
   const reportFileName = `Evaluacion-Periodo-${periodLabel.replace(/\s+/g, '-')}`
+  const defaultSortBy =
+    evaluation.ai_status === 'ANALYZED' ? 'high_risk_comments_count_desc' : 'overall_average_desc'
 
   return (
     <div
@@ -336,6 +338,7 @@ export default function EvaluationDetailPage() {
       <TeacherAveragesTable
         departmentId={evaluation.department_id}
         defaultPeriodId={evaluation.academic_period_id}
+        defaultSortBy={defaultSortBy}
         modality={modality}
         onTeacherClick={(teacher, periodId) => {
           const period = periods.find((p) => p.id === periodId)
