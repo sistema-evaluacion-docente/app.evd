@@ -13,6 +13,7 @@ import { PeriodSelect, type PeriodSelectOption } from '@/components/common/Perio
 import { ScoreBadge } from '@/components/common/ScoreBadge'
 import { ScoreLegend } from '@/components/common/ScoreLegend'
 import { TransitionLink } from '@/components/common/TransitionLink'
+import CourseTeacherDetailSkeleton from '@/components/skeletons/CourseTeacherDetailSkeleton'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
@@ -116,7 +117,12 @@ export function CourseTeacherDetail({
   const showAiPendingNotice = aiStatus === 'PENDING' || aiStatus === 'ANALYZING'
 
   if (isLoading) {
-    return <p className="text-muted-foreground py-10 text-center text-sm">Cargando…</p>
+    return (
+      <CourseTeacherDetailSkeleton
+        withTeacherIdentity={showTeacherIdentity}
+        className={className}
+      />
+    )
   }
 
   if (!course) {
