@@ -1,3 +1,4 @@
+import { STATUS_TONE_CLASS } from '@/lib/statusTone'
 import type {
   ActaStatus,
   CheckpointStage,
@@ -14,15 +15,18 @@ import type {
 /**
  * Human labels and tone classes for the module's statuses.
  *
- * Tones reuse the same emerald/amber/red vocabulary as `ActiveBadge` and
- * `scoreTone` so a plan reads consistently with the rest of the app.
+ * The tones come from `statusTone`, the one vocabulary every status badge in
+ * the app now reads, so a plan cannot end up a different shade of green from
+ * an evaluation that says the same thing.
  */
 
-const NEUTRAL = 'bg-muted text-muted-foreground'
-const INFO = 'bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-200'
-const SUCCESS = 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
-const WARNING = 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300'
-const DANGER = 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300'
+const {
+  neutral: NEUTRAL,
+  info: INFO,
+  success: SUCCESS,
+  warning: WARNING,
+  danger: DANGER,
+} = STATUS_TONE_CLASS
 
 export const PLAN_STATUS_LABEL: Record<PlanStatus, string> = {
   BORRADOR: 'Borrador',
