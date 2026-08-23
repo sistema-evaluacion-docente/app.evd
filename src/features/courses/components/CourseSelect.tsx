@@ -1,16 +1,7 @@
-import { X } from 'lucide-react'
-
-import { Button } from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Spinner } from '@/components/ui/spinner'
+import { SearchSelect } from '@/components/common/SearchSelect'
 import { cn } from '@/lib/utils'
 import { useListCourses } from '../api'
+import type { CourseRecord } from '../types'
 
 export interface CourseSelectProps {
   /** Selected course's id. */
@@ -27,13 +18,20 @@ export interface CourseSelectProps {
   className?: string
   disabled?: boolean
   size?: 'sm' | 'default'
-  /** Shows a trailing button to clear the selection once a course is picked. Defaults to `true`. */
+  /**
+   * Shows a way to clear the selection once a course is picked. Defaults to
+   * `true`. The field draws it inside itself, so it costs no room in the row.
+   */
   clearable?: boolean
 }
 
 /**
  * Select populated with a department's courses (`GET /courses/`), for
  * filtering other views by course.
+ *
+ * A combobox rather than a select, like its neighbour {@link TeacherSelect}:
+ * a department runs well past the hundred options this fetches, and scrolling
+ * a flat list for one of them is worse than typing three letters of it.
  *
  * @example
  * <CourseSelect value={courseId} onValueChange={setCourseId} />
@@ -52,50 +50,25 @@ export function CourseSelect({
   const { data, isLoading } = useListCourses({ limit: 100, departmentId })
 
   const courses = data?.data ?? []
-
-  if (isLoading) {
-    return <Spinner className={cn('size-5', className)} />
-  }
+  const selected = courses.find((course) => course.id === value) ?? null
 
   return (
-    <div className="flex items-center gap-1">
-      <Select
-        value={value}
-        onValueChange={(val) => onValueChange?.(val as number)}
-        disabled={disabled}
-      >
-        <SelectTrigger aria-label={ariaLabel} size={size} className={cn('w-fit', className)}>
-          <SelectValue placeholder={placeholder}>
-            {value != null
-              ? (courses.find((course) => course.id === value)?.name ?? placeholder)
-              : undefined}
-          </SelectValue>
-        </SelectTrigger>
-
-        <SelectContent>
-          {courses.length === 0 ? (
-            <p className="text-muted-foreground px-2 py-1.5 text-sm">Sin asignaturas.</p>
-          ) : (
-            courses.map((course) => (
-              <SelectItem key={course.id} value={course.id}>
-                {course.name || course.code}
-              </SelectItem>
-            ))
-          )}
-        </SelectContent>
-      </Select>
-
-      {clearable && value != null && (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => onValueChange?.(undefined)}
-          aria-label="Limpiar asignatura"
-        >
-          <X className="size-4" />
-        </Button>
-      )}
-    </div>
+    <SearchSelect<CourseRecord>
+      value={selected}
+      onValueChange={(course) => onValueChange?.(course?.id)}
+      items={courses}
+      itemToKey={(course) => course.id}
+      itemToLabel={(course) => course.name || course.code}
+      filter={(course, query) => course.code.toLowerCase().includes(query.toLowerCase())}
+      placeholder={placeholder}
+      ariaLabel={ariaLabel}
+      emptyMessage="Sin asignaturas que coincidan."
+      loading={isLoading}
+      loadingLabel="Cargando asignaturas…"
+      disabled={disabled}
+      size={size}
+      clearable={clearable}
+      className={cn('w-56', className)}
+    />
   )
 }
