@@ -14,6 +14,7 @@ import NotFoundPage from '@/features/not-found/pages/NotFoundPage'
 const DashboardPage = lazy(() => import('@/features/dashboard/pages/DashboardPage'))
 const NotificationsPage = lazy(() => import('@/features/notifications/pages/NotificationsPage'))
 const CommentsPage = lazy(() => import('@/features/comments/pages/CommentsPage'))
+const AlertsPage = lazy(() => import('@/features/comments/pages/AlertsPage'))
 const PeriodsPage = lazy(() => import('@/features/periods/pages/PeriodsPage'))
 const PeriodDetailPage = lazy(() => import('@/features/periods/pages/PeriodDetailPage'))
 const PeriodCourseDetailPage = lazy(() => import('@/features/periods/pages/PeriodCourseDetailPage'))
@@ -146,6 +147,12 @@ function App() {
           <Route path="/materias">
             <AppLayout>
               <SubjectsPage />
+            </AppLayout>
+          </Route>
+
+          <Route path="/alertas">
+            <AppLayout>
+              <AlertsPage />
             </AppLayout>
           </Route>
 
