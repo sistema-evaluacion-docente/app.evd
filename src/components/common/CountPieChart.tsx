@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/chart'
 import { computeCountDeltas, isRelevantDelta } from '@/lib/countDelta'
 import { cn } from '@/lib/utils'
+import { TREND_TEXT_CLASS } from '@/lib/trendTone'
 
 /** One slice of the pie: a stable key, its label, count, and an optional fixed color. */
 export interface CountPieChartEntry {
@@ -119,7 +120,7 @@ export function CountPieChart({
                   <span
                     className={cn(
                       'flex items-center gap-0.5 font-medium',
-                      delta.deltaPoints > 0 ? 'text-emerald-600' : 'text-red-600',
+                      TREND_TEXT_CLASS[delta.deltaPoints > 0 ? 'up' : 'down'],
                     )}
                   >
                     {delta.deltaPoints > 0 ? (

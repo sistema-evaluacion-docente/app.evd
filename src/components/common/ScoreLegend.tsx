@@ -1,4 +1,4 @@
-import { DEFAULT_DANGER_MAX, DEFAULT_SUCCESS_MIN } from '@/lib/scoreTone'
+import { DEFAULT_DANGER_MAX, DEFAULT_SUCCESS_MIN, SCORE_TONE_BG_CLASS } from '@/lib/scoreTone'
 import { cn } from '@/lib/utils'
 
 export interface ScoreLegendProps {
@@ -30,17 +30,26 @@ export function ScoreLegend({ className }: ScoreLegendProps) {
       <span className="font-medium">Escala de notas:</span>
 
       <span className="flex items-center gap-1.5">
-        <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-red-500" />
+        <span
+          aria-hidden="true"
+          className={cn('size-2 shrink-0 rounded-full', SCORE_TONE_BG_CLASS.danger)}
+        />
         {`Menor a ${dangerMax}`}
       </span>
 
       <span className="flex items-center gap-1.5">
-        <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-amber-500" />
+        <span
+          aria-hidden="true"
+          className={cn('size-2 shrink-0 rounded-full', SCORE_TONE_BG_CLASS.warning)}
+        />
         {`De ${dangerMax} a ${successMin}`}
       </span>
 
       <span className="flex items-center gap-1.5">
-        <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-green-500" />
+        <span
+          aria-hidden="true"
+          className={cn('size-2 shrink-0 rounded-full', SCORE_TONE_BG_CLASS.success)}
+        />
         {`Mayor a ${successMin}`}
       </span>
     </div>

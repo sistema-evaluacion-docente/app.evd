@@ -495,7 +495,8 @@ function NewRequestDialog({
         <DialogHeader>
           <DialogTitle>Solicitar evidencia</DialogTitle>
           <DialogDescription>
-            El docente recibirá una notificación con el entregable solicitado.
+            El docente recibirá una notificación en la plataforma y un correo con el entregable
+            solicitado.
           </DialogDescription>
         </DialogHeader>
 

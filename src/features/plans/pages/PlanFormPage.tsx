@@ -45,6 +45,7 @@ import { useGetSuggestedActions } from '@/features/suggested-actions/api'
 import type { TeacherComment } from '@/features/teachers/types'
 import formatDate, { todayISO } from '@/lib/formatDate'
 import { fieldErrorId } from '@/lib/fieldErrorId'
+import { getScoreToneBadgeClass, SCORE_TONE_BADGE_CLASS } from '@/lib/scoreTone'
 import { cn } from '@/lib/utils'
 import {
   useCreatePlan,
@@ -56,6 +57,7 @@ import {
   useUploadPlanDocument,
 } from '../api'
 import { PlanCaseReportUpload } from '../components/PlanCaseReportUpload'
+import { CommitmentDialog } from '../components/CommitmentDialog'
 import { CommitmentsEditor } from '../components/CommitmentsEditor'
 import { IndicatorPicker } from '../components/IndicatorPicker'
 import {
@@ -102,6 +104,7 @@ import type {
   DraftItem,
   Plan,
   PlanCandidate,
+  PlanCourseInput,
   PlanIndicators,
   PlanPeriod,
   PlanSubjectOption,
@@ -391,6 +394,48 @@ function PlanForm({
   const [items, setItems] = useState<DraftItem[]>(initial.items)
   const [courses, setCourses] = useState<DraftCourse[]>(initial.courses)
 
+  /**
+   * The commitment being written in `CommitmentDialog`, if any.
+   *
+   * Picking an indicator no longer drops a half-empty card into section 3: the
+   * draft waits here until it is saved. `courses` travels with it because the
+   * asignaturas a pick contributes must only be merged if the pick survives —
+   * cancelling has to leave the form exactly as it was found.
+   */
+  const [pending, setPending] = useState<{
+    draft: DraftItem
+    mode: 'create' | 'edit'
+    courses: PlanCourseInput[]
+  } | null>(null)
+
+  /**
+   * Where the focus was when the dialog opened, to put it back afterwards.
+   *
+   * The whole point of the dialog is that the director keeps picking without
+   * leaving the matrix; handing the focus back to the body would drop him at
+   * the top of a five-section form instead of on the button he just used.
+   */
+  const returnFocusRef = useRef<HTMLElement | null>(null)
+
+  const openCommitment = useCallback(
+    (next: { draft: DraftItem; mode: 'create' | 'edit'; courses: PlanCourseInput[] }) => {
+      returnFocusRef.current = document.activeElement as HTMLElement | null
+      setPending(next)
+    },
+    [],
+  )
+
+  const closeCommitment = useCallback(() => {
+    setPending(null)
+
+    const target = returnFocusRef.current
+    returnFocusRef.current = null
+
+    // Deferred a frame so it doesn't race the dialog's own focus handling on
+    // the way out — same reason `focusField` waits.
+    requestAnimationFrame(() => target?.focus({ preventScroll: true }))
+  }, [])
+
   // A required field goes red once it has been left empty, not while it is
   // still waiting its turn: `touched` grows on blur, and a failed submit turns
   // every pending error on at once.
@@ -561,14 +606,17 @@ function PlanForm({
         return
       }
 
-      setItems((items) => [...items, buildIndicatorDraft(pick, subject)])
-      // Picked at teacher level, the commitment covers every asignatura he taught
-      // — not only the ones the "solo indicadores bajos" filter left standing.
-      setCourses((courses) =>
-        mergeCourses(courses, coursesOfSubject(subject, workbench.allSubjects)),
-      )
+      // Straight into the dialog rather than into `items`: the commitment is
+      // written there and only joins the plan once it is saved.
+      openCommitment({
+        draft: buildIndicatorDraft(pick, subject),
+        mode: 'create',
+        // Picked at teacher level, the commitment covers every asignatura he
+        // taught — not only the ones "solo indicadores bajos" left standing.
+        courses: coursesOfSubject(subject, workbench.allSubjects),
+      })
     },
-    [isEdit, matchKeyOf, workbench.activeSubject, workbench.allSubjects],
+    [isEdit, matchKeyOf, openCommitment, workbench.activeSubject, workbench.allSubjects],
   )
 
   const toggleComment = useCallback(
@@ -586,24 +634,50 @@ function PlanForm({
 
       const subject = subjectOfComment(comment, workbench.allSubjects)
 
-      setItems((items) => [...items, buildCommentDraft(comment, subject)])
-      setCourses((courses) => mergeCourses(courses, coursesOfSubject(subject, [])))
+      openCommitment({
+        draft: buildCommentDraft(comment, subject),
+        mode: 'create',
+        courses: coursesOfSubject(subject, []),
+      })
     },
-    [workbench.allSubjects],
+    [openCommitment, workbench.allSubjects],
   )
 
   function addQualitative(aspect: number) {
-    setItems((current) => [...current, buildBlankDraft(aspect)])
-    // A manual commitment is written at teacher level — it doesn't come from
-    // any one asignatura — so it covers every one he taught, exactly like an
-    // indicator picked under "General". It is also what `pruneCourses` assumes,
-    // and it is what keeps section 4 from being left empty.
-    setCourses((current) => mergeCourses(current, coursesOfSubject(null, workbench.allSubjects)))
+    openCommitment({
+      draft: buildBlankDraft(aspect),
+      mode: 'create',
+      // A manual commitment is written at teacher level — it doesn't come from
+      // any one asignatura — so it covers every one he taught, exactly like an
+      // indicator picked under "General". It is also what `pruneCourses`
+      // assumes, and it is what keeps section 4 from being left empty.
+      courses: coursesOfSubject(null, workbench.allSubjects),
+    })
   }
 
-  const patchItem = useCallback((key: string, patch: Partial<DraftItem>) => {
-    setItems((current) => current.map((item) => (item.key === key ? { ...item, ...patch } : item)))
-  }, [])
+  /** Reopens a commitment already in the plan, in the same dialog it was written in. */
+  const editItem = useCallback(
+    (key: string) => {
+      const draft = itemsRef.current.find((item) => item.key === key)
+
+      if (draft) openCommitment({ draft, mode: 'edit', courses: [] })
+    },
+    [openCommitment],
+  )
+
+  /** The dialog is done: the commitment joins the plan, or replaces its old self. */
+  function commitPending(draft: DraftItem) {
+    if (!pending) return
+
+    if (pending.mode === 'edit') {
+      setItems((current) => current.map((item) => (item.key === draft.key ? draft : item)))
+    } else {
+      setItems((current) => [...current, draft])
+      setCourses((current) => mergeCourses(current, pending.courses))
+    }
+
+    closeCommitment()
+  }
 
   const removeItem = useCallback((key: string) => {
     const next = itemsRef.current.filter((item) => item.key !== key)
@@ -1021,7 +1095,16 @@ function PlanForm({
             </div>
             <ScoreBadge value={candidate.overall_average} showMax />
             {candidate.below_threshold && (
-              <Badge className="bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300">
+              // Coloured by the score, not fixed red: "bajo el umbral" is the
+              // institutional cut (3.5), and painting it red next to an amber
+              // 3.55 had the same row saying two different things at once.
+              <Badge
+                className={
+                  candidate.overall_average != null
+                    ? getScoreToneBadgeClass(candidate.overall_average)
+                    : SCORE_TONE_BADGE_CLASS.danger
+                }
+              >
                 Bajo el umbral
               </Badge>
             )}
@@ -1140,11 +1223,9 @@ function PlanForm({
           <CommitmentsEditor
             items={items}
             aspects={aspects}
-            defaultActions={defaultActions}
-            onChange={patchItem}
+            onEdit={editItem}
             onRemove={removeItem}
             invalidFields={invalidFields}
-            onFieldBlur={markTouched}
             disabled={actaLocked}
           />
         )}
@@ -1413,7 +1494,12 @@ function PlanForm({
             <Input
               id="acta-number"
               value={actaNumber}
-              onChange={(event) => setActaNumber(event.target.value)}
+              // Digits only, dropped as they are typed rather than refused
+              // afterwards. Not a `number` input: acta numbers are written with
+              // their leading zeros ("012"), which a numeric field eats, and it
+              // would grow a spinner for something nobody increments.
+              inputMode="numeric"
+              onChange={(event) => setActaNumber(event.target.value.replace(/\D/g, ''))}
               placeholder="Ej. 012"
               className={cn('num', FIELD_CLASS)}
               disabled={actaLocked}
@@ -1494,6 +1580,18 @@ function PlanForm({
               : 'Crear plan'}
         </Button>
       </div>
+
+      {/* Keyed on the draft so each commitment opens the dialog with a clean
+          copy of itself, instead of an effect syncing prop to state. */}
+      <CommitmentDialog
+        key={pending?.draft.key ?? 'none'}
+        draft={pending?.draft ?? null}
+        mode={pending?.mode ?? 'create'}
+        aspects={aspects}
+        defaultActions={defaultActions}
+        onSave={commitPending}
+        onCancel={closeCommitment}
+      />
     </form>
   )
 }

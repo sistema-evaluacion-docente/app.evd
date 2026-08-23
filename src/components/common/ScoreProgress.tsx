@@ -5,7 +5,8 @@ import { Minus, TrendingDown, TrendingUp } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Progress } from '@/components/ui/progress'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { getScoreTone } from '@/lib/scoreTone'
+import { getScoreTone, SCORE_TONE_BG_CLASS } from '@/lib/scoreTone'
+import { TREND_TEXT_CLASS } from '@/lib/trendTone'
 import { cn } from '@/lib/utils'
 
 type ScoreProgressTone = 'primary' | 'auto' | 'success' | 'warning' | 'danger' | 'neutral'
@@ -72,25 +73,26 @@ const SIZE_CLASS: Record<ScoreProgressSize, string> = {
   md: '**:data-[slot=progress-track]:h-1.5',
 }
 
-/** Fill color, keyed through the shadcn `Progress` primitive's internal indicator slot. */
+/** Reaches the fill through the shadcn `Progress` primitive's internal slot. */
+const INDICATOR = '**:data-[slot=progress-indicator]:'
+
+/**
+ * Fill color. The three semaphore tones are read off `scoreTone` rather than
+ * written out again: the bar and the number above it are the same reading, and
+ * they used to be two copies of the palette free to drift apart.
+ */
 const TONE_INDICATOR_CLASS: Record<Exclude<ScoreProgressTone, 'auto'>, string> = {
-  primary: '**:data-[slot=progress-indicator]:bg-primary',
-  success: '**:data-[slot=progress-indicator]:bg-green-500',
-  warning: '**:data-[slot=progress-indicator]:bg-amber-500',
-  danger: '**:data-[slot=progress-indicator]:bg-red-500',
-  neutral: '**:data-[slot=progress-indicator]:bg-foreground',
+  primary: `${INDICATOR}bg-primary`,
+  success: `${INDICATOR}${SCORE_TONE_BG_CLASS.success}`,
+  warning: `${INDICATOR}${SCORE_TONE_BG_CLASS.warning}`,
+  danger: `${INDICATOR}${SCORE_TONE_BG_CLASS.danger}`,
+  neutral: `${INDICATOR}bg-foreground`,
 }
 
 const TREND_ICON: Record<ScoreTrendDirection, typeof TrendingUp> = {
   up: TrendingUp,
   down: TrendingDown,
   flat: Minus,
-}
-
-const TREND_TEXT_CLASS: Record<ScoreTrendDirection, string> = {
-  up: 'text-green-600 dark:text-green-400 opacity-70',
-  down: 'text-red-600 dark:text-red-400 opacity-70',
-  flat: 'text-muted-foreground',
 }
 
 const TREND_WORD: Record<ScoreTrendDirection, string> = {
@@ -207,7 +209,7 @@ export function ScoreProgress({
       aria-valuetext={`${scoreLabel} (${percentLabel})`}
       style={indicatorStyle}
       className={cn(
-        '**:data-[slot=progress-track]:bg-[#aaa] min-w-15',
+        'min-w-15 **:data-[slot=progress-track]:bg-[#aaa]',
         SIZE_CLASS[size],
         indicatorClass,
         !showTrendBadge && className,
@@ -306,6 +308,9 @@ export function ScoreProgress({
                   className={cn(
                     'num ml-auto inline-flex items-center gap-0.5 font-semibold tabular-nums',
                     TREND_TEXT_CLASS[trend],
+                    // Dimmer than the same arrow on `ScoreBadge`: here it sits
+                    // beside the bar rather than in place of it.
+                    trend !== 'flat' && 'opacity-70',
                   )}
                 >
                   <TrendIcon className="size-3 shrink-0" aria-hidden="true" />
@@ -356,6 +361,7 @@ function ScoreTrendBadge({
       className={cn(
         'inline-flex shrink-0 items-center gap-0.5 text-xs font-semibold tabular-nums',
         TREND_TEXT_CLASS[trend],
+        trend !== 'flat' && 'opacity-70',
       )}
     >
       <Icon className="size-3.5 shrink-0" aria-hidden="true" />

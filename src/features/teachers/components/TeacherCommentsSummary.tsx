@@ -11,18 +11,10 @@ import { useAuthStore } from '@/features/auth'
 import { AI_STATUS_DISPLAY, type AiStatus } from '@/features/evaluations'
 import { CATEGORIES, categoryColor, categoryLabel, UNCATEGORIZED } from '@/lib/categoryLabel'
 import { cn } from '@/lib/utils'
+import { RISK_LEVELS } from '@/lib/riskLevel'
 import { useGetTeacherComments } from '../api'
 import type { TeacherComment } from '../types'
 import { CommentCard } from './CommentCard'
-
-/** Risk levels in display order: key, readable label, and a fixed semantic color
- *  (green/amber/red, same language as `getScoreTone`) — the charts need a real
- *  color, not a Tailwind class, so these are hardcoded hex equivalents. */
-const RISK_LEVELS = [
-  { key: 'BAJO', label: 'Bajo', color: '#22c55e' },
-  { key: 'MEDIO', label: 'Medio', color: '#f59e0b' },
-  { key: 'ALTO', label: 'Alto', color: '#ef4444' },
-] as const
 
 /** Excludes "Sin categoría" — a non-classification, not useful for analysis. */
 const ANALYZABLE_CATEGORIES = CATEGORIES.filter((category) => category.code !== UNCATEGORIZED)
@@ -109,7 +101,7 @@ export function TeacherCommentsSummary({
 
   const riskEntries = RISK_LEVELS.map((level) => ({
     key: level.key,
-    label: level.label,
+    label: level.name,
     value: riskCounts[level.key],
     color: level.color,
     previousValue: previousCounts?.riskCounts[level.key],

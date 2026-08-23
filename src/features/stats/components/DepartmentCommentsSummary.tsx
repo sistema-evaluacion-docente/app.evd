@@ -5,16 +5,9 @@ import { CountPieChart } from '@/components/common/CountPieChart'
 import { Button } from '@/components/ui/button'
 import { CATEGORIES, categoryColor, categoryLabel, UNCATEGORIZED } from '@/lib/categoryLabel'
 import { cn } from '@/lib/utils'
+import { RISK_LEVELS } from '@/lib/riskLevel'
 import { DepartmentCommentCategoriesChart } from './DepartmentCommentCategoriesChart'
 import { DepartmentCommentRiskChart } from './DepartmentCommentRiskChart'
-
-/** Risk levels in display order: key, readable label, and a fixed semantic color
- *  (green/amber/red) — same set used in the teacher's own comments summary. */
-const RISK_LEVELS = [
-  { key: 'BAJO', label: 'Bajo', color: '#22c55e' },
-  { key: 'MEDIO', label: 'Medio', color: '#f59e0b' },
-  { key: 'ALTO', label: 'Alto', color: '#ef4444' },
-] as const
 
 /** Excludes "Sin categoría" — a non-classification, not useful for analysis. */
 const ANALYZABLE_CATEGORIES = CATEGORIES.filter((category) => category.code !== UNCATEGORIZED)
@@ -57,7 +50,7 @@ export function DepartmentCommentsSummary({
 
   const riskEntries = RISK_LEVELS.map((level) => ({
     key: level.key,
-    label: level.label,
+    label: level.name,
     value: riskCounts?.[level.key] ?? 0,
     color: level.color,
     previousValue: previousRiskCounts?.[level.key],
