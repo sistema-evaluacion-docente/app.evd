@@ -83,7 +83,7 @@ export function TeachersList() {
     active: true,
     hasAverage: true,
     contractType: undefined as string | undefined,
-    sortBy: 'name_desc',
+    sortBy: 'high_risk_comments_count_desc',
   })
   const [debouncedFilters] = useDebounce(filters, 400)
 
