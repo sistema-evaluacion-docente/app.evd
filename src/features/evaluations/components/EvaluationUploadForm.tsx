@@ -2,6 +2,7 @@ import { CheckCircle2, Info, ListChecks } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
+import { DismissibleNotice } from '@/components/common/DismissibleNotice'
 import { InlineError } from '@/components/common/InlineError'
 import { MultiFileDropzone } from '@/components/common/MultiFileDropzone'
 import { TransitionLink } from '@/components/common/TransitionLink'
@@ -96,16 +97,18 @@ export function EvaluationUploadForm() {
           </>
         ) : (
           <>
-            <Alert className="border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-200">
-              <Info className="size-4" aria-hidden="true" />
-              <AlertTitle>Asegúrate de haber subido los docentes previamente</AlertTitle>
+            <DismissibleNotice storageKey="evaluation-upload-teachers-first">
+              <Alert className="border-blue-200 bg-blue-50 pr-10 text-blue-800 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-200">
+                <Info className="size-4" aria-hidden="true" />
+                <AlertTitle>Asegúrate de haber subido los docentes previamente</AlertTitle>
 
-              <AlertDescription>
-                Para evitar problemas al procesar la evaluación, verifica que los docentes ya estén
-                registrados antes de continuar.{' '}
-                <TransitionLink href="/docentes/cargar">Ir a cargar docentes</TransitionLink>
-              </AlertDescription>
-            </Alert>
+                <AlertDescription>
+                  Para evitar problemas al procesar la evaluación, verifica que los docentes ya
+                  estén registrados antes de continuar.{' '}
+                  <TransitionLink href="/docentes/cargar">Ir a cargar docentes</TransitionLink>
+                </AlertDescription>
+              </Alert>
+            </DismissibleNotice>
 
             <MultiFileDropzone
               label="PDF de la evaluación (uno o dos)"

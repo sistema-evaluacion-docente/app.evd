@@ -2,6 +2,7 @@ import { Download, Info } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
+import { DismissibleNotice } from '@/components/common/DismissibleNotice'
 import { FileDropzone } from '@/components/common/FileDropzone'
 import type { LogEntry } from '@/components/common/FloatingLogs'
 import { FloatingLogs } from '@/components/common/FloatingLogs'
@@ -110,22 +111,26 @@ export function TeacherUploadForm() {
         </CardHeader>
 
         <CardContent className="space-y-5">
-          <Alert className="border-blue-200 bg-blue-50 text-blue-800">
-            <Info className="size-4" aria-hidden="true" />
-            <AlertTitle>¿No conoces el formato?</AlertTitle>
+          <DismissibleNotice storageKey="teachers-upload-format">
+            {/* The dark variants are not decoration: without them this is
+                blue-800 text on a blue-50 card in a dark theme. */}
+            <Alert className="border-blue-200 bg-blue-50 pr-10 text-blue-800 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-200">
+              <Info className="size-4" aria-hidden="true" />
+              <AlertTitle>¿No conoces el formato?</AlertTitle>
 
-            <AlertDescription className="flex items-center gap-2">
-              Descarga el archivo de ejemplo para ver cómo debe estar estructurado tu CSV o XLSX.
-              <a
-                href="/DocentesEjemplo.csv"
-                download
-                className="inline-flex items-center gap-1 font-medium underline hover:no-underline"
-              >
-                <Download className="size-3.5" aria-hidden="true" />
-                Descargar ejemplo
-              </a>
-            </AlertDescription>
-          </Alert>
+              <AlertDescription className="flex items-center gap-2">
+                Descarga el archivo de ejemplo para ver cómo debe estar estructurado tu CSV o XLSX.
+                <a
+                  href="/DocentesEjemplo.csv"
+                  download
+                  className="inline-flex items-center gap-1 font-medium underline hover:no-underline"
+                >
+                  <Download className="size-3.5" aria-hidden="true" />
+                  Descargar ejemplo
+                </a>
+              </AlertDescription>
+            </Alert>
+          </DismissibleNotice>
 
           <FileDropzone
             file={file}
