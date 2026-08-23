@@ -463,7 +463,7 @@ export function CourseTeacherDetail({
 
                 {showWorstMover && worstMover && (
                   <MoverBadge direction="down">
-                    Requiere atención: {worstMover.dimension} ({worstMover.delta.toFixed(2)})
+                    {worstMover.dimension} ({worstMover.delta.toFixed(2)})
                   </MoverBadge>
                 )}
               </div>
