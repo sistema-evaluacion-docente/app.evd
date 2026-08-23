@@ -1,4 +1,4 @@
-import { ChevronUp, TrendingDown, TrendingUp } from 'lucide-react'
+import { ChevronUp } from 'lucide-react'
 import { useId, useRef, useState } from 'react'
 
 import { GenerateReportPdfButton } from '@/components/common/GenerateReportPdfButton'
@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
+import { MoverBadge } from '@/components/common/MoverBadge'
 import { AI_STATUS_DISPLAY, type AiStatus } from '@/features/evaluations'
 import { CATEGORIES, categoryLabel, UNCATEGORIZED } from '@/lib/categoryLabel'
 import { dimensionColor } from '@/lib/dimensionLabel'
@@ -455,17 +456,15 @@ export function CourseTeacherDetail({
             (showBestMover || showWorstMover) && (
               <div className="mt-4 flex flex-wrap gap-2">
                 {showBestMover && bestMover && (
-                  <Badge className="gap-1 bg-emerald-50 text-emerald-700">
-                    <TrendingUp className="size-3.5" aria-hidden="true" />
+                  <MoverBadge direction="up">
                     Mayor mejora: {bestMover.dimension} (+{bestMover.delta.toFixed(2)})
-                  </Badge>
+                  </MoverBadge>
                 )}
 
                 {showWorstMover && worstMover && (
-                  <Badge className="gap-1 bg-red-50 text-red-700">
-                    <TrendingDown className="size-3.5" aria-hidden="true" />
+                  <MoverBadge direction="down">
                     Requiere atención: {worstMover.dimension} ({worstMover.delta.toFixed(2)})
-                  </Badge>
+                  </MoverBadge>
                 )}
               </div>
             )

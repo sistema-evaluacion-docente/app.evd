@@ -1,7 +1,7 @@
-import { TrendingDown, TrendingUp } from 'lucide-react'
 import { useState } from 'react'
 
 import { PeriodSelect, type PeriodSelectOption } from '@/components/common/PeriodSelect'
+import { MoverBadge } from '@/components/common/MoverBadge'
 import { useAuthStore } from '@/features/auth'
 import { useGetTeacherHistory } from '@/features/periods'
 import { useGetTeacherDetail } from '../api'
@@ -121,19 +121,17 @@ export function TeacherPeriodInsights({ teacherId, className }: TeacherPeriodIns
         {(showBestCourse || showWorstCourse) && (
           <div className="flex flex-wrap gap-3">
             {showBestCourse && bestCourseMover && (
-              <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3.5 py-2 text-sm font-medium text-emerald-700">
-                <TrendingUp className="size-4.5" aria-hidden="true" />
+              <MoverBadge direction="up" size="md">
                 Mayor mejora: {bestCourseMover.course.course_name} (+
                 {bestCourseMover.delta.toFixed(2)})
-              </span>
+              </MoverBadge>
             )}
 
             {showWorstCourse && worstCourseMover && (
-              <span className="inline-flex items-center gap-2 rounded-full bg-red-50 px-3.5 py-2 text-sm font-medium text-red-700">
-                <TrendingDown className="size-4.5" aria-hidden="true" />
+              <MoverBadge direction="down" size="md">
                 Requiere atención: {worstCourseMover.course.course_name} (
                 {worstCourseMover.delta.toFixed(2)})
-              </span>
+              </MoverBadge>
             )}
           </div>
         )}

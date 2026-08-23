@@ -1,4 +1,4 @@
-import { CalendarRange, FileText, TrendingDown, TrendingUp } from 'lucide-react'
+import { CalendarRange, FileText } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 import { ScoreBadge } from '@/components/common/ScoreBadge'
@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { MoverBadge } from '@/components/common/MoverBadge'
 import { dimensionColor } from '@/lib/dimensionLabel'
 import { getScoreToneClass } from '@/lib/scoreTone'
 import type { TeacherDetail } from '../types'
@@ -138,17 +139,15 @@ export function TeacherOverview({ teacher, extraActions }: TeacherOverviewProps)
               {(showBestMover || showWorstMover) && (
                 <div className="mt-3 flex flex-wrap justify-end gap-2">
                   {showBestMover && bestMover && (
-                    <Badge className="gap-1 bg-emerald-50 text-emerald-700">
-                      <TrendingUp className="size-3.5" aria-hidden="true" />
+                    <MoverBadge direction="up">
                       Mayor mejora: {bestMover.dimension} (+{bestMover.delta.toFixed(2)})
-                    </Badge>
+                    </MoverBadge>
                   )}
 
                   {showWorstMover && worstMover && (
-                    <Badge className="gap-1 bg-red-50 text-red-700">
-                      <TrendingDown className="size-3.5" aria-hidden="true" />
+                    <MoverBadge direction="down">
                       Requiere atención: {worstMover.dimension} ({worstMover.delta.toFixed(2)})
-                    </Badge>
+                    </MoverBadge>
                   )}
                 </div>
               )}
