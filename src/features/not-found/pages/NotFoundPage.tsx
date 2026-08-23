@@ -2,6 +2,7 @@ import { Home, LogIn } from 'lucide-react'
 
 import { TransitionLink } from '@/components/common/TransitionLink'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 /**
  * Full-viewport 404 page shown for any unmatched route. Chrome-less (no
@@ -9,14 +10,22 @@ import { Button } from '@/components/ui/button'
  * background instead of a bare white screen, and a large ghost "404" numeral
  * behind the icon badge gives it presence without adding noise.
  */
-export default function NotFoundPage() {
+export default function NotFoundPage({
+  className,
+  bgActive = true,
+}: {
+  className?: string
+  bgActive?: boolean
+}) {
   return (
-    <div className="relative min-h-screen overflow-hidden">
-      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-        <div className="from-brand-50/70 via-background to-background dark:from-brand-900/20 absolute inset-0 bg-gradient-to-b" />
-        <div className="bg-brand-100/60 dark:bg-brand-900/25 absolute -top-40 left-1/2 h-[32rem] w-[32rem] -translate-x-1/2 rounded-full blur-3xl" />
-        <div className="bg-secondary-100/50 dark:bg-secondary-900/20 absolute right-[12%] bottom-[8%] h-56 w-56 rounded-full blur-3xl" />
-      </div>
+    <div className={cn('relative min-h-screen overflow-hidden', className)}>
+      {bgActive && (
+        <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+          <div className="from-brand-50/70 via-background to-background dark:from-brand-900/20 absolute inset-0 bg-gradient-to-b" />
+          <div className="bg-brand-100/60 dark:bg-brand-900/25 absolute -top-40 left-1/2 h-[32rem] w-[32rem] -translate-x-1/2 rounded-full blur-3xl" />
+          <div className="bg-secondary-100/50 dark:bg-secondary-900/20 absolute right-[12%] bottom-[8%] h-56 w-56 rounded-full blur-3xl" />
+        </div>
+      )}
 
       <main className="relative grid min-h-screen place-items-center px-6 py-12 text-center">
         <div className="flex max-w-sm flex-col items-center">
