@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import formatDate from '@/lib/formatDate'
 import { cn } from '@/lib/utils'
-import { getOperation, getOperationLabel, getTableLabel } from '../config'
+import { getOperationLabel, getOperationToneClass, getTableLabel } from '../config'
 import type { AuditLog } from '../types'
 
 /**
@@ -63,16 +63,9 @@ export const auditLogColumns: ColumnDef<AuditLog>[] = [
     header: 'Operación',
     cell: ({ getValue }) => {
       const operation = getValue<string | null>()
-      const config = operation ? getOperation(operation) : null
 
       return (
-        <Badge
-          className={cn(
-            'font-medium uppercase',
-            config?.bg ?? 'bg-muted',
-            config?.text ?? 'text-muted-foreground'
-          )}
-        >
+        <Badge className={cn('font-medium uppercase', getOperationToneClass(operation))}>
           {getOperationLabel(operation)}
         </Badge>
       )

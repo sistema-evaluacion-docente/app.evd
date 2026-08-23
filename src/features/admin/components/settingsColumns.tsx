@@ -35,16 +35,9 @@ export const settingsColumns: ColumnDef<Setting>[] = [
   //   header: 'Tipo',
   //   cell: ({ getValue }) => {
   //     const valueType = getValue<string | null>()
-  //     const config = valueType ? getValueTypeConfig(valueType) : null
 
   //     return (
-  //       <Badge
-  //         className={cn(
-  //           'font-medium',
-  //           config?.bg ?? 'bg-muted',
-  //           config?.text ?? 'text-muted-foreground',
-  //         )}
-  //       >
+  //       <Badge className={cn('font-medium', getValueTypeToneClass(valueType))}>
   //         {getValueTypeLabel(valueType)}
   //       </Badge>
   //     )
