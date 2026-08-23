@@ -9,6 +9,7 @@ import { PdfPage } from '@/components/common/pdf/PdfPage'
 import { PdfSection } from '@/components/common/pdf/PdfSection'
 import { PdfTable } from '@/components/common/pdf/PdfTable'
 import { PeriodSelect, type PeriodSelectOption } from '@/components/common/PeriodSelect'
+import CourseTeacherDetailSkeleton from '@/components/skeletons/CourseTeacherDetailSkeleton'
 import { ScoreBadge } from '@/components/common/ScoreBadge'
 import { ScoreLegend } from '@/components/common/ScoreLegend'
 import { TransitionLink } from '@/components/common/TransitionLink'
@@ -116,7 +117,7 @@ export function CourseTeacherDetail({
   const showAiPendingNotice = aiStatus === 'PENDING' || aiStatus === 'ANALYZING'
 
   if (isLoading) {
-    return <p className="text-muted-foreground py-10 text-center text-sm">Cargando…</p>
+    return <CourseTeacherDetailSkeleton className={className} />
   }
 
   if (!course) {
