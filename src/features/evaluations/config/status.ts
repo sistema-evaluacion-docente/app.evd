@@ -1,3 +1,4 @@
+import { STATUS_TONE_CLASS } from '@/lib/statusTone'
 import type { AiStatus, EvaluationRecord } from '../types'
 
 /** Display metadata (label + badge classes) for an evaluation status. */
@@ -10,15 +11,15 @@ export interface StatusDisplay {
 export const EVALUATION_STATUS_DISPLAY: Record<EvaluationRecord['status'], StatusDisplay> = {
   PROCESSING: {
     label: 'Procesando',
-    className: 'bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300',
+    className: STATUS_TONE_CLASS.warning,
   },
   COMPLETED: {
     label: 'Completado',
-    className: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
+    className: STATUS_TONE_CLASS.success,
   },
   FAILED: {
     label: 'Fallido',
-    className: 'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300',
+    className: STATUS_TONE_CLASS.danger,
   },
 }
 
@@ -26,7 +27,7 @@ export const EVALUATION_STATUS_DISPLAY: Record<EvaluationRecord['status'], Statu
 export const AI_STATUS_DISPLAY: Record<AiStatus, StatusDisplay> = {
   PENDING: {
     label: 'Pendiente',
-    className: 'bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300',
+    className: STATUS_TONE_CLASS.warning,
   },
   ANALYZING: {
     label: 'Analizando',
@@ -34,11 +35,11 @@ export const AI_STATUS_DISPLAY: Record<AiStatus, StatusDisplay> = {
   },
   ANALYZED: {
     label: 'Completado',
-    className: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
+    className: STATUS_TONE_CLASS.success,
   },
   FAILED: {
     label: 'Fallido',
-    className: 'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300',
+    className: STATUS_TONE_CLASS.danger,
   },
 }
 
