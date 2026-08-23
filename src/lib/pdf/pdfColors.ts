@@ -6,6 +6,9 @@
  * values are needed here. Keep in sync by hand: if the source values below
  * change, update this file too.
  */
+
+import { riskLevelColor } from '@/lib/riskLevel'
+
 export const pdfColors = {
   /** `--color-brand-600` in index.css. */
   brand: '#c93d2d',
@@ -23,10 +26,10 @@ export const pdfColors = {
   ink200: '#e4e6ea',
   /** `--ink-100` in index.css — subtle section backgrounds. */
   ink100: '#f1f2f4',
-  /** Risk semaphore — same literals as `DepartmentCommentRiskChart.tsx`. */
-  riskLow: '#22c55e',
-  riskMedium: '#f59e0b',
-  riskHigh: '#ef4444',
+  /** Risk semaphore, read off the one catalogue the screen charts also use. */
+  riskLow: riskLevelColor('BAJO')!,
+  riskMedium: riskLevelColor('MEDIO')!,
+  riskHigh: riskLevelColor('ALTO')!,
 } as const
 
 /**
@@ -50,14 +53,5 @@ export const pdfDimensionColors: Record<string, string> = {
  * pdfRiskColor(comment.risk_level?.name) // pdfColors.riskHigh, or undefined
  */
 export function pdfRiskColor(name: string | undefined): string | undefined {
-  switch (name?.toUpperCase()) {
-    case 'BAJO':
-      return pdfColors.riskLow
-    case 'MEDIO':
-      return pdfColors.riskMedium
-    case 'ALTO':
-      return pdfColors.riskHigh
-    default:
-      return undefined
-  }
+  return riskLevelColor(name)
 }
