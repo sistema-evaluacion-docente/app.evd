@@ -15,7 +15,11 @@ import {
   useUploadPlanDocument,
 } from '@/features/plans/api'
 import { usePlanWorkbench } from '@/features/plans/hooks/usePlanWorkbench'
-import { PLAN_DRAFT_MAX_AGE_MS, planDraftKey } from '@/features/plans/lib/planFormStorage'
+import {
+  PLAN_DRAFT_MAX_AGE_MS,
+  PLAN_DRAFT_VERSION,
+  planDraftKey,
+} from '@/features/plans/lib/planFormStorage'
 import PlanFormPage from '@/features/plans/pages/PlanFormPage'
 import { toast } from 'sonner'
 import type {
@@ -255,21 +259,46 @@ describe('PlanFormPage · creación', () => {
       expect(screen.queryByRole('heading', { name: new RegExp(label) })).not.toBeInTheDocument()
     }
 
-    await userEvent.click(screen.getByRole('button', { name: /Añadir compromiso manual/ }))
+    await userEvent.click(screen.getByRole('button', { name: /Añadir compromiso/ }))
 
     for (const label of ASPECT_LABELS) {
       expect(await screen.findByRole('menuitem', { name: new RegExp(label) })).toBeInTheDocument()
     }
   })
 
-  it('keeps the institutional observations up whatever was picked', () => {
+  it('keeps the institutional observations one click away, whatever was picked', async () => {
     mockQueries()
 
     renderAt(<PlanFormPage />)
 
-    expect(screen.getByLabelText(/Observaciones del Consejo/)).toBeInTheDocument()
+    // Casi siempre vacías: viven detrás de un botón del paso 3 en vez de
+    // alargar la sección con tres cajas de texto en blanco.
+    expect(screen.queryByLabelText(/Observaciones del Consejo/)).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: /^Observaciones/ }))
+
+    expect(await screen.findByLabelText(/Observaciones del Consejo/)).toBeInTheDocument()
     expect(screen.getByLabelText(/director de departamento/)).toBeInTheDocument()
     expect(screen.getByLabelText(/director de programa/)).toBeInTheDocument()
+  })
+
+  it('cuenta en el propio botón las observaciones ya escritas', async () => {
+    mockQueries()
+
+    renderAt(<PlanFormPage />)
+
+    const open = screen.getByRole('button', { name: /^Observaciones/ })
+
+    expect(open).toHaveTextContent(/^Observaciones$/)
+
+    await userEvent.click(open)
+    await userEvent.type(
+      await screen.findByLabelText(/director de programa/),
+      'Se acompañará desde el programa',
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Listo' }))
+
+    expect(screen.getByRole('button', { name: /^Observaciones/ })).toHaveTextContent('1')
   })
 
   it('says it is looking for the teachers instead of just going dead', () => {
@@ -463,8 +492,8 @@ describe('PlanFormPage · creación', () => {
     renderAt(<PlanFormPage />)
 
     // Enter inside an open suggestion list belongs to the list, not to the
-    // form: choosing a faculty must not try to save the plan behind it.
-    await userEvent.type(screen.getByLabelText(/Facultad/), 'INGENIER{Enter}')
+    // form: choosing a programme must not try to save the plan behind it.
+    await userEvent.type(screen.getByLabelText(/^Programa académico/), 'INGENIER{Enter}')
 
     expect(createMutate).not.toHaveBeenCalled()
     expect(vi.mocked(toast.warning)).not.toHaveBeenCalled()
@@ -477,16 +506,15 @@ describe('PlanFormPage · creación', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /Crear plan/ }))
 
-    for (const label of [/^Departamento académico/, /^Acta N\.º/]) {
-      expect(screen.getByLabelText(label)).toHaveAttribute('aria-invalid', 'true')
-    }
+    expect(screen.getByLabelText(/^Acta N\.º/)).toHaveAttribute('aria-invalid', 'true')
 
-    // Facultad, Programa and la fecha del acta arrive already resolved — from
-    // the director's own department and from today — so there is nothing to
-    // paint on them.
+    // Programa and la fecha del acta arrive already resolved — from the
+    // director's own department and from today — so there is nothing to paint
+    // on them. Facultad y departamento ya ni se preguntan.
     expect(screen.getByLabelText(/^Programa académico/)).toHaveValue('Ingeniería de Sistemas')
-    expect(screen.getByLabelText(/^Facultad/)).not.toHaveValue('')
     expect(screen.getByLabelText(/^Fecha del acta/)).not.toHaveAttribute('aria-invalid', 'true')
+    expect(screen.queryByLabelText(/^Facultad/)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/^Departamento académico/)).not.toBeInTheDocument()
   })
 
   it('paints the fecha del acta red once it is cleared away', async () => {
@@ -505,22 +533,25 @@ describe('PlanFormPage · creación', () => {
 
     renderAt(<PlanFormPage />)
 
-    const faculty = screen.getByLabelText(/^Facultad/)
+    const program = screen.getByLabelText(/^Programa académico/)
 
-    await userEvent.clear(faculty)
+    await userEvent.clear(program)
     await userEvent.tab()
 
     // The red rides on the group of the combobox, not on the input inside it.
-    expect(faculty.closest('[data-slot="autocomplete-input-group"]')).toHaveAttribute(
+    expect(program.closest('[data-slot="autocomplete-input-group"]')).toHaveAttribute(
       'aria-invalid',
       'true',
     )
   })
 
-  it('keeps the institutional observations optional, asterisk and all', () => {
+  it('keeps the institutional observations optional, asterisk and all', async () => {
     mockQueries()
 
     renderAt(<PlanFormPage />)
+
+    await userEvent.click(screen.getByRole('button', { name: /^Observaciones/ }))
+    await screen.findByLabelText(/Observaciones del Consejo/)
 
     for (const label of [/Observaciones del Consejo/, /director de departamento/]) {
       expect(screen.getByLabelText(label).textContent).not.toContain('*')
@@ -552,7 +583,7 @@ describe('PlanFormPage · creación', () => {
 
     expect(screen.getByText(/Todavía no hay asignaturas/)).toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole('button', { name: /Añadir compromiso manual/ }))
+    await userEvent.click(screen.getByRole('button', { name: /Añadir compromiso/ }))
     await userEvent.click(await screen.findByRole('menuitem', { name: /Planeación del curso/ }))
 
     // The commitment is written in the dialog, and only joins the plan — with
@@ -567,6 +598,33 @@ describe('PlanFormPage · creación', () => {
     expect(screen.getByText('Álgebra Lineal')).toBeInTheDocument()
     expect(screen.getByText('Cálculo I')).toBeInTheDocument()
     expect(screen.queryByText(/Todavía no hay asignaturas/)).not.toBeInTheDocument()
+  })
+
+  it('añade una asignatura suelta desde el menú del paso 4', async () => {
+    mockQueries({ subjects: SUBJECTS })
+
+    renderAt(<PlanFormPage />, '/planes/nuevo?teacher=7&period=2')
+
+    await userEvent.click(screen.getByRole('button', { name: /Añadir asignatura/ }))
+    await userEvent.click(await screen.findByRole('menuitem', { name: /Álgebra Lineal/ }))
+
+    expect(screen.getByText('Álgebra Lineal')).toBeInTheDocument()
+    expect(screen.queryByText('Cálculo I')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Todavía no hay asignaturas/)).not.toBeInTheDocument()
+  })
+
+  it('añade de una vez todas las del docente', async () => {
+    mockQueries({ subjects: SUBJECTS })
+
+    renderAt(<PlanFormPage />, '/planes/nuevo?teacher=7&period=2')
+
+    await userEvent.click(screen.getByRole('button', { name: /Añadir asignatura/ }))
+    await userEvent.click(
+      await screen.findByRole('menuitem', { name: /Añadir todas las del docente/ }),
+    )
+
+    expect(screen.getByText('Álgebra Lineal')).toBeInTheDocument()
+    expect(screen.getByText('Cálculo I')).toBeInTheDocument()
   })
 
   it('keeps letters out of the acta number', async () => {
@@ -590,7 +648,7 @@ describe('PlanFormPage · creación', () => {
 
     renderAt(<PlanFormPage />, '/planes/nuevo?teacher=7&period=2')
 
-    await userEvent.click(screen.getByRole('button', { name: /Añadir compromiso manual/ }))
+    await userEvent.click(screen.getByRole('button', { name: /Añadir compromiso/ }))
     await userEvent.click(await screen.findByRole('menuitem', { name: /Planeación del curso/ }))
     await userEvent.type(screen.getByLabelText(/Título del compromiso/), 'Metodología')
     await userEvent.type(screen.getByLabelText(/Descripción del compromiso/), 'Rediseñar')
@@ -608,7 +666,7 @@ describe('PlanFormPage · creación', () => {
 
     renderAt(<PlanFormPage />, '/planes/nuevo?teacher=7&period=2')
 
-    await userEvent.click(screen.getByRole('button', { name: /Añadir compromiso manual/ }))
+    await userEvent.click(screen.getByRole('button', { name: /Añadir compromiso/ }))
     await userEvent.click(await screen.findByRole('menuitem', { name: /Planeación del curso/ }))
     await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
 
@@ -748,14 +806,12 @@ describe('PlanFormPage · autoguardado', () => {
     window.localStorage.setItem(
       planDraftKey(),
       JSON.stringify({
-        version: 1,
+        version: PLAN_DRAFT_VERSION,
         savedAt: new Date().toISOString(),
         teacherId: 7,
         periodId: 2,
         titleOverride: 'Plan a medio escribir',
         description: 'Lo que quedó sin enviar',
-        facultyOverride: null,
-        departmentOverride: null,
         programOverride: null,
         actaDate: '2026-08-19',
         actaNumber: '012',
@@ -840,7 +896,7 @@ describe('PlanFormPage · autoguardado', () => {
       const stored = JSON.parse(window.localStorage.getItem(planDraftKey()) ?? '{}')
 
       expect(stored.description).toBe('Algo que no quiero perder')
-      expect(stored.version).toBe(1)
+      expect(stored.version).toBe(PLAN_DRAFT_VERSION)
     } finally {
       vi.useRealTimers()
     }
@@ -945,13 +1001,26 @@ describe('PlanFormPage · edición', () => {
     expect(payload.faculty_name).toBe('Ingeniería')
   })
 
-  it('separa departamento de programa en vez de imprimir el mismo dos veces', () => {
-    mockQueries({ plan: savedPlan() })
+  it('sólo pregunta el programa: facultad y departamento vienen del docente', async () => {
+    const updateMutate = vi.fn()
+
+    mockQueries({ plan: savedPlan(), updateMutate })
 
     renderAt(<PlanFormPage />, '/planes/8/editar')
 
-    expect(screen.getByLabelText(/^Departamento académico/)).toHaveValue('Departamento de Sistemas')
     expect(screen.getByLabelText(/^Programa académico/)).toHaveValue('Ingeniería de Sistemas')
+    expect(screen.queryByLabelText(/^Facultad/)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/^Departamento académico/)).not.toBeInTheDocument()
+
+    // Dejaron de ser campos, no de existir: el encabezado de los formatos sigue
+    // viajando en el payload, heredado del plan guardado.
+    await userEvent.click(screen.getByRole('button', { name: /Guardar cambios/ }))
+
+    const [payload] = updateMutate.mock.calls[0] as [Record<string, unknown>]
+
+    expect(payload.faculty_name).toBe('Ingeniería')
+    expect(payload.department_name).toBe('Departamento de Sistemas')
+    expect(payload.program_name).toBe('Ingeniería de Sistemas')
   })
 
   it('pide la fecha una sola vez: la del acta es la de inicio', () => {

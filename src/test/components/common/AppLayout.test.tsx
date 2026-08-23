@@ -101,6 +101,66 @@ describe('AppLayout', () => {
     expect(screen.queryByText('Contenido protegido')).not.toBeInTheDocument()
   })
 
+  it('keeps a director with a department on the improvement plans', () => {
+    mockAuth({
+      selectedRole: 'DIRECTOR DE DEPARTAMENTO',
+      user: { department_id: 3 } as ReturnType<typeof useAuth>['user'],
+    })
+
+    renderAt('/planes')
+
+    expect(screen.getByText('Contenido protegido')).toBeInTheDocument()
+  })
+
+  it('keeps a director with no department out of the improvement plans', () => {
+    mockAuth({
+      selectedRole: 'DIRECTOR DE DEPARTAMENTO',
+      user: { department_id: null } as ReturnType<typeof useAuth>['user'],
+    })
+
+    renderAt('/planes')
+
+    expect(screen.queryByText('Contenido protegido')).not.toBeInTheDocument()
+  })
+
+  it('blames the missing department, not the permissions', () => {
+    // The role is right; what is missing is the department every plan is
+    // scoped to. "Acceso no autorizado" would send them to argue with the
+    // wrong person.
+    mockAuth({
+      selectedRole: 'DIRECTOR DE DEPARTAMENTO',
+      user: { department_id: null } as ReturnType<typeof useAuth>['user'],
+    })
+
+    renderAt('/planes')
+
+    expect(screen.getByText('Sin departamento asignado')).toBeInTheDocument()
+    expect(screen.queryByText('Acceso no autorizado')).not.toBeInTheDocument()
+  })
+
+  it('covers the pages nested under the plans as well', () => {
+    mockAuth({
+      selectedRole: 'DIRECTOR DE DEPARTAMENTO',
+      user: { department_id: null } as ReturnType<typeof useAuth>['user'],
+    })
+
+    renderAt('/planes/nuevo')
+
+    expect(screen.getByText('Sin departamento asignado')).toBeInTheDocument()
+  })
+
+  it('leaves the rest of the director pages alone without a department', () => {
+    // Only the improvement plans are gated on it for now.
+    mockAuth({
+      selectedRole: 'DIRECTOR DE DEPARTAMENTO',
+      user: { department_id: null } as ReturnType<typeof useAuth>['user'],
+    })
+
+    renderAt('/docentes')
+
+    expect(screen.getByText('Contenido protegido')).toBeInTheDocument()
+  })
+
   it('renders the app chrome once authenticated', () => {
     mockAuth({ selectedRole: 'ADMIN' })
 

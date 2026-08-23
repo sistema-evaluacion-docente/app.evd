@@ -98,6 +98,77 @@ describe('AutoBreadcrumb', () => {
     expect(screen.getByText('Evaluaciones')).toHaveClass('cursor-pointer')
   })
 
+  it('renders nothing on the home route', () => {
+    // You are already at the root, so there is no trail to draw — and the
+    // segment used to add an English "Home" crumb under "Inicio".
+    const { container } = renderAt('/home')
+
+    expect(container).toBeEmptyDOMElement()
+  })
+
+  it('spells out the Spanish segments instead of capitalising them', () => {
+    renderAt('/mis-planes')
+
+    expect(screen.getByText('Mis planes')).toBeInTheDocument()
+    expect(screen.queryByText('Mis-planes')).not.toBeInTheDocument()
+  })
+
+  it('accents the segments the URL cannot carry', () => {
+    renderAt('/admin/configuracion')
+
+    expect(screen.getByText('Administración')).toBeInTheDocument()
+    expect(screen.getByText('Configuración')).toBeInTheDocument()
+  })
+
+  it('calls the audit page Historial', () => {
+    renderAt('/admin/logs')
+
+    expect(screen.getByText('Historial')).toBeInTheDocument()
+    expect(screen.queryByText('Logs')).not.toBeInTheDocument()
+  })
+
+  it('collapses a subject browsed from a period into one crumb', () => {
+    renderAt('/periodos/2025-1/materias/SIS101/A')
+
+    expect(screen.getByText('Periodos')).toBeInTheDocument()
+    expect(screen.getByText('2025-1')).toBeInTheDocument()
+    expect(screen.getByText('SIS101 · Grupo A')).toBeInTheDocument()
+  })
+
+  it("does not read a director's subject route as a group", () => {
+    // The collapse above used to fire on any "materias" followed by two
+    // segments, turning this route into "1155304 · Grupo docentes".
+    renderAt('/materias/1155304/docentes/12')
+
+    expect(screen.getByText('Materias')).toBeInTheDocument()
+    expect(screen.getByText('1155304')).toBeInTheDocument()
+    expect(screen.queryByText(/Grupo/)).not.toBeInTheDocument()
+    expect(screen.queryByText('Docentes')).not.toBeInTheDocument()
+  })
+
+  it('keeps the crumbs after the subject code', () => {
+    renderAt('/materias/1155304/comparar')
+
+    expect(screen.getByText('Materias')).toBeInTheDocument()
+    expect(screen.getByText('1155304')).toBeInTheDocument()
+    expect(screen.getByText('Comparar')).toBeInTheDocument()
+    expect(screen.queryByText(/Grupo/)).not.toBeInTheDocument()
+  })
+
+  it('does not link the subject code, which has no page of its own', () => {
+    renderAt('/materias/1155304/comparar')
+
+    expect(screen.getByText('1155304')).not.toHaveClass('cursor-pointer')
+    expect(screen.getByText('Materias')).toHaveClass('cursor-pointer')
+  })
+
+  it('marks only the last crumb as the current page', () => {
+    renderAt('/materias/1155304/comparar')
+
+    expect(screen.getByText('Comparar')).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByText('1155304')).not.toHaveAttribute('aria-current')
+  })
+
   it('navigates to an intermediate segment when clicked', async () => {
     const user = userEvent.setup()
 

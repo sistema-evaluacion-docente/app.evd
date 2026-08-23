@@ -49,8 +49,6 @@ function errorsOf(overrides: Partial<Parameters<typeof planFormErrors>[0]> = {})
     items: [filled(1)],
     aspects: ASPECTS,
     courses: COURSES,
-    facultyName: 'Facultad de Ingeniería',
-    departmentName: 'Departamento de Sistemas',
     programName: 'Ingeniería de Sistemas',
     actaNumber: '012',
     actaDate: '2026-03-04',
@@ -151,8 +149,6 @@ describe('planFormErrors', () => {
   it('walks the datos del plan in the order the section prints them', () => {
     const errors = errorsOf({
       title: '  ',
-      facultyName: '',
-      departmentName: '',
       programName: '',
       actaNumber: '',
       actaDate: '',
@@ -160,8 +156,6 @@ describe('planFormErrors', () => {
 
     expect(errors.map((error) => error.id)).toEqual([
       'title',
-      'faculty',
-      'department',
       'program',
       'acta-number',
       'acta-date',
@@ -178,12 +172,12 @@ describe('planFormErrors', () => {
     const errors = errorsOf({
       actaLocked: true,
       isEdit: true,
-      facultyName: '',
+      programName: '',
       actaNumber: '',
       actaDate: '',
     })
 
-    expect(errors.map((error) => error.id)).toEqual(['faculty'])
+    expect(errors.map((error) => error.id)).toEqual(['program'])
   })
 
   it('keeps the title ahead of the header columns, where the form prints it', () => {
