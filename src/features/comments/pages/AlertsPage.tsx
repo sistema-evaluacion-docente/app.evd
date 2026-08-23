@@ -18,6 +18,7 @@ const HIGH_RISK_LEVEL = 3
  */
 export default function AlertsPage() {
   const [, params] = useRoute('/alertas/:teacherId')
+
   const [searchParams] = useSearchParams()
   const periodName = searchParams.get('period') || 'actual'
   const teacherId = params?.teacherId ? Number(params.teacherId) : undefined
