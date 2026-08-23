@@ -82,7 +82,11 @@ export function PeriodSelect({
 
     if (!raw) return undefined
 
-    return options.find((o) => o.name === raw)?.id
+    // Matched against the code too: `name` is optional on the API's periods,
+    // and links built elsewhere (a notification's `?period=2025-1`) carry
+    // whichever of the two that side had. Falling through to `options[0]`
+    // here silently swaps the reader onto the latest period instead.
+    return options.find((o) => o.name === raw || o.code === raw)?.id
   }, [searchParams, searchParam, options, isUrlMode])
 
   const selectedId = isUrlMode
@@ -91,10 +95,11 @@ export function PeriodSelect({
 
   useEffect(() => {
     if (isUrlMode && !urlId && selectedId) {
-      const name = options.find((o) => o.id === selectedId)?.name
+      const selected = options.find((o) => o.id === selectedId)
+      const param = selected?.name || selected?.code
 
-      if (name) {
-        setSearchParams(withParam(searchParam, name), { replace: true })
+      if (param) {
+        setSearchParams(withParam(searchParam, param), { replace: true })
         onValueChange?.(selectedId)
       }
     }
@@ -108,10 +113,11 @@ export function PeriodSelect({
 
   const handleChange = (id: number) => {
     if (isUrlMode) {
-      const name = options.find((o) => o.id === id)?.name
+      const selected = options.find((o) => o.id === id)
+      const param = selected?.name || selected?.code
 
-      if (name) {
-        setSearchParams(withParam(searchParam, name), { replace: true })
+      if (param) {
+        setSearchParams(withParam(searchParam, param), { replace: true })
       }
     }
     onValueChange?.(id)
