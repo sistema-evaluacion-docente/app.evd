@@ -1,4 +1,4 @@
-import { isAuthorizedForPage } from '@/config/security'
+import { isAuthorizedForPage, type AccessContext } from '@/config/security'
 
 /** Query parameter carrying where the user was headed before signing in. */
 export const NEXT_PARAM = 'next'
@@ -33,14 +33,20 @@ export function nextParamFor(path: string, search = ''): string {
  *   the user somewhere else, right after they typed their password.
  * - It cannot be the login page itself, which would loop.
  * - The role has to be allowed to open it, or the redirect only trades the
- *   login screen for the "acceso no autorizado" one.
+ *   login screen for the "acceso no autorizado" one. Same for a page the user
+ *   is missing something else for — a director with no department and the
+ *   improvement plans.
  *
  * @example
  * resolveNextPath('/mis-planes/42', 'DOCENTE')  // → '/mis-planes/42'
  * resolveNextPath('/planes/42', 'DOCENTE')      // → '/home'  (ruta del director)
  * resolveNextPath('//evil.com', 'DOCENTE')      // → '/home'
  */
-export function resolveNextPath(next: string | null | undefined, role: string | null): string {
+export function resolveNextPath(
+  next: string | null | undefined,
+  role: string | null,
+  context?: AccessContext,
+): string {
   if (!next) return DEFAULT_LANDING
 
   // Same-site only: one leading slash, and the next character may not turn it
@@ -52,7 +58,7 @@ export function resolveNextPath(next: string | null | undefined, role: string | 
   const path = next.split(/[?#]/)[0]
 
   if (path === '/login') return DEFAULT_LANDING
-  if (!isAuthorizedForPage(path, role)) return DEFAULT_LANDING
+  if (!isAuthorizedForPage(path, role, context)) return DEFAULT_LANDING
 
   return next
 }
