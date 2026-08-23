@@ -500,7 +500,7 @@ function NewRequestDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3">
+        <div className="min-w-0 space-y-3">
           <div className="space-y-1.5">
             <Label htmlFor="req-title">Título</Label>
             <Input
@@ -539,17 +539,19 @@ function NewRequestDialog({
                 <Select value={itemId} onValueChange={(value) => setItemId(value as number | null)}>
                   <SelectTrigger id="req-item" className="w-full">
                     <SelectValue placeholder="Sin relacionar">
-                      {itemId != null
-                        ? plan.items.find((item) => item.id === itemId)?.description.slice(0, 60)
-                        : undefined}
+                      {itemId != null ? (
+                        <span className="truncate">
+                          {plan.items.find((item) => item.id === itemId)?.description}
+                        </span>
+                      ) : undefined}
                     </SelectValue>
                   </SelectTrigger>
 
-                  <SelectContent>
+                  <SelectContent className="w-auto max-w-(--available-width)">
                     <SelectItem value={null}>Sin relacionar</SelectItem>
                     {plan.items.map((item) => (
                       <SelectItem key={item.id} value={item.id}>
-                        {item.description.slice(0, 60)}
+                        {item.description}
                       </SelectItem>
                     ))}
                   </SelectContent>
