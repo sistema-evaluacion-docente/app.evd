@@ -62,8 +62,14 @@ function FormDrawer({
           className={cn("space-y-4 px-4 pb-4", formClassName)}
         >
           {children}
-
           <DrawerFooter className={cn("px-0 pb-0", footerClassName)}>
+            <Button type="submit" disabled={submitDisabled ?? isSubmitting}>
+              <Save />
+              {isSubmitting
+                ? (submitSubmittingLabel ?? submitLabel)
+                : submitLabel}
+            </Button>
+
             <Button
               type="button"
               variant="outline"
@@ -72,13 +78,6 @@ function FormDrawer({
             >
               <Undo2 />
               {cancelLabel}
-            </Button>
-
-            <Button type="submit" disabled={submitDisabled ?? isSubmitting}>
-              <Save />
-              {isSubmitting
-                ? (submitSubmittingLabel ?? submitLabel)
-                : submitLabel}
             </Button>
           </DrawerFooter>
         </form>
