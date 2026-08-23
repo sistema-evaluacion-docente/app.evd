@@ -44,6 +44,28 @@ export function riskLevelColor(name: string | undefined | null): string | undefi
 }
 
 /**
+ * Whether a risk level is one worth acting on — `MEDIO` or `ALTO`.
+ *
+ * Lives here and not in a feature so the plans module and the teacher's own
+ * summary can't disagree on what "riesgo" means. The name is trusted first
+ * because the API sends it in unpredictable casing; the id is the fallback for
+ * the payloads that carry no name.
+ *
+ * @example
+ * isRiskyLevel(comment.risk_level) // → true for Medio y Alto
+ */
+export function isRiskyLevel(
+  level: { id?: number | null; name?: string | null } | null | undefined,
+): boolean {
+  const key = level?.name?.toUpperCase()
+
+  if (key) return key === 'MEDIO' || key === 'ALTO'
+
+  // Ids of `RISK_LEVELS`: 1 Bajo, 2 Medio, 3 Alto.
+  return (level?.id ?? 0) >= 2
+}
+
+/**
  * Resolves a risk level id to its readable name. Unknown ids are returned as
  * `undefined` so callers can fall back to whatever the API sent.
  *
