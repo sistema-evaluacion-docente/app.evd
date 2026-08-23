@@ -16,8 +16,13 @@ vi.mock('@/features/plans/api', () => ({
 
 // The directory is the director's; the delete action is gated on the role.
 vi.mock('@/features/auth', () => ({
+  ROLE: {
+    ADMIN: 'ADMIN',
+    TEACHER: 'DOCENTE',
+    DEPARTMENT_DIRECTOR: 'DIRECTOR DE DEPARTAMENTO',
+  },
   useAuthStore: (selector: (state: unknown) => unknown) =>
-    selector({ user: { roles: ['DIRECTOR DE DEPARTAMENTO'] } }),
+    selector({ selectedRole: 'DIRECTOR DE DEPARTAMENTO' }),
 }))
 
 const mockDelete = { mutate: vi.fn(), isPending: false }

@@ -27,15 +27,17 @@ function mockAuth(overrides: Partial<ReturnType<typeof useAuth>>) {
 }
 
 function renderAt(path: string) {
-  const { hook } = memoryLocation({ path })
+  const { hook, history } = memoryLocation({ path, record: true })
 
-  return render(
+  const result = render(
     <Router hook={hook}>
       <AppLayout>
         <p>Contenido protegido</p>
       </AppLayout>
     </Router>,
   )
+
+  return { ...result, history }
 }
 
 describe('AppLayout', () => {
@@ -53,13 +55,33 @@ describe('AppLayout', () => {
     expect(screen.queryByText('Contenido protegido')).not.toBeInTheDocument()
   })
 
-  it('shows the not-authenticated screen when there is no logged in user', () => {
-    mockAuth({ loggedIn: false, selectedRole: null })
+  it('sends someone with no session to the login page, carrying where they were headed', () => {
+    // Not the same as being unauthorised: nothing was refused, they simply have
+    // not signed in — which is how a teacher arrives from the link in the
+    // "tienes un plan de mejoramiento" email.
+    mockAuth({ loggedIn: false, selectedRole: null, user: null })
 
-    renderAt('/')
+    const { history } = renderAt('/mis-planes/42')
+
+    expect(history.at(-1)).toBe('/login?next=%2Fmis-planes%2F42')
+    expect(screen.queryByText('Contenido protegido')).not.toBeInTheDocument()
+    expect(screen.queryByText('No autenticado')).not.toBeInTheDocument()
+  })
+
+  it('keeps the explanation for a session the API turned down', () => {
+    // Inactive, or not registered as a teacher. Bouncing this one to the login
+    // page would only loop, so it is told why instead.
+    // Solo hace falta que exista: lo que decide la rama es haber sesión o no.
+    mockAuth({
+      loggedIn: false,
+      selectedRole: null,
+      user: { active: false } as ReturnType<typeof useAuth>['user'],
+    })
+
+    const { history } = renderAt('/mis-planes/42')
 
     expect(screen.getByText('No autenticado')).toBeInTheDocument()
-    expect(screen.queryByText('Contenido protegido')).not.toBeInTheDocument()
+    expect(history.at(-1)).toBe('/mis-planes/42')
   })
 
   it('renders the children when the role is authorized for the route', () => {

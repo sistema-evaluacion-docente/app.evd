@@ -50,7 +50,7 @@ export default function TeacherMateriasPage() {
   if (!teacherId) {
     return (
       <>
-        <PageTitle>Materias</PageTitle>
+        <PageTitle>Mis materias</PageTitle>
 
         <p className="text-muted-foreground py-10 text-center text-sm">
           Su usuario no está vinculado a un registro de docente. Contacte al administrador del

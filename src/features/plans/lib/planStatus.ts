@@ -8,6 +8,7 @@ import type {
   PlanDocument,
   PlanEvidence,
   PlanStatus,
+  VerificationResult,
 } from '../types'
 
 /**
@@ -39,6 +40,24 @@ export const PLAN_STATUS_CLASS: Record<PlanStatus, string> = {
   CERRADO_CUMPLIDO: SUCCESS,
   CERRADO_NO_CUMPLIDO: DANGER,
   CERRADO_MANUAL: NEUTRAL,
+}
+
+/**
+ * What the following semester said, kept apart from `PLAN_STATUS_LABEL` on
+ * purpose: the plan status is the result the director signed at the closing,
+ * this is what the grades said afterwards. They can disagree, and that
+ * disagreement is the whole point of verifying.
+ */
+export const VERIFICATION_RESULT_LABEL: Record<VerificationResult, string> = {
+  MEJORO: 'Mejoró',
+  NO_MEJORO: 'No mejoró',
+  SIN_DATOS: 'Sin datos para comparar',
+}
+
+export const VERIFICATION_RESULT_CLASS: Record<VerificationResult, string> = {
+  MEJORO: SUCCESS,
+  NO_MEJORO: DANGER,
+  SIN_DATOS: NEUTRAL,
 }
 
 export const ACTA_STATUS_LABEL: Record<ActaStatus, string> = {

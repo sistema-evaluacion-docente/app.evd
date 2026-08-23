@@ -3,5 +3,5 @@ services:
     build: .
     container_name: evd-app
     ports:
-      - "${PORT_0}:80"
+      - '${PORT_0}:80'
     restart: unless-stopped

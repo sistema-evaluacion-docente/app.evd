@@ -1,253 +1,282 @@
+import { lazy, Suspense } from 'react'
 import { Route, Switch } from 'wouter'
-
 import { AppLayout } from '@/components/common/AppLayout'
-import { AboutPage } from '@/features/about'
-import { LogsPage, SettingsPage } from '@/features/admin'
-import { LoginPage } from '@/features/auth'
-import { CommentsPage } from '@/features/comments'
-import { DashboardPage } from '@/features/dashboard'
-import { DepartmentsPage } from '@/features/departments'
-import { DirectorsPage } from '@/features/directors'
-import {
-  EvaluationCoursesPage,
-  EvaluationDetailPage,
-  EvaluationDimensionsPage,
-  EvaluationLogsPanel,
-  EvaluationPdfPage,
-  EvaluationsPage,
-  EvaluationUploadPage,
-} from '@/features/evaluations'
-import { FacultiesPage } from '@/features/faculties'
-import { NotFoundPage } from '@/features/not-found'
-import { NotificationsPage } from '@/features/notifications'
-import {
-  AdminPeriodsPage,
-  PeriodCourseDetailPage,
-  PeriodDetailPage,
-  PeriodsPage,
-  TeacherMateriasPage,
-} from '@/features/periods'
-import {
-  MyPlanDetailPage,
-  MyPlansPage,
-  PlanDetailPage,
-  PlanFormPage,
-  PlansPage,
-} from '@/features/plans'
-import { SubjectComparisonPage, SubjectsPage, SubjectTeacherDetailPage } from '@/features/subjects'
-import { SuggestedActionsPage } from '@/features/suggested-actions'
-import { TeacherDetailPage, TeachersPage, TeacherUploadPage } from '@/features/teachers'
-import { UsersPage } from '@/features/users'
+import { RouteFallback } from '@/components/common/RouteFallback'
+import { EvaluationLogsPanel } from '@/features/evaluations/components/EvaluationLogsPanel'
+
+/**
+ * Every page is loaded on demand.
+ */
+const AboutPage = lazy(() => import('@/features/about/pages/AboutPage'))
+const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage'))
+const NotFoundPage = lazy(() => import('@/features/not-found/pages/NotFoundPage'))
+const DashboardPage = lazy(() => import('@/features/dashboard/pages/DashboardPage'))
+const NotificationsPage = lazy(() => import('@/features/notifications/pages/NotificationsPage'))
+const CommentsPage = lazy(() => import('@/features/comments/pages/CommentsPage'))
+const PeriodsPage = lazy(() => import('@/features/periods/pages/PeriodsPage'))
+const PeriodDetailPage = lazy(() => import('@/features/periods/pages/PeriodDetailPage'))
+const PeriodCourseDetailPage = lazy(() => import('@/features/periods/pages/PeriodCourseDetailPage'))
+const TeacherMateriasPage = lazy(() => import('@/features/periods/pages/TeacherMateriasPage'))
+const AdminPeriodsPage = lazy(() =>
+  import('@/features/periods/pages/AdminPeriodsPage').then((module) => ({
+    default: module.AdminPeriodsPage,
+  })),
+)
+const TeachersPage = lazy(() => import('@/features/teachers/pages/TeachersPage'))
+const TeacherDetailPage = lazy(() => import('@/features/teachers/pages/TeacherDetailPage'))
+const TeacherUploadPage = lazy(() => import('@/features/teachers/pages/TeacherUploadPage'))
+const SubjectsPage = lazy(() => import('@/features/subjects/pages/SubjectsPage'))
+const SubjectComparisonPage = lazy(() => import('@/features/subjects/pages/SubjectComparisonPage'))
+const SubjectTeacherDetailPage = lazy(
+  () => import('@/features/subjects/pages/SubjectTeacherDetailPage'),
+)
+const PlansPage = lazy(() => import('@/features/plans/pages/PlansPage'))
+const PlanDetailPage = lazy(() => import('@/features/plans/pages/PlanDetailPage'))
+const PlanFormPage = lazy(() => import('@/features/plans/pages/PlanFormPage'))
+const MyPlansPage = lazy(() => import('@/features/plans/pages/MyPlansPage'))
+const MyPlanDetailPage = lazy(() => import('@/features/plans/pages/MyPlanDetailPage'))
+const EvaluationsPage = lazy(() => import('@/features/evaluations/pages/EvaluationsPage'))
+const EvaluationDetailPage = lazy(() => import('@/features/evaluations/pages/EvaluationDetailPage'))
+const EvaluationCoursesPage = lazy(
+  () => import('@/features/evaluations/pages/EvaluationCoursesPage'),
+)
+const EvaluationDimensionsPage = lazy(
+  () => import('@/features/evaluations/pages/EvaluationDimensionsPage'),
+)
+const EvaluationPdfPage = lazy(() => import('@/features/evaluations/pages/EvaluationPdfPage'))
+const EvaluationUploadPage = lazy(() => import('@/features/evaluations/pages/EvaluationUploadPage'))
+const LogsPage = lazy(() => import('@/features/admin/pages/LogsPage'))
+const SettingsPage = lazy(() => import('@/features/admin/pages/SettingsPage'))
+const UsersPage = lazy(() => import('@/features/users/pages/UsersPage'))
+const SuggestedActionsPage = lazy(
+  () => import('@/features/suggested-actions/pages/SuggestedActionsPage'),
+)
+const DirectorsPage = lazy(() =>
+  import('@/features/directors/pages/DirectorsPage').then((module) => ({
+    default: module.DirectorsPage,
+  })),
+)
+const FacultiesPage = lazy(() =>
+  import('@/features/faculties/pages/FacultiesPage').then((module) => ({
+    default: module.FacultiesPage,
+  })),
+)
+const DepartmentsPage = lazy(() =>
+  import('@/features/departments/pages/DepartmentsPage').then((module) => ({
+    default: module.DepartmentsPage,
+  })),
+)
 
 function App() {
   return (
     <>
-      <Switch>
-        <Route path="/login" component={LoginPage} />
+      <Suspense fallback={<RouteFallback />}>
+        <Switch>
+          <Route path="/login" component={LoginPage} />
 
-        <Route path="/" component={AboutPage} />
+          <Route path="/" component={AboutPage} />
 
-        <Route path="/home">
-          <AppLayout>
-            <DashboardPage />
-          </AppLayout>
-        </Route>
+          <Route path="/home">
+            <AppLayout>
+              <DashboardPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/notificaciones">
-          <AppLayout>
-            <NotificationsPage />
-          </AppLayout>
-        </Route>
+          <Route path="/notificaciones">
+            <AppLayout>
+              <NotificationsPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/periodos">
-          <AppLayout>
-            <PeriodsPage />
-          </AppLayout>
-        </Route>
+          <Route path="/periodos">
+            <AppLayout>
+              <PeriodsPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/periodos/materias">
-          <AppLayout>
-            <TeacherMateriasPage />
-          </AppLayout>
-        </Route>
+          <Route path="/periodos/materias">
+            <AppLayout>
+              <TeacherMateriasPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/periodos/:period">
-          <AppLayout>
-            <PeriodDetailPage />
-          </AppLayout>
-        </Route>
+          <Route path="/periodos/:period">
+            <AppLayout>
+              <PeriodDetailPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/periodos/:period/materias/:courseCode/:groupName">
-          <AppLayout>
-            <PeriodCourseDetailPage />
-          </AppLayout>
-        </Route>
+          <Route path="/periodos/:period/materias/:courseCode/:groupName">
+            <AppLayout>
+              <PeriodCourseDetailPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/docentes/cargar">
-          <AppLayout>
-            <TeacherUploadPage />
-          </AppLayout>
-        </Route>
+          <Route path="/docentes/cargar">
+            <AppLayout>
+              <TeacherUploadPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/docentes">
-          <AppLayout>
-            <TeachersPage />
-          </AppLayout>
-        </Route>
+          <Route path="/docentes">
+            <AppLayout>
+              <TeachersPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/docentes/:id">
-          <AppLayout>
-            <TeacherDetailPage />
-          </AppLayout>
-        </Route>
+          <Route path="/docentes/:id">
+            <AppLayout>
+              <TeacherDetailPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/materias/:courseCode/docentes/:teacherId">
-          <AppLayout>
-            <SubjectTeacherDetailPage />
-          </AppLayout>
-        </Route>
+          <Route path="/materias/:courseCode/docentes/:teacherId">
+            <AppLayout>
+              <SubjectTeacherDetailPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/materias/:courseCode/comparar">
-          <AppLayout>
-            <SubjectComparisonPage />
-          </AppLayout>
-        </Route>
+          <Route path="/materias/:courseCode/comparar">
+            <AppLayout>
+              <SubjectComparisonPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/materias">
-          <AppLayout>
-            <SubjectsPage />
-          </AppLayout>
-        </Route>
+          <Route path="/materias">
+            <AppLayout>
+              <SubjectsPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/comentarios">
-          <AppLayout>
-            <CommentsPage />
-          </AppLayout>
-        </Route>
+          <Route path="/comentarios">
+            <AppLayout>
+              <CommentsPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/mis-planes">
-          <AppLayout>
-            <MyPlansPage />
-          </AppLayout>
-        </Route>
+          <Route path="/mis-planes">
+            <AppLayout>
+              <MyPlansPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/mis-planes/:id">
-          <AppLayout>
-            <MyPlanDetailPage />
-          </AppLayout>
-        </Route>
+          <Route path="/mis-planes/:id">
+            <AppLayout>
+              <MyPlanDetailPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/planes/nuevo">
-          <AppLayout>
-            <PlanFormPage />
-          </AppLayout>
-        </Route>
+          <Route path="/planes/nuevo">
+            <AppLayout>
+              <PlanFormPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/planes/:id/editar">
-          <AppLayout>
-            <PlanFormPage />
-          </AppLayout>
-        </Route>
+          <Route path="/planes/:id/editar">
+            <AppLayout>
+              <PlanFormPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/planes">
-          <AppLayout>
-            <PlansPage />
-          </AppLayout>
-        </Route>
+          <Route path="/planes">
+            <AppLayout>
+              <PlansPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/planes/:id">
-          <AppLayout>
-            <PlanDetailPage />
-          </AppLayout>
-        </Route>
+          <Route path="/planes/:id">
+            <AppLayout>
+              <PlanDetailPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/acciones">
-          <AppLayout>
-            <SuggestedActionsPage />
-          </AppLayout>
-        </Route>
+          <Route path="/acciones">
+            <AppLayout>
+              <SuggestedActionsPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/evaluaciones/cargar">
-          <AppLayout>
-            <EvaluationUploadPage />
-          </AppLayout>
-        </Route>
+          <Route path="/evaluaciones/cargar">
+            <AppLayout>
+              <EvaluationUploadPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/evaluaciones">
-          <AppLayout>
-            <EvaluationsPage />
-          </AppLayout>
-        </Route>
+          <Route path="/evaluaciones">
+            <AppLayout>
+              <EvaluationsPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/evaluaciones/:id/pdf">
-          <AppLayout>
-            <EvaluationPdfPage />
-          </AppLayout>
-        </Route>
+          <Route path="/evaluaciones/:id/pdf">
+            <AppLayout>
+              <EvaluationPdfPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/evaluaciones/:id/materias">
-          <AppLayout>
-            <EvaluationCoursesPage />
-          </AppLayout>
-        </Route>
+          <Route path="/evaluaciones/:id/materias">
+            <AppLayout>
+              <EvaluationCoursesPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/evaluaciones/:id/dimensiones">
-          <AppLayout>
-            <EvaluationDimensionsPage />
-          </AppLayout>
-        </Route>
+          <Route path="/evaluaciones/:id/dimensiones">
+            <AppLayout>
+              <EvaluationDimensionsPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/evaluaciones/:id">
-          <AppLayout>
-            <EvaluationDetailPage />
-          </AppLayout>
-        </Route>
+          <Route path="/evaluaciones/:id">
+            <AppLayout>
+              <EvaluationDetailPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/admin/logs">
-          <AppLayout>
-            <LogsPage />
-          </AppLayout>
-        </Route>
+          <Route path="/admin/logs">
+            <AppLayout>
+              <LogsPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/admin/configuracion">
-          <AppLayout>
-            <SettingsPage />
-          </AppLayout>
-        </Route>
+          <Route path="/admin/configuracion">
+            <AppLayout>
+              <SettingsPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/admin/facultades">
-          <AppLayout>
-            <FacultiesPage />
-          </AppLayout>
-        </Route>
+          <Route path="/admin/facultades">
+            <AppLayout>
+              <FacultiesPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/admin/departamentos">
-          <AppLayout>
-            <DepartmentsPage />
-          </AppLayout>
-        </Route>
+          <Route path="/admin/departamentos">
+            <AppLayout>
+              <DepartmentsPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/admin/periodos">
-          <AppLayout>
-            <AdminPeriodsPage />
-          </AppLayout>
-        </Route>
+          <Route path="/admin/periodos">
+            <AppLayout>
+              <AdminPeriodsPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/admin/usuarios">
-          <AppLayout>
-            <UsersPage />
-          </AppLayout>
-        </Route>
+          <Route path="/admin/usuarios">
+            <AppLayout>
+              <UsersPage />
+            </AppLayout>
+          </Route>
 
-        <Route path="/admin/directores">
-          <AppLayout>
-            <DirectorsPage />
-          </AppLayout>
-        </Route>
+          <Route path="/admin/directores">
+            <AppLayout>
+              <DirectorsPage />
+            </AppLayout>
+          </Route>
 
-        <Route component={NotFoundPage} />
-      </Switch>
-
+          <Route component={NotFoundPage} />
+        </Switch>
+      </Suspense>
       <EvaluationLogsPanel />
     </>
   )

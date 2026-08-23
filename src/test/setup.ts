@@ -40,3 +40,11 @@ if (!Element.prototype.scrollIntoView) {
  */
 window.scrollTo = () => {}
 
+/**
+ * Same for the element version, which jsdom does not define at all. Every
+ * navigation goes through `scrollToTop`, and that resets the layout's `<main>`
+ * as well as the window — so without this any test that navigates dies on it.
+ */
+if (!Element.prototype.scrollTo) {
+  Element.prototype.scrollTo = () => {}
+}

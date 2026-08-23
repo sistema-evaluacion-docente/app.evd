@@ -1,12 +1,15 @@
 import { ShieldAlert } from 'lucide-react'
-import { type ReactNode } from 'react'
-import { Link, useLocation } from 'wouter'
-
+import { type ReactNode, Suspense } from 'react'
+import { ErrorBoundary } from 'react-error-boundary'
+import { Link, Redirect, useLocation, useSearchParams } from 'wouter'
 import AppLayoutSkeleton from '@/components/skeletons/AppLayoutSkeleton'
+import { RouteError } from './RouteError'
+import { RouteFallback } from './RouteFallback'
 import { Button } from '@/components/ui/button'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { isAuthorizedForPage } from '@/config/security'
 import { UserNotAuth } from '@/features/auth'
+import { nextParamFor } from '@/features/auth/lib/nextPath'
 import useAuth from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
 import { AppHeader, type AppHeaderProps } from './AppHeader'
@@ -27,13 +30,17 @@ export function AppLayout({
   title,
 }: AppLayoutProps) {
   const [location] = useLocation()
-  const { isLoading, selectedRole, loggedIn } = useAuth()
+  const [searchParams] = useSearchParams()
+  const { isLoading, selectedRole, loggedIn, user } = useAuth()
 
   if (isLoading) {
     return <AppLayoutSkeleton />
   }
 
-  if (!isLoading && !loggedIn) {
+  if (!loggedIn) {
+    if (!user) {
+      return <Redirect to={`/login?${nextParamFor(location, searchParams.toString())}`} replace />
+    }
     return <UserNotAuth />
   }
 
@@ -43,6 +50,7 @@ export function AppLayout({
     <SidebarProvider>
       <AppLayoutContent
         authorized={authorized}
+        location={location}
         role={selectedRole}
         mainClassName={mainClassName}
         header={header}
@@ -57,7 +65,7 @@ export function AppLayout({
 interface AppLayoutContentProps {
   children: ReactNode
   authorized: boolean
-  /** Passed to the breadcrumb so it only links what this role can open. */
+  location: string
   role: string | null
   mainClassName?: string
   header?: AppHeaderProps
@@ -67,6 +75,7 @@ interface AppLayoutContentProps {
 function AppLayoutContent({
   children,
   authorized,
+  location,
   role,
   mainClassName,
   header,
@@ -86,7 +95,9 @@ function AppLayoutContent({
             )}
           >
             {authorized ? (
-              <>{children}</>
+              <ErrorBoundary FallbackComponent={RouteError} resetKeys={[location]}>
+                <Suspense fallback={<RouteFallback />}>{children}</Suspense>
+              </ErrorBoundary>
             ) : (
               <div className="flex h-[calc(100vh-220px)] flex-col items-center justify-center py-20 text-center">
                 <div className="animate-rise border-brand-200 bg-brand-50 mb-6 flex size-20 items-center justify-center rounded-2xl border">

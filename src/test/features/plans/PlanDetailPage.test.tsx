@@ -21,8 +21,13 @@ vi.mock('@/features/plans/api', () => ({
 }))
 
 vi.mock('@/features/auth', () => ({
+  ROLE: {
+    ADMIN: 'ADMIN',
+    TEACHER: 'DOCENTE',
+    DEPARTMENT_DIRECTOR: 'DIRECTOR DE DEPARTAMENTO',
+  },
   useAuthStore: (selector: (state: unknown) => unknown) =>
-    selector({ user: { roles: ['DIRECTOR DE DEPARTAMENTO'] } }),
+    selector({ selectedRole: 'DIRECTOR DE DEPARTAMENTO' }),
 }))
 
 // The panels below the commitments have their own tests; stubbed here so this

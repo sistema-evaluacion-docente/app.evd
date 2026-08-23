@@ -21,6 +21,8 @@ interface DatePickerProps {
   invalid?: boolean
   /** Leaving it without a date is what turns it red the first time. */
   onBlur?: () => void
+  /** Id of the message saying what is missing, for `aria-describedby`. */
+  describedBy?: string
   /** Earliest date that can be picked, as `YYYY-MM-DD`. */
   minDate?: string
   /** Latest date that can be picked, as `YYYY-MM-DD`. */
@@ -56,6 +58,7 @@ export function DatePicker({
   disabled = false,
   invalid = false,
   onBlur,
+  describedBy,
   minDate,
   maxDate,
   clearable = true,
@@ -88,6 +91,7 @@ export function DatePicker({
               variant="outline"
               disabled={disabled}
               aria-invalid={invalid || undefined}
+              aria-describedby={describedBy}
               onBlur={onBlur}
               className={cn(
                 'w-full justify-start text-left font-normal',

@@ -16,7 +16,7 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoadingEmailLogin, setIsLoadingEmailLogin] = useState(false)
 
-  const handleLoginWithEmail = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleLoginWithEmail = (event: React.SubmitEvent<HTMLFormElement>) => {
     event.preventDefault()
 
     if (isLoadingEmailLogin) return
@@ -69,7 +69,7 @@ export function LoginForm() {
 
       <header className="mb-8 text-center" style={{ animationDelay: '120ms' }}>
         <h1 className="text-[1.6rem] leading-tight font-semibold tracking-tight">
-          Acceso al Sistema
+          Acceso al sistema
         </h1>
 
         <p className="text-muted-foreground mt-2 text-sm" style={{ textWrap: 'pretty' }}>

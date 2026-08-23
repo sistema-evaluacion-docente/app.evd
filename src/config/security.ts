@@ -12,13 +12,13 @@ const securityConfig: { pages: SecurityPage[] } = {
   pages: [
     {
       path: '/home',
-      name: 'Mi Resumen',
+      name: 'Resumen',
       roles: ['DIRECTOR DE DEPARTAMENTO', 'ADMIN', 'DOCENTE'],
     },
 
     {
       path: '/periodos',
-      name: 'Mis periodos',
+      name: 'Periodos',
       roles: ['DOCENTE'],
     },
     {
@@ -28,7 +28,7 @@ const securityConfig: { pages: SecurityPage[] } = {
     },
     {
       path: '/mis-planes',
-      name: 'Mis planes de mejoramiento',
+      name: 'Planes de mejoramiento',
       roles: ['DOCENTE'],
     },
     {
@@ -84,7 +84,7 @@ const securityConfig: { pages: SecurityPage[] } = {
     },
     {
       path: '/admin/periodos',
-      name: 'Períodos',
+      name: 'Periodos',
       roles: ['ADMIN'],
     },
     {

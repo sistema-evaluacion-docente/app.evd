@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { KeyboardEvent, ReactNode } from 'react'
 
 import {
   Combobox,
@@ -38,6 +38,8 @@ interface SearchSelectProps<T> {
   disabled?: boolean
   /** Paints the field as still missing, the same way an input does. */
   invalid?: boolean
+  /** Id of the message saying what is missing, for `aria-describedby`. */
+  describedBy?: string
   /** While the options are still on their way, the field says so out loud. */
   loading?: boolean
   loadingLabel?: string
@@ -65,6 +67,17 @@ interface SearchSelectProps<T> {
  *   filter={(entry, query) => entry.code?.includes(query) ?? false}
  * />
  */
+/**
+ * Enter inside a suggestion list belongs to the list, not to the form around
+ * it: it commits the highlighted option. Without this the field also triggers
+ * the form's implicit submission, so picking a faculty would try to save the
+ * plan behind it. `preventDefault` only cancels that browser default — the
+ * component's own selection handler still runs.
+ */
+function keepEnterInTheList(event: KeyboardEvent<HTMLInputElement>) {
+  if (event.key === 'Enter') event.preventDefault()
+}
+
 export function SearchSelect<T>({
   value,
   onValueChange,
@@ -79,6 +92,7 @@ export function SearchSelect<T>({
   emptyMessage = 'Sin coincidencias',
   disabled = false,
   invalid = false,
+  describedBy,
   loading = false,
   loadingLabel = 'Cargando…',
   className,
@@ -105,6 +119,8 @@ export function SearchSelect<T>({
           id={id}
           placeholder={loading ? loadingLabel : placeholder}
           aria-busy={loading || undefined}
+          aria-describedby={describedBy}
+          onKeyDown={keepEnterInTheList}
         />
         {value != null && !disabled && !loading && <ComboboxClear />}
         <ComboboxTrigger disabled={disabled || loading} />

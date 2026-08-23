@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { AlertTriangle, Check, ChevronRight, CircleCheck, HelpCircle, Plus, X } from 'lucide-react'
 
 import { DimensionDot } from '@/components/common/DimensionDot'
@@ -21,10 +22,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-// From the sub-barrels, not `@/features/teachers`: the teachers feature imports
-// `@/features/plans` for `TeacherPlanAction`, so the root barrel would close an
-// import cycle between the two features.
-import { CommentCard } from '@/features/teachers/components'
+import { CommentCard } from '@/features/teachers/components/CommentCard'
 import type { TeacherComment } from '@/features/teachers/types'
 import { getScoreToneClass } from '@/lib/scoreTone'
 import { cn } from '@/lib/utils'
@@ -77,11 +75,16 @@ interface IndicatorPickerProps {
  * "solo indicadores bajos" on, only what is below the institutional threshold
  * or commented with medium/high risk survives the filter.
  *
+ * Memoised: it hangs off the same component as the commitment cards, so every
+ * keystroke in one of those used to redraw the whole matrix — four dimensions,
+ * their questions and every comment — for a change it has no part in. The page
+ * keeps its props identity-stable so this can bail out.
+ *
  * @example
  * <IndicatorPicker dimensions={dimensions} threshold={3.5} comments={comments}
  *   selectedIds={ids} onToggleIndicator={toggle} onToggleComment={toggleComment} />
  */
-export function IndicatorPicker({
+export const IndicatorPicker = memo(function IndicatorPicker({
   dimensions,
   threshold,
   comments,
@@ -290,7 +293,7 @@ export function IndicatorPicker({
       )}
     </div>
   )
-}
+})
 
 /** Explains what the "solo indicadores bajos" filter actually keeps. */
 function WeakFilterHelp({ threshold }: { threshold: number }) {

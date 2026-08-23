@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
 import { CommitmentsEditor } from '@/features/plans/components/CommitmentsEditor'
-import { buildBlankDraft, reserveDraftKeys } from '@/features/plans/lib/planDraft'
+import { buildBlankDraft } from '@/features/plans/lib/planDraft'
 import type { DraftItem, PlanAspect } from '@/features/plans/types'
 
 const ASPECTS: PlanAspect[] = [
@@ -15,7 +15,10 @@ function item(overrides: Partial<DraftItem> = {}): DraftItem {
   return { ...buildBlankDraft(1), ...overrides }
 }
 
-function renderEditor(items: DraftItem[], overrides: Partial<{ invalidFields: Set<string> }> = {}) {
+function renderEditor(
+  items: DraftItem[],
+  overrides: Partial<{ invalidFields: Map<string, string> }> = {},
+) {
   const onFieldBlur = vi.fn()
 
   render(
@@ -24,7 +27,7 @@ function renderEditor(items: DraftItem[], overrides: Partial<{ invalidFields: Se
       aspects={ASPECTS}
       onChange={vi.fn()}
       onRemove={vi.fn()}
-      invalidFields={overrides.invalidFields ?? new Set()}
+      invalidFields={overrides.invalidFields ?? new Map()}
       onFieldBlur={onFieldBlur}
     />,
   )
@@ -100,13 +103,30 @@ describe('CommitmentsEditor', () => {
   it('paints red only the fields the page says are already due', () => {
     const draft = item({ description: '', commitment: '' })
 
-    renderEditor([draft], { invalidFields: new Set([`commit-${draft.key}`]) })
+    renderEditor([draft], {
+      invalidFields: new Map([[`commit-${draft.key}`, 'Falta el compromiso.']]),
+    })
 
     expect(screen.getByLabelText(/Descripción del indicador/)).not.toHaveAttribute(
       'aria-invalid',
       'true',
     )
     expect(screen.getByLabelText(/^Compromiso/)).toHaveAttribute('aria-invalid', 'true')
+  })
+
+  it('says in words what is missing, and points the field at it', () => {
+    const draft = item({ description: '', commitment: '' })
+
+    renderEditor([draft], {
+      invalidFields: new Map([[`commit-${draft.key}`, 'Falta el compromiso.']]),
+    })
+
+    // Red alone is not an error message: the reason has to be readable, and
+    // reachable from the control for anyone who can't see the colour.
+    const message = screen.getByRole('alert')
+
+    expect(message).toHaveTextContent('Falta el compromiso.')
+    expect(screen.getByLabelText(/^Compromiso/)).toHaveAttribute('aria-describedby', message.id)
   })
 
   it('reports a required field left empty, which is what turns it red', async () => {
@@ -135,23 +155,20 @@ describe('CommitmentsEditor', () => {
   })
 })
 
-describe('reserveDraftKeys', () => {
-  it('hands out keys past the ones a restored draft already holds', () => {
-    // A reload restarts the counter, so a restored 'draft-9000' would otherwise
-    // be handed out a second time and two rows would edit as one.
-    reserveDraftKeys([{ key: 'draft-9000' }, { key: 'draft-42' }, { key: 'group:12' }])
+describe('claves de los compromisos en borrador', () => {
+  it('no repite una clave', () => {
+    // Dos filas con la misma clave se editan como una sola.
+    const keys = new Set(Array.from({ length: 500 }, () => buildBlankDraft(1).key))
 
-    expect(buildBlankDraft(1).key).toBe('draft-9001')
+    expect(keys.size).toBe(500)
   })
 
-  it('ignores keys that were never ours to count', () => {
-    const before = Number(/^draft-(\d+)$/.exec(buildBlankDraft(1).key)?.[1])
+  it('no choca con las que trae un borrador guardado', () => {
+    // Recargar la página no puede volver a repartir una clave que un compromiso
+    // restaurado ya tiene — incluidas las del contador que se usaba antes.
+    const restored = ['draft-1', 'draft-42', 'draft-9000']
+    const fresh = Array.from({ length: 200 }, () => buildBlankDraft(1).key)
 
-    reserveDraftKeys([{ key: 'code:MAT101::A' }, { key: 'manual-2-1699999999' }])
-
-    const after = Number(/^draft-(\d+)$/.exec(buildBlankDraft(1).key)?.[1])
-
-    // Nothing there was a draft key, so the counter just carries on forward.
-    expect(after).toBeGreaterThan(before)
+    expect(fresh.some((key) => restored.includes(key))).toBe(false)
   })
 })

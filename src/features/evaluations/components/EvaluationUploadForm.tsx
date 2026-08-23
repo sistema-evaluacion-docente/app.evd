@@ -61,7 +61,7 @@ export function EvaluationUploadForm() {
       <CardHeader>
         <CardTitle>Subir evaluación docente</CardTitle>
         <CardDescription>
-          Carga el PDF con las evaluaciones de los docentes de tu departamento para el período
+          Carga el PDF con las evaluaciones de los docentes de tu departamento para el periodo
           académico. Si tu departamento evalúa en las dos modalidades, puedes cargar los dos
           documentos de presencial y distancia en una sola evaluación.
         </CardDescription>
