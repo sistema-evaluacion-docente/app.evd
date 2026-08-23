@@ -21,14 +21,15 @@ export default function LoginPage() {
   const isLoading = useAuthStore((s) => s.isLoading)
   const loggedIn = useAuthStore((s) => s.loggedIn)
   const selectedRole = useAuthStore((s) => s.selectedRole)
+  const hasDepartment = useAuthStore((s) => s.user?.department_id != null)
 
   const next = searchParams.get(NEXT_PARAM)
 
   useEffect(() => {
     if (loggedIn) {
-      navigate(resolveNextPath(next, selectedRole))
+      navigate(resolveNextPath(next, selectedRole, { hasDepartment }))
     }
-  }, [loggedIn, navigate, next, selectedRole])
+  }, [hasDepartment, loggedIn, navigate, next, selectedRole])
 
   if (isLoading) {
     return <AppLayoutSkeleton />
