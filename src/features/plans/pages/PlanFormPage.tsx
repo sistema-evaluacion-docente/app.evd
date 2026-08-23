@@ -38,6 +38,10 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { useAuthStore } from '@/features/auth'
+// Deep-imported from the feature's `api` barrel rather than its root on
+// purpose: `features/suggested-actions` imports `features/plans` for the
+// aspect catalogue, so going through the barrel would close an import cycle.
+import { useGetSuggestedActions } from '@/features/suggested-actions/api'
 import type { TeacherComment } from '@/features/teachers/types'
 import formatDate, { todayISO } from '@/lib/formatDate'
 import { fieldErrorId } from '@/lib/fieldErrorId'
@@ -105,6 +109,9 @@ import type {
 
 /** Sentinel of the "añadir asignatura" select: takes every one of them at once. */
 const ALL_COURSES = 'ALL'
+
+/** Campos planos del formulario: sin sombra y con el borde siempre visible. */
+const FIELD_CLASS = 'border-border shadow-none'
 
 type FormMode = 'create' | 'edit'
 
@@ -395,6 +402,11 @@ function PlanForm({
   const [showAllErrors, setShowAllErrors] = useState(false)
 
   const aspects = useMemo(() => indicators.aspects ?? [], [indicators])
+
+  // The department's own default wordings, offered inside each commitment.
+  // Never blocks the page: a department that has set none simply gets no
+  // suggestions, and every field is still written by hand as before.
+  const { actions: defaultActions } = useGetSuggestedActions()
 
   /** The period the caller came from, else the most recent evaluated one. */
   const periodId = useMemo(() => {
@@ -1128,6 +1140,7 @@ function PlanForm({
           <CommitmentsEditor
             items={items}
             aspects={aspects}
+            defaultActions={defaultActions}
             onChange={patchItem}
             onRemove={removeItem}
             invalidFields={invalidFields}
@@ -1142,6 +1155,7 @@ function PlanForm({
             <Textarea
               id="council-obs"
               rows={3}
+              className={FIELD_CLASS}
               value={councilObservations}
               onChange={(event) => setCouncilObservations(event.target.value)}
               placeholder="Se imprimen en el Formato 2, bajo los compromisos acordados"
@@ -1155,6 +1169,7 @@ function PlanForm({
               <Textarea
                 id="department-obs"
                 rows={2}
+                className={FIELD_CLASS}
                 value={departmentObservations}
                 onChange={(event) => setDepartmentObservations(event.target.value)}
               />
@@ -1165,6 +1180,7 @@ function PlanForm({
               <Textarea
                 id="program-obs"
                 rows={2}
+                className={FIELD_CLASS}
                 value={programObservations}
                 onChange={(event) => setProgramObservations(event.target.value)}
               />
@@ -1300,6 +1316,7 @@ function PlanForm({
           </Label>
           <Input
             id="title"
+            className={FIELD_CLASS}
             value={title}
             onChange={(event) => setTitleOverride(event.target.value)}
             onBlur={() => markTouched('title')}
@@ -1315,6 +1332,7 @@ function PlanForm({
           <Textarea
             id="plan-desc"
             rows={3}
+            className={FIELD_CLASS}
             value={description}
             onChange={(event) => setDescription(event.target.value)}
           />
@@ -1347,6 +1365,7 @@ function PlanForm({
             </Label>
             <Input
               id="department"
+              className={FIELD_CLASS}
               value={departmentName}
               onChange={(event) => setDepartmentOverride(event.target.value)}
               placeholder="Escríbelo"
@@ -1396,7 +1415,7 @@ function PlanForm({
               value={actaNumber}
               onChange={(event) => setActaNumber(event.target.value)}
               placeholder="Ej. 012"
-              className="num"
+              className={cn('num', FIELD_CLASS)}
               disabled={actaLocked}
               aria-invalid={invalidFields.has('acta-number')}
               aria-describedby={

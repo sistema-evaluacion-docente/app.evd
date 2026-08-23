@@ -57,6 +57,11 @@ const securityConfig: { pages: SecurityPage[] } = {
       roles: ['DIRECTOR DE DEPARTAMENTO'],
     },
     {
+      path: '/acciones',
+      name: 'Acciones sugeridas',
+      roles: ['DIRECTOR DE DEPARTAMENTO'],
+    },
+    {
       path: '/evaluaciones/:id/pdf',
       name: 'Documento de la evaluación',
       roles: ['DIRECTOR DE DEPARTAMENTO', 'DOCENTE'],

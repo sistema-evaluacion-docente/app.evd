@@ -48,6 +48,9 @@ const EvaluationUploadPage = lazy(() => import('@/features/evaluations/pages/Eva
 const LogsPage = lazy(() => import('@/features/admin/pages/LogsPage'))
 const SettingsPage = lazy(() => import('@/features/admin/pages/SettingsPage'))
 const UsersPage = lazy(() => import('@/features/users/pages/UsersPage'))
+const SuggestedActionsPage = lazy(
+  () => import('@/features/suggested-actions/pages/SuggestedActionsPage'),
+)
 const DirectorsPage = lazy(() =>
   import('@/features/directors/pages/DirectorsPage').then((module) => ({
     default: module.DirectorsPage,
@@ -184,6 +187,12 @@ function App() {
           <Route path="/planes/:id">
             <AppLayout>
               <PlanDetailPage />
+            </AppLayout>
+          </Route>
+
+          <Route path="/acciones">
+            <AppLayout>
+              <SuggestedActionsPage />
             </AppLayout>
           </Route>
 

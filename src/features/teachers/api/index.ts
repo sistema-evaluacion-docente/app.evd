@@ -146,8 +146,6 @@ async function updateComment(
   return api.patch(`/comments/${commentId}`, payload)
 }
 
-/** Raw PDF (not the JSON envelope) with a teacher's pages extracted from the
- *  department's evaluation report for one period. */
 async function getTeacherEvaluationReportBlob(
   teacherId: number,
   evaluationId: number,

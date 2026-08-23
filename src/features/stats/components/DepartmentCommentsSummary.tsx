@@ -1,4 +1,4 @@
-import { BarChart3, PieChart as PieChartIcon } from 'lucide-react'
+import { BarChart3, LayoutGrid, PieChart as PieChartIcon } from 'lucide-react'
 import { useState } from 'react'
 
 import { CountPieChart } from '@/components/common/CountPieChart'
@@ -19,7 +19,7 @@ const RISK_LEVELS = [
 /** Excludes "Sin categoría" — a non-classification, not useful for analysis. */
 const ANALYZABLE_CATEGORIES = CATEGORIES.filter((category) => category.code !== UNCATEGORIZED)
 
-type ViewMode = 'bar' | 'pie'
+type ViewMode = 'bar' | 'pie' | 'both'
 
 export interface DepartmentCommentsSummaryProps {
   riskCounts: { BAJO: number; MEDIO: number; ALTO: number } | undefined
@@ -34,11 +34,10 @@ export interface DepartmentCommentsSummaryProps {
 
 /**
  * Comment breakdown for the department's period-range report: risk level and
- * pedagogical category, either as the existing vertical bar charts
- * (`DepartmentCommentRiskChart`/`DepartmentCommentCategoriesChart`, unchanged)
- * or as donuts (`CountPieChart`) — one toggle switches both at once, same
- * pattern as the teacher's own comments summary
- * (`TeacherCommentsSummary`/`TeacherDimensionComparison`).
+ * pedagogical category, as the existing vertical bar charts
+ * (`DepartmentCommentRiskChart`/`DepartmentCommentCategoriesChart`, unchanged),
+ * as donuts (`CountPieChart`), or both stacked together — one toggle switches
+ * every column at once, e.g. to include both forms in a printed report.
  *
  * @example
  * <DepartmentCommentsSummary
@@ -111,6 +110,17 @@ export function DepartmentCommentsSummary({
             <PieChartIcon className="size-3.5" aria-hidden="true" />
             Dona
           </Button>
+
+          <Button
+            type="button"
+            variant={viewMode === 'both' ? 'default' : 'ghost'}
+            size="sm"
+            aria-pressed={viewMode === 'both'}
+            onClick={() => setViewMode('both')}
+          >
+            <LayoutGrid className="size-3.5" aria-hidden="true" />
+            Ambos
+          </Button>
         </div>
       </div>
 
@@ -120,12 +130,13 @@ export function DepartmentCommentsSummary({
             Por nivel de riesgo
           </h3>
 
-          {viewMode === 'bar' ? (
-            <DepartmentCommentRiskChart counts={riskCounts} />
-          ) : (
+          {viewMode !== 'pie' && <DepartmentCommentRiskChart counts={riskCounts} />}
+
+          {viewMode !== 'bar' && (
             <CountPieChart
               entries={riskEntries}
               emptyMessage="No hay comentarios clasificados por nivel de riesgo en este rango de periodos."
+              className={viewMode === 'both' ? 'border-border mt-4 border-t pt-4' : undefined}
             />
           )}
         </div>
@@ -135,12 +146,13 @@ export function DepartmentCommentsSummary({
             Por categoría pedagógica
           </h3>
 
-          {viewMode === 'bar' ? (
-            <DepartmentCommentCategoriesChart counts={categoryCounts} />
-          ) : (
+          {viewMode !== 'pie' && <DepartmentCommentCategoriesChart counts={categoryCounts} />}
+
+          {viewMode !== 'bar' && (
             <CountPieChart
               entries={categoryEntries}
               emptyMessage="No hay comentarios clasificados por categoría en este rango de periodos."
+              className={viewMode === 'both' ? 'border-border mt-4 border-t pt-4' : undefined}
             />
           )}
         </div>

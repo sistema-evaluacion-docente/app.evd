@@ -1,6 +1,13 @@
 import { ChevronUp, TrendingDown, TrendingUp } from 'lucide-react'
-import { useId, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 
+import { GenerateReportPdfButton } from '@/components/common/GenerateReportPdfButton'
+import { PdfChartImage } from '@/components/common/pdf/PdfChartImage'
+import { PdfCommentList } from '@/components/common/pdf/PdfCommentList'
+import { PdfFactGrid } from '@/components/common/pdf/PdfFactGrid'
+import { PdfPage } from '@/components/common/pdf/PdfPage'
+import { PdfSection } from '@/components/common/pdf/PdfSection'
+import { PdfTable } from '@/components/common/pdf/PdfTable'
 import { PeriodSelect, type PeriodSelectOption } from '@/components/common/PeriodSelect'
 import { ScoreBadge } from '@/components/common/ScoreBadge'
 import { ScoreLegend } from '@/components/common/ScoreLegend'
@@ -11,13 +18,18 @@ import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
 import { AI_STATUS_DISPLAY, type AiStatus } from '@/features/evaluations'
+import { CATEGORIES, categoryLabel, UNCATEGORIZED } from '@/lib/categoryLabel'
 import { dimensionColor } from '@/lib/dimensionLabel'
+import { formatPdfAverage } from '@/lib/pdf/formatPdfAverage'
+import { pdfColors, pdfDimensionColors, pdfRiskColor } from '@/lib/pdf/pdfColors'
 import { getScoreToneClass } from '@/lib/scoreTone'
 import { cn } from '@/lib/utils'
 import { useGetTeacherComments, useGetTeacherCourseHistory, useGetTeacherDetail } from '../api'
 import { CommentsPanel } from './CommentsPanel'
 import { CourseAverageTrend } from './CourseAverageTrend'
 import { CourseDimensionBreakdown } from './CourseDimensionBreakdown'
+
+const ANALYZABLE_CATEGORIES = CATEGORIES.filter((category) => category.code !== UNCATEGORIZED)
 
 export interface CourseTeacherDetailProps {
   teacherId: number
@@ -26,8 +38,9 @@ export interface CourseTeacherDetailProps {
   /** Academic period the course and its comparison are anchored to. */
   period: string
   /**
-   * Shows the teacher's name and avatar above the title — for a viewer who
-   * isn't the teacher themself (e.g. a director). Defaults to `false`.
+   * Shows the teacher's name and avatar above the title, and a "Descargar
+   * reporte" button — for a viewer who isn't the teacher themself (e.g. a
+   * director). Defaults to `false`.
    */
   showTeacherIdentity?: boolean
   className?: string
@@ -63,6 +76,7 @@ export function CourseTeacherDetail({
   className,
 }: CourseTeacherDetailProps) {
   const comparisonToggleId = useId()
+  const trendChartRef = useRef<HTMLElement>(null)
 
   const { data, isLoading } = useGetTeacherDetail({ teacherId, periodName: period })
   const teacher = data?.data
@@ -145,6 +159,201 @@ export function CourseTeacherDetail({
     code: item.period_code,
   }))
 
+  // Full comment text goes in the PDF report here — unlike the teacher's own
+  // (multi-course) report, this one is scoped to a single subject, so the
+  // volume stays small enough to include verbatim, not just counts.
+  const flatCourseComments = courseComments?.flatMap((item) => item.comments) ?? []
+  const commentRiskCounts = flatCourseComments.reduce(
+    (counts, comment) => {
+      const key = comment.risk_level?.name.toUpperCase()
+      if (key === 'BAJO' || key === 'MEDIO' || key === 'ALTO') counts[key] += 1
+      return counts
+    },
+    { BAJO: 0, MEDIO: 0, ALTO: 0 },
+  )
+  const commentCategoryCounts = flatCourseComments.reduce<Record<string, number>>(
+    (counts, comment) => {
+      for (const category of comment.pedagogical_categories) {
+        counts[category.name] = (counts[category.name] ?? 0) + 1
+      }
+      return counts
+    },
+    {},
+  )
+
+  const reportFileName = `Reporte-Materia-${course.course_name.replace(/\s+/g, '-')}-${period}`
+
+  const pdfReportButton = teacher && (
+    <GenerateReportPdfButton
+      label="Descargar reporte de la materia"
+      fileName={reportFileName}
+      className="hover:border-primary hover:bg-primary hover:text-primary-foreground"
+      chartRefs={{ trend: trendChartRef }}
+      buildDocument={(images) => (
+        <PdfPage title="Reporte de la materia" subtitle={`${teacher.name} · Periodo: ${period}`}>
+          <PdfFactGrid
+            facts={[
+              { label: 'Materia', value: course.course_name },
+              { label: 'Código', value: course.course_code },
+              { label: 'Grupo', value: course.group_name },
+            ]}
+            columns={3}
+          />
+
+          <PdfFactGrid
+            facts={[
+              { label: 'Docente', value: teacher.name },
+              { label: 'Periodo', value: period },
+              {
+                label: selectedComparison
+                  ? `Promedio actual (${period})`
+                  : 'Promedio en esta asignatura',
+                value: formatPdfAverage(course.overall_average),
+              },
+              ...(selectedComparison
+                ? [
+                    {
+                      label: `Promedio comparación (${selectedComparison.period_name})`,
+                      value: formatPdfAverage(selectedComparison.overall_average),
+                    },
+                  ]
+                : []),
+            ]}
+            columns={selectedComparison ? 4 : 3}
+          />
+
+          {(showBestMover || showWorstMover) && (
+            <PdfFactGrid
+              facts={[
+                ...(showBestMover && bestMover
+                  ? [
+                      {
+                        label: 'Mayor mejora',
+                        value: `${bestMover.dimension} (+${bestMover.delta.toFixed(2)})`,
+                        color: pdfColors.riskLow,
+                      },
+                    ]
+                  : []),
+                ...(showWorstMover && worstMover
+                  ? [
+                      {
+                        label: 'Requiere atención',
+                        value: `${worstMover.dimension} (${worstMover.delta.toFixed(2)})`,
+                        color: pdfColors.riskHigh,
+                      },
+                    ]
+                  : []),
+              ]}
+              columns={2}
+            />
+          )}
+
+          <PdfSection title="Promedio por dimensión">
+            <PdfFactGrid
+              facts={dimensionRanking.map((dimension) => ({
+                label: dimension.dimension,
+                value: formatPdfAverage(dimension.average),
+                color: pdfDimensionColors[dimension.dimension],
+              }))}
+              columns={dimensionRanking.length || 1}
+            />
+          </PdfSection>
+
+          {course.dimensions.map((dimension) => {
+            const previousDimension = selectedComparison?.dimensions.find(
+              (item) => item.dimension === dimension.dimension,
+            )
+
+            return (
+              <PdfSection
+                key={dimension.dimension}
+                title={`${dimension.dimension} — Promedio ${formatPdfAverage(dimension.average)}`}
+                noBreak={false}
+              >
+                <PdfTable
+                  columns={
+                    previousDimension
+                      ? [
+                          { header: 'Pregunta', width: '50%' },
+                          { header: `Actual (${period})`, width: '25%', align: 'center' },
+                          {
+                            header: `Comparación (${selectedComparison?.period_name})`,
+                            width: '25%',
+                            align: 'center',
+                          },
+                        ]
+                      : [
+                          { header: 'Pregunta', width: '78%' },
+                          { header: 'Promedio', width: '22%', align: 'center' },
+                        ]
+                  }
+                  rows={dimension.questions.map((question) => {
+                    const previousQuestion = previousDimension?.questions.find(
+                      (item) => item.code === question.code,
+                    )
+                    const row = [
+                      `${question.code}. ${question.text}`,
+                      formatPdfAverage(question.score),
+                    ]
+                    if (previousDimension) row.push(formatPdfAverage(previousQuestion?.score))
+                    return row
+                  })}
+                />
+              </PdfSection>
+            )
+          })}
+
+          <PdfSection title="Comentarios de los estudiantes" noBreak={false}>
+            <PdfFactGrid
+              facts={[
+                {
+                  label: 'Riesgo bajo',
+                  value: String(commentRiskCounts.BAJO),
+                  color: pdfColors.riskLow,
+                },
+                {
+                  label: 'Riesgo medio',
+                  value: String(commentRiskCounts.MEDIO),
+                  color: pdfColors.riskMedium,
+                },
+                {
+                  label: 'Riesgo alto',
+                  value: String(commentRiskCounts.ALTO),
+                  color: pdfColors.riskHigh,
+                },
+              ]}
+              columns={3}
+            />
+
+            <PdfFactGrid
+              facts={ANALYZABLE_CATEGORIES.map((category) => ({
+                label: categoryLabel(category.code),
+                value: String(commentCategoryCounts[category.code] ?? 0),
+              }))}
+              columns={4}
+            />
+
+            <PdfCommentList
+              comments={flatCourseComments.map((comment) => ({
+                text: comment.original_text,
+                riskLabel: comment.risk_level?.name,
+                riskColor: pdfRiskColor(comment.risk_level?.name),
+                categoryLabels: comment.pedagogical_categories.map((category) =>
+                  categoryLabel(category.name),
+                ),
+              }))}
+              emptyMessage="Todavía no hay comentarios registrados para esta materia."
+            />
+          </PdfSection>
+
+          <PdfSection title={`Evolución de esta asignatura: ${course.course_name}`}>
+            <PdfChartImage src={images.trend} />
+          </PdfSection>
+        </PdfPage>
+      )}
+    />
+  )
+
   return (
     <div className={cn('space-y-6', className)}>
       <div
@@ -181,6 +390,10 @@ export function CourseTeacherDetail({
               <p className="text-muted-foreground text-xs">{teacher.institutional_code}</p>
             </div>
           </TransitionLink>
+        )}
+
+        {showTeacherIdentity && pdfReportButton && (
+          <div className="shrink-0">{pdfReportButton}</div>
         )}
       </div>
 
@@ -355,7 +568,7 @@ export function CourseTeacherDetail({
         emptyMessage="Todavía no hay comentarios registrados para esta materia."
       />
 
-      <section className="border-border bg-background rounded-md border">
+      <section ref={trendChartRef} className="border-border bg-background rounded-md border">
         <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
           Evolución de esta asignatura: {course.course_name}
         </h2>

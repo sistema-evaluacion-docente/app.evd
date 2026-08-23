@@ -22,7 +22,7 @@ export interface CategoryMeta {
 const CATEGORY_META: Record<string, CategoryMeta> = {
   LABEL_0: {
     id: 1,
-    code: 'DESARROLLO DEL CONOCIMIENTO',
+    code: 'LABEL_0',
     label: 'Desarrollo del conocimiento',
     short: 'Conocimiento',
     description:
@@ -31,7 +31,7 @@ const CATEGORY_META: Record<string, CategoryMeta> = {
   },
   LABEL_1: {
     id: 2,
-    code: 'DESEMPEÑO DOCENTE',
+    code: 'LABEL_1',
     label: 'Desempeño docente',
     short: 'Desempeño',
     description:
@@ -40,7 +40,7 @@ const CATEGORY_META: Record<string, CategoryMeta> = {
   },
   LABEL_2: {
     id: 3,
-    code: 'PROCESOS DE EVALUACIÓN',
+    code: 'LABEL_2',
     label: 'Procesos de evaluación',
     short: 'Evaluación',
     description:
@@ -49,7 +49,7 @@ const CATEGORY_META: Record<string, CategoryMeta> = {
   },
   LABEL_3: {
     id: 4,
-    code: 'INTEGRACIÓN INTERPERSONAL',
+    code: 'LABEL_3',
     label: 'Integración interpersonal',
     short: 'Relaciones',
     description:
@@ -58,7 +58,7 @@ const CATEGORY_META: Record<string, CategoryMeta> = {
   },
   LABEL_4: {
     id: 5,
-    code: 'SIN CATEGORIA',
+    code: 'LABEL_4',
     label: 'Sin categoría',
     short: 'Sin categoría',
     description:

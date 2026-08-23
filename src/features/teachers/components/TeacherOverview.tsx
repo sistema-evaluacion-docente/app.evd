@@ -1,4 +1,5 @@
 import { CalendarRange, FileText, TrendingDown, TrendingUp } from 'lucide-react'
+import type { ReactNode } from 'react'
 
 import { ScoreBadge } from '@/components/common/ScoreBadge'
 import { ScoreLegend } from '@/components/common/ScoreLegend'
@@ -14,6 +15,8 @@ import type { TeacherDetail } from '../types'
 
 interface TeacherOverviewProps {
   teacher: TeacherDetail
+  /** Extra action(s) rendered next to "Descargar evaluación", e.g. the director's custom PDF report button. */
+  extraActions?: ReactNode
 }
 
 /**
@@ -26,7 +29,7 @@ interface TeacherOverviewProps {
  * @example
  * <TeacherOverview teacher={teacher} />
  */
-export function TeacherOverview({ teacher }: TeacherOverviewProps) {
+export function TeacherOverview({ teacher, extraActions }: TeacherOverviewProps) {
   const dimensionDeltas = teacher.previous_period
     ? teacher.dimensions
         .map((dimension) => {
@@ -74,14 +77,7 @@ export function TeacherOverview({ teacher }: TeacherOverviewProps) {
           </p>
 
           <div className="flex items-center gap-4">
-            {teacher.group_count > 0 && (
-              <p className="text-brand-700/70 dark:text-brand-300/70 text-xs tracking-wide uppercase">
-                <span className="num text-brand-700 dark:text-brand-200 font-bold">
-                  {teacher.group_count}
-                </span>{' '}
-                {teacher.group_count === 1 ? 'grupo evaluado' : 'grupos evaluados'}
-              </p>
-            )}
+            {extraActions}
 
             <Button
               variant="outline"

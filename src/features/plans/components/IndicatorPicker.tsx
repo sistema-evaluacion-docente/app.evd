@@ -1,6 +1,7 @@
 import { memo } from 'react'
 import { AlertTriangle, Check, ChevronRight, CircleCheck, HelpCircle, Plus, X } from 'lucide-react'
 
+import { DimensionDot } from '@/components/common/DimensionDot'
 import { ScoreBadge } from '@/components/common/ScoreBadge'
 import {
   SelectLoadingLabel,
@@ -262,6 +263,7 @@ export const IndicatorPicker = memo(function IndicatorPicker({
                   className="text-muted-foreground size-4 shrink-0 transition-transform group-data-panel-open:rotate-90"
                   aria-hidden="true"
                 />
+                <DimensionDot />
                 <span className="text-sm font-medium">Sin categoría</span>
                 <span className="text-muted-foreground num text-xs">
                   {uncategorized.length} comentario{uncategorized.length === 1 ? '' : 's'}
@@ -356,6 +358,7 @@ function DimensionBlock({
             className="text-muted-foreground size-4 shrink-0 transition-transform group-data-panel-open:rotate-90"
             aria-hidden="true"
           />
+          <DimensionDot dimension={dimension.dimension} />
           <span className="text-sm font-medium">{dimension.dimension}</span>
           {dimension.below_threshold && (
             <Badge className="bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300">
@@ -453,15 +456,19 @@ function CommentRow({
 }) {
   return (
     <li className="flex items-start justify-between gap-3 px-4 py-1 pl-10">
+      {/* Clicking the quote opens `CommentDetailDrawer`, same as in
+          /comentarios: the text is clamped to three lines here, and a director
+          deciding whether a comment justifies a commitment has to be able to
+          read the whole thing. It doesn't compete with «Agregar», which sits
+          outside the card — and the card's own handler ignores clicks that
+          land on a button anyway. */}
       <CommentCard
         comment={comment}
-        variant="compact"
         showGutter={false}
         showCourse={showCourse}
         showScores={false}
-        showDetail={false}
         clampLines={3}
-        className="min-w-0 flex-1 hover:bg-transparent"
+        className="min-w-0 flex-1"
       />
 
       <div className="mt-3 shrink-0">

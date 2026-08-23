@@ -1,11 +1,10 @@
 import { memo, useMemo } from 'react'
-import { ChevronRight, Lightbulb, Trash2 } from 'lucide-react'
-
+import { Trash2 } from 'lucide-react'
 import { FieldError } from '@/components/common/FieldError'
+import { DimensionDot } from '@/components/common/DimensionDot'
 import { Required } from '@/components/common/Required'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -17,8 +16,10 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { fieldErrorId } from '@/lib/fieldErrorId'
+import type { SuggestedAction } from '@/features/suggested-actions/types'
 import { commitmentFieldId, isMeasurable, itemsInPaintedOrder } from '../lib/planValidation'
 import type { DraftItem, PlanAspect } from '../types'
+import { CommitmentSuggestions } from './CommitmentSuggestions'
 
 /**
  * Shared empty list for the rows that don't show the aspect picker.
@@ -31,6 +32,11 @@ const NO_ASPECTS: PlanAspect[] = []
 interface CommitmentsEditorProps {
   items: DraftItem[]
   aspects: PlanAspect[]
+  /**
+   * The department's default improvement actions (`/acciones`). Offered on the
+   * commitments whose aspect they were written for.
+   */
+  defaultActions?: SuggestedAction[]
   onChange: (key: string, patch: Partial<DraftItem>) => void
   onRemove: (key: string) => void
   /**
@@ -61,6 +67,7 @@ interface CommitmentsEditorProps {
 export function CommitmentsEditor({
   items,
   aspects,
+  defaultActions = [],
   onChange,
   onRemove,
   invalidFields,
@@ -78,14 +85,33 @@ export function CommitmentsEditor({
     [items, aspects],
   )
 
+  const actionsByAspect = useMemo(() => {
+    const grouped = new Map<number, SuggestedAction[]>()
+
+    for (const action of defaultActions) {
+      const bucket = grouped.get(action.aspect)
+
+      if (bucket) bucket.push(action)
+      else grouped.set(action.aspect, [action])
+    }
+
+    return grouped
+  }, [defaultActions])
+
+  const actionsFor = (item: DraftItem) =>
+    item.aspect == null ? [] : (actionsByAspect.get(item.aspect) ?? [])
+
   return (
     <div className="space-y-4">
       {filled.map((aspect) => (
         <section key={aspect.aspect} className="border-border rounded-md border">
           <header className="bg-muted/40 border-b px-4 py-2.5">
-            <h3 className="text-sm font-semibold">
-              <span className="text-muted-foreground num mr-1.5">{aspect.aspect}.</span>
-              {aspect.label}
+            <h3 className="flex items-center gap-2 text-sm font-semibold">
+              <DimensionDot dimension={aspect.dimension} />
+              <span>
+                <span className="text-muted-foreground num mr-1.5">{aspect.aspect}.</span>
+                {aspect.label}
+              </span>
             </h3>
           </header>
 
@@ -105,6 +131,7 @@ export function CommitmentsEditor({
                   aspectError={invalidFields.get(commitmentFieldId.aspect(item.key))}
                   onFieldBlur={onFieldBlur}
                   disabled={disabled}
+                  departmentActions={actionsFor(item)}
                 />
               ))}
           </ul>
@@ -114,7 +141,10 @@ export function CommitmentsEditor({
       {orphans.length > 0 && (
         <section className="border-border rounded-md border border-dashed">
           <header className="bg-muted/40 border-b px-4 py-2.5">
-            <h3 className="text-sm font-semibold">Sin aspecto asignado</h3>
+            <h3 className="flex items-center gap-2 text-sm font-semibold">
+              <DimensionDot />
+              Sin aspecto asignado
+            </h3>
             <p className="text-muted-foreground text-xs">
               Estos compromisos no se imprimirán en los formatos hasta que elijas un aspecto.
             </p>
@@ -134,6 +164,7 @@ export function CommitmentsEditor({
                 aspectError={invalidFields.get(commitmentFieldId.aspect(item.key))}
                 onFieldBlur={onFieldBlur}
                 disabled={disabled}
+                departmentActions={actionsFor(item)}
                 showAspectPicker
                 aspects={aspects}
               />
@@ -163,6 +194,7 @@ const CommitmentRow = memo(function CommitmentRow({
   aspectError,
   onFieldBlur,
   disabled,
+  departmentActions,
   showAspectPicker = false,
   aspects = NO_ASPECTS,
 }: {
@@ -178,6 +210,7 @@ const CommitmentRow = memo(function CommitmentRow({
   aspectError?: string
   onFieldBlur: (id: string) => void
   disabled: boolean
+  departmentActions: SuggestedAction[]
   showAspectPicker?: boolean
   aspects?: PlanAspect[]
 }) {
@@ -334,37 +367,11 @@ const CommitmentRow = memo(function CommitmentRow({
         )}
       </div>
 
-      {item.suggestions.length > 0 && (
-        <Collapsible className="text-muted-foreground text-xs">
-          <CollapsibleTrigger className="group flex cursor-pointer items-center gap-1.5">
-            <ChevronRight
-              aria-hidden="true"
-              className="size-3.5 shrink-0 transition-transform group-data-panel-open:rotate-90"
-            />
-            <Lightbulb className="size-3.5" aria-hidden="true" />
-            Acciones sugeridas ({item.suggestions.length})
-          </CollapsibleTrigger>
-
-          <CollapsibleContent>
-            <ul className="mt-1.5 space-y-1 pl-5">
-              {item.suggestions.map((suggestion) => (
-                <li key={suggestion} className="list-disc">
-                  <Button
-                    type="button"
-                    variant="link"
-                    size="sm"
-                    disabled={disabled}
-                    className="h-auto justify-start px-0 py-0 text-left text-xs font-normal whitespace-normal"
-                    onClick={() => onChange(item.key, { commitment: suggestion })}
-                  >
-                    {suggestion}
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          </CollapsibleContent>
-        </Collapsible>
-      )}
+      <CommitmentSuggestions
+        departmentActions={departmentActions}
+        onPick={(commitment) => onChange(item.key, { commitment })}
+        disabled={disabled}
+      />
 
       {item.comment_previews.length > 0 && (
         <div className="border-border space-y-1 border-l-2 pl-3">

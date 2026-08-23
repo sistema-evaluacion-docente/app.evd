@@ -1,5 +1,5 @@
 import { BarChart3, ChevronRight, List } from 'lucide-react'
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 
 import { DimensionComparisonChart } from '@/components/common/DimensionComparisonChart'
 import { ScoreProgress } from '@/components/common/ScoreProgress'
@@ -9,9 +9,22 @@ import type { TeacherComparisonDimension, TeacherComparisonEntry } from '@/featu
 import { dimensionColor } from '@/lib/dimensionLabel'
 import { comparisonEntryKey } from '../config'
 
+type DimensionViewMode = 'list' | 'chart'
+
 export interface TeacherDimensionComparisonProps {
   entries: TeacherComparisonEntry[]
   colorByKey: Map<string, string>
+  /**
+   * Controls the list/chart toggle from outside — e.g. a PDF report
+   * temporarily forcing `'chart'` so the real, visible chart can be
+   * screenshotted (a chart rendered off-screen just to capture it measures
+   * and paints unreliably; the one already on screen doesn't). Uncontrolled
+   * (owns its own state) when omitted.
+   */
+  viewMode?: DimensionViewMode
+  onViewModeChange?: (mode: DimensionViewMode) => void
+  /** Called with each dimension's bar-chart DOM node while `viewMode === 'chart'` (and `null` once it unmounts) — e.g. to snapshot it for a PDF report. */
+  onDimensionChartRef?: (dimensionName: string, node: HTMLElement | null) => void
   className?: string
 }
 
@@ -19,8 +32,6 @@ interface DimensionRow {
   entry: TeacherComparisonEntry
   dimension: TeacherComparisonDimension | undefined
 }
-
-type DimensionViewMode = 'list' | 'chart'
 
 /**
  * One card per pedagogical dimension, each listing every teacher in the
@@ -39,9 +50,18 @@ type DimensionViewMode = 'list' | 'chart'
 export function TeacherDimensionComparison({
   entries,
   colorByKey,
+  viewMode: controlledViewMode,
+  onViewModeChange,
+  onDimensionChartRef,
   className,
 }: TeacherDimensionComparisonProps) {
-  const [viewMode, setViewMode] = useState<DimensionViewMode>('list')
+  const [internalViewMode, setInternalViewMode] = useState<DimensionViewMode>('list')
+  const viewMode = controlledViewMode ?? internalViewMode
+
+  function setViewMode(mode: DimensionViewMode) {
+    onViewModeChange?.(mode)
+    if (controlledViewMode === undefined) setInternalViewMode(mode)
+  }
 
   const orderedEntries = [...entries].sort(
     (a, b) => a.teacher_id - b.teacher_id || a.group_name.localeCompare(b.group_name),
@@ -103,6 +123,7 @@ export function TeacherDimensionComparison({
             entries={orderedEntries}
             colorByKey={colorByKey}
             viewMode={viewMode}
+            onChartRef={onDimensionChartRef}
           />
         ))}
       </div>
@@ -130,15 +151,41 @@ function DimensionCard({
   entries,
   colorByKey,
   viewMode,
+  onChartRef,
 }: {
   dimensionName: string
   entries: TeacherComparisonEntry[]
   colorByKey: Map<string, string>
   viewMode: DimensionViewMode
+  onChartRef?: (dimensionName: string, node: HTMLElement | null) => void
 }) {
   const rows: DimensionRow[] = entries.map((entry) => ({
     entry,
     dimension: entry.dimensions.find((dimension) => dimension.dimension === dimensionName),
+  }))
+
+  // Stable across renders — an inline arrow function here would make React
+  // treat the `ref` prop as changed on every render and detach/reattach it
+  // every time, re-triggering `onChartRef` needlessly.
+  const handleChartRef = useCallback(
+    (node: HTMLElement | null) => onChartRef?.(dimensionName, node),
+    [dimensionName, onChartRef],
+  )
+
+  const chartSeries = [
+    {
+      id: 'average',
+      label: 'Promedio',
+      scores: rows.map(({ entry, dimension }) => ({
+        dimension: comparisonEntryKey(entry),
+        value: dimension?.average ?? undefined,
+      })),
+    },
+  ]
+  const chartDimensions = rows.map(({ entry }) => ({
+    key: comparisonEntryKey(entry),
+    label: shortTeacherName(entry.teacher_name),
+    color: colorByKey.get(comparisonEntryKey(entry)),
   }))
 
   const scoredRows = rows.filter(
@@ -181,23 +228,10 @@ function DimensionCard({
       )}
 
       {viewMode === 'chart' ? (
-        <div className="px-5 py-4">
+        <div ref={handleChartRef} className="animate-fade-in px-5 py-4">
           <DimensionComparisonChart
-            series={[
-              {
-                id: 'average',
-                label: 'Promedio',
-                scores: rows.map(({ entry, dimension }) => ({
-                  dimension: comparisonEntryKey(entry),
-                  value: dimension?.average ?? undefined,
-                })),
-              },
-            ]}
-            dimensions={rows.map(({ entry }) => ({
-              key: comparisonEntryKey(entry),
-              label: shortTeacherName(entry.teacher_name),
-              color: colorByKey.get(comparisonEntryKey(entry)),
-            }))}
+            series={chartSeries}
+            dimensions={chartDimensions}
             orientation="vertical"
             colorByDimension
             showLegend={false}
@@ -208,7 +242,7 @@ function DimensionCard({
           />
         </div>
       ) : (
-        <div className="space-y-3 px-5 py-4">
+        <div className="animate-fade-in space-y-3 px-5 py-4">
           {rows.map(({ entry, dimension }) => (
             <div key={comparisonEntryKey(entry)}>
               <div className="mb-1 flex items-center justify-between gap-2 text-xs">

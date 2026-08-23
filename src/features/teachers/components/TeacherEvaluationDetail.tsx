@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { ReactNode, RefObject } from 'react'
 
 import { DimensionComparisonChart } from '@/components/common/DimensionComparisonChart'
 import { PeriodAverageTrend } from '@/features/periods'
@@ -17,6 +17,12 @@ export interface TeacherEvaluationDetailProps {
   hideComments?: boolean
   /** Forwarded to `TeacherCourseResults` — see its own docs. */
   getCourseHref?: (course: CourseDetail) => string
+  /** Attaches to the "Perfil por dimensiones" card — e.g. to snapshot it for a PDF report. */
+  dimensionsChartRef?: RefObject<HTMLElement | null>
+  /** Attaches to the "Evolución del promedio por periodo" card — e.g. to snapshot it for a PDF report. */
+  trendChartRef?: RefObject<HTMLElement | null>
+  /** Extra action(s) next to "Descargar evaluación" in the overview header — see `TeacherOverview`. */
+  overviewActions?: ReactNode
   className?: string
 }
 
@@ -38,13 +44,16 @@ export function TeacherEvaluationDetail({
   commentsTitle = 'Comentarios de los estudiantes',
   hideComments = false,
   getCourseHref,
+  dimensionsChartRef,
+  trendChartRef,
+  overviewActions,
   className,
 }: TeacherEvaluationDetailProps) {
   return (
     <div className={cn('space-y-6', className)}>
-      <TeacherOverview teacher={teacher} />
+      <TeacherOverview teacher={teacher} extraActions={overviewActions} />
 
-      <section className="border-border bg-background rounded-md border">
+      <section ref={dimensionsChartRef} className="border-border bg-background rounded-md border">
         <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
           Perfil por dimensiones
         </h2>
@@ -81,7 +90,7 @@ export function TeacherEvaluationDetail({
         />
       )}
 
-      <section className="border-border bg-background rounded-md border">
+      <section ref={trendChartRef} className="border-border bg-background rounded-md border">
         <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
           Evolución del promedio por periodo
         </h2>
