@@ -72,15 +72,20 @@ export default function TeacherMateriasPage() {
         <div className="space-y-6">
           <PageTitle className="flex w-full flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <p>Mis materias</p>
+            <div className="flex items-center gap-3">
+              <h2 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                Periodo
+              </h2>
 
-            <PeriodSelect
-              className="font-normal"
-              options={periodOptions}
-              value={selectedOption?.id}
-              onValueChange={setPeriodId}
-              searchParam="period"
-              ariaLabel="Periodo"
-            />
+              <PeriodSelect
+                className="font-normal"
+                options={periodOptions}
+                value={selectedOption?.id}
+                onValueChange={setPeriodId}
+                searchParam="period"
+                ariaLabel="Periodo"
+              />
+            </div>
           </PageTitle>
 
           {isLoading ? (
