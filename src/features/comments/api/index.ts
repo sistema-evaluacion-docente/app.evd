@@ -32,10 +32,15 @@ async function getComments(params: CommentListParams): Promise<ResponseAPI<Teach
   return api.get('/comments/', { params: query })
 }
 
+async function getComment(commentId: number): Promise<ResponseAPI<TeacherComment>> {
+  return api.get(`/comments/${commentId}`)
+}
+
 /** Query-key factory so list invalidations stay consistent. */
 export const commentsKeys = {
   all: ['comments'] as const,
   lists: () => [...commentsKeys.all, 'list'] as const,
+  detail: (commentId: number) => [...commentsKeys.all, 'detail', commentId] as const,
 }
 
 /**
@@ -97,5 +102,23 @@ export function useGetComments({
     staleTime: 60_000,
     placeholderData: keepPreviousData,
     enabled,
+  })
+}
+
+/**
+ * Fetches one comment by id (`GET /comments/{comment_id}`) — for showing the
+ * comment a link points at directly, without depending on it falling inside
+ * the page of results the current filters happen to return. Disabled while
+ * `commentId` is undefined.
+ *
+ * @example
+ * const { data } = useGetComment(commentIdFromTheUrlHash)
+ */
+export function useGetComment(commentId?: number) {
+  return useQuery({
+    queryKey: commentsKeys.detail(commentId ?? 0),
+    queryFn: () => getComment(commentId as number),
+    staleTime: 60_000,
+    enabled: commentId !== undefined,
   })
 }
