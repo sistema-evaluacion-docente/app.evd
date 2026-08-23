@@ -1,4 +1,5 @@
 import type { TeacherComment, TeacherCommentsCourse } from '@/features/teachers/types'
+import { isRiskyLevel } from '@/lib/riskLevel'
 import { courseKey } from './indicatorMatrix'
 
 /**
@@ -19,12 +20,7 @@ export const STUDENT_COMMENTS_ASPECT = 5
 
 /** Medium and high risk: what the module treats as worth acting on. */
 export function isRiskyComment(comment: TeacherComment): boolean {
-  const name = comment.risk_level?.name?.toUpperCase()
-
-  if (name) return name === 'MEDIO' || name === 'ALTO'
-
-  // Ids of `RISK_LEVELS`: 1 Bajo, 2 Medio, 3 Alto.
-  return (comment.risk_level?.id ?? 0) >= 2
+  return isRiskyLevel(comment.risk_level)
 }
 
 export interface GroupedComments {
