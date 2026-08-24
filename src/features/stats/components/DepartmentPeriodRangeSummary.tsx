@@ -14,9 +14,11 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { Switch } from '@/components/ui/switch'
 import { useGetAcademicPeriods } from '@/features/periods'
+import { useNavigate } from '@/hooks/useNavigate'
 import { CATEGORIES, categoryLabel, UNCATEGORIZED } from '@/lib/categoryLabel'
 import { formatPdfAverage } from '@/lib/pdf/formatPdfAverage'
 import { pdfColors } from '@/lib/pdf/pdfColors'
+import type { RiskLevelMeta } from '@/lib/riskLevel'
 import { cn } from '@/lib/utils'
 import { useGetDepartmentPeriodRangeStats } from '../api'
 import { DepartmentCommentPeriodBreakdown } from './DepartmentCommentPeriodBreakdown'
@@ -57,6 +59,7 @@ export function DepartmentPeriodRangeSummary({
   className,
 }: DepartmentPeriodRangeSummaryProps) {
   const compareRangeId = useId()
+  const navigate = useNavigate()
   const { data: periodsData, isPending: isPeriodsPending } = useGetAcademicPeriods()
   const periods = periodsData?.data ?? []
   const sortedPeriods = [...periods].sort((a, b) => a.code.localeCompare(b.code))
@@ -208,6 +211,19 @@ export function DepartmentPeriodRangeSummary({
       : (endPeriod?.name ?? '')
 
   const showTrendChart = compareRange && startPeriod !== endPeriod
+
+  /**
+   * Comments of one risk level, in the period the charts are showing — the
+   * range's last one while comparing, since that's the period the risk
+   * breakdown itself is drawn from.
+   */
+  const commentsHrefForRisk = (level: RiskLevelMeta) => {
+    const params = new URLSearchParams({ riskLevel: String(level.id) })
+
+    if (endPeriod?.name) params.set('period', endPeriod.name)
+
+    return `/comentarios?${params.toString()}`
+  }
 
   const departmentName = data?.data?.department_name
   const reportTitle = departmentName
