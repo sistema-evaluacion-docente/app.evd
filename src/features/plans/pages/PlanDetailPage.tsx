@@ -38,14 +38,6 @@ export default function PlanDetailPage() {
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   const planId = params?.id && !isNaN(Number(params.id)) ? Number(params.id) : undefined
-
-  // Improvement plans belong to the department director, start to finish: they
-  // agree them, sign them, follow them up and close them.
-  //
-  // Read off `selectedRole` and not off every role the account holds: that is
-  // the one `AppLayout` gates the routes with, so a director who switched to
-  // "Docente" would otherwise still be offered controls the rest of the app has
-  // already decided they are not using right now.
   const canManage = useAuthStore((state) => state.selectedRole) === ROLE.DEPARTMENT_DIRECTOR
 
   const { data, isPending } = useGetPlan(planId)
@@ -58,16 +50,11 @@ export default function PlanDetailPage() {
   const plan = data?.data
   const aspects = indicatorsResponse?.data?.aspects ?? []
 
-  // The plan only talks about what was actually agreed: an aspect nobody
-  // committed to is left out instead of printing an empty placeholder.
   const committedAspects = aspects.filter((aspect) =>
     plan?.items.some((item) => item.aspect === aspect.aspect),
   )
   const unassignedItems = plan?.items.filter((item) => item.aspect == null) ?? []
 
-  // Signing the Ficha de acuerdo settles what was agreed: from there the plan
-  // is in force and its content stops being editable, so the way back is to
-  // take the signed scan off in "Formatos oficiales".
   const signedActa = plan ? hasSignedActa(plan) : false
   const closed = plan ? isPlanClosed(plan.status) : false
   const canEdit = Boolean(canManage && plan && !closed && !signedActa)
@@ -115,8 +102,6 @@ export default function PlanDetailPage() {
             <div className="min-w-48">
               <div className="mb-1 flex items-baseline justify-between gap-3">
                 <p className="text-muted-foreground text-xs tracking-wide uppercase">Avance</p>
-                {/* Said out loud, not only on hover: a bar that reads empty all
-                    semester tells the director nothing about where the plan is. */}
                 <p className="num text-sm font-semibold">{planProgress(plan)}%</p>
               </div>
               <ScoreProgress
@@ -141,9 +126,6 @@ export default function PlanDetailPage() {
                 </Button>
               )}
 
-              {/* Undoing the agreement belongs to the director who made it, so
-                  it stays offered even once the acta is signed and the plan can
-                  no longer be edited — the confirmation is what guards it. */}
               {canManage && (
                 <Button
                   size="sm"
@@ -170,7 +152,7 @@ export default function PlanDetailPage() {
         <header className="bg-muted/50 border-b px-6 py-4">
           <h2 className="font-semibold">Compromisos</h2>
           <p className="text-muted-foreground text-sm">
-            {commitmentsSummary(plan.items.length, committedAspects.length, aspects.length)}
+            {commitmentsSummary(plan.items.length)}
           </p>
         </header>
 
@@ -225,6 +207,9 @@ export default function PlanDetailPage() {
                 {course.course_code && (
                   <span className="text-muted-foreground num">{course.course_code}</span>
                 )}
+                {course.program_name && (
+                  <span className="text-muted-foreground">{course.program_name}</span>
+                )}
                 {course.group_name && (
                   <span className="text-muted-foreground">Grupo {course.group_name}</span>
                 )}
@@ -277,16 +262,10 @@ export default function PlanDetailPage() {
  * and is left out while the catalogue is on its way: "0 de 0" says nothing.
  *
  * @example
- * commitmentsSummary(2, 1, 5) // → '2 compromisos · 1 de 5 aspectos del formato.'
+ * commitmentsSummary(2) // → '2 compromisos'
  */
-function commitmentsSummary(total: number, committed: number, aspects: number): string {
-  if (total === 0) return 'Agrupados por los cinco aspectos de los formatos oficiales.'
-
-  const commitments = `${total} ${total === 1 ? 'compromiso' : 'compromisos'}`
-
-  if (aspects === 0) return `${commitments}.`
-
-  return `${commitments} · ${committed} de ${aspects} aspectos del formato.`
+function commitmentsSummary(total: number): string {
+  return `${total} ${total === 1 ? 'compromiso' : 'compromisos'} `
 }
 
 function CommitmentCard({ item }: { item: PlanItem }) {

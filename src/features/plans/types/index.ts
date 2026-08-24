@@ -306,7 +306,7 @@ export interface CreatePlanInput {
   verification_period_id?: number | null
   title: string
   description?: string
-  program_name?: string
+
   faculty_name?: string
   department_name?: string
   start_date?: string
@@ -325,7 +325,6 @@ export interface UpdatePlanInput {
   title?: string
   description?: string
   verification_period_id?: number | null
-  program_name?: string
   faculty_name?: string
   department_name?: string
   start_date?: string
@@ -438,6 +437,7 @@ export interface TeacherCourseOption {
   course_name: string | null
   course_code: string | null
   group_name: string | null
+  program_name: string | null
 }
 
 export interface TeacherHistoryPeriod {
@@ -512,6 +512,7 @@ export interface PlanSubjectOption {
   course_code: string | null
   group_name: string | null
   academic_group_id: number | null
+  program_name: string | null
 }
 
 /** A commitment being drafted before the plan is saved. */

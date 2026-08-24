@@ -13,7 +13,6 @@ import {
   X,
 } from 'lucide-react'
 
-import { Combobox } from '@/components/common/Combobox'
 import { DatePicker } from '@/components/common/DatePicker'
 import { FieldError } from '@/components/common/FieldError'
 import { InlineError } from '@/components/common/InlineError'
@@ -49,7 +48,6 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
-import { useAuthStore } from '@/features/auth'
 // Deep-imported from the feature's `api` barrel rather than its root on
 // purpose: `features/suggested-actions` imports `features/plans` for the
 // aspect catalogue, so going through the barrel would close an import cycle.
@@ -74,7 +72,6 @@ import { PlanObservationsList } from '../components/PlanObservationsList'
 import { CommitmentDialog } from '../components/CommitmentDialog'
 import { CommitmentsEditor } from '../components/CommitmentsEditor'
 import { IndicatorPicker } from '../components/IndicatorPicker'
-import { facultyOfProgram, PROGRAM_NAMES, programsOfFaculty } from '../config/academicCatalog'
 import { usePlanWorkbench } from '../hooks/usePlanWorkbench'
 import { SUBJECT_ALL } from '../lib/indicatorMatrix'
 import { usePlanFormDraft } from '../hooks/usePlanFormDraft'
@@ -129,15 +126,14 @@ type FormMode = 'create' | 'edit'
 
 /**
  * Seed of every field the form owns. The `*Override` ones are `null` while the
- * value is still derived from context, which is how the creation flow starts and
- * how a plan that never recorded, say, a programme comes back for editing.
+ * value is still derived from context — the title from the docente and the
+ * periodo, the periodo from the route — which is how the creation flow starts.
  */
 interface PlanFormInitial {
   periodId?: number
   teacherId?: number
   titleOverride: string | null
   description: string
-  programOverride: string | null
   actaDate: string
   actaNumber: string
   councilObservations: string
@@ -243,7 +239,6 @@ export default function PlanFormPage() {
           teacherId: plan.teacher_id,
           titleOverride: plan.title,
           description: plan.description ?? '',
-          programOverride: plan.program_name,
           actaDate: plan.acta_date ?? plan.start_date ?? '',
           actaNumber: plan.acta_number ?? '',
           councilObservations: plan.council_observations ?? '',
@@ -257,7 +252,6 @@ export default function PlanFormPage() {
           teacherId: presetTeacher ? Number(presetTeacher) : undefined,
           titleOverride: null,
           description: '',
-          programOverride: null,
           // The plan is drawn up the day the Consejo de Departamento approves it.
           actaDate: todayISO(),
           actaNumber: '',
@@ -326,7 +320,6 @@ function restoredFields(draft: PlanFormDraft): Partial<PlanFormInitial> {
     teacherId: draft.teacherId,
     titleOverride: draft.titleOverride,
     description: draft.description,
-    programOverride: draft.programOverride,
     actaDate: draft.actaDate,
     actaNumber: draft.actaNumber,
     councilObservations: draft.councilObservations,
@@ -378,7 +371,6 @@ function PlanForm({
   const [teacherId, setTeacherId] = useState<number | undefined>(initial.teacherId)
   const [titleOverride, setTitleOverride] = useState<string | null>(initial.titleOverride)
   const [description, setDescription] = useState(initial.description)
-  const [programOverride, setProgramOverride] = useState<string | null>(initial.programOverride)
   // One date for both: the agreement starts the day the acta backing it is
   // signed. Formato 2 prints it as "FECHA" and Formato 3 as "Fecha".
   const [actaDate, setActaDate] = useState(initial.actaDate)
@@ -537,25 +529,18 @@ function PlanForm({
 
   const title = titleOverride ?? defaultTitle
 
-  // At UFPS the director's own "department" is named after the programme it
-  // serves, so it seeds PROGRAMA ACADÉMICO — la única de las tres que sigue
-  // siendo un campo, porque es la que el director puede querer corregir.
+  // Ninguna de las tres columnas del encabezado de los formatos se pregunta ya.
+  // Facultad y departamento académico salen del registro del docente evaluado (o
+  // del plan guardado, al editar), así que pedirlos era hacer escribir dos veces
+  // algo que el sistema ya sabe; se leen, ya resueltos, en el detalle del plan.
   //
-  // Facultad y departamento académico ya no se preguntan: salen del registro
-  // del docente evaluado (o del plan guardado, al editar) y sólo se imprimen en
-  // el encabezado de los formatos, así que pedirlos era hacer escribir dos
-  // veces algo que el sistema ya sabe. Se muestran, ya resueltos, en el detalle
-  // del plan. La facultad del programa es el último recurso.
-  const authDepartment = useAuthStore((state) => state.user?.department_name) ?? ''
-  const programName = programOverride ?? authDepartment
+  // El programa académico tampoco: no es uno solo. Un docente adscrito a un
+  // departamento da clase en varias carreras, y preguntar uno obligaba a
+  // estampar el mismo en todas las asignaturas — que es justo lo que hacía decir
+  // al plan que toda materia es de la carrera del departamento. Ahora cada
+  // asignatura trae la suya, resuelta por la API desde su código.
   const departmentName = plan?.department_name ?? candidate?.department_name ?? ''
-  const facultyName =
-    plan?.faculty_name ?? candidate?.faculty_name ?? facultyOfProgram(programName)?.name ?? ''
-
-  const programOptions = useMemo(
-    () => (facultyName ? programsOfFaculty(facultyName) : PROGRAM_NAMES),
-    [facultyName],
-  )
+  const facultyName = plan?.faculty_name ?? candidate?.faculty_name ?? ''
 
   const aspectByDimension = useMemo(
     () =>
@@ -891,7 +876,6 @@ function PlanForm({
     periodId,
     titleOverride,
     description,
-    programOverride,
     actaDate,
     actaNumber,
     councilObservations,
@@ -917,7 +901,6 @@ function PlanForm({
         items,
         aspects,
         courses,
-        programName,
         actaNumber,
         actaDate,
       }),
@@ -930,7 +913,6 @@ function PlanForm({
       items,
       aspects,
       courses,
-      programName,
       actaNumber,
       actaDate,
     ],
@@ -992,7 +974,12 @@ function PlanForm({
         course_name: course.course_name.trim(),
         course_code: course.course_code,
         group_name: course.group_name,
-        program_name: programName.trim() || undefined,
+        // Cada fila con la suya: la que la API resolvió desde el código de la
+        // asignatura. Antes iba aquí el único programa del formulario, el mismo
+        // en todas, y por eso una materia de otra carrera salía impresa como si
+        // fuera del departamento. La API la vuelve a resolver al guardar, así
+        // que esto es lo que se ve mientras se redacta, no la última palabra.
+        program_name: course.program_name,
         order: index,
       }))
   }
@@ -1022,7 +1009,6 @@ function PlanForm({
     const shared = {
       title: title.trim(),
       description: description.trim() || undefined,
-      program_name: programName.trim() || undefined,
       faculty_name: facultyName.trim() || undefined,
       department_name: departmentName.trim() || undefined,
       department_director_observations: departmentObservations.trim() || undefined,
@@ -1510,9 +1496,9 @@ function PlanForm({
               añádelas con el selector de arriba.
             </p>
           ) : (
-            // Read-only on purpose: the name, the code and the group are what
-            // the evaluation report says the teacher taught, and a plan that
-            // renames them stops matching the record it is built on.
+            // Read-only on purpose: the name, the code, the group and la carrera
+            // are what the evaluation report says the teacher taught, and a plan
+            // that renames them stops matching the record it is built on.
             <ul className="divide-border border-border divide-y rounded-md border">
               {courses.map((course) => (
                 <li key={course.key} className="flex flex-wrap items-center gap-3 px-4 py-2.5">
@@ -1520,6 +1506,14 @@ function PlanForm({
 
                   {course.course_code && (
                     <span className="text-muted-foreground num text-xs">{course.course_code}</span>
+                  )}
+
+                  {/* Al lado del código porque de ahí sale: los tres primeros
+                      dígitos son el COD_CARRERA. Va en el tono callado de los
+                      metadatos para no competir con el nombre de la materia, que
+                      es lo que el director está leyendo. */}
+                  {course.program_name && (
+                    <span className="text-muted-foreground text-xs">{course.program_name}</span>
                   )}
 
                   {course.group_name && (
@@ -1582,31 +1576,12 @@ function PlanForm({
           />
         </div>
 
-        {/* Lo que queda del encabezado de los formatos oficiales, junto al acto
-            administrativo que lo respalda: el programa académico, y el
-            "ACTO ADMINISTRATIVO: ACTA No. ___ FECHA: ___" que cierra la Ficha
+        {/* El "ACTO ADMINISTRATIVO: ACTA No. ___ FECHA: ___" que cierra la Ficha
             de acuerdo, salido del Consejo de Departamento que aprueba el plan.
-            Facultad y departamento ya no se piden — se heredan del docente
-            evaluado y se leen en el detalle del plan. */}
+            Es lo único que queda del encabezado de los formatos: facultad y
+            departamento se heredan del docente evaluado y se leen en el detalle,
+            y el programa académico lo trae cada asignatura desde su código. */}
         <div className="flex flex-wrap gap-4 border-t pt-4">
-          <div className="min-w-56 flex-1 space-y-1.5">
-            <Label htmlFor="program">
-              Programa académico <Required />
-            </Label>
-            <Combobox
-              id="program"
-              value={programName}
-              onValueChange={setProgramOverride}
-              options={programOptions}
-              placeholder="Programa"
-              invalid={invalidFields.has('program')}
-              describedBy={invalidFields.has('program') ? fieldErrorId('program') : undefined}
-              onBlur={() => markTouched('program')}
-            />
-
-            <FieldError fieldId="program" message={invalidFields.get('program')} />
-          </div>
-
           <div className="min-w-40 space-y-1.5">
             <Label htmlFor="acta-number">
               Acta N.º <Required />
