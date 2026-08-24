@@ -1,22 +1,11 @@
-import { CalendarRange, MessageSquareText } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { CalendarRange } from 'lucide-react'
 
 import { ScoreBadge } from '@/components/common/ScoreBadge'
 import { TransitionLink } from '@/components/common/TransitionLink'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { CATEGORIES, categoryLabel, UNCATEGORIZED } from '@/lib/categoryLabel'
 import { cn } from '@/lib/utils'
 import type { DepartmentPeriodRangeStats } from '../types'
-
-/** Ordered risk levels shown in the comments breakdown, label + object key. */
-const COMMENTS_RISK_LEVELS = [
-  { key: 'BAJO', label: 'Comentarios de riesgo bajo' },
-  { key: 'MEDIO', label: 'Comentarios de riesgo medio' },
-  { key: 'ALTO', label: 'Comentarios de riesgo alto' },
-] as const
-
-const ANALYZABLE_CATEGORIES = CATEGORIES.filter((category) => category.code !== UNCATEGORIZED)
 
 export interface DepartmentStatsHeroProps {
   stats: DepartmentPeriodRangeStats
@@ -34,7 +23,7 @@ export interface DepartmentStatsHeroProps {
  * @example
  * <DepartmentStatsHero stats={stats} />
  */
-export function DepartmentStatsHero({ stats, commentsHref, className }: DepartmentStatsHeroProps) {
+export function DepartmentStatsHero({ stats, className }: DepartmentStatsHeroProps) {
   const rangeLabel =
     stats.start_period_code === stats.end_period_code
       ? stats.start_period_code
@@ -61,8 +50,8 @@ export function DepartmentStatsHero({ stats, commentsHref, className }: Departme
           <Badge className="text-sm font-bold">{rangeLabel}</Badge>
         </p>
 
-        <TransitionLink href={`/evaluaciones/`}>
-          <Button size="sm">Ver evaluaciones</Button>
+        <TransitionLink href={`/evaluaciones`}>
+          <Button size="sm">Ver evaluación detallada</Button>
         </TransitionLink>
       </div>
 
@@ -97,7 +86,7 @@ export function DepartmentStatsHero({ stats, commentsHref, className }: Departme
         </div>
       </div>
 
-      {stats.comments_risk_counts && (
+      {/* {stats.comments_risk_counts && (
         <div>
           <div className="bg-muted/40 flex items-center justify-between gap-3 px-6 py-3">
             <p className="text-muted-foreground flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
@@ -154,17 +143,17 @@ export function DepartmentStatsHero({ stats, commentsHref, className }: Departme
             ))}
           </div>
         </div>
-      )}
+      )} */}
     </section>
   )
 }
 
-function Fact({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="px-6 py-4">
-      <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">{label}</p>
+// function Fact({ label, children }: { label: string; children: ReactNode }) {
+//   return (
+//     <div className="px-6 py-4">
+//       <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">{label}</p>
 
-      <div className="mt-2 flex min-h-8 items-center">{children}</div>
-    </div>
-  )
-}
+//       <div className="mt-2 flex min-h-8 items-center">{children}</div>
+//     </div>
+//   )
+// }
