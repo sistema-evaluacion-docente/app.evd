@@ -446,24 +446,6 @@ export function DepartmentPeriodRangeSummary({
             )}
           */}
 
-          {(data?.data?.comments_risk_counts ||
-            data?.data?.comments_pedagogical_category_counts) && (
-            <div ref={commentsCardRef}>
-              {rangeCompareActive ? (
-                <DepartmentCommentPeriodBreakdown periods={data?.data?.periods ?? []} />
-              ) : (
-                <DepartmentCommentsSummary
-                  riskCounts={data?.data?.comments_risk_counts}
-                  categoryCounts={data?.data?.comments_pedagogical_category_counts}
-                  onRiskLevelClick={(level) => {
-                    const href = commentsHrefForRisk(level)
-                    navigate(href)
-                  }}
-                />
-              )}
-            </div>
-          )}
-
           {showTrendChart && (
             <section ref={trendCardRef} className="border-border bg-background rounded-md border">
               <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
@@ -487,6 +469,24 @@ export function DepartmentPeriodRangeSummary({
                 />
               </div>
             </section>
+          )}
+
+          {(data?.data?.comments_risk_counts ||
+            data?.data?.comments_pedagogical_category_counts) && (
+            <div ref={commentsCardRef}>
+              {rangeCompareActive ? (
+                <DepartmentCommentPeriodBreakdown periods={data?.data?.periods ?? []} />
+              ) : (
+                <DepartmentCommentsSummary
+                  riskCounts={data?.data?.comments_risk_counts}
+                  categoryCounts={data?.data?.comments_pedagogical_category_counts}
+                  onRiskLevelClick={(level) => {
+                    const href = commentsHrefForRisk(level)
+                    navigate(href)
+                  }}
+                />
+              )}
+            </div>
           )}
 
           <section
