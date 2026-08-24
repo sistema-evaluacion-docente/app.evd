@@ -11,6 +11,7 @@ export { PlanEvidences } from './components/PlanEvidences'
 export { PlanCheckpoints } from './components/PlanCheckpoints'
 export { PlanClosedSummary, PlanClosure } from './components/PlanClosure'
 export { PlanVerification } from './components/PlanVerification'
+export { VerificationFollowUpAction } from './components/VerificationFollowUpAction'
 export {
   ActaStatusBadge,
   EvidenceRequestBadge,
