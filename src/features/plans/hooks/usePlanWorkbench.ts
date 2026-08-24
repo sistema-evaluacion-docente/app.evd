@@ -95,7 +95,11 @@ export function usePlanWorkbench({
 
   const { data: coursesResponse } = useGetTeacherCourses(teacherId, periodId)
 
-  /** Course+group rows, with the `academic_group_id` only the plans API knows. */
+  /**
+   * Course+group rows, with the `academic_group_id` and la carrera que sólo la
+   * API de planes conoce — la resuelve desde el código de la asignatura, no
+   * desde el departamento del docente.
+   */
   const allSubjects = useMemo<PlanSubjectOption[]>(() => {
     const groups = coursesResponse?.data ?? []
 
@@ -112,6 +116,7 @@ export function usePlanWorkbench({
         course_code: course.course_code,
         group_name: course.group_name,
         academic_group_id: match?.academic_group_id ?? null,
+        program_name: match?.program_name ?? null,
       }
     })
   }, [detail, coursesResponse])

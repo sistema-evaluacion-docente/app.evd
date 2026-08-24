@@ -100,6 +100,7 @@ export function courseOfSubject(option: PlanSubjectOption): PlanCourseInput {
     course_name: option.course_name,
     course_code: option.course_code,
     group_name: option.group_name,
+    program_name: option.program_name,
   }
 }
 
