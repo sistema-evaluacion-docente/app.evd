@@ -1,4 +1,5 @@
 import { AlertTriangle, CheckCircle2, MessageSquareWarning, ScanSearch } from 'lucide-react'
+import type { ReactNode } from 'react'
 
 import { Badge } from '@/components/ui/badge'
 import formatDate from '@/lib/formatDate'
@@ -21,6 +22,12 @@ interface PlanVerificationProps {
   verification: Verification | null
   /** Shown when the grades that would settle the plan have not arrived yet. */
   verificationPeriodCode: string | null
+  /**
+   * What to offer next to the verdict — the follow-up plan, typically. Kept as
+   * a slot so this stays a component that only reads: the caller already knows
+   * the role and holds the queries an action needs.
+   */
+  action?: ReactNode
 }
 
 /**
@@ -39,7 +46,11 @@ interface PlanVerificationProps {
  *   verificationPeriodCode={plan.verification_period_code}
  * />
  */
-export function PlanVerification({ verification, verificationPeriodCode }: PlanVerificationProps) {
+export function PlanVerification({
+  verification,
+  verificationPeriodCode,
+  action,
+}: PlanVerificationProps) {
   const period = verification?.period_code ?? verificationPeriodCode
 
   return (
@@ -56,11 +67,15 @@ export function PlanVerification({ verification, verificationPeriodCode }: PlanV
           </p>
         </div>
 
-        {verification && (
-          <Badge className={VERIFICATION_RESULT_CLASS[verification.result]}>
-            {VERIFICATION_RESULT_LABEL[verification.result]}
-          </Badge>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {verification && (
+            <Badge className={VERIFICATION_RESULT_CLASS[verification.result]}>
+              {VERIFICATION_RESULT_LABEL[verification.result]}
+            </Badge>
+          )}
+
+          {action}
+        </div>
       </header>
 
       {!verification || !hasFindings(verification) ? (
