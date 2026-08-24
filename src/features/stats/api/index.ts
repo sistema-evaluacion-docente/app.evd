@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query'
 
 import type { ResponseAPI } from '@/@types/Response'
 import api from '@/config/axios'
@@ -115,6 +115,28 @@ export function useGetDepartmentPeriodRangeStats({
     enabled: Boolean(startPeriod) && Boolean(endPeriod),
     placeholderData: keepPreviousData,
     staleTime: 60_000,
+  })
+}
+
+/**
+ * Fetches each period's own stats as its own single-period snapshot
+ * (`start_period === end_period` per request), run in parallel. The range
+ * endpoint only ever answers with one aggregate for whatever range it's
+ * asked about — this is how a genuine per-period breakdown (e.g. one bar per
+ * period in a chart) gets built from it.
+ *
+ * @returns One query result per period, in the same order as `periodCodes`.
+ *
+ * @example
+ * const results = useGetDepartmentPeriodBreakdowns(stats.periods.map((p) => p.academic_period_code));
+ */
+export function useGetDepartmentPeriodBreakdowns(periodCodes: string[]) {
+  return useQueries({
+    queries: periodCodes.map((code) => ({
+      queryKey: statsKeys.departmentPeriodRange(code, code),
+      queryFn: () => getDepartmentPeriodRangeStats(code, code),
+      staleTime: 60_000,
+    })),
   })
 }
 

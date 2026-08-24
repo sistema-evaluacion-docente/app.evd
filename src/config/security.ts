@@ -88,6 +88,11 @@ const securityConfig: { pages: SecurityPage[] } = {
       roles: ['ADMIN'],
     },
     {
+      path: '/programas',
+      name: 'Programas',
+      roles: ['ADMIN'],
+    },
+    {
       path: '/admin/periodos',
       name: 'Periodos',
       roles: ['ADMIN'],
