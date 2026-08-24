@@ -44,6 +44,24 @@ export function riskLevelColor(name: string | undefined | null): string | undefi
 }
 
 /**
+ * Reads a risk level id off a query string, ignoring anything that isn't one
+ * — a hand-typed `?riskLevel=9` is dropped rather than forwarded to the API.
+ * Same guard `parseModality` gives the modality filter.
+ *
+ * @example
+ * parseRiskLevelId(searchParams.get('riskLevel')) // → 3, or undefined
+ */
+export function parseRiskLevelId(
+  raw: string | number | null | undefined,
+): RiskLevelMeta['id'] | undefined {
+  if (raw == null || raw === '') return undefined
+
+  const id = Number(raw)
+
+  return RISK_LEVELS.find((level) => level.id === id)?.id
+}
+
+/**
  * Whether a risk level is one worth acting on — `MEDIO` or `ALTO`.
  *
  * Lives here and not in a feature so the plans module and the teacher's own
