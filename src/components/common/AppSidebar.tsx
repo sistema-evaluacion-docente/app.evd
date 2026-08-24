@@ -58,7 +58,7 @@ const MENU_ICON_BY_PATH: Record<string, typeof DEFAULT_ICON> = {
   '/admin/directores': UserSearch,
   '/admin/documentos': FileText,
   '/admin/configuracion': Settings,
-  '/admin/logs': Logs,
+  '/admin/historial': Logs,
 }
 
 /**

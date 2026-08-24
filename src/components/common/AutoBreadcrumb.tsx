@@ -37,7 +37,6 @@ const SEGMENT_LABELS: Record<string, string> = {
   dimensiones: 'Dimensiones',
   pdf: 'Documento',
   admin: 'Administración',
-  logs: 'Historial',
   configuracion: 'Configuración',
   facultades: 'Facultades',
   departamentos: 'Departamentos',

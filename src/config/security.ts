@@ -103,7 +103,7 @@ const securityConfig: { pages: SecurityPage[] } = {
       roles: ['ADMIN'],
     },
     {
-      path: '/admin/logs',
+      path: '/admin/historial',
       name: 'Historial',
       roles: ['ADMIN'],
     },

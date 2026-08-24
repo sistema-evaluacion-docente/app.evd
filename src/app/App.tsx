@@ -246,7 +246,7 @@ function App() {
             </AppLayout>
           </Route>
 
-          <Route path="/admin/logs">
+          <Route path="/admin/historial">
             <AppLayout>
               <LogsPage />
             </AppLayout>
