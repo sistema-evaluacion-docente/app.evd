@@ -448,6 +448,10 @@ export function DepartmentPeriodRangeSummary({
                 <DepartmentCommentsSummary
                   riskCounts={data?.data?.comments_risk_counts}
                   categoryCounts={data?.data?.comments_pedagogical_category_counts}
+                  onRiskLevelClick={(level) => {
+                    const href = commentsHrefForRisk(level)
+                    navigate(href)
+                  }}
                 />
               )}
             </div>
