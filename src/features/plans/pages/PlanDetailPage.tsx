@@ -21,6 +21,7 @@ import { PlanEvidences } from '../components/PlanEvidences'
 import { PlanIdentityStrips } from '../components/PlanIdentityStrips'
 import { ActaStatusBadge, PlanStatusBadge } from '../components/PlanStatusBadge'
 import { PlanVerification } from '../components/PlanVerification'
+import { VerificationFollowUpAction } from '../components/VerificationFollowUpAction'
 import { hasSignedActa, isPlanClosed, planProgress, planProgressStage } from '../lib/planStatus'
 import type { PlanItem } from '../types'
 
@@ -151,9 +152,7 @@ export default function PlanDetailPage() {
       <section className="border-border bg-card overflow-hidden rounded-md border">
         <header className="bg-muted/50 border-b px-6 py-4">
           <h2 className="font-semibold">Compromisos</h2>
-          <p className="text-muted-foreground text-sm">
-            {commitmentsSummary(plan.items.length)}
-          </p>
+          <p className="text-muted-foreground text-sm">{commitmentsSummary(plan.items.length)}</p>
         </header>
 
         {plan.items.length === 0 && (
@@ -238,6 +237,13 @@ export default function PlanDetailPage() {
         <PlanVerification
           verification={plan.verification}
           verificationPeriodCode={plan.verification_period_code}
+          action={
+            /* Only once the grades say he did not improve: that is what a
+               follow-up plan answers, and the acta of this one is settled. */
+            canManage && plan.verification?.result === 'NO_MEJORO' ? (
+              <VerificationFollowUpAction plan={plan} catalogue={indicatorsResponse?.data} />
+            ) : null
+          }
         />
       )}
 
@@ -294,7 +300,6 @@ function CommitmentCard({ item }: { item: PlanItem }) {
             Resultado: <span className="num">{item.result_value.toFixed(2)}</span>
           </span>
         )}
-        <Badge variant="outline">{item.status}</Badge>
       </div>
 
       {item.comments.length > 0 && (

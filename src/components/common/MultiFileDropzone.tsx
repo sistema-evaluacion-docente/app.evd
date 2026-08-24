@@ -4,6 +4,7 @@ import { useId, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { formatBytes } from '@/lib/formatBytes'
+import { openLocalFile } from '@/lib/openLocalFile'
 import { cn } from '@/lib/utils'
 import { InlineError } from './InlineError'
 
@@ -154,7 +155,23 @@ export function MultiFileDropzone({
               </div>
 
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{file.name}</p>
+                {/* The name itself opens it, the way a signed format opens
+                    from `PlanDocuments`. Only for PDFs: the dropzone is
+                    generic and `accept` can name a type the browser would
+                    download instead of showing. */}
+                {file.type === 'application/pdf' ? (
+                  <button
+                    type="button"
+                    onClick={() => openLocalFile(file)}
+                    title={`Previsualizar ${file.name} en una pestaña nueva`}
+                    className="block max-w-full cursor-pointer truncate text-sm font-medium underline-offset-2 hover:underline"
+                  >
+                    {file.name}
+                  </button>
+                ) : (
+                  <p className="truncate text-sm font-medium">{file.name}</p>
+                )}
+
                 <p className="text-muted-foreground text-xs tabular-nums">
                   {formatBytes(file.size)}
                 </p>

@@ -142,4 +142,29 @@ describe('FileDropzone', () => {
 
     expect(screen.getByLabelText('Archivo')).toBeDisabled()
   })
+
+  it('opens the selected PDF in a tab of its own when its name is clicked', async () => {
+    const user = userEvent.setup()
+    const open = vi.spyOn(window, 'open').mockReturnValue(null)
+    const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:acta')
+    const onFileChange = vi.fn()
+
+    render(<FileDropzone file={makeFile()} onFileChange={onFileChange} />)
+
+    await user.click(screen.getByRole('button', { name: 'informe.pdf' }))
+
+    expect(open).toHaveBeenCalledWith('blob:acta', '_blank', 'noopener')
+    // The whole box is the file picker; previewing must not reopen it.
+    expect(onFileChange).not.toHaveBeenCalled()
+
+    open.mockRestore()
+    createObjectURL.mockRestore()
+  })
+
+  it('leaves the name as plain text while the file is uploading', () => {
+    render(<FileDropzone file={makeFile()} onFileChange={vi.fn()} isUploading />)
+
+    expect(screen.queryByRole('button', { name: 'informe.pdf' })).not.toBeInTheDocument()
+    expect(screen.getByText('Subiendo archivo…')).toBeInTheDocument()
+  })
 })

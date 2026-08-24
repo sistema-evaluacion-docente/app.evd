@@ -472,8 +472,14 @@ export function useUpdateComment() {
       // Also matches the flat `/comments/` list (features/comments) — both key
       // families include 'comments', so one predicate invalidates each cache
       // this edit could be visible in without a cross-feature import.
+      //
+      // 'plans' rides along because a plan's verification reads the risk level
+      // back: re-tagging a comment ALTO → MEDIO takes it out of the findings
+      // that reappeared, and the plan on screen would otherwise keep showing
+      // the old one until a reload.
       queryClient.invalidateQueries({
-        predicate: (query) => query.queryKey.includes('comments'),
+        predicate: (query) =>
+          query.queryKey.includes('comments') || query.queryKey.includes('plans'),
       })
     },
   })

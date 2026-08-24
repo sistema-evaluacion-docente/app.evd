@@ -29,7 +29,7 @@
       "get": {
         "tags": ["Teachers"],
         "summary": "Get All Teachers",
-        "description": "List all teachers with pagination and filters.",
+        "description": "List all teachers with pagination and filters.\n\nDirectors are restricted to their own department — any client-supplied\ndepartment_id is ignored and replaced by the one from the token.",
         "operationId": "get_all_teachers_teachers__get",
         "security": [
           {
@@ -373,7 +373,7 @@
       "get": {
         "tags": ["Teachers"],
         "summary": "Get Teachers With Averages",
-        "description": "List teachers with overall_average for a given academic period.",
+        "description": "List teachers with overall_average for a given academic period.\n\nDirectors are restricted to their own department — any client-supplied\ndepartment_id is ignored and replaced by the one from the token.\n\nWith `modality`, the average and the high-risk comment count cover only\nthat kind of program, and teachers who do not teach in it drop out of the\nlisting (unless `has_average` is false).",
         "operationId": "get_teachers_with_averages_teachers_with_averages_get",
         "security": [
           {
@@ -403,6 +403,25 @@
               "title": "Has Average"
             },
             "description": "Filter teachers that have an overall average or not"
+          },
+          {
+            "name": "modality",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": ["PRESENCIAL", "DISTANCIA"],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Calcular el promedio y los comentarios de alto riesgo solo con los grupos de esta modalidad. Sin el filtro se toman todos.",
+              "title": "Modality"
+            },
+            "description": "Calcular el promedio y los comentarios de alto riesgo solo con los grupos de esta modalidad. Sin el filtro se toman todos."
           },
           {
             "name": "search",
@@ -951,6 +970,81 @@
         }
       }
     },
+    "/teachers/{teacher_id}/evaluations/{evaluation_id}/report": {
+      "get": {
+        "tags": ["Teachers"],
+        "summary": "Download Teacher Evaluation Report",
+        "description": "Download the teacher's pages from an evaluation PDF.\n\nDOCENTE may only download their own report; DIRECTOR may download any\nteacher's report within their department.",
+        "operationId": "download_teacher_evaluation_report_teachers__teacher_id__evaluations__evaluation_id__report_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "teacher_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Teacher Id"
+            }
+          },
+          {
+            "name": "evaluation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Evaluation Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/teachers/{teacher_id}": {
       "get": {
         "tags": ["Teachers"],
@@ -1481,6 +1575,78 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseEnvelope_CourseOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/courses/{course_id}/name": {
+      "patch": {
+        "tags": ["Courses"],
+        "summary": "Patch Course Name",
+        "description": "Update only the name of a course. Restricted to the director's own department.",
+        "operationId": "patch_course_name_courses__course_id__name_patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "course_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Course Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CourseNameUpdate"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2463,6 +2629,23 @@
             }
           },
           {
+            "name": "modality",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": ["PRESENCIAL", "DISTANCIA"],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Modality"
+            }
+          },
+          {
             "name": "page",
             "in": "query",
             "required": false,
@@ -2783,7 +2966,7 @@
       "post": {
         "tags": ["Evaluations"],
         "summary": "Upload Evaluation",
-        "description": "Upload a teacher evaluation PDF for a department.",
+        "description": "Upload the teacher evaluation PDFs of a department for one period.\n\nSend the `file` part once for a department that only has presencial\nprograms, or twice — presencial and a distancia — to register both in the\nsame evaluation.",
         "operationId": "upload_evaluation_evaluations_upload_post",
         "security": [
           {
@@ -3153,7 +3336,7 @@
       "get": {
         "tags": ["Evaluations"],
         "summary": "Get Evaluation By Id",
-        "description": "Endpoint to get an evaluation by ID.",
+        "description": "Endpoint to get an evaluation by ID, optionally restricted to one modality.",
         "operationId": "get_evaluation_by_id_evaluations__evaluation_id__get",
         "security": [
           {
@@ -3169,6 +3352,25 @@
               "type": "integer",
               "title": "Evaluation Id"
             }
+          },
+          {
+            "name": "modality",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": ["PRESENCIAL", "DISTANCIA"],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Calcular promedio, dimensiones, comentarios y número de docentes solo con los grupos de esta modalidad. Sin el filtro se devuelve la evaluación completa.",
+              "title": "Modality"
+            },
+            "description": "Calcular promedio, dimensiones, comentarios y número de docentes solo con los grupos de esta modalidad. Sin el filtro se devuelve la evaluación completa."
           },
           {
             "name": "Authorization",
@@ -3275,7 +3477,7 @@
       "get": {
         "tags": ["Evaluations"],
         "summary": "Download Evaluation Pdf",
-        "description": "Download the PDF of an evaluation.\n\nOnly ADMIN or the DIRECTOR of the department the evaluation belongs to\nmay access the file — it is no longer served as a public static asset.",
+        "description": "Download one of the PDFs of an evaluation.\n\nAn evaluation may hold the presencial and the distancia documents; without\n`modality` the first one is served. Only ADMIN or the DIRECTOR of the\ndepartment the evaluation belongs to may access the file — it is no longer\nserved as a public static asset.",
         "operationId": "download_evaluation_pdf_evaluations__evaluation_id__pdf_get",
         "security": [
           {
@@ -3291,6 +3493,25 @@
               "type": "integer",
               "title": "Evaluation Id"
             }
+          },
+          {
+            "name": "modality",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": ["PRESENCIAL", "DISTANCIA"],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "PDF a descargar cuando la evaluación tiene los dos documentos",
+              "title": "Modality"
+            },
+            "description": "PDF a descargar cuando la evaluación tiene los dos documentos"
           },
           {
             "name": "Authorization",
@@ -3566,7 +3787,7 @@
       "get": {
         "tags": ["Evaluations"],
         "summary": "Get Evaluation Dimension Detail",
-        "description": "Return an evaluation's pedagogical dimensions with overall and per-question\naverages. Only the director of the evaluation's department may access it.\n\nPass `teacher_id` and/or `course_id` to restrict the breakdown to a single\ndocente or materia; the response then also includes an `overall` field\nwith the unfiltered evaluation-wide breakdown for comparison.",
+        "description": "Return an evaluation's pedagogical dimensions with overall and per-question\naverages. Only the director of the evaluation's department may access it.\n\nPass `teacher_id` and/or `course_id` to restrict the breakdown to a single\ndocente or materia; the response then also includes an `overall` field\nwith the unfiltered evaluation-wide breakdown for comparison.\n\n`modality` scopes the whole response — breakdown, `department_average` and\n`overall` — to one kind of program, so a distancia docente is never\ncompared against a presencial average.",
         "operationId": "get_evaluation_dimension_detail_evaluations__evaluation_id__dimensions_detail_get",
         "security": [
           {
@@ -3614,6 +3835,25 @@
               ],
               "title": "Course Id"
             }
+          },
+          {
+            "name": "modality",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": ["PRESENCIAL", "DISTANCIA"],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Calcular el detalle solo con los grupos de esta modalidad. Sin el filtro se toma la evaluación completa.",
+              "title": "Modality"
+            },
+            "description": "Calcular el detalle solo con los grupos de esta modalidad. Sin el filtro se toma la evaluación completa."
           },
           {
             "name": "Authorization",
@@ -4475,7 +4715,7 @@
       "get": {
         "tags": ["Comments"],
         "summary": "Get All Comments",
-        "description": "List all comments with optional filters and pagination.",
+        "description": "List all comments for the director's own department, with filters and pagination.",
         "operationId": "get_all_comments_comments__get",
         "security": [
           {
@@ -4578,6 +4818,25 @@
               ],
               "title": "Pedagogical Category Id"
             }
+          },
+          {
+            "name": "modality",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": ["PRESENCIAL", "DISTANCIA"],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Traer solo los comentarios de los grupos de esta modalidad (PRESENCIAL o DISTANCIA). Sin el filtro se devuelven todos.",
+              "title": "Modality"
+            },
+            "description": "Traer solo los comentarios de los grupos de esta modalidad (PRESENCIAL o DISTANCIA). Sin el filtro se devuelven todos."
           },
           {
             "name": "search",
@@ -6612,11 +6871,373 @@
         }
       }
     },
+    "/programs/": {
+      "get": {
+        "tags": ["Programs"],
+        "summary": "Get All Programs",
+        "description": "Get all programs with filters and pagination.",
+        "operationId": "get_all_programs_programs__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Active"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 10,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseEnvelope_list_ProgramOut__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Programs"],
+        "summary": "Create Program",
+        "description": "Create a new program.",
+        "operationId": "create_program_programs__post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProgramCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseEnvelope_ProgramOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/programs/{program_id}": {
+      "get": {
+        "tags": ["Programs"],
+        "summary": "Get Program By Id",
+        "description": "Get a program by ID.",
+        "operationId": "get_program_by_id_programs__program_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "program_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Program Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseEnvelope_ProgramOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Programs"],
+        "summary": "Update Program",
+        "description": "Update a program.",
+        "operationId": "update_program_programs__program_id__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "program_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Program Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProgramUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseEnvelope_ProgramOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Programs"],
+        "summary": "Delete Program",
+        "description": "Delete a program.",
+        "operationId": "delete_program_programs__program_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "program_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Program Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseEnvelope_ProgramOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/settings/": {
       "get": {
         "tags": ["Settings"],
         "summary": "Get All Settings",
-        "description": "List all settings with pagination and filters.",
+        "description": "List the settings the user may see, with pagination and filters.",
         "operationId": "get_all_settings_settings__get",
         "security": [
           {
@@ -6655,6 +7276,32 @@
                 }
               ],
               "title": "Value Type"
+            }
+          },
+          {
+            "name": "department_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Department Id"
+            }
+          },
+          {
+            "name": "include_global",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Include Global"
             }
           },
           {
@@ -6723,7 +7370,7 @@
       "post": {
         "tags": ["Settings"],
         "summary": "Create Setting",
-        "description": "Create a new setting.",
+        "description": "Create a new setting in the caller's own scope.\n\nA director creates it for its department; an ADMIN creates an\ninstitutional one. A payload naming another scope is refused.",
         "operationId": "create_setting_settings__post",
         "security": [
           {
@@ -6786,7 +7433,7 @@
       "get": {
         "tags": ["Settings"],
         "summary": "Get Setting By Key",
-        "description": "Get a setting by key.",
+        "description": "Get the setting in effect for the caller.\n\nFor a director its department's value wins and the institutional one is\nthe fallback; for an ADMIN it is the institutional value. Naming a\n``department_id`` the caller does not manage is a 403, not a fallback.",
         "operationId": "get_setting_by_key_settings_by_key__key__get",
         "security": [
           {
@@ -6801,6 +7448,22 @@
             "schema": {
               "type": "string",
               "title": "Key"
+            }
+          },
+          {
+            "name": "department_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Department Id"
             }
           },
           {
@@ -7040,7 +7703,7 @@
       "get": {
         "tags": ["Settings"],
         "summary": "Get Setting History",
-        "description": "Get setting history by setting ID.",
+        "description": "Get the history of a setting, in its own scope.",
         "operationId": "get_setting_history_settings__setting_id__history_get",
         "security": [
           {
@@ -7332,11 +7995,11 @@
               }
             }
           },
-          "400": {
-            "description": "Bad request"
-          },
           "403": {
             "description": "Forbidden"
+          },
+          "400": {
+            "description": "Bad request"
           },
           "422": {
             "description": "Validation Error",
@@ -7436,7 +8099,7 @@
       "get": {
         "tags": ["Stats"],
         "summary": "Get Department Period Range Subjects",
-        "description": "Get subject (course) averages for the director's own department\nacross a range of academic periods (e.g. from \"2020-1\" to \"2022-1\"),\nwith pagination and an optional search filter by subject name. Only\nthe department's director can access this report.",
+        "description": "Get subject (course) averages for the director's own department\nacross a range of academic periods (e.g. from \"2020-1\" to \"2022-1\"),\nwith pagination and optional filters by subject name, teacher name and\nmodality (PRESENCIAL/DISTANCIA). Only the department's director can\naccess this report.",
         "operationId": "get_department_period_range_subjects_stats_departments_period_range_subjects_get",
         "security": [
           {
@@ -7503,6 +8166,25 @@
               "title": "Teacher Name"
             },
             "description": "Buscar por nombre del docente. Cuando se envía, los promedios y conteos de cada asignatura se recalculan solo con los grupos de ese docente."
+          },
+          {
+            "name": "modality",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": ["PRESENCIAL", "DISTANCIA"],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtrar por modalidad del grupo (PRESENCIAL o DISTANCIA). Cuando se envía, los promedios y conteos de cada asignatura se recalculan solo con los grupos de esa modalidad. Los grupos cargados antes de que se registrara la modalidad quedan fuera.",
+              "title": "Modality"
+            },
+            "description": "Filtrar por modalidad del grupo (PRESENCIAL o DISTANCIA). Cuando se envía, los promedios y conteos de cada asignatura se recalculan solo con los grupos de esa modalidad. Los grupos cargados antes de que se registrara la modalidad quedan fuera."
           },
           {
             "name": "sort_by",
@@ -8692,6 +9374,2245 @@
         }
       }
     },
+    "/improvement-plans/": {
+      "get": {
+        "tags": ["Improvement Plans"],
+        "summary": "Get All Plans",
+        "description": "List improvement plans of a department with pagination and filters.",
+        "operationId": "get_all_plans_improvement_plans__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "department_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Department Id"
+            }
+          },
+          {
+            "name": "period_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Period Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "name": "teacher_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Teacher Id"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 10,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseEnvelope_list_ImprovementPlanOut__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Improvement Plans"],
+        "summary": "Create Plan",
+        "description": "Create an improvement plan for a teacher.",
+        "operationId": "create_plan_improvement_plans__post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImprovementPlanCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseEnvelope_ImprovementPlanOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/improvement-plans/at-risk": {
+      "get": {
+        "tags": ["Improvement Plans"],
+        "summary": "Get At Risk Teachers",
+        "description": "Teachers an improvement plan is suggested for, without one yet.",
+        "operationId": "get_at_risk_teachers_improvement_plans_at_risk_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "period_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Period Id"
+            }
+          },
+          {
+            "name": "department_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Department Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/improvement-plans/candidates": {
+      "get": {
+        "tags": ["Improvement Plans"],
+        "summary": "Get Plan Candidates",
+        "description": "Every evaluated teacher of the department with their weak indicators.",
+        "operationId": "get_plan_candidates_improvement_plans_candidates_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "period_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Period Id"
+            }
+          },
+          {
+            "name": "department_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Department Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/improvement-plans/periods": {
+      "get": {
+        "tags": ["Improvement Plans"],
+        "summary": "Get Evaluated Periods",
+        "description": "Academic periods with evaluations loaded, selectable as plan origin.",
+        "operationId": "get_evaluated_periods_improvement_plans_periods_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "department_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Department Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/improvement-plans/indicators": {
+      "get": {
+        "tags": ["Improvement Plans"],
+        "summary": "Get Plan Indicators",
+        "description": "Catalogue of indicators and the five aspects of the official forms.",
+        "operationId": "get_plan_indicators_improvement_plans_indicators_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/improvement-plans/my": {
+      "get": {
+        "tags": ["Improvement Plans"],
+        "summary": "Get My Plans",
+        "description": "Plans belonging to the calling teacher.",
+        "operationId": "get_my_plans_improvement_plans_my_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseEnvelope_list_ImprovementPlanOut__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/improvement-plans/teacher/{teacher_id}/courses": {
+      "get": {
+        "tags": ["Improvement Plans"],
+        "summary": "Get Teacher Courses",
+        "description": "Asignaturas of a teacher in a period, to prefill the official forms.",
+        "operationId": "get_teacher_courses_improvement_plans_teacher__teacher_id__courses_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "teacher_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Teacher Id"
+            }
+          },
+          {
+            "name": "period_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Period Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/improvement-plans/teacher/{teacher_id}/history": {
+      "get": {
+        "tags": ["Improvement Plans"],
+        "summary": "Get Teacher History",
+        "description": "Cross-period history of a teacher, including plan recurrences.",
+        "operationId": "get_teacher_history_improvement_plans_teacher__teacher_id__history_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "teacher_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Teacher Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/improvement-plans/{plan_id}": {
+      "get": {
+        "tags": ["Improvement Plans"],
+        "summary": "Get Plan By Id",
+        "description": "Get an improvement plan by id. A DOCENTE can only see their own plan.",
+        "operationId": "get_plan_by_id_improvement_plans__plan_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseEnvelope_ImprovementPlanOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Improvement Plans"],
+        "summary": "Update Plan",
+        "description": "Update an improvement plan, its items and its asignaturas.",
+        "operationId": "update_plan_improvement_plans__plan_id__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImprovementPlanUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseEnvelope_ImprovementPlanOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Improvement Plans"],
+        "summary": "Delete Plan",
+        "description": "Delete an improvement plan — only the director of its department.\n\nNot open to an ADMIN on purpose: the plan is an agreement between a director\nand a teacher, and undoing it belongs to whoever agreed it.",
+        "operationId": "delete_plan_improvement_plans__plan_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/improvement-plans/{plan_id}/case-report": {
+      "put": {
+        "tags": ["Improvement Plans"],
+        "summary": "Upsert Case Report",
+        "description": "Record the Formato 1 complaint that originated the plan.",
+        "operationId": "upsert_case_report_improvement_plans__plan_id__case_report_put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImprovementPlanCaseReportUpsert"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseEnvelope_ImprovementPlanOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/improvement-plans/{plan_id}/checkpoints/{checkpoint_id}": {
+      "put": {
+        "tags": ["Improvement Plans"],
+        "summary": "Update Checkpoint",
+        "description": "Fill in one of the two formal seguimientos, aspect by aspect.",
+        "operationId": "update_checkpoint_improvement_plans__plan_id__checkpoints__checkpoint_id__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          },
+          {
+            "name": "checkpoint_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Checkpoint Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImprovementPlanCheckpointUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseEnvelope_ImprovementPlanOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/improvement-plans/{plan_id}/acta/close": {
+      "post": {
+        "tags": ["Improvement Plans"],
+        "summary": "Close Acta",
+        "description": "Freeze the acta content so it can be printed and signed.",
+        "operationId": "close_acta_improvement_plans__plan_id__acta_close_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseEnvelope_ImprovementPlanOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/improvement-plans/{plan_id}/acta/reopen": {
+      "post": {
+        "tags": ["Improvement Plans"],
+        "summary": "Reopen Acta",
+        "description": "Reopen a closed acta to correct it (ADMIN only).",
+        "operationId": "reopen_acta_improvement_plans__plan_id__acta_reopen_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseEnvelope_ImprovementPlanOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/improvement-plans/{plan_id}/close": {
+      "post": {
+        "tags": ["Improvement Plans"],
+        "summary": "Close Plan",
+        "description": "Close an improvement plan with the confirmed result.",
+        "operationId": "close_plan_improvement_plans__plan_id__close_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImprovementPlanClose"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseEnvelope_ImprovementPlanOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/improvement-plans/{plan_id}/documents/{format_type}/generate": {
+      "post": {
+        "tags": ["Improvement Plans"],
+        "summary": "Generate Document",
+        "description": "Render an official form (formato-1|formato-2|formato-3) from the plan data.",
+        "operationId": "generate_document_improvement_plans__plan_id__documents__format_type__generate_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          },
+          {
+            "name": "format_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Format Type"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseEnvelope_ImprovementPlanOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/improvement-plans/{plan_id}/documents/{format_type}/signed": {
+      "post": {
+        "tags": ["Improvement Plans"],
+        "summary": "Upload Signed Document",
+        "description": "Upload the physically signed copy of an official form.\n\nFor the acta (formato-2) this requires the acta to be closed and moves it to\nFIRMADA.",
+        "operationId": "upload_signed_document_improvement_plans__plan_id__documents__format_type__signed_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          },
+          {
+            "name": "format_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Format Type"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_signed_document_improvement_plans__plan_id__documents__format_type__signed_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseEnvelope_ImprovementPlanOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Improvement Plans"],
+        "summary": "Delete Signed Document",
+        "description": "Detach the signed copy of an official form — a wrong or outdated scan.\n\nThe generated PDF stays in place, so the form simply goes back to asking for\na signature. For the acta (formato-2) this walks FIRMADA back to CERRADA.",
+        "operationId": "delete_signed_document_improvement_plans__plan_id__documents__format_type__signed_delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          },
+          {
+            "name": "format_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Format Type"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseEnvelope_ImprovementPlanOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/improvement-plans/{plan_id}/evidence-requests": {
+      "get": {
+        "tags": ["Improvement Plans"],
+        "summary": "List Evidence Requests",
+        "description": "Deliverables the director asked for on this plan.",
+        "operationId": "list_evidence_requests_improvement_plans__plan_id__evidence_requests_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseEnvelope_list_ImprovementPlanEvidenceRequestOut__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Improvement Plans"],
+        "summary": "Create Evidence Request",
+        "description": "Ask the teacher for a specific deliverable.",
+        "operationId": "create_evidence_request_improvement_plans__plan_id__evidence_requests_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImprovementPlanEvidenceRequestCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseEnvelope_ImprovementPlanEvidenceRequestOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/improvement-plans/{plan_id}/evidence-requests/{request_id}": {
+      "get": {
+        "tags": ["Improvement Plans"],
+        "summary": "Get Evidence Request",
+        "description": "One request with its submissions and message thread.",
+        "operationId": "get_evidence_request_improvement_plans__plan_id__evidence_requests__request_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          },
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Request Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseEnvelope_ImprovementPlanEvidenceRequestOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Improvement Plans"],
+        "summary": "Update Evidence Request",
+        "description": "Edit a requested deliverable.",
+        "operationId": "update_evidence_request_improvement_plans__plan_id__evidence_requests__request_id__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          },
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Request Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImprovementPlanEvidenceRequestUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseEnvelope_ImprovementPlanEvidenceRequestOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/improvement-plans/{plan_id}/evidence-requests/{request_id}/comments": {
+      "post": {
+        "tags": ["Improvement Plans"],
+        "summary": "Add Evidence Comment",
+        "description": "Post a message on the request thread — director or teacher.",
+        "operationId": "add_evidence_comment_improvement_plans__plan_id__evidence_requests__request_id__comments_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          },
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Request Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImprovementPlanEvidenceCommentCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseEnvelope_ImprovementPlanEvidenceCommentOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/improvement-plans/{plan_id}/evidences": {
+      "post": {
+        "tags": ["Improvement Plans"],
+        "summary": "Upload Evidence",
+        "description": "Submit an evidence PDF, optionally answering a specific request.",
+        "operationId": "upload_evidence_improvement_plans__plan_id__evidences_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_evidence_improvement_plans__plan_id__evidences_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseEnvelope_ImprovementPlanEvidenceOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/improvement-plans/{plan_id}/evidences/{evidence_id}/review": {
+      "put": {
+        "tags": ["Improvement Plans"],
+        "summary": "Review Evidence",
+        "description": "Approve a submitted evidence or send it back for a new attempt.",
+        "operationId": "review_evidence_improvement_plans__plan_id__evidences__evidence_id__review_put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          },
+          {
+            "name": "evidence_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Evidence Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImprovementPlanEvidenceReview"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseEnvelope_ImprovementPlanEvidenceOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/improvement-plans/{plan_id}/evidences/{evidence_id}": {
+      "delete": {
+        "tags": ["Improvement Plans"],
+        "summary": "Delete Evidence",
+        "description": "Delete a submitted evidence — its uploader or a manager of the plan.",
+        "operationId": "delete_evidence_improvement_plans__plan_id__evidences__evidence_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          },
+          {
+            "name": "evidence_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Evidence Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Improvement Plans"],
+        "summary": "Download Evidence",
+        "description": "Download a submitted evidence file.",
+        "operationId": "download_evidence_improvement_plans__plan_id__evidences__evidence_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          },
+          {
+            "name": "evidence_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Evidence Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/improvement-plans/{plan_id}/documents/{format_type}/word": {
+      "get": {
+        "tags": ["Improvement Plans"],
+        "summary": "Download Document Word",
+        "description": "Download an official form as an editable Word document.\n\nThe acta is signed by hand and often needs a last-minute correction, so the\ndirector gets a working copy. It is rendered from the plan as it stands and\nis not tracked — the PDF remains the document of record.",
+        "operationId": "download_document_word_improvement_plans__plan_id__documents__format_type__word_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          },
+          {
+            "name": "format_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Format Type"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/improvement-plans/{plan_id}/documents/{format_type}": {
+      "get": {
+        "tags": ["Improvement Plans"],
+        "summary": "Download Document",
+        "description": "Download an official form — the signed copy when there is one.",
+        "operationId": "download_document_improvement_plans__plan_id__documents__format_type__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          },
+          {
+            "name": "format_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Format Type"
+            }
+          },
+          {
+            "name": "generated",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Force the unsigned generated copy",
+              "default": false,
+              "title": "Generated"
+            },
+            "description": "Force the unsigned generated copy"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/notifications/me": {
       "get": {
         "tags": ["Notifications"],
@@ -9091,6 +12012,18 @@
               }
             ],
             "title": "Group Name"
+          },
+          "modality": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": ["PRESENCIAL", "DISTANCIA"]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modality"
           }
         },
         "type": "object",
@@ -9147,6 +12080,17 @@
               }
             ],
             "title": "Group Name"
+          },
+          "modality": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modality"
           },
           "course": {
             "anyOf": [
@@ -9247,6 +12191,18 @@
               }
             ],
             "title": "Group Name"
+          },
+          "modality": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": ["PRESENCIAL", "DISTANCIA"]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modality"
           }
         },
         "type": "object",
@@ -9672,6 +12628,66 @@
       "Body_upload_evaluation_evaluations_upload_post": {
         "properties": {
           "file": {
+            "items": {
+              "type": "string",
+              "contentMediaType": "application/octet-stream"
+            },
+            "type": "array",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": ["file"],
+        "title": "Body_upload_evaluation_evaluations_upload_post"
+      },
+      "Body_upload_evidence_improvement_plans__plan_id__evidences_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Id"
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id"
+          }
+        },
+        "type": "object",
+        "required": ["file"],
+        "title": "Body_upload_evidence_improvement_plans__plan_id__evidences_post"
+      },
+      "Body_upload_signed_document_improvement_plans__plan_id__documents__format_type__signed_post": {
+        "properties": {
+          "file": {
             "type": "string",
             "contentMediaType": "application/octet-stream",
             "title": "File"
@@ -9679,7 +12695,7 @@
         },
         "type": "object",
         "required": ["file"],
-        "title": "Body_upload_evaluation_evaluations_upload_post"
+        "title": "Body_upload_signed_document_improvement_plans__plan_id__documents__format_type__signed_post"
       },
       "Body_upload_teachers_excel_teachers_upload_post": {
         "properties": {
@@ -9724,6 +12740,12 @@
         "required": ["created", "skipped", "errors"],
         "title": "BulkUploadResult",
         "description": "Schema for bulk upload result."
+      },
+      "CloseResult": {
+        "type": "string",
+        "enum": ["CUMPLIDO", "NO_CUMPLIDO"],
+        "title": "CloseResult",
+        "description": "Result requested when closing a plan."
       },
       "CommentOut": {
         "properties": {
@@ -9857,6 +12879,28 @@
             "type": "boolean",
             "title": "Pedagogical Category Modified By Director",
             "default": false
+          },
+          "risk_level_ai_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Level Ai Model"
+          },
+          "pedagogical_category_ai_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pedagogical Category Ai Model"
           },
           "created_at": {
             "type": "string",
@@ -10209,6 +13253,19 @@
         "type": "object",
         "required": ["code", "text"],
         "title": "CourseHistoryQuestion"
+      },
+      "CourseNameUpdate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": ["name"],
+        "title": "CourseNameUpdate",
+        "description": "Schema for a director patching only the course name."
       },
       "CourseOut": {
         "properties": {
@@ -10730,6 +13787,17 @@
               }
             ],
             "title": "Group Name"
+          },
+          "modality": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modality"
           },
           "course_id": {
             "type": "integer",
@@ -11337,6 +14405,17 @@
             ],
             "title": "Department Average"
           },
+          "modality": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modality"
+          },
           "dimensions": {
             "items": {
               "$ref": "#/components/schemas/DimensionDetailItem"
@@ -11364,7 +14443,7 @@
           "dimensions"
         ],
         "title": "EvaluationDimensionDetailOut",
-        "description": "Breakdown of an evaluation's pedagogical dimensions.\n\nWhen filtered by `teacher_id` and/or `course_id`, `overall` carries the\nsame breakdown for the whole evaluation so the filtered result can be\ncompared against it."
+        "description": "Breakdown of an evaluation's pedagogical dimensions.\n\nWhen filtered by `teacher_id` and/or `course_id`, `overall` carries the\nsame breakdown for the whole evaluation so the filtered result can be\ncompared against it. `modality` echoes the kind of program the whole\nresponse is scoped to, or null when it covers the entire evaluation."
       },
       "EvaluationOut": {
         "properties": {
@@ -11437,6 +14516,25 @@
               }
             ],
             "title": "Pdf Url"
+          },
+          "pdf_urls": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Pdf Urls",
+            "default": []
+          },
+          "modality": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modality"
           },
           "active": {
             "anyOf": [
@@ -12024,6 +15122,18 @@
         "title": "EvaluationSummaryOut",
         "description": "Aggregated statistics for a single evaluation (one department, one period)."
       },
+      "EvidenceRequestStatus": {
+        "type": "string",
+        "enum": ["PENDIENTE", "EN_REVISION", "APROBADA", "RECHAZADA"],
+        "title": "EvidenceRequestStatus",
+        "description": "State of a deliverable the director asked the teacher for.\n\nA rejection sends the request back to PENDIENTE so the teacher can submit\nagain."
+      },
+      "EvidenceStatus": {
+        "type": "string",
+        "enum": ["PENDIENTE", "APROBADA", "RECHAZADA"],
+        "title": "EvidenceStatus",
+        "description": "Review state of a single submitted evidence."
+      },
       "FacultyCreate": {
         "properties": {
           "name": {
@@ -12150,6 +15260,2298 @@
         "required": ["status"],
         "title": "HealthResponseSchema",
         "description": "Health-check response schema."
+      },
+      "ImprovementPlanCaseReportOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "plan_id": {
+            "type": "integer",
+            "title": "Plan Id"
+          },
+          "reported_by": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reported By"
+          },
+          "complaint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Complaint"
+          },
+          "observations": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observations"
+          },
+          "committee_act_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Committee Act Reference"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": ["id", "plan_id"],
+        "title": "ImprovementPlanCaseReportOut",
+        "description": "Schema for outputting the Formato 1 case report."
+      },
+      "ImprovementPlanCaseReportUpsert": {
+        "properties": {
+          "complaint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Complaint"
+          },
+          "observations": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observations"
+          },
+          "committee_act_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Committee Act Reference"
+          }
+        },
+        "type": "object",
+        "title": "ImprovementPlanCaseReportUpsert",
+        "description": "Formato 1 fields — the complaint that originated the plan."
+      },
+      "ImprovementPlanCheckpointNoteOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "aspect": {
+            "type": "integer",
+            "title": "Aspect"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": ["id", "aspect"],
+        "title": "ImprovementPlanCheckpointNoteOut",
+        "description": "Schema for outputting one follow-up cell."
+      },
+      "ImprovementPlanCheckpointNoteUpsert": {
+        "properties": {
+          "aspect": {
+            "type": "integer",
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Aspect"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": ["aspect"],
+        "title": "ImprovementPlanCheckpointNoteUpsert",
+        "description": "One cell of the follow-up matrix (aspect x seguimiento)."
+      },
+      "ImprovementPlanCheckpointOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "plan_id": {
+            "type": "integer",
+            "title": "Plan Id"
+          },
+          "stage": {
+            "type": "string",
+            "title": "Stage"
+          },
+          "scheduled_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scheduled Date"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "aspect_notes": {
+            "items": {
+              "$ref": "#/components/schemas/ImprovementPlanCheckpointNoteOut"
+            },
+            "type": "array",
+            "title": "Aspect Notes"
+          }
+        },
+        "type": "object",
+        "required": ["id", "plan_id", "stage", "status"],
+        "title": "ImprovementPlanCheckpointOut",
+        "description": "Schema for outputting a plan checkpoint."
+      },
+      "ImprovementPlanCheckpointUpdate": {
+        "properties": {
+          "scheduled_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scheduled Date"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "aspect_notes": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ImprovementPlanCheckpointNoteUpsert"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aspect Notes"
+          }
+        },
+        "type": "object",
+        "title": "ImprovementPlanCheckpointUpdate",
+        "description": "Schema for filling in one of the two formal seguimientos."
+      },
+      "ImprovementPlanClose": {
+        "properties": {
+          "result": {
+            "$ref": "#/components/schemas/CloseResult"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": ["result"],
+        "title": "ImprovementPlanClose",
+        "description": "Schema for closing a plan."
+      },
+      "ImprovementPlanCourseCreate": {
+        "properties": {
+          "academic_group_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Academic Group Id"
+          },
+          "course_name": {
+            "type": "string",
+            "title": "Course Name"
+          },
+          "course_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Course Code"
+          },
+          "group_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Group Name"
+          },
+          "program_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Program Name"
+          },
+          "order": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Order"
+          }
+        },
+        "type": "object",
+        "required": ["course_name"],
+        "title": "ImprovementPlanCourseCreate",
+        "description": "A row of the asignaturas table printed on Formatos 2 and 3."
+      },
+      "ImprovementPlanCourseOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "plan_id": {
+            "type": "integer",
+            "title": "Plan Id"
+          },
+          "academic_group_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Academic Group Id"
+          },
+          "course_name": {
+            "type": "string",
+            "title": "Course Name"
+          },
+          "course_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Course Code"
+          },
+          "group_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Group Name"
+          },
+          "program_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Program Name"
+          },
+          "order": {
+            "type": "integer",
+            "title": "Order"
+          }
+        },
+        "type": "object",
+        "required": ["id", "plan_id", "course_name", "order"],
+        "title": "ImprovementPlanCourseOut",
+        "description": "Schema for outputting an asignatura row."
+      },
+      "ImprovementPlanCreate": {
+        "properties": {
+          "teacher_id": {
+            "type": "integer",
+            "title": "Teacher Id"
+          },
+          "origin_period_id": {
+            "type": "integer",
+            "title": "Origin Period Id"
+          },
+          "verification_period_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verification Period Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "program_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Program Name"
+          },
+          "faculty_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Faculty Name"
+          },
+          "department_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department Name"
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date"
+          },
+          "end_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Date"
+          },
+          "acta_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acta Number"
+          },
+          "acta_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acta Date"
+          },
+          "council_observations": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Council Observations"
+          },
+          "department_director_observations": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department Director Observations"
+          },
+          "program_director_observations": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Program Director Observations"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ImprovementPlanItemCreate"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "courses": {
+            "items": {
+              "$ref": "#/components/schemas/ImprovementPlanCourseCreate"
+            },
+            "type": "array",
+            "title": "Courses"
+          }
+        },
+        "type": "object",
+        "required": ["teacher_id", "origin_period_id", "title"],
+        "title": "ImprovementPlanCreate",
+        "description": "Schema for creating an improvement plan."
+      },
+      "ImprovementPlanDocumentOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "plan_id": {
+            "type": "integer",
+            "title": "Plan Id"
+          },
+          "format_type": {
+            "type": "string",
+            "title": "Format Type"
+          },
+          "generated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated At"
+          },
+          "generated_by": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated By"
+          },
+          "signed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed At"
+          },
+          "signed_by": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed By"
+          },
+          "signed_filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed Filename"
+          },
+          "has_generated": {
+            "type": "boolean",
+            "title": "Has Generated",
+            "default": false
+          },
+          "has_signed": {
+            "type": "boolean",
+            "title": "Has Signed",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": ["id", "plan_id", "format_type"],
+        "title": "ImprovementPlanDocumentOut",
+        "description": "Schema for outputting a generated/signed official form."
+      },
+      "ImprovementPlanEvidenceCommentCreate": {
+        "properties": {
+          "body": {
+            "type": "string",
+            "title": "Body"
+          }
+        },
+        "type": "object",
+        "required": ["body"],
+        "title": "ImprovementPlanEvidenceCommentCreate",
+        "description": "Schema for posting a message on an evidence request thread."
+      },
+      "ImprovementPlanEvidenceCommentOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "request_id": {
+            "type": "integer",
+            "title": "Request Id"
+          },
+          "author_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author Id"
+          },
+          "author_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author Name"
+          },
+          "body": {
+            "type": "string",
+            "title": "Body"
+          },
+          "is_system": {
+            "type": "boolean",
+            "title": "Is System",
+            "default": false
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": ["id", "request_id", "body"],
+        "title": "ImprovementPlanEvidenceCommentOut",
+        "description": "Schema for outputting a message of an evidence request thread."
+      },
+      "ImprovementPlanEvidenceOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "plan_id": {
+            "type": "integer",
+            "title": "Plan Id"
+          },
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Id"
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id"
+          },
+          "uploaded_by": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uploaded By"
+          },
+          "uploader_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uploader Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "file_url": {
+            "type": "string",
+            "title": "File Url"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "PENDIENTE"
+          },
+          "reviewed_by": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed By"
+          },
+          "reviewed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed At"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": ["id", "plan_id", "file_url"],
+        "title": "ImprovementPlanEvidenceOut",
+        "description": "Schema for outputting a plan evidence (PDF attached as compliance proof)."
+      },
+      "ImprovementPlanEvidenceRequestCreate": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Id"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          }
+        },
+        "type": "object",
+        "required": ["title"],
+        "title": "ImprovementPlanEvidenceRequestCreate",
+        "description": "Schema for asking the teacher for a specific deliverable."
+      },
+      "ImprovementPlanEvidenceRequestOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "plan_id": {
+            "type": "integer",
+            "title": "Plan Id"
+          },
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Id"
+          },
+          "requested_by": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requested By"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          },
+          "evidences": {
+            "items": {
+              "$ref": "#/components/schemas/ImprovementPlanEvidenceOut"
+            },
+            "type": "array",
+            "title": "Evidences"
+          },
+          "comments": {
+            "items": {
+              "$ref": "#/components/schemas/ImprovementPlanEvidenceCommentOut"
+            },
+            "type": "array",
+            "title": "Comments"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": ["id", "plan_id", "title", "status"],
+        "title": "ImprovementPlanEvidenceRequestOut",
+        "description": "Schema for outputting an evidence request with its thread."
+      },
+      "ImprovementPlanEvidenceRequestUpdate": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EvidenceRequestStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "title": "ImprovementPlanEvidenceRequestUpdate",
+        "description": "Schema for editing a pending evidence request."
+      },
+      "ImprovementPlanEvidenceReview": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/EvidenceStatus"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          }
+        },
+        "type": "object",
+        "required": ["status"],
+        "title": "ImprovementPlanEvidenceReview",
+        "description": "Schema for the director's verdict on a submitted evidence."
+      },
+      "ImprovementPlanItemCommentOut": {
+        "properties": {
+          "comment_id": {
+            "type": "integer",
+            "title": "Comment Id"
+          },
+          "original_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original Text"
+          },
+          "risk_level_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Level Name"
+          },
+          "risk_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Score"
+          }
+        },
+        "type": "object",
+        "required": ["comment_id"],
+        "title": "ImprovementPlanItemCommentOut",
+        "description": "A student comment cited as justification of an item."
+      },
+      "ImprovementPlanItemCreate": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "commitment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Commitment"
+          },
+          "aspect": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 5.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aspect"
+          },
+          "target_type": {
+            "$ref": "#/components/schemas/TargetType",
+            "default": "QUALITATIVE"
+          },
+          "target_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Ref"
+          },
+          "baseline_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline Value"
+          },
+          "target_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Value"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ItemStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "order": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Order"
+          },
+          "comment_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment Ids"
+          }
+        },
+        "type": "object",
+        "required": ["description"],
+        "title": "ImprovementPlanItemCreate",
+        "description": "Schema for creating/updating a plan item.\n\nWhen ``id`` is present on update the existing item is updated; otherwise a\nnew item is created. Items omitted from an update payload are removed."
+      },
+      "ImprovementPlanItemOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "plan_id": {
+            "type": "integer",
+            "title": "Plan Id"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "commitment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Commitment"
+          },
+          "aspect": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aspect"
+          },
+          "target_type": {
+            "type": "string",
+            "title": "Target Type"
+          },
+          "target_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Ref"
+          },
+          "baseline_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline Value"
+          },
+          "target_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Value"
+          },
+          "result_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result Value"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "order": {
+            "type": "integer",
+            "title": "Order"
+          },
+          "comments": {
+            "items": {
+              "$ref": "#/components/schemas/ImprovementPlanItemCommentOut"
+            },
+            "type": "array",
+            "title": "Comments"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": ["id", "plan_id", "description", "target_type", "status", "order"],
+        "title": "ImprovementPlanItemOut",
+        "description": "Schema for outputting a plan item."
+      },
+      "ImprovementPlanOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "teacher_id": {
+            "type": "integer",
+            "title": "Teacher Id"
+          },
+          "teacher_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Teacher Name"
+          },
+          "teacher_avatar_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Teacher Avatar Url"
+          },
+          "department_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department Id"
+          },
+          "origin_period_id": {
+            "type": "integer",
+            "title": "Origin Period Id"
+          },
+          "origin_period_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Origin Period Code"
+          },
+          "verification_period_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verification Period Id"
+          },
+          "verification_period_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verification Period Code"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "program_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Program Name"
+          },
+          "faculty_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Faculty Name"
+          },
+          "department_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department Name"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "close_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Close Reason"
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date"
+          },
+          "end_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Date"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "closed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed At"
+          },
+          "acta_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acta Number"
+          },
+          "acta_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acta Date"
+          },
+          "acta_status": {
+            "type": "string",
+            "title": "Acta Status",
+            "default": "BORRADOR"
+          },
+          "acta_closed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acta Closed At"
+          },
+          "acta_closed_by": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acta Closed By"
+          },
+          "acta_locked": {
+            "type": "boolean",
+            "title": "Acta Locked",
+            "default": false
+          },
+          "council_observations": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Council Observations"
+          },
+          "department_director_observations": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department Director Observations"
+          },
+          "program_director_observations": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Program Director Observations"
+          },
+          "has_acta": {
+            "type": "boolean",
+            "title": "Has Acta",
+            "default": false
+          },
+          "progress": {
+            "type": "integer",
+            "title": "Progress",
+            "default": 0
+          },
+          "verification": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ImprovementPlanVerificationOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ImprovementPlanItemOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "checkpoints": {
+            "items": {
+              "$ref": "#/components/schemas/ImprovementPlanCheckpointOut"
+            },
+            "type": "array",
+            "title": "Checkpoints"
+          },
+          "evidences": {
+            "items": {
+              "$ref": "#/components/schemas/ImprovementPlanEvidenceOut"
+            },
+            "type": "array",
+            "title": "Evidences"
+          },
+          "courses": {
+            "items": {
+              "$ref": "#/components/schemas/ImprovementPlanCourseOut"
+            },
+            "type": "array",
+            "title": "Courses"
+          },
+          "case_report": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ImprovementPlanCaseReportOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/ImprovementPlanDocumentOut"
+            },
+            "type": "array",
+            "title": "Documents"
+          },
+          "evidence_count": {
+            "type": "integer",
+            "title": "Evidence Count",
+            "default": 0
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": ["id", "teacher_id", "origin_period_id", "title", "status"],
+        "title": "ImprovementPlanOut",
+        "description": "Schema for outputting an improvement plan."
+      },
+      "ImprovementPlanUpdate": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "verification_period_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verification Period Id"
+          },
+          "program_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Program Name"
+          },
+          "faculty_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Faculty Name"
+          },
+          "department_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department Name"
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date"
+          },
+          "end_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Date"
+          },
+          "acta_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acta Number"
+          },
+          "acta_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acta Date"
+          },
+          "council_observations": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Council Observations"
+          },
+          "department_director_observations": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department Director Observations"
+          },
+          "program_director_observations": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Program Director Observations"
+          },
+          "items": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ImprovementPlanItemCreate"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Items"
+          },
+          "courses": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ImprovementPlanCourseCreate"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Courses"
+          }
+        },
+        "type": "object",
+        "title": "ImprovementPlanUpdate",
+        "description": "Schema for updating an improvement plan and its items.\n\nIf ``items`` is provided it replaces the full item list (add/remove/update);\nsame for ``courses``."
+      },
+      "ImprovementPlanVerificationCommentOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Id"
+          },
+          "comment_id": {
+            "type": "integer",
+            "title": "Comment Id"
+          },
+          "original_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original Text"
+          },
+          "pedagogical_category_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pedagogical Category Id"
+          },
+          "category_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Name"
+          },
+          "risk_level_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Level Name"
+          },
+          "is_alert": {
+            "type": "boolean",
+            "title": "Is Alert",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": ["id", "comment_id"],
+        "title": "ImprovementPlanVerificationCommentOut",
+        "description": "A student comment bringing back the complaint behind a commitment."
+      },
+      "ImprovementPlanVerificationCourseOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "academic_group_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Academic Group Id"
+          },
+          "course_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Course Name"
+          },
+          "course_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Course Code"
+          },
+          "group_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Group Name"
+          },
+          "result_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result Value"
+          },
+          "met": {
+            "type": "boolean",
+            "title": "Met",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": ["id"],
+        "title": "ImprovementPlanVerificationCourseOut",
+        "description": "One subject of the verification period, for the indicator verified."
+      },
+      "ImprovementPlanVerificationItemOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Id"
+          },
+          "target_type": {
+            "type": "string",
+            "title": "Target Type"
+          },
+          "target_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Ref"
+          },
+          "target_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Value"
+          },
+          "result_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result Value"
+          },
+          "met": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Met"
+          },
+          "courses": {
+            "items": {
+              "$ref": "#/components/schemas/ImprovementPlanVerificationCourseOut"
+            },
+            "type": "array",
+            "title": "Courses"
+          }
+        },
+        "type": "object",
+        "required": ["id", "target_type"],
+        "title": "ImprovementPlanVerificationItemOut",
+        "description": "One agreed target, measured again a semester later."
+      },
+      "ImprovementPlanVerificationOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "plan_id": {
+            "type": "integer",
+            "title": "Plan Id"
+          },
+          "period_id": {
+            "type": "integer",
+            "title": "Period Id"
+          },
+          "period_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period Code"
+          },
+          "result": {
+            "type": "string",
+            "title": "Result"
+          },
+          "scores_verified_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scores Verified At"
+          },
+          "comments_verified_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comments Verified At"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ImprovementPlanVerificationItemOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "comment_findings": {
+            "items": {
+              "$ref": "#/components/schemas/ImprovementPlanVerificationCommentOut"
+            },
+            "type": "array",
+            "title": "Comment Findings"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": ["id", "plan_id", "period_id", "result"],
+        "title": "ImprovementPlanVerificationOut",
+        "description": "What the following semester said about a plan.\n\n``result`` is what the grades say — MEJORO / NO_MEJORO / SIN_DATOS — and is\nnever the closing the director signed, which lives in ``status``."
+      },
+      "ItemStatus": {
+        "type": "string",
+        "enum": ["PENDIENTE", "EN_PROGRESO", "CUMPLIDO", "NO_CUMPLIDO"],
+        "title": "ItemStatus",
+        "description": "Status of a single plan item."
       },
       "NotificationCreate": {
         "properties": {
@@ -12341,6 +17743,103 @@
         "required": ["id", "name"],
         "title": "PedagogicalCategoryScoreOut",
         "description": "Pedagogical category output with the confidence score of this assignment."
+      },
+      "ProgramCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          }
+        },
+        "type": "object",
+        "required": ["name", "code"],
+        "title": "ProgramCreate",
+        "description": "Schema for creating a program."
+      },
+      "ProgramOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": ["id", "name", "code", "active", "created_at", "updated_at"],
+        "title": "ProgramOut",
+        "description": "Schema for outputting a program."
+      },
+      "ProgramUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active"
+          }
+        },
+        "type": "object",
+        "title": "ProgramUpdate",
+        "description": "Schema for updating a program."
       },
       "QuestionComparisonDetail": {
         "properties": {
@@ -13437,6 +18936,214 @@
         "required": ["status"],
         "title": "ResponseEnvelope[HealthResponseSchema]"
       },
+      "ResponseEnvelope_ImprovementPlanEvidenceCommentOut_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Response status: 'success' or 'error'",
+            "examples": ["success", "error"]
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ImprovementPlanEvidenceCommentOut"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Response payload (null for error responses)"
+          },
+          "pagination": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Pagination"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pagination metadata (only for paginated list endpoints)"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorDetail"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Error details (null for success responses)"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "ISO 8601 UTC timestamp of the response"
+          }
+        },
+        "type": "object",
+        "required": ["status"],
+        "title": "ResponseEnvelope[ImprovementPlanEvidenceCommentOut]"
+      },
+      "ResponseEnvelope_ImprovementPlanEvidenceOut_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Response status: 'success' or 'error'",
+            "examples": ["success", "error"]
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ImprovementPlanEvidenceOut"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Response payload (null for error responses)"
+          },
+          "pagination": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Pagination"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pagination metadata (only for paginated list endpoints)"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorDetail"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Error details (null for success responses)"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "ISO 8601 UTC timestamp of the response"
+          }
+        },
+        "type": "object",
+        "required": ["status"],
+        "title": "ResponseEnvelope[ImprovementPlanEvidenceOut]"
+      },
+      "ResponseEnvelope_ImprovementPlanEvidenceRequestOut_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Response status: 'success' or 'error'",
+            "examples": ["success", "error"]
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ImprovementPlanEvidenceRequestOut"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Response payload (null for error responses)"
+          },
+          "pagination": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Pagination"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pagination metadata (only for paginated list endpoints)"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorDetail"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Error details (null for success responses)"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "ISO 8601 UTC timestamp of the response"
+          }
+        },
+        "type": "object",
+        "required": ["status"],
+        "title": "ResponseEnvelope[ImprovementPlanEvidenceRequestOut]"
+      },
+      "ResponseEnvelope_ImprovementPlanOut_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Response status: 'success' or 'error'",
+            "examples": ["success", "error"]
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ImprovementPlanOut"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Response payload (null for error responses)"
+          },
+          "pagination": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Pagination"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pagination metadata (only for paginated list endpoints)"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorDetail"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Error details (null for success responses)"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "ISO 8601 UTC timestamp of the response"
+          }
+        },
+        "type": "object",
+        "required": ["status"],
+        "title": "ResponseEnvelope[ImprovementPlanOut]"
+      },
       "ResponseEnvelope_NotificationOut_": {
         "properties": {
           "status": {
@@ -13488,6 +19195,58 @@
         "type": "object",
         "required": ["status"],
         "title": "ResponseEnvelope[NotificationOut]"
+      },
+      "ResponseEnvelope_ProgramOut_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Response status: 'success' or 'error'",
+            "examples": ["success", "error"]
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProgramOut"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Response payload (null for error responses)"
+          },
+          "pagination": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Pagination"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pagination metadata (only for paginated list endpoints)"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorDetail"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Error details (null for success responses)"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "ISO 8601 UTC timestamp of the response"
+          }
+        },
+        "type": "object",
+        "required": ["status"],
+        "title": "ResponseEnvelope[ProgramOut]"
       },
       "ResponseEnvelope_SettingOut_": {
         "properties": {
@@ -14523,6 +20282,118 @@
         "required": ["status"],
         "title": "ResponseEnvelope[list[FacultyOut]]"
       },
+      "ResponseEnvelope_list_ImprovementPlanEvidenceRequestOut__": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Response status: 'success' or 'error'",
+            "examples": ["success", "error"]
+          },
+          "data": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ImprovementPlanEvidenceRequestOut"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data",
+            "description": "Response payload (null for error responses)"
+          },
+          "pagination": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Pagination"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pagination metadata (only for paginated list endpoints)"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorDetail"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Error details (null for success responses)"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "ISO 8601 UTC timestamp of the response"
+          }
+        },
+        "type": "object",
+        "required": ["status"],
+        "title": "ResponseEnvelope[list[ImprovementPlanEvidenceRequestOut]]"
+      },
+      "ResponseEnvelope_list_ImprovementPlanOut__": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Response status: 'success' or 'error'",
+            "examples": ["success", "error"]
+          },
+          "data": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ImprovementPlanOut"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data",
+            "description": "Response payload (null for error responses)"
+          },
+          "pagination": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Pagination"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pagination metadata (only for paginated list endpoints)"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorDetail"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Error details (null for success responses)"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "ISO 8601 UTC timestamp of the response"
+          }
+        },
+        "type": "object",
+        "required": ["status"],
+        "title": "ResponseEnvelope[list[ImprovementPlanOut]]"
+      },
       "ResponseEnvelope_list_NotificationOut__": {
         "properties": {
           "status": {
@@ -14578,6 +20449,62 @@
         "type": "object",
         "required": ["status"],
         "title": "ResponseEnvelope[list[NotificationOut]]"
+      },
+      "ResponseEnvelope_list_ProgramOut__": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Response status: 'success' or 'error'",
+            "examples": ["success", "error"]
+          },
+          "data": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ProgramOut"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data",
+            "description": "Response payload (null for error responses)"
+          },
+          "pagination": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Pagination"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pagination metadata (only for paginated list endpoints)"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorDetail"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Error details (null for success responses)"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "ISO 8601 UTC timestamp of the response"
+          }
+        },
+        "type": "object",
+        "required": ["status"],
+        "title": "ResponseEnvelope[list[ProgramOut]]"
       },
       "ResponseEnvelope_list_QuestionItem__": {
         "properties": {
@@ -15074,12 +21001,23 @@
               }
             ],
             "title": "Description"
+          },
+          "department_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department Id"
           }
         },
         "type": "object",
         "required": ["key", "value"],
         "title": "SettingCreate",
-        "description": "Schema for creating a setting."
+        "description": "Schema for creating a setting.\n\nThe setting is always created in the caller's own scope — a director's\ndepartment, or the institutional one for an ADMIN. ``department_id`` is\naccepted only so that asking for someone else's scope can be refused out\nloud: silently dropping it would file the setting somewhere the caller did\nnot ask for."
       },
       "SettingHistoryOut": {
         "properties": {
@@ -15105,6 +21043,17 @@
           "new_value": {
             "type": "string",
             "title": "New Value"
+          },
+          "department_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department Id"
           },
           "changed_by": {
             "anyOf": [
@@ -15162,6 +21111,7 @@
           "key",
           "old_value",
           "new_value",
+          "department_id",
           "changed_by",
           "changed_by_name",
           "changed_by_avatar_url",
@@ -15199,6 +21149,31 @@
               }
             ],
             "title": "Description"
+          },
+          "department_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department Id"
+          },
+          "department_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department Name"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/SettingScope"
           },
           "changed_by": {
             "anyOf": [
@@ -15256,6 +21231,8 @@
           "value",
           "value_type",
           "description",
+          "department_id",
+          "scope",
           "changed_by",
           "changed_by_name",
           "changed_by_avatar_url",
@@ -15265,6 +21242,12 @@
         ],
         "title": "SettingOut",
         "description": "Schema for outputting a setting."
+      },
+      "SettingScope": {
+        "type": "string",
+        "enum": ["GLOBAL", "DEPARTMENT"],
+        "title": "SettingScope",
+        "description": "Who a setting belongs to."
       },
       "SettingUpdate": {
         "properties": {
@@ -15288,6 +21271,12 @@
         "required": ["value"],
         "title": "SettingUpdate",
         "description": "Schema for updating a setting."
+      },
+      "TargetType": {
+        "type": "string",
+        "enum": ["DIMENSION", "QUESTION", "PEDAGOGICAL_CATEGORY", "OVERALL_AVERAGE", "QUALITATIVE"],
+        "title": "TargetType",
+        "description": "How an item's compliance is measured against the verification period.\n\n``DIMENSION`` targets the overall score of a dimension (e.g. \"Desempeño\nDocente\"); ``QUESTION`` targets a single question of the evaluation form\ninside that dimension (e.g. \"011 - Asiste puntualmente a clase\")."
       },
       "TeacherCommentsOut": {
         "properties": {

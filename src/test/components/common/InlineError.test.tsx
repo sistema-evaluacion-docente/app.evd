@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import userEvent from '@testing-library/user-event'
+import { describe, expect, it, vi } from 'vitest'
 
 import { InlineError } from '@/components/common/InlineError'
 
@@ -26,5 +27,21 @@ describe('InlineError', () => {
     render(<InlineError message="Campo requerido" id="file-error" />)
 
     expect(screen.getByRole('alert')).toHaveAttribute('id', 'file-error')
+  })
+
+  it('has no close button unless it can be cleared', () => {
+    render(<InlineError message="Campo requerido" />)
+
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
+  })
+
+  it('clears itself through the caller, so the error can come back later', async () => {
+    const onDismiss = vi.fn()
+
+    render(<InlineError message="Ocurrió un error inesperado" onDismiss={onDismiss} />)
+
+    await userEvent.click(screen.getByRole('button', { name: /cerrar el error/i }))
+
+    expect(onDismiss).toHaveBeenCalledTimes(1)
   })
 })

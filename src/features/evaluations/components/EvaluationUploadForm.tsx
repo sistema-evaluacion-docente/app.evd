@@ -138,7 +138,7 @@ export function EvaluationUploadForm() {
               .
             </p>
 
-            {uploadError && <InlineError message={uploadError} />}
+            {uploadError && <InlineError message={uploadError} onDismiss={() => upload.reset()} />}
 
             <div className="flex items-center justify-end gap-3">
               <Button
