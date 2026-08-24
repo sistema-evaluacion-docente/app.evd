@@ -19,6 +19,7 @@ import { formatPdfAverage } from '@/lib/pdf/formatPdfAverage'
 import { pdfColors } from '@/lib/pdf/pdfColors'
 import { cn } from '@/lib/utils'
 import { useGetDepartmentPeriodRangeStats } from '../api'
+import { DepartmentCommentPeriodBreakdown } from './DepartmentCommentPeriodBreakdown'
 import { DepartmentCommentsSummary } from './DepartmentCommentsSummary'
 import { DepartmentDimensionsChart } from './DepartmentDimensionsChart'
 import { DepartmentStatsHero } from './DepartmentStatsHero'
@@ -102,22 +103,13 @@ export function DepartmentPeriodRangeSummary({
     endPeriod: endPeriod?.code,
   })
 
-  // Only fires while comparing a genuine range — feeds the "evolución" mode of
-  // the comments summary, comparing the range's first period against its last.
+  // Comparing a genuine range switches the comments card to
+  // `DepartmentCommentPeriodBreakdown`, which fetches its own per-period data.
   const rangeCompareActive =
     compareRange &&
     startPeriod !== undefined &&
     endPeriod !== undefined &&
     startPeriod !== endPeriod
-
-  const { data: startRangeStats } = useGetDepartmentPeriodRangeStats({
-    startPeriod: rangeCompareActive ? startPeriod?.code : undefined,
-    endPeriod: rangeCompareActive ? startPeriod?.code : undefined,
-  })
-  const { data: endRangeStats } = useGetDepartmentPeriodRangeStats({
-    startPeriod: rangeCompareActive ? endPeriod?.code : undefined,
-    endPeriod: rangeCompareActive ? endPeriod?.code : undefined,
-  })
 
   /* MOVER BADGES DISABLED — pending fix: for a single period, the "previous
      period" is picked purely by chronological code order, which can land on
@@ -434,31 +426,14 @@ export function DepartmentPeriodRangeSummary({
           {(data?.data?.comments_risk_counts ||
             data?.data?.comments_pedagogical_category_counts) && (
             <div ref={commentsCardRef}>
-              <DepartmentCommentsSummary
-                riskCounts={
-                  rangeCompareActive
-                    ? endRangeStats?.data?.comments_risk_counts
-                    : data?.data?.comments_risk_counts
-                }
-                categoryCounts={
-                  rangeCompareActive
-                    ? endRangeStats?.data?.comments_pedagogical_category_counts
-                    : data?.data?.comments_pedagogical_category_counts
-                }
-                previousRiskCounts={
-                  rangeCompareActive ? startRangeStats?.data?.comments_risk_counts : undefined
-                }
-                previousCategoryCounts={
-                  rangeCompareActive
-                    ? startRangeStats?.data?.comments_pedagogical_category_counts
-                    : undefined
-                }
-                comparisonLabel={
-                  rangeCompareActive && startPeriod && endPeriod
-                    ? { start: startPeriod.name, end: endPeriod.name }
-                    : undefined
-                }
-              />
+              {rangeCompareActive ? (
+                <DepartmentCommentPeriodBreakdown periods={data?.data?.periods ?? []} />
+              ) : (
+                <DepartmentCommentsSummary
+                  riskCounts={data?.data?.comments_risk_counts}
+                  categoryCounts={data?.data?.comments_pedagogical_category_counts}
+                />
+              )}
             </div>
           )}
 

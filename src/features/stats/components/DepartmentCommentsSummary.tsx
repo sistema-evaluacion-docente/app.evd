@@ -17,20 +17,19 @@ type ViewMode = 'bar' | 'pie' | 'both'
 export interface DepartmentCommentsSummaryProps {
   riskCounts: { BAJO: number; MEDIO: number; ALTO: number } | undefined
   categoryCounts: Record<string, number> | undefined
-  /** Counts from the range's starting period, when comparing a genuine range — enables the delta indicator (donut mode only). */
-  previousRiskCounts?: { BAJO: number; MEDIO: number; ALTO: number }
-  previousCategoryCounts?: Record<string, number>
-  /** Start/end period names, when comparing a genuine range — swaps the generic subtitle for "Comparando X con Y". */
-  comparisonLabel?: { start: string; end: string }
   className?: string
 }
 
 /**
- * Comment breakdown for the department's period-range report: risk level and
- * pedagogical category, as the existing vertical bar charts
+ * Comment breakdown for a single period: risk level and pedagogical
+ * category, as the existing vertical bar charts
  * (`DepartmentCommentRiskChart`/`DepartmentCommentCategoriesChart`, unchanged),
  * as donuts (`CountPieChart`), or both stacked together — one toggle switches
  * every column at once, e.g. to include both forms in a printed report.
+ *
+ * Single period only — when comparing a range, `DepartmentPeriodRangeSummary`
+ * renders `DepartmentCommentPeriodBreakdown` instead, since a range needs a
+ * genuine per-period read, not one period's counts labeled as a comparison.
  *
  * @example
  * <DepartmentCommentsSummary
@@ -41,9 +40,6 @@ export interface DepartmentCommentsSummaryProps {
 export function DepartmentCommentsSummary({
   riskCounts,
   categoryCounts,
-  previousRiskCounts,
-  previousCategoryCounts,
-  comparisonLabel,
   className,
 }: DepartmentCommentsSummaryProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('bar')
@@ -53,7 +49,6 @@ export function DepartmentCommentsSummary({
     label: level.name,
     value: riskCounts?.[level.key] ?? 0,
     color: level.color,
-    previousValue: previousRiskCounts?.[level.key],
   }))
 
   const categoryEntries = ANALYZABLE_CATEGORIES.map((category) => ({
@@ -61,8 +56,6 @@ export function DepartmentCommentsSummary({
     label: categoryLabel(category.code),
     value: categoryCounts?.[category.code] ?? 0,
     color: categoryColor(category.code),
-    previousValue:
-      previousCategoryCounts?.[category.code] ?? (previousCategoryCounts ? 0 : undefined),
   }))
 
   return (
@@ -71,9 +64,8 @@ export function DepartmentCommentsSummary({
         <div>
           <h2 className="text-sm font-medium">Comentarios de la heteroevaluación</h2>
           <p className="text-muted-foreground mt-0.5 text-xs">
-            {comparisonLabel
-              ? `Comparando ${comparisonLabel.start} con ${comparisonLabel.end}.`
-              : 'Clasificación de los comentarios que los estudiantes dejaron en las evaluaciones del departamento durante el rango seleccionado.'}
+            Clasificación de los comentarios que los estudiantes dejaron en las evaluaciones del
+            departamento durante el periodo seleccionado.
           </p>
         </div>
 
