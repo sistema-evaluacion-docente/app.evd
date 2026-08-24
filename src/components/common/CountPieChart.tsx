@@ -26,6 +26,11 @@ export interface CountPieChartProps {
   /** Legend below the donut — color alone isn't enough to read a slice. Defaults to `true`. */
   showLegend?: boolean
   emptyMessage?: string
+  /**
+   * Makes every slice — and its legend row, which is where a thin slice is
+   * actually reachable — clickable, handing back the entry it was drawn for.
+   */
+  onEntryClick?: (entry: CountPieChartEntry) => void
   chartClassName?: string
   className?: string
 }
@@ -55,6 +60,7 @@ export function CountPieChart({
   entries,
   showLegend = true,
   emptyMessage = 'No hay datos suficientes para graficar.',
+  onEntryClick,
   chartClassName,
   className,
 }: CountPieChartProps) {
@@ -91,6 +97,16 @@ export function CountPieChart({
             outerRadius="80%"
             paddingAngle={2}
             strokeWidth={2}
+            className={onEntryClick ? 'cursor-pointer' : undefined}
+            onClick={
+              onEntryClick
+                ? (_, index) => {
+                    const entry = entries[index]
+
+                    if (entry) onEntryClick(entry)
+                  }
+                : undefined
+            }
           >
             {entries.map((entry, index) => (
               <Cell key={entry.key} fill={entry.color ?? PALETTE[index % PALETTE.length]} />
@@ -105,11 +121,8 @@ export function CountPieChart({
             const delta = deltas[index]
             const relevant = isRelevantDelta(delta?.deltaPoints)
 
-            return (
-              <span
-                key={entry.key}
-                className="text-muted-foreground flex items-center gap-1.5 text-xs"
-              >
+            const content = (
+              <>
                 <span
                   aria-hidden="true"
                   className="size-2.5 shrink-0 rounded-full"
@@ -132,6 +145,29 @@ export function CountPieChart({
                     {delta.deltaPoints.toFixed(1)}%
                   </span>
                 )}
+              </>
+            )
+
+            const rowClass = 'text-muted-foreground flex items-center gap-1.5 text-xs'
+
+            // A button rather than a clickable span: the slices themselves are
+            // only reachable with a pointer, so the legend is what makes the
+            // same jump available from the keyboard.
+            return onEntryClick ? (
+              <button
+                key={entry.key}
+                type="button"
+                onClick={() => onEntryClick(entry)}
+                className={cn(
+                  rowClass,
+                  'hover:text-foreground w-fit cursor-pointer text-left transition-colors',
+                )}
+              >
+                {content}
+              </button>
+            ) : (
+              <span key={entry.key} className={rowClass}>
+                {content}
               </span>
             )
           })}
