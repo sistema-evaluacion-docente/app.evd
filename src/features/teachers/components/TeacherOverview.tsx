@@ -103,7 +103,7 @@ export function TeacherOverview({ teacher, extraActions }: TeacherOverviewProps)
               className="from-brand-500/10 pointer-events-none absolute -top-24 -right-24 size-56 rounded-full bg-radial to-transparent blur-2xl"
             />
 
-            <div className="relative flex items-center gap-2">
+            <div className="relative flex items-start gap-2">
               <div>
                 <Avatar className="size-20">
                   <AvatarFallback>{teacher.name.at(0)}</AvatarFallback>
@@ -112,9 +112,10 @@ export function TeacherOverview({ teacher, extraActions }: TeacherOverviewProps)
               </div>
 
               <div>
-                <h2 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
+                <h2 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl max-w-sm">
                   {teacher.name}
                 </h2>
+
                 <p className="text-muted-foreground tracking-wide uppercase">
                   {teacher.institutional_code}
                 </p>
@@ -140,13 +141,13 @@ export function TeacherOverview({ teacher, extraActions }: TeacherOverviewProps)
                 <div className="mt-3 flex flex-wrap justify-end gap-2">
                   {showBestMover && bestMover && (
                     <MoverBadge direction="up">
-                      Mayor mejora: {bestMover.dimension} (+{bestMover.delta.toFixed(2)})
+                      {bestMover.dimension} (+{bestMover.delta.toFixed(2)})
                     </MoverBadge>
                   )}
 
                   {showWorstMover && worstMover && (
                     <MoverBadge direction="down">
-                      Requiere atención: {worstMover.dimension} ({worstMover.delta.toFixed(2)})
+                      {worstMover.dimension} ({worstMover.delta.toFixed(2)})
                     </MoverBadge>
                   )}
                 </div>

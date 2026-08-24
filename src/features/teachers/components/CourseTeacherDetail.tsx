@@ -2,6 +2,7 @@ import { ChevronUp } from 'lucide-react'
 import { useId, useRef, useState } from 'react'
 
 import { GenerateReportPdfButton } from '@/components/common/GenerateReportPdfButton'
+import { MoverBadge } from '@/components/common/MoverBadge'
 import { PdfChartImage } from '@/components/common/pdf/PdfChartImage'
 import { PdfCommentList } from '@/components/common/pdf/PdfCommentList'
 import { PdfFactGrid } from '@/components/common/pdf/PdfFactGrid'
@@ -18,7 +19,6 @@ import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
-import { MoverBadge } from '@/components/common/MoverBadge'
 import { AI_STATUS_DISPLAY, type AiStatus } from '@/features/evaluations'
 import { CATEGORIES, categoryLabel, UNCATEGORIZED } from '@/lib/categoryLabel'
 import { dimensionColor } from '@/lib/dimensionLabel'
@@ -117,7 +117,12 @@ export function CourseTeacherDetail({
   const showAiPendingNotice = aiStatus === 'PENDING' || aiStatus === 'ANALYZING'
 
   if (isLoading) {
-    return <CourseTeacherDetailSkeleton className={className} />
+    return (
+      <CourseTeacherDetailSkeleton
+        withTeacherIdentity={showTeacherIdentity}
+        className={className}
+      />
+    )
   }
 
   if (!course) {
@@ -380,7 +385,7 @@ export function CourseTeacherDetail({
             href={`/docentes/${teacher.teacher_id}?period=${encodeURIComponent(period)}`}
             className="group inline-flex w-fit shrink-0 items-center gap-3 lg:flex-row-reverse"
           >
-            <Avatar className="ring-border ring-offset-background group-hover:ring-primary/40 size-11 ring-2 ring-offset-2 transition-colors">
+            <Avatar className="size-12 shrink-0">
               <AvatarFallback className="uppercase">{teacher.name.at(0) ?? '?'}</AvatarFallback>
               <AvatarImage src={teacher.avatar_url} alt={teacher.name} />
             </Avatar>
@@ -393,11 +398,9 @@ export function CourseTeacherDetail({
             </div>
           </TransitionLink>
         )}
-
-        {showTeacherIdentity && pdfReportButton && (
-          <div className="shrink-0">{pdfReportButton}</div>
-        )}
       </div>
+
+      {showTeacherIdentity && pdfReportButton && <div className="shrink-0">{pdfReportButton}</div>}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="border-border bg-background min-w-0 flex-1 rounded-md border px-6 py-5">
@@ -464,7 +467,7 @@ export function CourseTeacherDetail({
 
                 {showWorstMover && worstMover && (
                   <MoverBadge direction="down">
-                    Requiere atención: {worstMover.dimension} ({worstMover.delta.toFixed(2)})
+                    {worstMover.dimension} ({worstMover.delta.toFixed(2)})
                   </MoverBadge>
                 )}
               </div>

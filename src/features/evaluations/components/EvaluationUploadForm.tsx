@@ -62,9 +62,9 @@ export function EvaluationUploadForm() {
       <CardHeader>
         <CardTitle>Subir evaluación docente</CardTitle>
         <CardDescription>
-          Carga el PDF con las evaluaciones de los docentes de tu departamento para el periodo
-          académico. Si tu departamento evalúa en las dos modalidades, puedes cargar los dos
-          documentos de presencial y distancia en una sola evaluación.
+          Carga el PDF con las evaluaciones de tu departamento para el periodo académico. Si el
+          departamento tiene grupos presenciales y a distancia, sube un PDF por modalidad — el
+          sistema los combina automáticamente en una sola evaluación.
         </CardDescription>
       </CardHeader>
 
@@ -77,13 +77,19 @@ export function EvaluationUploadForm() {
 
               <AlertDescription>
                 El procesamiento continúa en segundo plano. Cuando termine, revisa los nombres de
-                las materias: el PDF suele cortarlos cuando son largos.
+                las materias: el PDF suele cortarlos cuando son largos. Luego entra a "Ver
+                evaluación" para iniciar el análisis con IA — ahí verás un botón "Analizar" junto al
+                estado del análisis.
               </AlertDescription>
             </Alert>
 
             <div className="flex flex-wrap items-center justify-end gap-3">
-              <Button type="button" variant="ghost" onClick={() => navigate('/evaluaciones')}>
-                Ir a evaluaciones
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => navigate(`/evaluaciones/${uploadedId}`)}
+              >
+                Ver evaluación
               </Button>
 
               <Button
@@ -111,7 +117,7 @@ export function EvaluationUploadForm() {
             </DismissibleNotice>
 
             <MultiFileDropzone
-              label="PDF de la evaluación (uno o dos)"
+              label="PDF de la evaluación (uno por modalidad)"
               files={files}
               error={error}
               onFilesAdded={addFiles}
@@ -119,18 +125,17 @@ export function EvaluationUploadForm() {
               maxFiles={2}
               disabled={upload.isPending}
               isUploading={upload.isPending}
-              title="Selecciona uno o dos PDF"
+              title="Selecciona los PDF"
               subtitle="Arrastra y suelta o haz clic · Máximo 10 MB por archivo"
             />
 
             <p className="text-muted-foreground text-sm">
-              Con un solo documento basta. El segundo es opcional y solo tiene sentido si tu
-              departamento evalúa en las dos modalidades: la modalidad se detecta del contenido del
-              PDF, así que da igual en qué orden los cargues. Si cargas los dos,{' '}
+              La modalidad de cada PDF se detecta automáticamente por su contenido, así que da igual
+              en qué orden los subas. Eso sí: si cargas los dos,{' '}
               <span className="text-foreground font-medium">
                 deben ser del mismo periodo académico y del mismo departamento
               </span>
-              : se procesan juntos como una sola evaluación.
+              .
             </p>
 
             {uploadError && <InlineError message={uploadError} />}

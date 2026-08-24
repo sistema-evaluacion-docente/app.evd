@@ -25,7 +25,7 @@ import formatDate from '@/lib/formatDate'
 import { MODALITIES } from '@/lib/modality'
 import { formatPdfAverage } from '@/lib/pdf/formatPdfAverage'
 import { cn } from '@/lib/utils'
-import { useGetEvaluation } from '../api'
+import { evaluationsKeys, useAnalyzeEvaluation, useGetEvaluation } from '../api'
 import {
   EvaluationDimensionDetailCard,
   EvaluationDimensionsChart,
@@ -33,6 +33,7 @@ import {
   ModalityNotice,
 } from '../components'
 import { AI_STATUS_DISPLAY, EVALUATION_STATUS_DISPLAY } from '../config'
+import { useEvaluationLogs } from '../hooks'
 import type { EvaluationDimensionDetail } from '../types'
 
 /** The report's only filter, offered through the shared "Filtros" panel. */
@@ -66,6 +67,23 @@ export default function EvaluationDetailPage() {
 
   const { data, isLoading, isPlaceholderData } = useGetEvaluation(evaluationId, modality)
   const evaluation = data?.data
+
+  const { mutate: analyze, isPending: isAnalyzing } = useAnalyzeEvaluation()
+  const { connect: connectLogs } = useEvaluationLogs()
+
+  function handleAnalyze() {
+    if (!evaluation) return
+
+    connectLogs({
+      evaluationId: evaluation.id,
+      queryKeysToInvalidate: [
+        evaluationsKeys.lists(),
+        evaluationsKeys.byId(evaluation.id, modality),
+      ],
+      detailsUrl: `/evaluaciones/${evaluation.id}`,
+    })
+    analyze(evaluation.id)
+  }
 
   const dimensionsCardRef = useRef<HTMLElement>(null)
   const [includeTeachers, setIncludeTeachers] = useState(true)
@@ -178,6 +196,8 @@ export default function EvaluationDetailPage() {
       <EvaluationOverview
         evaluation={evaluation}
         pdfHref={`/evaluaciones/${evaluation.id}/pdf`}
+        onAnalyze={handleAnalyze}
+        isAnalyzing={isAnalyzing}
         actions={
           <>
             <GenerateReportPdfButton

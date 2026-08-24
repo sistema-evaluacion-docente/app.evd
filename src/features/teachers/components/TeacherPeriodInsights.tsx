@@ -122,7 +122,7 @@ export function TeacherPeriodInsights({ teacherId, className }: TeacherPeriodIns
           <div className="flex flex-wrap gap-3">
             {showBestCourse && bestCourseMover && (
               <MoverBadge direction="up" size="md">
-                Mayor mejora: {bestCourseMover.course.course_name} (+
+                {bestCourseMover.course.course_name} (+
                 {bestCourseMover.delta.toFixed(2)})
               </MoverBadge>
             )}

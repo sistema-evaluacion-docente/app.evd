@@ -150,6 +150,12 @@ function App() {
             </AppLayout>
           </Route>
 
+          <Route path="/alertas/:teacherId">
+            <AppLayout>
+              <AlertsPage />
+            </AppLayout>
+          </Route>
+
           <Route path="/alertas">
             <AppLayout>
               <AlertsPage />

@@ -10,7 +10,7 @@ export type MoverDirection = 'up' | 'down'
 
 const TONE_CLASS: Record<MoverDirection, string> = {
   up: SCORE_TONE_BADGE_CLASS.success,
-  down: SCORE_TONE_BADGE_CLASS.danger,
+  down: SCORE_TONE_BADGE_CLASS.warning,
 }
 
 const ICON: Record<MoverDirection, typeof TrendingUp> = {

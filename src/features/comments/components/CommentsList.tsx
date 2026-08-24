@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useSyncExternalStore } from 'react'
 import { useDebounce, useDebouncedCallback } from 'use-debounce'
 
 import { DataTableFilters, type FilterConfig } from '@/components/common/DataTableFilters'
@@ -7,13 +7,41 @@ import { PeriodSelect } from '@/components/common/PeriodSelect'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAuthStore } from '@/features/auth'
-import { CommentList, TeacherSelect } from '@/features/teachers'
+import { CommentCard, CommentList, TeacherSelect } from '@/features/teachers'
 import { useModalityFilter } from '@/hooks/useModalityFilter'
 import { useTableFilters } from '@/hooks/useTableFilters'
 import { CATEGORIES } from '@/lib/categoryLabel'
 import { MODALITIES } from '@/lib/modality'
 import { RISK_LEVELS } from '@/lib/riskLevel'
-import { useGetComments } from '../api'
+import { useGetComment, useGetComments } from '../api'
+
+function subscribeToHash(onChange: () => void) {
+  window.addEventListener('hashchange', onChange)
+  window.addEventListener('popstate', onChange)
+
+  return () => {
+    window.removeEventListener('hashchange', onChange)
+    window.removeEventListener('popstate', onChange)
+  }
+}
+
+/**
+ * The `#<comment id>` a link (e.g. a "riesgo alto" notification) landed on,
+ * ignoring anything that isn't a usable comment id. Subscribed rather than
+ * read once, so a second notification opened while this page is already
+ * mounted points at its own comment: `TransitionLink` announces its
+ * `pushState` with a `popstate` event, and a plain anchor fires `hashchange`.
+ */
+function useLinkedCommentId(): number | undefined {
+  const hash = useSyncExternalStore(
+    subscribeToHash,
+    () => window.location.hash,
+    () => '',
+  )
+  const id = Number(hash.slice(1))
+
+  return Number.isInteger(id) && id > 0 ? id : undefined
+}
 
 const filterConfig: FilterConfig[] = [
   {
@@ -47,6 +75,13 @@ interface CommentsListProps {
    * longer the reader's to choose.
    */
   riskLevel?: number
+  /**
+   * Preselects the "Docente" filter — e.g. a "riesgo alto" notification
+   * linking to one teacher's alerts. Re-applied every time the value itself
+   * changes (another link into an already-open page); in between, the reader
+   * can still change or clear the filter.
+   */
+  initialTeacherId?: number
   /** Shown when no comment matches the current filters. */
   emptyMessage?: string
 }
@@ -64,17 +99,37 @@ interface CommentsListProps {
  * @example
  * // Only the high-risk comments, with no risk filter to loosen it.
  * <CommentsList riskLevel={3} emptyMessage="No hay comentarios de riesgo alto." />
+ *
+ * @example
+ * // Landed on from a "riesgo alto" notification, scoped to that teacher.
+ * <CommentsList riskLevel={3} initialTeacherId={teacherId} />
  */
 export function CommentsList({
   riskLevel,
+  initialTeacherId,
   emptyMessage = 'No hay comentarios que coincidan con los filtros aplicados.',
 }: CommentsListProps = {}) {
   const departmentId = useAuthStore((state) => state.user?.department_id)
+  const linkedCommentId = useLinkedCommentId()
   const [periodId, setPeriodId] = useState<number | undefined>(undefined)
-  const [teacherId, setTeacherId] = useState<number | undefined>(undefined)
+  const [teacherId, setTeacherId] = useState<number | undefined>(initialTeacherId)
   const [search, setSearch] = useState('')
   const [debouncedSearch] = useDebounce(search, 400)
   const [page, setPage] = useState(1)
+
+  // A second link into the page — another teacher's alerts from a different
+  // "riesgo alto" notification — lands on the component already mounted, so
+  // `initialTeacherId` has to be re-read on change instead of only at mount.
+  // Adjusted during render rather than in an effect so the query below already
+  // asks for the new teacher on this pass, with no interim request for the old
+  // one.
+  const [appliedTeacherId, setAppliedTeacherId] = useState(initialTeacherId)
+
+  if (initialTeacherId !== appliedTeacherId) {
+    setAppliedTeacherId(initialTeacherId)
+    setTeacherId(initialTeacherId)
+    setPage(1)
+  }
 
   const { modality, setModality } = useModalityFilter()
 
@@ -108,7 +163,15 @@ export function CommentsList({
     enabled: periodId !== undefined && Boolean(departmentId),
   })
 
-  const comments = data?.data ?? []
+  // Fetched by id instead of being looked for among `comments`: the linked
+  // comment only lands in the list when it happens to fall on the page the
+  // current filters and pagination return, which for a teacher with more than
+  // `limit` alerts it usually doesn't. Pinned above the list below.
+  const { data: linkedData, error: linkedError } = useGetComment(linkedCommentId)
+  const linkedComment = linkedData?.data
+
+  // Kept out of the list so it isn't read twice on the same screen.
+  const comments = (data?.data ?? []).filter((comment) => comment.id !== linkedComment?.id)
   const pages = data?.pagination?.pages ?? 1
 
   if (!departmentId) {
@@ -176,13 +239,36 @@ export function CommentsList({
         />
       </div>
 
+      {linkedCommentId !== undefined && (
+        <section className="space-y-2">
+          <h2 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+            Comentario de la notificación
+          </h2>
+
+          <div className="bg-background border-border/70 rounded-lg border px-6">
+            <CommentList
+              comments={linkedComment ? [linkedComment] : []}
+              isLoading={!linkedComment && !linkedError}
+              error={linkedError ? linkedError.message : null}
+              skeletonCount={1}
+              emptyMessage="El comentario de esta notificación ya no está disponible."
+              renderComment={(comment, index) => (
+                <CommentCard comment={comment} index={index} showTeacher showCourse highlighted />
+              )}
+            />
+          </div>
+        </section>
+      )}
+
       <div className="bg-background border-border/70 rounded-lg border px-6">
         <CommentList
           comments={comments}
           isLoading={isPending}
           error={error ? error.message : null}
-          commentProps={{ showTeacher: true, showCourse: true }}
           emptyMessage={emptyMessage}
+          renderComment={(comment, index) => (
+            <CommentCard comment={comment} index={index} showTeacher showCourse />
+          )}
         />
       </div>
 

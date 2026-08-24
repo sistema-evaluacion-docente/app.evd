@@ -77,7 +77,7 @@ export function CommentList({
         const style = { animationDelay: `${Math.min(index, 8) * 60}ms` }
 
         return renderComment ? (
-          <div key={comment.id} className="animate-rise" style={style}>
+          <div key={comment.id} style={style}>
             {renderComment(comment, index)}
           </div>
         ) : (
@@ -85,7 +85,6 @@ export function CommentList({
             key={comment.id}
             comment={comment}
             index={index}
-            className="animate-rise"
             style={style}
             {...commentProps}
           />
@@ -101,11 +100,7 @@ function CommentListSkeleton({ count, className }: { count: number; className?: 
   return (
     <div className={cn('divide-border/70 divide-y', className)} aria-hidden="true">
       {Array.from({ length: count }, (_, index) => (
-        <div
-          key={index}
-          className="animate-rise grid grid-cols-[1.5rem_1fr] gap-x-4 py-5"
-          style={{ animationDelay: `${index * 70}ms` }}
-        >
+        <div key={index} className="grid grid-cols-[1.5rem_1fr] gap-x-4 py-5">
           <div className="bg-muted mx-auto h-1.5 w-1.5 rounded-full" />
 
           <div className="space-y-2">
