@@ -241,6 +241,8 @@ function mockQueries({
     activeSubject,
     effectiveSubjectKey: activeSubject?.key ?? 'ALL',
     dimensions,
+    matrixOf: () => dimensions,
+    allComments: [],
     comments: { byDimension: {}, uncategorized: [] },
     weakCount: 0,
     riskyCount: 0,
@@ -1038,6 +1040,43 @@ describe('PlanFormPage · autoguardado', () => {
   })
 })
 
+describe('PlanFormPage · indicadores traídos del perfil', () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('siembra los indicadores seleccionados como compromisos por escribir', async () => {
+    mockQueries({ dimensions: MATRIX, subjects: SUBJECTS })
+
+    renderAt(<PlanFormPage />, '/planes/nuevo?teacher=7&picks=q%3A011')
+
+    // The card is there with its baseline read off the matrix, and empty where
+    // only the director can write.
+    expect(await screen.findByText('011 · Asiste puntualmente a clase (3.31)')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Redactar el compromiso/ })).toBeInTheDocument()
+  })
+
+  it('trae las asignaturas que el indicador obliga a listar', async () => {
+    mockQueries({ dimensions: MATRIX, subjects: SUBJECTS })
+
+    renderAt(<PlanFormPage />, '/planes/nuevo?teacher=7&picks=q%3A011')
+
+    await screen.findByText('011 · Asiste puntualmente a clase (3.31)')
+
+    // Picked at teacher level, so every asignatura he taught comes with it.
+    expect(screen.queryByText(/Todavía no hay asignaturas/)).not.toBeInTheDocument()
+    expect(screen.getByText(/Álgebra Lineal/)).toBeInTheDocument()
+  })
+
+  it('ignora un parámetro que no nombra ningún indicador', () => {
+    mockQueries({ dimensions: MATRIX, subjects: SUBJECTS })
+
+    renderAt(<PlanFormPage />, '/planes/nuevo?teacher=7&picks=zzz')
+
+    expect(screen.getByText(/Todavía no hay compromisos|Agrega al menos un indicador/)).toBeTruthy()
+  })
+})
+
 describe('PlanFormPage · edición', () => {
   afterEach(() => {
     vi.clearAllMocks()
@@ -1153,6 +1192,51 @@ describe('PlanFormPage · edición', () => {
    * asignatura matched both of the existing ones and filtered them out — the
    * click meant to add deleted what was already agreed.
    */
+  /**
+   * Arriving from the profile with indicators already picked, the alternative
+   * to a run was one trip down to a card and back per commitment.
+   */
+  it('escribe los compromisos pendientes uno tras otro, sin cerrar el diálogo', async () => {
+    mockQueries({
+      plan: savedPlan({
+        items: [
+          savedItem({ id: 41, commitment: '', target_value: null }),
+          savedItem({ id: 42, description: 'Metodología — Cálculo (3.10)', commitment: '' }),
+        ],
+      }),
+    })
+
+    renderAt(<PlanFormPage />, '/planes/8/editar')
+
+    await userEvent.click(screen.getByRole('button', { name: /Redactar los compromisos/ }))
+
+    // Opens on the first pending one and says where the run is.
+    expect(await screen.findByRole('dialog')).toHaveTextContent('Compromiso 1 de 2')
+
+    await userEvent.type(screen.getByLabelText(/Descripción del compromiso/), 'Publicar guías')
+    await userEvent.type(screen.getByLabelText(/Meta esperada/), '4')
+    await userEvent.click(screen.getByRole('button', { name: /Guardar y siguiente/ }))
+
+    // Straight on to the second, still in the same dialog.
+    expect(await screen.findByRole('dialog')).toHaveTextContent('Compromiso 2 de 2')
+    expect(screen.getByRole('button', { name: /Guardar y terminar/ })).toBeInTheDocument()
+  })
+
+  it('cuenta los compromisos que todavía no se pueden guardar', () => {
+    mockQueries({
+      plan: savedPlan({
+        items: [savedItem({ id: 41 }), savedItem({ id: 42, commitment: '' })],
+      }),
+    })
+
+    renderAt(<PlanFormPage />, '/planes/8/editar')
+
+    expect(screen.getByRole('button', { name: /Redactar el compromiso/ })).toHaveTextContent(
+      '1 pendiente',
+    )
+    expect(screen.getByRole('status')).toHaveTextContent('1 de 2 compromisos completos')
+  })
+
   it('no borra los compromisos acordados al agregar el mismo indicador en otra asignatura', async () => {
     mockQueries({
       plan: savedPlan({

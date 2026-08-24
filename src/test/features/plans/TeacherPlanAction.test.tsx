@@ -10,6 +10,13 @@ import type { Plan } from '@/features/plans/types'
 
 vi.mock('@/features/plans/api', () => ({ useGetPlans: vi.fn() }))
 
+// The selection panel has its own tests and pulls three queries of its own;
+// stubbed here so this one stays on what the profile strip decides to offer.
+vi.mock('@/features/plans/components/IndicatorSelectionSheet', () => ({
+  IndicatorSelectionSheet: ({ open, target }: { open: boolean; target: { kind: string } }) =>
+    open ? <div data-testid="selection-sheet">{target.kind}</div> : null,
+}))
+
 /** The role the director is signed in as, which is what gates the actions. */
 let selectedRole = 'DIRECTOR DE DEPARTAMENTO'
 
@@ -99,6 +106,35 @@ describe('TeacherPlanAction', () => {
     renderAction()
 
     expect(screen.queryByRole('button', { name: 'Ver historial' })).not.toBeInTheDocument()
+  })
+
+  it('abre el panel de selección desde el perfil, para empezar un plan', async () => {
+    const user = userEvent.setup()
+
+    renderAction({ plans: [] })
+
+    await user.click(screen.getByRole('button', { name: 'Seleccionar indicadores' }))
+
+    expect(await screen.findByTestId('selection-sheet')).toHaveTextContent('new')
+  })
+
+  // With a plan already in force the selection has somewhere to land: its
+  // commitments, not a second plan the semester cannot have.
+  it('con un plan en curso, la selección se agrega a ese plan', async () => {
+    const user = userEvent.setup()
+
+    renderAction()
+
+    await user.click(screen.getByRole('button', { name: 'Agregar indicadores al plan' }))
+
+    expect(await screen.findByTestId('selection-sheet')).toHaveTextContent('edit')
+  })
+
+  it('no ofrece agregar indicadores a un acta ya firmada', () => {
+    renderAction({ plans: [plan({ acta_locked: true, acta_status: 'FIRMADA' })] })
+
+    expect(screen.queryByRole('button', { name: /indicadores/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Ver plan' })).toBeInTheDocument()
   })
 
   it('no ofrece crear un segundo plan cuando el periodo ya tiene el suyo', () => {
