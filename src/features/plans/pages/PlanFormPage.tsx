@@ -68,7 +68,8 @@ import {
   useUploadPlanDocument,
 } from '../api'
 import { PlanCaseReportUpload } from '../components/PlanCaseReportUpload'
-import { PlanObservationsDialog } from '../components/PlanObservationsDialog'
+import { type ObservationKind, PlanObservationsDialog } from '../components/PlanObservationsDialog'
+import { PlanObservationsList } from '../components/PlanObservationsList'
 import { CommitmentDialog } from '../components/CommitmentDialog'
 import { CommitmentsEditor } from '../components/CommitmentsEditor'
 import { IndicatorPicker } from '../components/IndicatorPicker'
@@ -379,6 +380,19 @@ function PlanForm({
 
   /** Las tres observaciones viven detrás de un botón del paso 3. */
   const [observationsOpen, setObservationsOpen] = useState(false)
+  /** Observación a la que saltar al abrir; null cuando se abre por el botón. */
+  const [observationsFocus, setObservationsFocus] = useState<ObservationKind | null>(null)
+
+  function setObservation(kind: ObservationKind, value: string) {
+    if (kind === 'council') setCouncilObservations(value)
+    else if (kind === 'department') setDepartmentObservations(value)
+    else setProgramObservations(value)
+  }
+
+  function openObservations(focus: ObservationKind | null = null) {
+    setObservationsFocus(focus)
+    setObservationsOpen(true)
+  }
 
   // Deliberately outside the autosaved snapshot: a File can't be serialised, so
   // it is re-picked after a reload rather than silently lost on submit.
@@ -1181,9 +1195,9 @@ function PlanForm({
               </p>
             )}
 
-            <Button type="button" variant="outline" onClick={() => setObservationsOpen(true)}>
+            <Button type="button" variant="outline" onClick={() => openObservations()}>
               <NotebookPen className="size-4" aria-hidden="true" />
-              Observaciones
+              Añadir Observaciones
               {writtenObservations > 0 && (
                 <Badge variant="secondary" className="num ml-0.5 min-w-5 justify-center px-1.5">
                   {writtenObservations}
@@ -1239,6 +1253,15 @@ function PlanForm({
             disabled={actaLocked}
           />
         )}
+
+        <PlanObservationsList
+          council={councilObservations}
+          department={departmentObservations}
+          program={programObservations}
+          onEdit={openObservations}
+          onRemove={(kind) => setObservation(kind, '')}
+          councilDisabled={actaLocked}
+        />
       </section>
 
       {teacherId != null && (
@@ -1506,11 +1529,13 @@ function PlanForm({
         </LoadingButton>
       </div>
 
-      {/* Keyed on the draft so each commitment opens the dialog with a clean
-          copy of itself, instead of an effect syncing prop to state. */}
       <PlanObservationsDialog
         open={observationsOpen}
-        onOpenChange={setObservationsOpen}
+        onOpenChange={(open) => {
+          setObservationsOpen(open)
+          if (!open) setObservationsFocus(null)
+        }}
+        focus={observationsFocus}
         councilObservations={councilObservations}
         onCouncilObservationsChange={setCouncilObservations}
         departmentObservations={departmentObservations}
@@ -1520,6 +1545,8 @@ function PlanForm({
         councilDisabled={actaLocked}
       />
 
+      {/* Keyed on the draft so each commitment opens the dialog with a clean
+          copy of itself, instead of an effect syncing prop to state. */}
       <CommitmentDialog
         key={pending?.draft.key ?? 'none'}
         draft={pending?.draft ?? null}
