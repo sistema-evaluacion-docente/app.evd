@@ -11,7 +11,7 @@ import { useAuthStore } from '@/features/auth'
 import { AI_STATUS_DISPLAY, type AiStatus } from '@/features/evaluations'
 import { CATEGORIES, categoryColor, categoryLabel, UNCATEGORIZED } from '@/lib/categoryLabel'
 import { cn } from '@/lib/utils'
-import { RISK_LEVELS } from '@/lib/riskLevel'
+import { isRiskyLevel, RISK_LEVELS } from '@/lib/riskLevel'
 import { useGetTeacherComments } from '../api'
 import type { TeacherComment } from '../types'
 import { CommentCard } from './CommentCard'
@@ -116,8 +116,14 @@ export function TeacherCommentsSummary({
       previousCounts?.categoryCounts[category.code] ?? (previousCounts ? 0 : undefined),
   }))
 
+  /**
+   * El comentario más grave, y sólo si de verdad lo es: antes bastaba con que
+   * tuviera `risk_score` para encabezar un bloque titulado "Requiere más
+   * atención", así que un docente con puros comentarios de riesgo bajo también
+   * recibía la advertencia. Se filtra por nivel antes de buscar el máximo.
+   */
   const topComment = comments.reduce<TeacherComment | undefined>((max, comment) => {
-    if (comment.risk_score == null) return max
+    if (comment.risk_score == null || !isRiskyLevel(comment.risk_level)) return max
     if (!max || max.risk_score == null || comment.risk_score > max.risk_score) return comment
     return max
   }, undefined)

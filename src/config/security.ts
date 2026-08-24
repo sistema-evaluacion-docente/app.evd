@@ -1,11 +1,15 @@
 /** One route of the app, with the roles allowed to open it. */
-interface SecurityPage {
+export interface SecurityPage {
   /** Route path; `:param` segments match any value (e.g. `/evaluaciones/:id/pdf`). */
   path: string
   name: string
   roles: string[]
-  /** Reachable by URL for the roles below, but never listed in the sidebar. */
   hidden?: boolean
+  requiresDepartment?: boolean
+}
+
+export interface AccessContext {
+  hasDepartment?: boolean
 }
 
 const securityConfig: { pages: SecurityPage[] } = {
@@ -60,6 +64,7 @@ const securityConfig: { pages: SecurityPage[] } = {
       path: '/planes',
       name: 'Planes de mejoramiento',
       roles: ['DIRECTOR DE DEPARTAMENTO'],
+      requiresDepartment: true,
     },
     {
       path: '/acciones',
@@ -71,11 +76,6 @@ const securityConfig: { pages: SecurityPage[] } = {
       name: 'Documento de la evaluación',
       roles: ['DIRECTOR DE DEPARTAMENTO', 'DOCENTE'],
       hidden: true,
-    },
-    {
-      path: '/notificaciones',
-      name: 'Notificaciones',
-      roles: ['DIRECTOR DE DEPARTAMENTO', 'ADMIN', 'DOCENTE'],
     },
     {
       path: '/admin/facultades',
@@ -104,8 +104,13 @@ const securityConfig: { pages: SecurityPage[] } = {
     },
     {
       path: '/admin/logs',
-      name: 'Logs',
+      name: 'Historial',
       roles: ['ADMIN'],
+    },
+    {
+      path: '/notificaciones',
+      name: 'Notificaciones',
+      roles: ['DIRECTOR DE DEPARTAMENTO', 'ADMIN', 'DOCENTE'],
     },
     {
       path: '/admin/configuracion',
@@ -136,27 +141,62 @@ function matchesPath(path: string, routePath: string): boolean {
   )
 }
 
+/** Whether the context satisfies the extra conditions a page asks for. */
+function meetsRequirements(page: SecurityPage, context?: AccessContext): boolean {
+  // No context given means the caller makes no claim either way, so a page
+  // gated on the department is left alone rather than blocked on a guess.
+  if (!page.requiresDepartment || context?.hasDepartment === undefined) return true
+
+  return context.hasDepartment
+}
+
+/**
+ * Every configured route the path falls under, whatever the role.
+ *
+ * Exposed so a caller can tell "this role may not open it" apart from "this
+ * user is missing something the page needs" — two blocks that read very
+ * differently to whoever hits them.
+ */
+export function pagesForPath(path: string): SecurityPage[] {
+  return securityConfig.pages.filter((page) => matchesPath(path, page.path))
+}
+
 /**
  * Whether a role may open a given path.
  *
  * @example
  * isAuthorizedForPage('/evaluaciones/12/pdf', 'DOCENTE') // true
+ *
+ * @example
+ * // A director with no department gets no improvement plans.
+ * isAuthorizedForPage('/planes', 'DIRECTOR DE DEPARTAMENTO', { hasDepartment: false }) // false
  */
-export function isAuthorizedForPage(path: string, role: string | null): boolean {
+export function isAuthorizedForPage(
+  path: string,
+  role: string | null,
+  context?: AccessContext,
+): boolean {
   return securityConfig.pages.some(
-    (page) => matchesPath(path, page.path) && page.roles.includes(role ?? ''),
+    (page) =>
+      matchesPath(path, page.path) &&
+      page.roles.includes(role ?? '') &&
+      meetsRequirements(page, context),
   )
 }
 
 /**
  * Returns the sidebar menus available for a given role. Hidden routes are left
- * out — they are reachable by URL but have no menu entry of their own.
+ * out — they are reachable by URL but have no menu entry of their own — and so
+ * are the ones the context does not qualify for.
  *
  * @param role The role to get the menus for.
+ * @param context What the user has beyond the role, e.g. a department.
  * @returns The menus available for the given role.
  */
-export function getMenus(role: string): SecurityConfig['pages'] {
-  return securityConfig.pages.filter((page) => !page.hidden && page.roles.includes(role))
+export function getMenus(role: string, context?: AccessContext): SecurityConfig['pages'] {
+  return securityConfig.pages.filter(
+    (page) => !page.hidden && page.roles.includes(role) && meetsRequirements(page, context),
+  )
 }
 
 export type SecurityConfig = typeof securityConfig

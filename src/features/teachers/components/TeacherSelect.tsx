@@ -1,12 +1,7 @@
-import { X } from 'lucide-react'
-import { useState } from 'react'
-
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select'
-import { Spinner } from '@/components/ui/spinner'
+import { SearchSelect } from '@/components/common/SearchSelect'
 import { cn } from '@/lib/utils'
 import { useListTeachers } from '../api'
+import type { TeacherRecord } from '../types'
 
 export interface TeacherSelectProps {
   /** Selected teacher's name — this is what filters key off, not the id. */
@@ -31,13 +26,25 @@ export interface TeacherSelectProps {
   className?: string
   disabled?: boolean
   size?: 'sm' | 'default'
-  /** Shows a trailing button to clear the selection once a teacher is picked. Defaults to `true`. */
+  /**
+   * Shows a way to clear the selection once a teacher is picked. Defaults to
+   * `true`. The field draws it inside itself, so it costs no room in the row.
+   */
   clearable?: boolean
 }
 
 /**
  * Select populated with a department's teachers (`GET /teachers/`), for
  * filtering other views by teacher — e.g. a results/subjects table.
+ *
+ * Built on {@link SearchSelect}, which is a combobox: the list is filtered by
+ * the field itself, in a popup anchored to it. It used to be a `Select` with a
+ * text input smuggled into the popup, which is the one thing Base UI's select
+ * cannot do — with `alignItemWithTrigger` it measures the chosen option against
+ * the trigger and sets the popup's height by hand, so every keystroke re-ran
+ * that pass, and once the list no longer fit it fell back to an absolutely
+ * positioned portal at the end of `<body>` and stretched the document. That is
+ * what "the filter pushes the page down" was.
  *
  * @example
  * <TeacherSelect value={teacherName} onValueChange={setTeacherName} />
@@ -59,78 +66,50 @@ export function TeacherSelect({
   size = 'default',
   clearable = true,
 }: TeacherSelectProps) {
-  const [query, setQuery] = useState('')
-
   const { data, isLoading } = useListTeachers({ limit: 100, departmentId })
 
   const teachers = data?.data ?? []
-  const filteredTeachers = query
-    ? teachers.filter((teacher) => teacher.user.name.toLowerCase().includes(query.toLowerCase()))
-    : teachers
 
+  // The callers hold a scalar — an id or a name — while the field works in
+  // whole teachers, so the object is resolved here rather than at every use.
   const byId = onIdChange !== undefined
-  const selected = byId ? idValue : value
+  const selected =
+    teachers.find((teacher) => (byId ? teacher.id === idValue : teacher.user.name === value)) ??
+    null
 
-  if (isLoading) {
-    return <Spinner className={cn('size-5', className)} />
+  const handleChange = (teacher: TeacherRecord | null) => {
+    if (byId) {
+      onIdChange?.(teacher?.id)
+      return
+    }
+
+    onValueChange?.(teacher?.user.name)
   }
 
   return (
-    <div className="flex items-center gap-1">
-      <Select<string | number>
-        value={selected}
-        onValueChange={(val) =>
-          byId ? onIdChange?.(val as number) : onValueChange?.(val as string)
-        }
-        onOpenChange={(open) => {
-          if (!open) setQuery('')
-        }}
-        disabled={disabled}
-      >
-        <SelectTrigger aria-label={ariaLabel} size={size} className={cn('w-fit', className)}>
-          <span>
-            {(byId ? teachers.find((teacher) => teacher.id === idValue)?.user.name : value) ||
-              placeholder}
-          </span>
-        </SelectTrigger>
-
-        <SelectContent className="w-72">
-          <div className="p-1">
-            <Input
-              type="text"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              onKeyDown={(event) => event.stopPropagation()}
-              placeholder="Buscar docente..."
-              aria-label="Buscar docente"
-              className="h-8"
-              autoFocus
-            />
-          </div>
-
-          {filteredTeachers.length === 0 ? (
-            <p className="text-muted-foreground px-2 py-1.5 text-sm">Sin resultados.</p>
-          ) : (
-            filteredTeachers.map((teacher) => (
-              <SelectItem key={teacher.id} value={byId ? teacher.id : teacher.user.name}>
-                {teacher.user.name}
-              </SelectItem>
-            ))
-          )}
-        </SelectContent>
-      </Select>
-
-      {clearable && selected != null && (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => (byId ? onIdChange?.(undefined) : onValueChange?.(undefined))}
-          aria-label="Limpiar docente"
-        >
-          <X className="size-4" />
-        </Button>
-      )}
-    </div>
+    <SearchSelect<TeacherRecord>
+      value={selected}
+      onValueChange={handleChange}
+      items={teachers}
+      itemToKey={(teacher) => teacher.id}
+      itemToLabel={(teacher) => teacher.user.name}
+      filter={(teacher, query) =>
+        teacher.institutional_code?.toLowerCase().includes(query.toLowerCase()) ?? false
+      }
+      placeholder={placeholder}
+      ariaLabel={ariaLabel}
+      emptyMessage="Sin docentes que coincidan."
+      // The field stays mounted while the list is on its way. Swapping it for a
+      // bare spinner used to reflow the whole filter row once teachers landed.
+      loading={isLoading}
+      loadingLabel="Cargando docentes…"
+      disabled={disabled}
+      size={size}
+      clearable={clearable}
+      // A width by default: the field is `w-full` underneath, which inside the
+      // flex filter rows it lives in would claim the whole line. Callers that
+      // do fill a column (the filters popover) override it.
+      className={cn('w-56', className)}
+    />
   )
 }

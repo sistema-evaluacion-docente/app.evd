@@ -36,6 +36,15 @@ interface SearchSelectProps<T> {
   /** Shown when nothing matches what was typed. */
   emptyMessage?: string
   disabled?: boolean
+  /**
+   * Accessible name, for a field with no visible `<Label>` of its own — the
+   * filter rows above a table, where the placeholder is all there is.
+   */
+  ariaLabel?: string
+  /** `sm` matches the compact controls of a filter row. Defaults to `default`. */
+  size?: 'sm' | 'default'
+  /** Offers a way to unpick the value once there is one. Defaults to `true`. */
+  clearable?: boolean
   /** Paints the field as still missing, the same way an input does. */
   invalid?: boolean
   /** Id of the message saying what is missing, for `aria-describedby`. */
@@ -89,6 +98,9 @@ export function SearchSelect<T>({
   isItemDisabled,
   id,
   placeholder,
+  ariaLabel,
+  size = 'default',
+  clearable = true,
   emptyMessage = 'Sin coincidencias',
   disabled = false,
   invalid = false,
@@ -111,18 +123,22 @@ export function SearchSelect<T>({
       openOnInputClick
       disabled={disabled}
     >
-      <ComboboxInputGroup className={cn(className)} aria-invalid={invalid || undefined}>
+      <ComboboxInputGroup
+        className={cn(size === 'sm' && 'h-8', className)}
+        aria-invalid={invalid || undefined}
+      >
         {loading && (
           <Spinner className="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
         )}
         <ComboboxInput
           id={id}
           placeholder={loading ? loadingLabel : placeholder}
+          aria-label={ariaLabel}
           aria-busy={loading || undefined}
           aria-describedby={describedBy}
           onKeyDown={keepEnterInTheList}
         />
-        {value != null && !disabled && !loading && <ComboboxClear />}
+        {clearable && value != null && !disabled && !loading && <ComboboxClear />}
         <ComboboxTrigger disabled={disabled || loading} />
       </ComboboxInputGroup>
 

@@ -10,7 +10,7 @@ import type { DraftCourse, DraftItem } from '../types'
  */
 
 /** Bumped whenever the snapshot shape changes, to drop the ones we can't read. */
-export const PLAN_DRAFT_VERSION = 1
+export const PLAN_DRAFT_VERSION = 2
 
 /** Past this, whatever was being written is no longer what the director meant. */
 export const PLAN_DRAFT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000
@@ -21,8 +21,6 @@ export interface PlanFormSnapshot {
   periodId?: number
   titleOverride: string | null
   description: string
-  facultyOverride: string | null
-  departmentOverride: string | null
   programOverride: string | null
   actaDate: string
   actaNumber: string

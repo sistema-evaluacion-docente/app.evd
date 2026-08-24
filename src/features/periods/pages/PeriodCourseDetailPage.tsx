@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useRoute } from 'wouter'
 
 import { BackButton } from '@/components/common/BackButton'
+import CourseTeacherDetailSkeleton from '@/components/skeletons/CourseTeacherDetailSkeleton'
 import { TransitionLink } from '@/components/common/TransitionLink'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/features/auth'
@@ -41,7 +42,7 @@ export default function PeriodCourseDetailPage() {
     return (
       <>
         <BackButton fallbackHref="/periodos" label="Volver al periodo" className="mb-4" />
-        <p className="text-muted-foreground py-10 text-center text-sm">Cargando…</p>
+        <CourseTeacherDetailSkeleton />
       </>
     )
   }

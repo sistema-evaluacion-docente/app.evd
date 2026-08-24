@@ -3,6 +3,8 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { ActiveBadge } from '@/components/common/ActiveBadge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
+import { STATUS_TONE_CLASS } from '@/lib/statusTone'
+import { cn } from '@/lib/utils'
 import { getRoleLabel } from '../config'
 import type { AdminUser } from '../types'
 
@@ -68,8 +70,11 @@ export const userColumns: ColumnDef<AdminUser>[] = [
 
       return (
         <div className="flex flex-wrap gap-1.5">
+          {/* Pastilla suave, como el resto de badges de la app: el `secondary`
+              por defecto pinta el azul institucional a saturación plena con
+              texto blanco, y tres roles seguidos leían como tres botones. */}
           {roles.map((role) => (
-            <Badge key={role} variant="secondary" className="font-medium">
+            <Badge key={role} className={cn('font-medium', STATUS_TONE_CLASS.accent)}>
               {getRoleLabel(role)}
             </Badge>
           ))}

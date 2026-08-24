@@ -1,3 +1,4 @@
+import { DismissibleNotice } from '@/components/common/DismissibleNotice'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Info } from 'lucide-react'
 
@@ -12,16 +13,18 @@ import { Info } from 'lucide-react'
  */
 export function AlertsAiNotice() {
   return (
-    <Alert className="mb-4">
-      <Info aria-hidden="true" />
+    <DismissibleNotice storageKey="alerts-ai" className="mb-4">
+      <Alert className="pr-10">
+        <Info aria-hidden="true" />
 
-      <AlertTitle>Estas alertas las sugiere un modelo de IA</AlertTitle>
+        <AlertTitle>Estas alertas las sugiere un modelo de IA</AlertTitle>
 
-      <AlertDescription>
-        El nivel de riesgo lo asigna DistilBETO, un modelo de IA entrenado por nosotros, y puede
-        equivocarse. Si no estás de acuerdo, cambia el nivel desde el comentario: la decisión final
-        es tuya.
-      </AlertDescription>
-    </Alert>
+        <AlertDescription>
+          El nivel de riesgo lo asigna DistilBETO, un modelo de IA entrenado por nosotros, y puede
+          equivocarse. Si no estás de acuerdo, cambia el nivel desde el comentario: la decisión
+          final es tuya.
+        </AlertDescription>
+      </Alert>
+    </DismissibleNotice>
   )
 }

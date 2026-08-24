@@ -11,7 +11,7 @@ import formatDate from '@/lib/formatDate'
 import { cn } from '@/lib/utils'
 import { X } from 'lucide-react'
 import { useGetAuditLogById } from '../api'
-import { getOperation, getOperationLabel, getTableLabel } from '../config'
+import { getOperationLabel, getOperationToneClass, getTableLabel } from '../config'
 
 interface AuditLogDetailDrawerProps {
   /** ID of the audit log to fetch and display. Pass null to close the drawer. */
@@ -105,20 +105,9 @@ export function AuditLogDetailDrawer({ auditId, open, onOpenChange }: AuditLogDe
                 <div className="border-border/40 flex items-start justify-between gap-4 border-b pb-3">
                   <dt className="text-muted-foreground shrink-0 text-sm font-medium">Operación</dt>
                   <dd className="text-right">
-                    {(() => {
-                      const config = log.operation ? getOperation(log.operation) : null
-                      return (
-                        <Badge
-                          className={cn(
-                            'font-medium',
-                            config?.bg ?? 'bg-muted',
-                            config?.text ?? 'text-muted-foreground',
-                          )}
-                        >
-                          {getOperationLabel(log.operation)}
-                        </Badge>
-                      )
-                    })()}
+                    <Badge className={cn('font-medium', getOperationToneClass(log.operation))}>
+                      {getOperationLabel(log.operation)}
+                    </Badge>
                   </dd>
                 </div>
 

@@ -1,6 +1,7 @@
 import { ChevronRight, Search, Sparkles, X } from 'lucide-react'
 import { useMemo, type ReactNode } from 'react'
 
+import { DismissibleNotice } from '@/components/common/DismissibleNotice'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { categoryColor, categoryLabel } from '@/lib/categoryLabel'
@@ -170,14 +171,19 @@ export function CommentsPanel({
       )}
 
       {hasData && hasClassifiedComments && (
-        <Alert className="mx-6 my-4 w-auto border bg-amber-50 py-2.5 dark:bg-amber-950/40">
-          <Sparkles className="size-3.5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+        // Dismissed for good once read: the same sentence is shown on every
+        // subject, of every teacher, on every visit — and this panel is mounted
+        // once per teacher on the comparison page, so it used to stack.
+        <DismissibleNotice storageKey="comments-ai-disclaimer" className="mx-6 my-4">
+          <Alert className="w-auto border bg-amber-50 py-2.5 pr-10 dark:bg-amber-950/40">
+            <Sparkles className="size-3.5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
 
-          <AlertDescription className="text-xs text-amber-700 dark:text-amber-300">
-            Los comentarios clasificados fueron analizados por el componente de Inteligencia
-            Artificial y están sujetos a revisión del director de departamento.
-          </AlertDescription>
-        </Alert>
+            <AlertDescription className="text-xs text-amber-700 dark:text-amber-300">
+              Los comentarios clasificados fueron analizados por el componente de Inteligencia
+              Artificial y están sujetos a revisión del director de departamento.
+            </AlertDescription>
+          </Alert>
+        </DismissibleNotice>
       )}
 
       {showFilters && hasData && (

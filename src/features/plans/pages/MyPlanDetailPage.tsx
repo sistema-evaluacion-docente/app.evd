@@ -1,5 +1,5 @@
 import { useRoute } from 'wouter'
-import { Download, Eye, FileCheck2, Info, Stamp } from 'lucide-react'
+import { Download, Eye, FileCheck2, Info } from 'lucide-react'
 
 import { PageTitle } from '@/components/common/PageTitle'
 import { ScoreProgress } from '@/components/common/ScoreProgress'
@@ -19,6 +19,7 @@ import {
 } from '../api'
 import { PlanCheckpoints } from '../components/PlanCheckpoints'
 import { PlanEvidences } from '../components/PlanEvidences'
+import { PlanIdentityStrips } from '../components/PlanIdentityStrips'
 import { ActaStatusBadge, PlanStatusBadge } from '../components/PlanStatusBadge'
 import { PLAN_FORMATS, planProgress, planProgressStage } from '../lib/planStatus'
 import type { Plan } from '../types'
@@ -201,14 +202,7 @@ function PlanSummary({ plan }: { plan: Plan }) {
         </p>
       )}
 
-      {(plan.acta_number || plan.acta_date) && (
-        <p className="text-muted-foreground flex flex-wrap items-center gap-2 border-t px-6 py-3 text-sm">
-          <Stamp className="size-4 shrink-0" aria-hidden="true" />
-          Acta N.º{' '}
-          <span className="num text-foreground font-semibold">{plan.acta_number ?? '—'}</span>
-          {plan.acta_date && ` · ${formatDate(plan.acta_date, 'D [de] MMMM [de] YYYY')}`}
-        </p>
-      )}
+      <PlanIdentityStrips plan={plan} />
     </section>
   )
 }

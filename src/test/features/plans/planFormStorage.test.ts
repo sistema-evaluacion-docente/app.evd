@@ -14,8 +14,6 @@ const SNAPSHOT: PlanFormSnapshot = {
   periodId: 2,
   titleOverride: 'Plan de Ada',
   description: '',
-  facultyOverride: null,
-  departmentOverride: null,
   programOverride: null,
   actaDate: '2026-08-19',
   actaNumber: '012',

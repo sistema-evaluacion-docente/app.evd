@@ -85,14 +85,14 @@ function getActivePath(items: SecurityConfig['pages'], location: string): string
 export function AppSidebar() {
   const [location] = useLocation()
   const { setOpenMobile } = useSidebar()
-  const { handleLogout, selectedRole } = useAuth()
+  const { handleLogout, selectedRole, user } = useAuth()
   const navigate = useNavigate()
 
   if (!selectedRole) {
     return null
   }
 
-  const items = getMenus(selectedRole)
+  const items = getMenus(selectedRole, { hasDepartment: user?.department_id != null })
   const activePath = getActivePath(items, location)
 
   return (

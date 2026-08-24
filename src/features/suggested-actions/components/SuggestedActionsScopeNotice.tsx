@@ -1,5 +1,6 @@
 import { Building2, Info } from 'lucide-react'
 
+import { DismissibleNotice } from '@/components/common/DismissibleNotice'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import type { Setting } from '@/features/admin'
 import { isDepartmentOwnedSetting } from '@/features/admin'
@@ -24,33 +25,37 @@ interface SuggestedActionsScopeNoticeProps {
 export function SuggestedActionsScopeNotice({ setting }: SuggestedActionsScopeNoticeProps) {
   if (setting && isDepartmentOwnedSetting(setting)) {
     return (
-      <Alert className="mb-4">
-        <Building2 aria-hidden="true" />
+      <DismissibleNotice storageKey="suggested-actions-scope-own" className="mb-4">
+        <Alert className="pr-10">
+          <Building2 aria-hidden="true" />
 
-        <AlertTitle>Lista propia de {setting.department_name ?? 'tu departamento'}</AlertTitle>
+          <AlertTitle>Lista propia de {setting.department_name ?? 'tu departamento'}</AlertTitle>
 
-        <AlertDescription>
-          Estas acciones se ofrecen al redactar los planes de mejoramiento de tu departamento.
-        </AlertDescription>
-      </Alert>
+          <AlertDescription>
+            Estas acciones se ofrecen al redactar los planes de mejoramiento de tu departamento.
+          </AlertDescription>
+        </Alert>
+      </DismissibleNotice>
     )
   }
 
   return (
-    <Alert className="mb-4">
-      <Info aria-hidden="true" />
+    <DismissibleNotice storageKey="suggested-actions-scope-institutional" className="mb-4">
+      <Alert className="pr-10">
+        <Info aria-hidden="true" />
 
-      <AlertTitle>
-        {setting
-          ? 'Estás viendo las acciones institucionales'
-          : 'Todavía no hay acciones sugeridas'}
-      </AlertTitle>
+        <AlertTitle>
+          {setting
+            ? 'Estás viendo las acciones institucionales'
+            : 'Todavía no hay acciones sugeridas'}
+        </AlertTitle>
 
-      <AlertDescription>
-        {setting
-          ? 'Son las que mantiene la administración y solo ella puede editarlas. El primer cambio que guardes creará una lista propia de tu departamento, sin tocar la institucional.'
-          : 'Agrega la primera para que aparezca como sugerencia al redactar los planes de mejoramiento de tu departamento.'}
-      </AlertDescription>
-    </Alert>
+        <AlertDescription>
+          {setting
+            ? 'Son las que mantiene la administración y solo ella puede editarlas. El primer cambio que guardes creará una lista propia de tu departamento, sin tocar la institucional.'
+            : 'Agrega la primera para que aparezca como sugerencia al redactar los planes de mejoramiento de tu departamento.'}
+        </AlertDescription>
+      </Alert>
+    </DismissibleNotice>
   )
 }

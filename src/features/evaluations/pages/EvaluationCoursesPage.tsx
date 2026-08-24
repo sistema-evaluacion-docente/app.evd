@@ -2,6 +2,7 @@ import { Info } from 'lucide-react'
 import { useRoute } from 'wouter'
 
 import { BackButton } from '@/components/common/BackButton'
+import { DismissibleNotice } from '@/components/common/DismissibleNotice'
 import { DataTableFilters, type FilterConfig } from '@/components/common/DataTableFilters'
 import { PageTitle } from '@/components/common/PageTitle'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -86,16 +87,18 @@ export default function EvaluationCoursesPage() {
       <div className="space-y-5">
         <ModalityNotice modality={modality} />
 
-        <Alert className="border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-200">
-          <Info className="size-4" aria-hidden="true" />
-          <AlertTitle>Corrige los nombres que el PDF haya cortado</AlertTitle>
+        <DismissibleNotice storageKey="evaluation-courses-names">
+          <Alert className="border-blue-200 bg-blue-50 pr-10 text-blue-800 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-200">
+            <Info className="size-4" aria-hidden="true" />
+            <AlertTitle>Corrige los nombres que el PDF haya cortado</AlertTitle>
 
-          <AlertDescription>
-            Los nombres se extraen del PDF y suelen quedar cortados cuando son largos. Haz clic en
-            el lápiz junto a un nombre para escribirlo completo; el código de la materia es el dato
-            que no cambia.
-          </AlertDescription>
-        </Alert>
+            <AlertDescription>
+              Los nombres se extraen del PDF y suelen quedar cortados cuando son largos. Haz clic en
+              el lápiz junto a un nombre para escribirlo completo; el código de la materia es el
+              dato que no cambia.
+            </AlertDescription>
+          </Alert>
+        </DismissibleNotice>
 
         {evaluation.status === 'PROCESSING' ? (
           <div className="border-border bg-background flex flex-col items-center gap-3 rounded-md border px-6 py-12 text-center">

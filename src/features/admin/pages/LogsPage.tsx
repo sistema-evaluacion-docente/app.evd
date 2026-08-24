@@ -7,7 +7,7 @@ import { LogsList } from '../components'
 export default function LogsPage() {
   return (
     <>
-      <PageTitle>Logs</PageTitle>
+      <PageTitle>Historial</PageTitle>
 
       <LogsList />
     </>

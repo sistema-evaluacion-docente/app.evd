@@ -3,19 +3,33 @@
  * table names, operation types, and their display labels.
  */
 
-/** Audit log operation types with their human-readable labels and styling. */
-export const OPERATIONS = [
-  { value: 'CREATE', label: 'Crear', bg: 'bg-emerald-50', text: 'text-emerald-700' },
-  { value: 'UPDATE', label: 'Actualizar', bg: 'bg-sky-50', text: 'text-sky-700' },
-  { value: 'DELETE', label: 'Eliminar', bg: 'bg-brand-50', text: 'text-brand-700' },
-  { value: 'READ', label: 'Leer', bg: 'bg-muted', text: 'text-muted-foreground' },
-  { value: 'IMPORT', label: 'Importar', bg: 'bg-violet-50', text: 'text-violet-700' },
-  { value: 'EXPORT', label: 'Exportar', bg: 'bg-amber-50', text: 'text-amber-700' },
-  { value: 'UNASSIGN', label: 'Desasignar', bg: 'bg-brand-50', text: 'text-brand-700' },
-  { value: 'ASSIGN', label: 'Asignar', bg: 'bg-sky-50', text: 'text-sky-700' },
-  { value: 'ACTIVATE', label: 'Activar', bg: 'bg-emerald-50', text: 'text-emerald-700' },
-  { value: 'DEACTIVATE', label: 'Desactivar', bg: 'bg-gray-50', text: 'text-gray-700' },
-  { value: 'BULK_CREATE', label: 'Crear en masa', bg: 'bg-blue-50', text: 'text-blue-700' },
+import { STATUS_TONE_CLASS, type StatusTone } from '@/lib/statusTone'
+
+/**
+ * Audit log operation types with their human-readable labels and tone.
+ *
+ * The tone is a key of `STATUS_TONE_CLASS`, not a pair of raw Tailwind classes:
+ * the eleven entries used to carry their own `bg-*-50` / `text-*-700` literals
+ * with no `dark:` variant at all, so in dark mode every badge but `READ` came
+ * out dark text on a near-white pill.
+ *
+ * Read semantically rather than one hue per operation — the label already says
+ * which one it is: verde lo que nace o se habilita, rojo lo que se destruye,
+ * ámbar lo que se desvincula, azul lo que se modifica, marca lo que entra o
+ * sale del sistema, y gris lo que no cambia nada.
+ */
+export const OPERATIONS: { value: string; label: string; tone: StatusTone }[] = [
+  { value: 'CREATE', label: 'Crear', tone: 'success' },
+  { value: 'UPDATE', label: 'Actualizar', tone: 'accent' },
+  { value: 'DELETE', label: 'Eliminar', tone: 'danger' },
+  { value: 'READ', label: 'Leer', tone: 'neutral' },
+  { value: 'IMPORT', label: 'Importar', tone: 'info' },
+  { value: 'EXPORT', label: 'Exportar', tone: 'info' },
+  { value: 'UNASSIGN', label: 'Desasignar', tone: 'warning' },
+  { value: 'ASSIGN', label: 'Asignar', tone: 'accent' },
+  { value: 'ACTIVATE', label: 'Activar', tone: 'success' },
+  { value: 'DEACTIVATE', label: 'Desactivar', tone: 'neutral' },
+  { value: 'BULK_CREATE', label: 'Crear en masa', tone: 'success' },
 ]
 
 /** Operation options for filters (label/value pairs only). */
@@ -51,13 +65,27 @@ export function getTableLabel(tableName: string | null | undefined): string {
 }
 
 /**
- * Get the operation config (label, bg, text) for a given operation value.
+ * Get the operation config (label, tone) for a given operation value.
  *
  * @example
- * getOperation('CREATE') // => { value: 'CREATE', label: 'Crear', bg: 'bg-emerald-50', text: 'text-emerald-700' }
+ * getOperation('CREATE') // => { value: 'CREATE', label: 'Crear', tone: 'success' }
  */
 export function getOperation(operation: string) {
   return OPERATIONS.find((o) => o.value === operation)
+}
+
+/**
+ * Badge classes of an operation, already resolved — so the tables and the
+ * detail drawer stop composing `bg`/`text` by hand and can never disagree.
+ * An unknown operation falls back to the neutral pill.
+ *
+ * @example
+ * <Badge className={getOperationToneClass(log.operation)}>…</Badge>
+ */
+export function getOperationToneClass(operation: string | null | undefined): string {
+  const tone = (operation ? getOperation(operation)?.tone : undefined) ?? 'neutral'
+
+  return STATUS_TONE_CLASS[tone]
 }
 
 /**
@@ -74,24 +102,36 @@ export function getOperationLabel(operation: string | null | undefined): string 
   return entry?.label ?? operation
 }
 
-/** Setting value types with their human-readable labels and badge styling. */
-export const SETTING_VALUE_TYPES = [
-  { value: 'string', label: 'Texto', bg: 'bg-sky-50', text: 'text-sky-700' },
-  { value: 'int', label: 'Entero', bg: 'bg-violet-50', text: 'text-violet-700' },
-  { value: 'float', label: 'Decimal', bg: 'bg-indigo-50', text: 'text-indigo-700' },
-  { value: 'boolean', label: 'Booleano', bg: 'bg-emerald-50', text: 'text-emerald-700' },
-  { value: 'json', label: 'JSON', bg: 'bg-amber-50', text: 'text-amber-700' },
-  { value: 'date', label: 'Fecha', bg: 'bg-brand-50', text: 'text-brand-700' },
+/** Setting value types with their human-readable labels and badge tone. */
+export const SETTING_VALUE_TYPES: { value: string; label: string; tone: StatusTone }[] = [
+  { value: 'string', label: 'Texto', tone: 'accent' },
+  { value: 'int', label: 'Entero', tone: 'info' },
+  { value: 'float', label: 'Decimal', tone: 'info' },
+  { value: 'boolean', label: 'Booleano', tone: 'success' },
+  { value: 'json', label: 'JSON', tone: 'warning' },
+  { value: 'date', label: 'Fecha', tone: 'neutral' },
 ]
 
 /**
- * Get the badge config (label, bg, text) for a given setting value type.
+ * Get the badge config (label, tone) for a given setting value type.
  *
  * @example
- * getValueTypeConfig('boolean') // => { value: 'boolean', label: 'Booleano', bg: 'bg-emerald-50', text: 'text-emerald-700' }
+ * getValueTypeConfig('boolean') // => { value: 'boolean', label: 'Booleano', tone: 'success' }
  */
 export function getValueTypeConfig(valueType: string) {
   return SETTING_VALUE_TYPES.find((v) => v.value === valueType)
+}
+
+/**
+ * Badge classes of a setting value type, already resolved.
+ *
+ * @example
+ * <Badge className={getValueTypeToneClass('json')}>JSON</Badge>
+ */
+export function getValueTypeToneClass(valueType: string | null | undefined): string {
+  const tone = (valueType ? getValueTypeConfig(valueType)?.tone : undefined) ?? 'neutral'
+
+  return STATUS_TONE_CLASS[tone]
 }
 
 /**

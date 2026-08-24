@@ -128,7 +128,8 @@ export function PlanClosure({ plan }: PlanClosureProps) {
             <DialogTitle>¿Cerrar el plan?</DialogTitle>
             <DialogDescription>
               Queda registrado el resultado del acompañamiento. Los seguimientos y las evidencias
-              pasan a solo lectura.
+              pasan a solo lectura, y el docente recibirá una notificación en la plataforma y un
+              correo con el resultado del cierre.
             </DialogDescription>
           </DialogHeader>
 

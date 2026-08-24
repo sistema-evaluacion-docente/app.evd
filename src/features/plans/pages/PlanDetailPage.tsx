@@ -1,4 +1,4 @@
-import { Pencil, Stamp, Trash2 } from 'lucide-react'
+import { Pencil, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useRoute } from 'wouter'
 
@@ -12,13 +12,13 @@ import { Button } from '@/components/ui/button'
 import { ROLE, useAuthStore } from '@/features/auth'
 import { NotFoundPage } from '@/features/not-found'
 import { useNavigate } from '@/hooks/useNavigate'
-import formatDate from '@/lib/formatDate'
 import { useGetPlan, useGetPlanIndicators } from '../api'
 import { DeletePlanDialog } from '../components/DeletePlanDialog'
 import { PlanCheckpoints } from '../components/PlanCheckpoints'
 import { PlanClosedSummary, PlanClosure } from '../components/PlanClosure'
 import { PlanDocuments } from '../components/PlanDocuments'
 import { PlanEvidences } from '../components/PlanEvidences'
+import { PlanIdentityStrips } from '../components/PlanIdentityStrips'
 import { ActaStatusBadge, PlanStatusBadge } from '../components/PlanStatusBadge'
 import { PlanVerification } from '../components/PlanVerification'
 import { hasSignedActa, isPlanClosed, planProgress, planProgressStage } from '../lib/planStatus'
@@ -163,17 +163,7 @@ export default function PlanDetailPage() {
           <p className="text-muted-foreground border-t px-6 py-3 text-sm">{plan.description}</p>
         )}
 
-        {/* The acto administrativo backing the agreement: two blanks the Ficha
-            de acuerdo prints, so they belong with the plan's identity rather
-            than in a section of their own. */}
-        {(plan.acta_number || plan.acta_date) && (
-          <p className="text-muted-foreground flex flex-wrap items-center gap-2 border-t px-6 py-3 text-sm">
-            <Stamp className="size-4 shrink-0" aria-hidden="true" />
-            Acta N.º{' '}
-            <span className="num text-foreground font-semibold">{plan.acta_number ?? '—'}</span>
-            {plan.acta_date && ` · ${formatDate(plan.acta_date, 'D [de] MMMM [de] YYYY')}`}
-          </p>
-        )}
+        <PlanIdentityStrips plan={plan} />
       </section>
 
       <section className="border-border bg-card overflow-hidden rounded-md border">
