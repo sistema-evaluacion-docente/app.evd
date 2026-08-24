@@ -15,14 +15,13 @@ export type PlanStatus =
   | 'RESULTADO_DISPONIBLE'
   | 'CERRADO_CUMPLIDO'
   | 'CERRADO_NO_CUMPLIDO'
-  | 'CERRADO_MANUAL'
 
 /** Lifecycle of the acta, independent from the plan status. */
 export type ActaStatus = 'BORRADOR' | 'CERRADA' | 'FIRMADA'
 
 export type ItemStatus = 'PENDIENTE' | 'EN_PROGRESO' | 'CUMPLIDO' | 'NO_CUMPLIDO'
 
-export type CloseResult = 'CUMPLIDO' | 'NO_CUMPLIDO' | 'MANUAL'
+export type CloseResult = 'CUMPLIDO' | 'NO_CUMPLIDO'
 
 /** The two formal follow-ups: week 8 and weeks 15/16. */
 export type CheckpointStage = 'PRIMER_SEGUIMIENTO' | 'SEGUNDO_SEGUIMIENTO'

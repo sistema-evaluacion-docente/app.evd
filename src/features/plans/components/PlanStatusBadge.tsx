@@ -24,9 +24,13 @@ interface PlanStatusBadgeProps {
  * <PlanStatusBadge status={plan.status} />
  */
 export function PlanStatusBadge({ status, className }: PlanStatusBadgeProps) {
-  return (
-    <Badge className={cn(PLAN_STATUS_CLASS[status], className)}>{PLAN_STATUS_LABEL[status]}</Badge>
-  )
+  // A status the API grew — or one this app dropped, the way `CERRADO_MANUAL`
+  // was — must not paint an empty badge reading `undefined`. The raw value is
+  // ugly but it says something true, and the neutral tone keeps it quiet.
+  const label = PLAN_STATUS_LABEL[status] ?? status
+  const tone = PLAN_STATUS_CLASS[status] ?? PLAN_STATUS_CLASS.BORRADOR
+
+  return <Badge className={cn(tone, className)}>{label}</Badge>
 }
 
 /** Lifecycle of the acta — independent from the plan status. */

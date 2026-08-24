@@ -34,7 +34,6 @@ export const PLAN_STATUS_LABEL: Record<PlanStatus, string> = {
   RESULTADO_DISPONIBLE: 'Resultado disponible',
   CERRADO_CUMPLIDO: 'Cerrado · cumplido',
   CERRADO_NO_CUMPLIDO: 'Cerrado · no cumplido',
-  CERRADO_MANUAL: 'Cerrado manualmente',
 }
 
 export const PLAN_STATUS_CLASS: Record<PlanStatus, string> = {
@@ -43,7 +42,6 @@ export const PLAN_STATUS_CLASS: Record<PlanStatus, string> = {
   RESULTADO_DISPONIBLE: WARNING,
   CERRADO_CUMPLIDO: SUCCESS,
   CERRADO_NO_CUMPLIDO: DANGER,
-  CERRADO_MANUAL: NEUTRAL,
 }
 
 /**
