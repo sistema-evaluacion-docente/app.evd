@@ -68,6 +68,11 @@ const DepartmentsPage = lazy(() =>
     default: module.DepartmentsPage,
   })),
 )
+const ProgramsPage = lazy(() =>
+  import('@/features/programs/pages/ProgramsPage').then((module) => ({
+    default: module.ProgramsPage,
+  })),
+)
 
 function App() {
   return (
@@ -207,6 +212,12 @@ function App() {
           <Route path="/acciones">
             <AppLayout>
               <SuggestedActionsPage />
+            </AppLayout>
+          </Route>
+
+          <Route path="/programas">
+            <AppLayout>
+              <ProgramsPage />
             </AppLayout>
           </Route>
 

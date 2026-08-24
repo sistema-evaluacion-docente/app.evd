@@ -33,6 +33,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   nuevo: 'Nuevo',
   editar: 'Editar',
   acciones: 'Acciones sugeridas',
+  programas: 'Programas académicos',
   evaluaciones: 'Evaluaciones',
   dimensiones: 'Dimensiones',
   pdf: 'Documento',
