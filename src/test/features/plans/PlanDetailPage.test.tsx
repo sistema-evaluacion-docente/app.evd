@@ -141,12 +141,30 @@ describe('PlanDetailPage · compromisos', () => {
     expect(screen.queryByText('Sin compromisos.')).not.toBeInTheDocument()
   })
 
-  it('counts the committed aspects against the five of the form', () => {
+  it('counts the commitments, and the aspects they cover as context', () => {
     mockPlan([item(1, 1, 'Expresa sus ideas'), item(2, 3, 'Retroalimenta tarde')])
 
     renderPage()
 
-    expect(screen.getByText('2 de 5 aspectos con compromisos.')).toBeInTheDocument()
+    expect(screen.getByText('2 compromisos · 2 de 5 aspectos del formato.')).toBeInTheDocument()
+  })
+
+  // Two commitments on the same aspect used to read "1 de 5 aspectos con
+  // compromisos" right above two cards, which looks like the page lost one.
+  it('counts both commitments when they share an aspect', () => {
+    mockPlan([item(1, 2, 'Asiste puntualmente · Redes'), item(2, 2, 'Asiste puntualmente · Elect')])
+
+    renderPage()
+
+    expect(screen.getByText('2 compromisos · 1 de 5 aspectos del formato.')).toBeInTheDocument()
+  })
+
+  it('counts a commitment left without an aspect, which no aspect covers', () => {
+    mockPlan([item(1, 1, 'Expresa sus ideas'), item(2, null, 'Compromiso suelto')])
+
+    renderPage()
+
+    expect(screen.getByText('2 compromisos · 1 de 5 aspectos del formato.')).toBeInTheDocument()
   })
 
   it('surfaces commitments left without an aspect instead of dropping them', () => {

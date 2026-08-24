@@ -28,6 +28,7 @@ import { getScoreToneBadgeClass, getScoreToneClass, SCORE_TONE_BADGE_CLASS } fro
 import { cn } from '@/lib/utils'
 import { type GroupedComments, visibleComments } from '../lib/commentGroups'
 import { SUBJECT_ALL } from '../lib/indicatorMatrix'
+import { indicatorKey } from '../lib/planStatus'
 import {
   commentSelectionId,
   indicatorPickOf,
@@ -46,6 +47,12 @@ interface IndicatorPickerProps {
   comments: GroupedComments
   /** `selection_id` of everything already in the draft, indicators and comments. */
   selectedIds: Set<string>
+  /**
+   * How many commitments the plan already holds per `indicatorKey`, so a row
+   * can say "2 en el plan" even when none of them is this asignatura's — which
+   * is every commitment of a plan that came back to be edited.
+   */
+  committedCounts?: ReadonlyMap<string, number>
   onToggleIndicator: (pick: IndicatorPick) => void
   onToggleComment: (comment: TeacherComment) => void
   /** Maps a dimension name to its aspect number (1-4). */
@@ -89,6 +96,7 @@ export const IndicatorPicker = memo(function IndicatorPicker({
   threshold,
   comments,
   selectedIds,
+  committedCounts,
   onToggleIndicator,
   onToggleComment,
   aspectByDimension,
@@ -248,6 +256,7 @@ export const IndicatorPicker = memo(function IndicatorPicker({
               questions={block.questions}
               comments={block.comments}
               selectedIds={selectedIds}
+              committedCounts={committedCounts}
               onToggleIndicator={onToggleIndicator}
               onToggleComment={onToggleComment}
               aspect={aspectByDimension[block.dimension.dimension] ?? null}
@@ -331,6 +340,7 @@ function DimensionBlock({
   questions,
   comments,
   selectedIds,
+  committedCounts,
   onToggleIndicator,
   onToggleComment,
   aspect,
@@ -342,6 +352,7 @@ function DimensionBlock({
   questions: IndicatorQuestion[]
   comments: TeacherComment[]
   selectedIds: Set<string>
+  committedCounts?: ReadonlyMap<string, number>
   onToggleIndicator: (pick: IndicatorPick) => void
   onToggleComment: (comment: TeacherComment) => void
   aspect: number | null
@@ -349,6 +360,9 @@ function DimensionBlock({
   showCourse: boolean
 }) {
   const scope = subjectKey === SUBJECT_ALL ? null : subjectKey
+  const dimensionPicked = selectedIds.has(
+    indicatorSelectionId(scope, 'DIMENSION', dimension.target_ref),
+  )
 
   return (
     <Collapsible className="border-border rounded-md border">
@@ -379,9 +393,17 @@ function DimensionBlock({
         </CollapsibleTrigger>
 
         <div className="flex items-center gap-3">
+          <CommittedChip
+            count={otherCommitments(
+              committedCounts,
+              'DIMENSION',
+              dimension.target_ref,
+              dimensionPicked,
+            )}
+          />
           <ScoreBadge value={dimension.average ?? undefined} />
           <PickButton
-            picked={selectedIds.has(indicatorSelectionId(scope, 'DIMENSION', dimension.target_ref))}
+            picked={dimensionPicked}
             onClick={() => onToggleIndicator(indicatorPickOf(dimension, aspect))}
           />
         </div>
@@ -407,6 +429,14 @@ function DimensionBlock({
                 </div>
 
                 <div className="flex shrink-0 items-center gap-3">
+                  <CommittedChip
+                    count={otherCommitments(
+                      committedCounts,
+                      'QUESTION',
+                      question.target_ref,
+                      picked,
+                    )}
+                  />
                   <span
                     className={cn(
                       'num text-sm font-semibold',
@@ -486,6 +516,50 @@ function CommentRow({
         <PickButton picked={picked} onClick={() => onToggle(comment)} />
       </div>
     </li>
+  )
+}
+
+/**
+ * Commitments the plan already holds on this indicator, beyond the one the
+ * button beside it is showing.
+ */
+function otherCommitments(
+  counts: ReadonlyMap<string, number> | undefined,
+  targetType: 'DIMENSION' | 'QUESTION',
+  targetRef: string,
+  picked: boolean,
+): number {
+  const total = counts?.get(indicatorKey(targetType, targetRef)) ?? 0
+
+  return Math.max(total - (picked ? 1 : 0), 0)
+}
+
+/**
+ * Says an indicator is already committed to somewhere else in the plan.
+ *
+ * A commitment restored from a saved plan doesn't carry the asignatura it was
+ * agreed under — the API keeps the asignaturas for the plan, not per
+ * commitment — so its row cannot be shown as picked. With nothing at all in its
+ * place, "already agreed" looked exactly like "nobody has looked at this yet",
+ * and the director had no way to know that adding it again was on purpose.
+ *
+ * The count carries its own explanation for a screen reader: the chip reads
+ * "2 en el plan" out of context otherwise.
+ */
+function CommittedChip({ count }: { count: number }) {
+  if (count === 0) return null
+
+  return (
+    <Badge variant="secondary" className="shrink-0 font-normal">
+      <span className="num">{count}</span> en el plan
+      <span className="sr-only">
+        {count === 1
+          ? ' — este indicador ya tiene un compromiso, de otra asignatura o de una edición anterior.'
+          : ` — este indicador ya tiene ${count} compromisos, de otras asignaturas o de una edición anterior.`}{' '}
+        Agrégalo para comprometer también esta asignatura; para quitar uno, usa su tarjeta en
+        «Compromisos».
+      </span>
+    </Badge>
   )
 }
 

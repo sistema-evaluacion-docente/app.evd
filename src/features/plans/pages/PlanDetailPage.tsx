@@ -102,7 +102,7 @@ export default function PlanDetailPage() {
                 <PlanStatusBadge status={plan.status} />
                 <ActaStatusBadge status={plan.acta_status} />
                 {plan.origin_period_code && (
-                  <Badge variant="outline">Origen {plan.origin_period_code}</Badge>
+                  <Badge variant="outline">Periodo {plan.origin_period_code}</Badge>
                 )}
                 {plan.verification_period_code && (
                   <Badge variant="outline">Verificación {plan.verification_period_code}</Badge>
@@ -170,9 +170,7 @@ export default function PlanDetailPage() {
         <header className="bg-muted/50 border-b px-6 py-4">
           <h2 className="font-semibold">Compromisos</h2>
           <p className="text-muted-foreground text-sm">
-            {plan.items.length === 0
-              ? 'Agrupados por los cinco aspectos de los formatos oficiales.'
-              : `${committedAspects.length} de ${aspects.length} aspectos con compromisos.`}
+            {commitmentsSummary(plan.items.length, committedAspects.length, aspects.length)}
           </p>
         </header>
 
@@ -268,6 +266,29 @@ export default function PlanDetailPage() {
 }
 
 /** One agreed commitment: what was detected, what was promised, how it stands. */
+/**
+ * The line under "Compromisos", which leads with the commitments themselves.
+ *
+ * It used to count only the aspects, and that reads as a miscount: two
+ * commitments filed under the same aspect printed "1 de 5 aspectos con
+ * compromisos" directly above two cards. The same happened to a commitment left
+ * without an aspect — it showed below, uncounted. The coverage of the five
+ * aspects of the official form is still worth saying, so it follows as context,
+ * and is left out while the catalogue is on its way: "0 de 0" says nothing.
+ *
+ * @example
+ * commitmentsSummary(2, 1, 5) // → '2 compromisos · 1 de 5 aspectos del formato.'
+ */
+function commitmentsSummary(total: number, committed: number, aspects: number): string {
+  if (total === 0) return 'Agrupados por los cinco aspectos de los formatos oficiales.'
+
+  const commitments = `${total} ${total === 1 ? 'compromiso' : 'compromisos'}`
+
+  if (aspects === 0) return `${commitments}.`
+
+  return `${commitments} · ${committed} de ${aspects} aspectos del formato.`
+}
+
 function CommitmentCard({ item }: { item: PlanItem }) {
   return (
     <li className="border-border rounded-md border p-3">

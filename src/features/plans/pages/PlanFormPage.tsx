@@ -546,35 +546,57 @@ function PlanForm({
   )
 
   /**
-   * How a drafted commitment answers to the picker.
+   * How a drafted commitment answers to the picker: by its own `selection_id`,
+   * the same way whether the plan is being created or edited.
    *
-   * While creating, the same indicator picked under two subjects is two
-   * different commitments. A saved plan doesn't record which subject each one
-   * came from, so when editing the indicator alone is the identity — one
-   * commitment per indicator, which is what the official form prints anyway.
-   * Without this an already-agreed indicator would show up unpicked and
-   * clicking it would file a duplicate.
-   */
-  const pickerScope =
-    workbench.effectiveSubjectKey === SUBJECT_ALL ? null : workbench.effectiveSubjectKey
-
-  /**
+   * Editing used to key on the indicator alone, on the grounds that a saved
+   * plan doesn't record which asignatura each commitment came from. But a plan
+   * legitimately holds two commitments on one indicator — the same question
+   * read on two asignaturas, each carrying its own evidences — and a shared
+   * identity made them a single row: toggling it filtered *both* out, so
+   * adding a third asignatura deleted the two already agreed. What editing
+   * cannot reconstruct is now reported rather than guessed, by
+   * `committedCounts` below.
+   *
    * Keyed on the ids themselves, not on `items`: the array is rebuilt on every
    * keystroke inside a commitment, and a fresh `Set` on each of those would
    * re-render the whole picker for a change it does not care about.
    */
-  const selectionKey = items
-    .map((item) =>
-      isEdit && item.target_ref != null
-        ? indicatorSelectionId(pickerScope, item.target_type, item.target_ref)
-        : item.selection_id,
-    )
-    .join('\u0000')
+  const selectionKey = items.map((item) => item.selection_id).join('\u0000')
 
   const selectedIds = useMemo(
     () => new Set(selectionKey ? selectionKey.split('\u0000') : []),
     [selectionKey],
   )
+
+  /**
+   * How many commitments the plan already holds for each indicator.
+   *
+   * A row can only be shown as picked when a commitment carries this
+   * asignatura's `selection_id`, which a restored one never does. Without this,
+   * the indicators of a saved plan came back looking untouched and the director
+   * had no way to tell "nobody has looked at this yet" from "already agreed,
+   * under another asignatura". The count says so without pretending to know
+   * which asignatura it was.
+   *
+   * Built off a joined key for the same reason as `selectionKey`: a keystroke
+   * inside a commitment must not rebuild it.
+   */
+  const committedKey = items
+    .map((item) => (item.target_ref == null ? '' : indicatorKey(item.target_type, item.target_ref)))
+    .join('\u0000')
+
+  const committedCounts = useMemo(() => {
+    const counts = new Map<string, number>()
+
+    for (const key of committedKey.split('\u0000')) {
+      if (key === '') continue
+
+      counts.set(key, (counts.get(key) ?? 0) + 1)
+    }
+
+    return counts
+  }, [committedKey])
 
   /**
    * The commitments as they stand right now, for the handlers below.
@@ -590,15 +612,6 @@ function PlanForm({
     itemsRef.current = items
   }, [items])
 
-  /** Identity a drafted commitment is matched by when toggling it off. */
-  const matchKeyOf = useCallback(
-    (item: DraftItem): string =>
-      isEdit && item.target_ref != null
-        ? indicatorKey(item.target_type, item.target_ref)
-        : item.selection_id,
-    [isEdit],
-  )
-
   function resetPicking() {
     setItems([])
     setCourses([])
@@ -609,11 +622,13 @@ function PlanForm({
     (pick: IndicatorPick) => {
       const subject = workbench.activeSubject
       const id = indicatorSelectionId(subject?.key ?? null, pick.target_type, pick.target_ref)
-      const matchKey = isEdit ? indicatorKey(pick.target_type, pick.target_ref) : id
       const current = itemsRef.current
 
-      if (current.some((item) => matchKeyOf(item) === matchKey)) {
-        const next = current.filter((item) => matchKeyOf(item) !== matchKey)
+      // Only this asignatura's own commitment is taken back out. The same
+      // indicator agreed under another one is a different commitment, with its
+      // own evidences, and is removed from its card in section 3.
+      if (current.some((item) => item.selection_id === id)) {
+        const next = current.filter((item) => item.selection_id !== id)
 
         setItems(next)
         setCourses((courses) => pruneCourses(courses, next))
@@ -630,7 +645,7 @@ function PlanForm({
         courses: coursesOfSubject(subject, workbench.allSubjects),
       })
     },
-    [isEdit, matchKeyOf, openCommitment, workbench.activeSubject, workbench.allSubjects],
+    [openCommitment, workbench.activeSubject, workbench.allSubjects],
   )
 
   const toggleComment = useCallback(
@@ -1160,6 +1175,7 @@ function PlanForm({
             threshold={threshold}
             comments={workbench.comments}
             selectedIds={selectedIds}
+            committedCounts={committedCounts}
             onToggleIndicator={toggleIndicator}
             onToggleComment={toggleComment}
             aspectByDimension={aspectByDimension}

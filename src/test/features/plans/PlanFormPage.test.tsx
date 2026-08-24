@@ -23,6 +23,7 @@ import {
 import PlanFormPage from '@/features/plans/pages/PlanFormPage'
 import { toast } from 'sonner'
 import type {
+  IndicatorDimension,
   Plan,
   PlanCandidate,
   PlanIndicators,
@@ -125,6 +126,29 @@ const HEALTHY_CANDIDATE: PlanCandidate = {
   below_threshold: false,
 }
 
+/** One dimension with one question, enough for the picker to paint both rows. */
+const MATRIX: IndicatorDimension[] = [
+  {
+    dimension: 'Dimensión 2',
+    target_type: 'DIMENSION',
+    target_ref: 'Metodología',
+    average: 3.05,
+    below_threshold: true,
+    suggestions: [],
+    questions: [
+      {
+        target_type: 'QUESTION',
+        target_ref: '011',
+        code: '011',
+        text: 'Asiste puntualmente a clase',
+        average: 3.31,
+        below_threshold: true,
+        suggestions: [],
+      },
+    ],
+  },
+]
+
 /** What the evaluation report says the teacher taught. */
 const SUBJECTS: PlanSubjectOption[] = [
   {
@@ -153,6 +177,8 @@ function mockQueries({
   candidatesLoading = false,
   candidates = [CANDIDATE],
   subjects = [],
+  dimensions = [],
+  activeSubject = null,
   plan,
   updateMutate = vi.fn(),
   createMutate = vi.fn(),
@@ -163,6 +189,10 @@ function mockQueries({
   candidatesLoading?: boolean
   candidates?: PlanCandidate[]
   subjects?: PlanSubjectOption[]
+  /** The matrix the picker paints. Empty by default: most tests never open it. */
+  dimensions?: IndicatorDimension[]
+  /** The asignatura the subject filter is on, or `null` for "General". */
+  activeSubject?: PlanSubjectOption | null
   plan?: Plan
   updateMutate?: ReturnType<typeof vi.fn>
   createMutate?: ReturnType<typeof vi.fn>
@@ -208,9 +238,9 @@ function mockQueries({
   vi.mocked(usePlanWorkbench).mockReturnValue({
     allSubjects: subjects,
     subjectOptions: subjects,
-    activeSubject: null,
-    effectiveSubjectKey: 'ALL',
-    dimensions: [],
+    activeSubject,
+    effectiveSubjectKey: activeSubject?.key ?? 'ALL',
+    dimensions,
     comments: { byDimension: {}, uncategorized: [] },
     weakCount: 0,
     riskyCount: 0,
@@ -801,6 +831,26 @@ describe('PlanFormPage · creación', () => {
 })
 
 /** A saved plan, reduced to the fields the form reads back. */
+/** One agreed commitment, on the dimension `MATRIX` paints. */
+function savedItem(overrides: Partial<Plan['items'][number]> = {}): Plan['items'][number] {
+  return {
+    id: 41,
+    plan_id: 8,
+    description: 'Metodología — Álgebra (2.80)',
+    commitment: 'Rediseñar las guías de clase',
+    aspect: 1,
+    target_type: 'DIMENSION',
+    target_ref: 'Metodología',
+    baseline_value: 2.8,
+    target_value: 3.5,
+    result_value: null,
+    status: 'PENDIENTE',
+    order: 0,
+    comments: [],
+    ...overrides,
+  }
+}
+
 function savedPlan(overrides: Partial<Plan> = {}): Plan {
   return {
     id: 8,
@@ -1094,5 +1144,55 @@ describe('PlanFormPage · edición', () => {
 
     expect(screen.getByLabelText(/^Fecha del acta/)).toBeInTheDocument()
     expect(screen.queryByLabelText('Fecha de inicio')).not.toBeInTheDocument()
+  })
+
+  /**
+   * A plan holds one commitment per indicator *and asignatura*: the same
+   * question, low in two courses, is two agreements with their own evidences.
+   * Editing used to key the picker on the indicator alone, so adding a third
+   * asignatura matched both of the existing ones and filtered them out — the
+   * click meant to add deleted what was already agreed.
+   */
+  it('no borra los compromisos acordados al agregar el mismo indicador en otra asignatura', async () => {
+    mockQueries({
+      plan: savedPlan({
+        items: [
+          savedItem({ id: 41, description: 'Metodología — Álgebra (2.80)' }),
+          savedItem({ id: 42, description: 'Metodología — Cálculo (3.10)' }),
+        ],
+      }),
+      dimensions: MATRIX,
+      subjects: SUBJECTS,
+      activeSubject: SUBJECTS[0],
+    })
+
+    renderAt(<PlanFormPage />, '/planes/8/editar')
+
+    // The dimension row, which both saved commitments are about.
+    await userEvent.click(screen.getAllByRole('button', { name: 'Agregar' })[0])
+
+    // Neither was taken out, and the click opened a third one to write.
+    expect(screen.getByText('Metodología — Álgebra (2.80)')).toBeInTheDocument()
+    expect(screen.getByText('Metodología — Cálculo (3.10)')).toBeInTheDocument()
+    expect(await screen.findByRole('dialog')).toBeInTheDocument()
+  })
+
+  it('dice cuántos compromisos ya tiene el indicador en el plan', () => {
+    mockQueries({
+      plan: savedPlan({
+        items: [
+          savedItem({ id: 41, description: 'Metodología — Álgebra (2.80)' }),
+          savedItem({ id: 42, description: 'Metodología — Cálculo (3.10)' }),
+        ],
+      }),
+      dimensions: MATRIX,
+      subjects: SUBJECTS,
+      activeSubject: SUBJECTS[0],
+    })
+
+    renderAt(<PlanFormPage />, '/planes/8/editar')
+
+    // The dimension has two; the question below it none, so it stays silent.
+    expect(screen.getByText(/en el plan/)).toHaveTextContent('2 en el plan')
   })
 })
