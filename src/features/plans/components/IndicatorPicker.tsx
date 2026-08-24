@@ -10,6 +10,7 @@ import {
 import { IndicatorMatrixSkeleton } from '@/components/skeletons/IndicatorMatrixSkeleton'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Label } from '@/components/ui/label'
 import {
@@ -53,6 +54,12 @@ interface IndicatorPickerProps {
    * is every commitment of a plan that came back to be edited.
    */
   committedCounts?: ReadonlyMap<string, number>
+  /**
+   * `commit` writes each pick straight away, in `CommitmentDialog` — the
+   * behaviour of the plan form. `select` only marks rows, for the panel that
+   * gathers a selection on the teacher's profile and hands it to the form.
+   */
+  mode?: 'commit' | 'select'
   onToggleIndicator: (pick: IndicatorPick) => void
   onToggleComment: (comment: TeacherComment) => void
   /** Maps a dimension name to its aspect number (1-4). */
@@ -97,6 +104,7 @@ export const IndicatorPicker = memo(function IndicatorPicker({
   comments,
   selectedIds,
   committedCounts,
+  mode = 'commit',
   onToggleIndicator,
   onToggleComment,
   aspectByDimension,
@@ -257,6 +265,7 @@ export const IndicatorPicker = memo(function IndicatorPicker({
               comments={block.comments}
               selectedIds={selectedIds}
               committedCounts={committedCounts}
+              mode={mode}
               onToggleIndicator={onToggleIndicator}
               onToggleComment={onToggleComment}
               aspect={aspectByDimension[block.dimension.dimension] ?? null}
@@ -292,6 +301,7 @@ export const IndicatorPicker = memo(function IndicatorPicker({
                       picked={selectedIds.has(commentSelectionId(comment.id))}
                       onToggle={onToggleComment}
                       showCourse={subjectKey === SUBJECT_ALL}
+                      mode={mode}
                     />
                   ))}
                 </ul>
@@ -341,6 +351,7 @@ function DimensionBlock({
   comments,
   selectedIds,
   committedCounts,
+  mode,
   onToggleIndicator,
   onToggleComment,
   aspect,
@@ -353,6 +364,7 @@ function DimensionBlock({
   comments: TeacherComment[]
   selectedIds: Set<string>
   committedCounts?: ReadonlyMap<string, number>
+  mode: 'commit' | 'select'
   onToggleIndicator: (pick: IndicatorPick) => void
   onToggleComment: (comment: TeacherComment) => void
   aspect: number | null
@@ -402,9 +414,11 @@ function DimensionBlock({
             )}
           />
           <ScoreBadge value={dimension.average ?? undefined} />
-          <PickButton
+          <PickControl
+            mode={mode}
             picked={dimensionPicked}
-            onClick={() => onToggleIndicator(indicatorPickOf(dimension, aspect))}
+            label={`la dimensión ${dimension.dimension}`}
+            onToggle={() => onToggleIndicator(indicatorPickOf(dimension, aspect))}
           />
         </div>
       </div>
@@ -447,9 +461,11 @@ function DimensionBlock({
                   >
                     {question.average != null ? question.average.toFixed(2) : '—'}
                   </span>
-                  <PickButton
+                  <PickControl
+                    mode={mode}
                     picked={picked}
-                    onClick={() => onToggleIndicator(questionPickOf(question, aspect))}
+                    label={`el indicador ${question.code}, ${question.text}`}
+                    onToggle={() => onToggleIndicator(questionPickOf(question, aspect))}
                   />
                 </div>
               </li>
@@ -475,6 +491,7 @@ function DimensionBlock({
               picked={selectedIds.has(commentSelectionId(comment.id))}
               onToggle={onToggleComment}
               showCourse={showCourse}
+              mode={mode}
             />
           ))}
         </ul>
@@ -489,11 +506,13 @@ function CommentRow({
   picked,
   onToggle,
   showCourse,
+  mode,
 }: {
   comment: TeacherComment
   picked: boolean
   onToggle: (comment: TeacherComment) => void
   showCourse: boolean
+  mode: 'commit' | 'select'
 }) {
   return (
     <li className="flex items-start justify-between gap-3 px-4 py-1 pl-10">
@@ -513,7 +532,12 @@ function CommentRow({
       />
 
       <div className="mt-3 shrink-0">
-        <PickButton picked={picked} onClick={() => onToggle(comment)} />
+        <PickControl
+          mode={mode}
+          picked={picked}
+          label="este comentario de estudiantes"
+          onToggle={() => onToggle(comment)}
+        />
       </div>
     </li>
   )
@@ -560,6 +584,37 @@ function CommittedChip({ count }: { count: number }) {
         «Compromisos».
       </span>
     </Badge>
+  )
+}
+
+/**
+ * The control that marks a row, in whichever shape the surface calls for.
+ *
+ * On the plan form a pick opens `CommitmentDialog` right away, so the row needs
+ * a button that says what it is about to do — «Agregar». On the selection panel
+ * nothing is written yet and the director is sweeping twenty-one rows, where
+ * twenty-one buttons read as noise and a column of checkboxes reads as a list.
+ */
+function PickControl({
+  mode,
+  picked,
+  label,
+  onToggle,
+}: {
+  mode: 'commit' | 'select'
+  picked: boolean
+  /** Named for the screen reader: «Seleccionar el indicador 011, …». */
+  label: string
+  onToggle: () => void
+}) {
+  if (mode === 'commit') return <PickButton picked={picked} onClick={onToggle} />
+
+  return (
+    <Checkbox
+      checked={picked}
+      onCheckedChange={onToggle}
+      aria-label={`${picked ? 'Quitar' : 'Seleccionar'} ${label}`}
+    />
   )
 }
 

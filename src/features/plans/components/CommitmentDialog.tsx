@@ -1,4 +1,5 @@
 import { type SubmitEvent, useMemo, useState } from 'react'
+import { ArrowRight } from 'lucide-react'
 
 import { FieldError } from '@/components/common/FieldError'
 import { Required } from '@/components/common/Required'
@@ -67,6 +68,16 @@ export interface CommitmentDialogProps {
   defaultActions?: SuggestedAction[]
   /** Hands back the finished commitment; only fires once it is complete. */
   onSave: (draft: DraftItem) => void
+  /**
+   * Where this commitment sits in a run of them, when the director asked to
+   * write the pending ones one after another. Absent for a single edit.
+   */
+  queue?: { index: number; total: number }
+  /**
+   * Saves and moves straight on to the next pending commitment. Offered only
+   * with a `queue`, and only while there is a next one.
+   */
+  onSaveAndNext?: (draft: DraftItem) => void
   onCancel: () => void
 }
 
@@ -116,6 +127,8 @@ function CommitmentForm({
   aspects,
   defaultActions = [],
   onSave,
+  queue,
+  onSaveAndNext,
   onCancel,
 }: CommitmentDialogProps & { draft: DraftItem }) {
   const [item, setItem] = useState<DraftItem>(draft)
@@ -161,6 +174,27 @@ function CommitmentForm({
     setTouched((current) => (current.has(id) ? current : new Set(current).add(id)))
   }
 
+  /**
+   * Whether the run continues past this one.
+   *
+   * The last commitment says «Guardar y terminar» instead: a "next" that closes
+   * the dialog is a promise the button didn't keep.
+   */
+  const hasNext = queue != null && queue.index < queue.total - 1
+
+  /** Shared by both save buttons, so the refusal is identical either way. */
+  function commit(handler: (item: DraftItem) => void): boolean {
+    if (errors.length > 0) {
+      setShowAllErrors(true)
+      focusField(dialogFieldId(errors[0].id))
+      return false
+    }
+
+    handler(item)
+
+    return true
+  }
+
   function submit(event: SubmitEvent) {
     event.preventDefault()
     // React propagates events through its own tree, not the DOM one, so a
@@ -169,13 +203,9 @@ function CommitmentForm({
     // obligatorios" to someone who only pressed Guardar on one commitment.
     event.stopPropagation()
 
-    if (errors.length > 0) {
-      setShowAllErrors(true)
-      focusField(dialogFieldId(errors[0].id))
-      return
-    }
-
-    onSave(item)
+    // In a run, Enter carries on to the next one — that is what the primary
+    // button does, and the two must not disagree.
+    commit(queue != null && onSaveAndNext ? onSaveAndNext : onSave)
   }
 
   return (
@@ -184,7 +214,16 @@ function CommitmentForm({
     <form onSubmit={submit} noValidate className="contents">
       <DialogHeader>
         <DialogTitle className="pr-6">
-          {mode === 'edit' ? 'Editar compromiso' : 'Nuevo compromiso'}
+          {queue ? (
+            <>
+              Compromiso <span className="num">{queue.index + 1}</span> de{' '}
+              <span className="num">{queue.total}</span>
+            </>
+          ) : mode === 'edit' ? (
+            'Editar compromiso'
+          ) : (
+            'Nuevo compromiso'
+          )}
         </DialogTitle>
         <DialogDescription>
           Se imprime en el Formato 2, bajo el aspecto al que pertenece.
@@ -382,9 +421,22 @@ function CommitmentForm({
 
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onCancel}>
-          Cancelar
+          {queue ? 'Cerrar' : 'Cancelar'}
         </Button>
-        <Button type="submit">Guardar</Button>
+
+        {/* In a run, «Guardar» still stops there on purpose: the director may
+            want to look at the plan before writing the rest, and the counter in
+            section 3 will still say how many are left. */}
+        {queue && onSaveAndNext && hasNext && (
+          <Button type="button" variant="outline" onClick={() => commit(onSave)}>
+            Guardar
+          </Button>
+        )}
+
+        <Button type="submit">
+          {!queue ? 'Guardar' : hasNext ? 'Guardar y siguiente' : 'Guardar y terminar'}
+          {queue && hasNext && <ArrowRight className="size-4" aria-hidden="true" />}
+        </Button>
       </DialogFooter>
     </form>
   )

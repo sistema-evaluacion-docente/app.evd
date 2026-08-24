@@ -1,4 +1,5 @@
-import { ClipboardList, Eye, History, Plus } from 'lucide-react'
+import { ClipboardList, Eye, History, ListChecks, Plus } from 'lucide-react'
+import { useState } from 'react'
 import { useLocation } from 'wouter'
 
 import { Button } from '@/components/ui/button'
@@ -7,6 +8,7 @@ import { ROLE, useAuthStore } from '@/features/auth'
 import { cn } from '@/lib/utils'
 import { useGetPlans } from '../api'
 import { isPlanClosed } from '../lib/planStatus'
+import { IndicatorSelectionSheet } from './IndicatorSelectionSheet'
 import { PlanStatusBadge } from './PlanStatusBadge'
 
 interface TeacherPlanActionProps {
@@ -50,6 +52,7 @@ export function TeacherPlanAction({
   className,
 }: TeacherPlanActionProps) {
   const [, navigate] = useLocation()
+  const [selecting, setSelecting] = useState(false)
   // Only the department director runs improvement plans, and only while that is
   // the role they are signed in as.
   const canManage = useAuthStore((state) => state.selectedRole) === ROLE.DEPARTMENT_DIRECTOR
@@ -91,6 +94,15 @@ export function TeacherPlanAction({
   /** Plans of the teacher that belong to another semester than this profile. */
   const otherPeriods = current ? plans.length - 1 : plans.length
   const periodLabel = periodCode ? `el periodo ${periodCode}` : 'este periodo'
+
+  /**
+   * Whether the indicators of this period can still reach a plan.
+   *
+   * Either there is none yet — the selection starts one — or the one there is
+   * still accepts content. A signed acta does not: the API refuses commitments
+   * and asignaturas on it, so offering to add more would be a dead end.
+   */
+  const canSelect = !isPending && (!current || !current.acta_locked)
 
   return (
     <section
@@ -138,6 +150,17 @@ export function TeacherPlanAction({
           </>
         )}
 
+        {/* The informed way in: pick the indicators while the scores are on
+            screen, and land on the form with them already drafted. «Crear
+            plan» stays as the direct route for a director who would rather
+            start from the form. */}
+        {canSelect && (
+          <Button variant="outline" size="sm" onClick={() => setSelecting(true)}>
+            <ListChecks className="size-4" aria-hidden="true" />
+            {current ? 'Agregar indicadores al plan' : 'Seleccionar indicadores'}
+          </Button>
+        )}
+
         {!isPending && current && (
           <Button variant="outline" size="sm" onClick={() => navigate(`/planes/${current.id}`)}>
             <Eye className="size-4" aria-hidden="true" />
@@ -168,6 +191,19 @@ export function TeacherPlanAction({
           </Button>
         )}
       </div>
+
+      {/* Mounted from the start but idle: every query it makes is held back by
+          `open`, so the profile pays nothing until the director asks for it —
+          and the panel keeps its selection, and its closing animation, instead
+          of being torn out mid-transition. */}
+      <IndicatorSelectionSheet
+        open={selecting}
+        onOpenChange={setSelecting}
+        teacherId={teacherId}
+        teacherName={name ?? undefined}
+        periodCode={periodCode}
+        target={current ? { kind: 'edit', planId: current.id } : { kind: 'new' }}
+      />
     </section>
   )
 }
