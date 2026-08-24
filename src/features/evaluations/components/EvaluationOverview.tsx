@@ -6,7 +6,9 @@ import { ScoreBadge } from '@/components/common/ScoreBadge'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
+import { useNavigate } from '@/hooks/useNavigate'
 import formatDate from '@/lib/formatDate'
+import { cn } from '@/lib/utils'
 import { AI_STATUS_DISPLAY, EVALUATION_STATUS_DISPLAY } from '../config'
 import type { EvaluationRecord } from '../types'
 
@@ -54,6 +56,8 @@ export function EvaluationOverview({
   isAnalyzing,
   className,
 }: EvaluationOverviewProps) {
+  const navigate = useNavigate()
+
   const statusConfig = EVALUATION_STATUS_DISPLAY[evaluation.status]
   const aiStatusConfig = evaluation.ai_status ? AI_STATUS_DISPLAY[evaluation.ai_status] : undefined
   const isCurrentlyAnalyzing = evaluation.ai_status === 'ANALYZING' || isAnalyzing
@@ -133,11 +137,19 @@ export function EvaluationOverview({
       </div>
 
       <div className="divide-border grid grid-cols-2 divide-x sm:grid-cols-4">
-        <Fact label="Docentes evaluados">
+        <Fact
+          label="Docentes evaluados"
+          title={`Ver la lista de docentes evaluados`}
+          onClick={() => navigate(`/docentes?period=${evaluation.academic_period_name}`)}
+        >
           <span className="num text-2xl font-semibold tabular-nums">{evaluation.count}</span>
         </Fact>
 
-        <Fact label="Comentarios de alto riesgo">
+        <Fact
+          label="Comentarios de alto riesgo"
+          title={`Ver los comentarios de alto riesgo`}
+          onClick={() => navigate(`/alertas?period=${evaluation.academic_period_name}`)}
+        >
           <span className="num text-primary text-2xl font-semibold tabular-nums">
             {evaluation.comments_risk_counts?.ALTO ?? '—'}
           </span>
@@ -177,9 +189,23 @@ export function EvaluationOverview({
   )
 }
 
-function Fact({ label, children }: { label: string; children: ReactNode }) {
+function Fact({
+  label,
+  children,
+  onClick,
+  title,
+}: {
+  label: string
+  children: ReactNode
+  onClick?: () => void
+  title?: string
+}) {
   return (
-    <div className="px-6 py-4">
+    <div
+      title={title}
+      onClick={onClick}
+      className={cn('px-6 py-4', onClick ? 'hover:bg-accent/50 cursor-pointer' : '')}
+    >
       <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">{label}</p>
 
       <div className="mt-2 flex min-h-8 items-center">{children}</div>
