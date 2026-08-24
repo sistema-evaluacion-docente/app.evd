@@ -1,9 +1,10 @@
-import { FileText, UploadCloud, X } from 'lucide-react'
+import { Eye, FileText, UploadCloud, X } from 'lucide-react'
 import { useId, useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { formatBytes } from '@/lib/formatBytes'
+import { openLocalFile } from '@/lib/openLocalFile'
 import { cn } from '@/lib/utils'
 import { InlineError } from './InlineError'
 
@@ -159,6 +160,21 @@ export function MultiFileDropzone({
                   {formatBytes(file.size)}
                 </p>
               </div>
+
+              {/* Only for PDFs: the dropzone is generic and `accept` can name
+                  a type the browser would download instead of showing. */}
+              {file.type === 'application/pdf' && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => openLocalFile(file)}
+                  aria-label={`Ver ${file.name}`}
+                  title="Ver el PDF en una pestaña nueva"
+                >
+                  <Eye className="size-4" aria-hidden="true" />
+                </Button>
+              )}
 
               <Button
                 type="button"
