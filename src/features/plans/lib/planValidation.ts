@@ -145,7 +145,6 @@ export function planFormErrors({
   items,
   aspects,
   courses,
-  programName,
   actaNumber,
   actaDate,
 }: {
@@ -158,8 +157,6 @@ export function planFormErrors({
   items: DraftItem[]
   aspects: PlanAspect[]
   courses: DraftCourse[]
-  /** The resolved value, not the override: it is what gets printed. */
-  programName: string
   actaNumber: string
   actaDate: string
 }): PlanFieldError[] {
@@ -196,11 +193,6 @@ export function planFormErrors({
 
   // Section 5, in the order the section paints it.
   if (isBlank(title)) errors.push({ id: 'title', message: 'El plan necesita un título.' })
-
-  // La única columna del encabezado de los formatos que sigue siendo un campo:
-  // facultad y departamento se heredan del docente evaluado y ya no se
-  // preguntan, así que tampoco se pueden reclamar — no habría dónde escribirlas.
-  if (isBlank(programName)) errors.push({ id: 'program', message: 'Indica el programa académico.' })
 
   // Part of the acta, so a signed one doesn't get asked for them again — and
   // couldn't answer anyway, with both fields disabled.

@@ -121,7 +121,7 @@ describe('AutoBreadcrumb', () => {
   })
 
   it('calls the audit page Historial', () => {
-    renderAt('/admin/logs')
+    renderAt('/admin/historial')
 
     expect(screen.getByText('Historial')).toBeInTheDocument()
     expect(screen.queryByText('Logs')).not.toBeInTheDocument()

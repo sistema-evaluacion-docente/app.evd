@@ -15,14 +15,13 @@ export type PlanStatus =
   | 'RESULTADO_DISPONIBLE'
   | 'CERRADO_CUMPLIDO'
   | 'CERRADO_NO_CUMPLIDO'
-  | 'CERRADO_MANUAL'
 
 /** Lifecycle of the acta, independent from the plan status. */
 export type ActaStatus = 'BORRADOR' | 'CERRADA' | 'FIRMADA'
 
 export type ItemStatus = 'PENDIENTE' | 'EN_PROGRESO' | 'CUMPLIDO' | 'NO_CUMPLIDO'
 
-export type CloseResult = 'CUMPLIDO' | 'NO_CUMPLIDO' | 'MANUAL'
+export type CloseResult = 'CUMPLIDO' | 'NO_CUMPLIDO'
 
 /** The two formal follow-ups: week 8 and weeks 15/16. */
 export type CheckpointStage = 'PRIMER_SEGUIMIENTO' | 'SEGUNDO_SEGUIMIENTO'
@@ -307,7 +306,7 @@ export interface CreatePlanInput {
   verification_period_id?: number | null
   title: string
   description?: string
-  program_name?: string
+
   faculty_name?: string
   department_name?: string
   start_date?: string
@@ -326,7 +325,6 @@ export interface UpdatePlanInput {
   title?: string
   description?: string
   verification_period_id?: number | null
-  program_name?: string
   faculty_name?: string
   department_name?: string
   start_date?: string
@@ -439,6 +437,7 @@ export interface TeacherCourseOption {
   course_name: string | null
   course_code: string | null
   group_name: string | null
+  program_name: string | null
 }
 
 export interface TeacherHistoryPeriod {
@@ -513,6 +512,7 @@ export interface PlanSubjectOption {
   course_code: string | null
   group_name: string | null
   academic_group_id: number | null
+  program_name: string | null
 }
 
 /** A commitment being drafted before the plan is saved. */

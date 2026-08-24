@@ -546,8 +546,8 @@ export function CourseTeacherDetail({
         </div>
 
         <CourseDimensionBreakdown
-          course={course}
-          previousCourse={selectedComparison}
+          dimensions={course.dimensions}
+          previous={selectedComparison?.dimensions}
           previousLabel={selectedComparison?.period_name}
           className="px-6"
         />

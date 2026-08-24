@@ -20,7 +20,7 @@ import type { Plan } from '../types'
  * <PlanIdentityStrips plan={plan} />
  */
 export function PlanIdentityStrips({ plan }: { plan: Plan }) {
-  const header = [plan.faculty_name, plan.department_name, plan.program_name].filter(Boolean)
+  const header = ["Facultad " + plan.faculty_name, "Departamento " + plan.department_name].filter(Boolean)
 
   return (
     <>

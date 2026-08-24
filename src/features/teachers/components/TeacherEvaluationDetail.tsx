@@ -5,6 +5,7 @@ import { PeriodAverageTrend } from '@/features/periods'
 import { dimensionColor } from '@/lib/dimensionLabel'
 import { cn } from '@/lib/utils'
 import type { CourseDetail, TeacherDetail } from '../types'
+import { CourseDimensionBreakdown } from './CourseDimensionBreakdown'
 import { TeacherComments } from './TeacherComments'
 import { TeacherCourseResults } from './TeacherCourseResults'
 import { TeacherOverview } from './TeacherOverview'
@@ -78,6 +79,26 @@ export function TeacherEvaluationDetail({
             referenceLabel="Promedio general"
           />
         </div>
+      </section>
+
+      {/* The same twenty-one indicators the asignaturas below break down, but
+          for the teacher as a whole. They were in the payload all along and
+          nowhere on screen: the chart above only carries the four dimension
+          averages, so a question dragging every course at once had no place it
+          could be read. */}
+      <section className="border-border bg-background rounded-md border">
+        <div className="border-border border-b px-6 py-4">
+          <h2 className="text-sm font-medium">Indicadores del periodo</h2>
+          <p className="text-muted-foreground text-xs">
+            Promedio de cada indicador en todos los grupos que dictó, sin separar por asignatura.
+          </p>
+        </div>
+
+        <CourseDimensionBreakdown
+          dimensions={teacher.dimensions}
+          previous={teacher.previous_period?.dimensions}
+          className="px-6 pb-2"
+        />
       </section>
 
       <TeacherCourseResults teacher={teacher} getCourseHref={getCourseHref} />

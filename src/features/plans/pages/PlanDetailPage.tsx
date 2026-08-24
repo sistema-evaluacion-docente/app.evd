@@ -38,14 +38,6 @@ export default function PlanDetailPage() {
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   const planId = params?.id && !isNaN(Number(params.id)) ? Number(params.id) : undefined
-
-  // Improvement plans belong to the department director, start to finish: they
-  // agree them, sign them, follow them up and close them.
-  //
-  // Read off `selectedRole` and not off every role the account holds: that is
-  // the one `AppLayout` gates the routes with, so a director who switched to
-  // "Docente" would otherwise still be offered controls the rest of the app has
-  // already decided they are not using right now.
   const canManage = useAuthStore((state) => state.selectedRole) === ROLE.DEPARTMENT_DIRECTOR
 
   const { data, isPending } = useGetPlan(planId)
@@ -58,16 +50,11 @@ export default function PlanDetailPage() {
   const plan = data?.data
   const aspects = indicatorsResponse?.data?.aspects ?? []
 
-  // The plan only talks about what was actually agreed: an aspect nobody
-  // committed to is left out instead of printing an empty placeholder.
   const committedAspects = aspects.filter((aspect) =>
     plan?.items.some((item) => item.aspect === aspect.aspect),
   )
   const unassignedItems = plan?.items.filter((item) => item.aspect == null) ?? []
 
-  // Signing the Ficha de acuerdo settles what was agreed: from there the plan
-  // is in force and its content stops being editable, so the way back is to
-  // take the signed scan off in "Formatos oficiales".
   const signedActa = plan ? hasSignedActa(plan) : false
   const closed = plan ? isPlanClosed(plan.status) : false
   const canEdit = Boolean(canManage && plan && !closed && !signedActa)
@@ -102,7 +89,7 @@ export default function PlanDetailPage() {
                 <PlanStatusBadge status={plan.status} />
                 <ActaStatusBadge status={plan.acta_status} />
                 {plan.origin_period_code && (
-                  <Badge variant="outline">Origen {plan.origin_period_code}</Badge>
+                  <Badge variant="outline">Periodo {plan.origin_period_code}</Badge>
                 )}
                 {plan.verification_period_code && (
                   <Badge variant="outline">Verificación {plan.verification_period_code}</Badge>
@@ -115,8 +102,6 @@ export default function PlanDetailPage() {
             <div className="min-w-48">
               <div className="mb-1 flex items-baseline justify-between gap-3">
                 <p className="text-muted-foreground text-xs tracking-wide uppercase">Avance</p>
-                {/* Said out loud, not only on hover: a bar that reads empty all
-                    semester tells the director nothing about where the plan is. */}
                 <p className="num text-sm font-semibold">{planProgress(plan)}%</p>
               </div>
               <ScoreProgress
@@ -141,9 +126,6 @@ export default function PlanDetailPage() {
                 </Button>
               )}
 
-              {/* Undoing the agreement belongs to the director who made it, so
-                  it stays offered even once the acta is signed and the plan can
-                  no longer be edited — the confirmation is what guards it. */}
               {canManage && (
                 <Button
                   size="sm"
@@ -170,9 +152,7 @@ export default function PlanDetailPage() {
         <header className="bg-muted/50 border-b px-6 py-4">
           <h2 className="font-semibold">Compromisos</h2>
           <p className="text-muted-foreground text-sm">
-            {plan.items.length === 0
-              ? 'Agrupados por los cinco aspectos de los formatos oficiales.'
-              : `${committedAspects.length} de ${aspects.length} aspectos con compromisos.`}
+            {commitmentsSummary(plan.items.length)}
           </p>
         </header>
 
@@ -227,6 +207,9 @@ export default function PlanDetailPage() {
                 {course.course_code && (
                   <span className="text-muted-foreground num">{course.course_code}</span>
                 )}
+                {course.program_name && (
+                  <span className="text-muted-foreground">{course.program_name}</span>
+                )}
                 {course.group_name && (
                   <span className="text-muted-foreground">Grupo {course.group_name}</span>
                 )}
@@ -268,6 +251,23 @@ export default function PlanDetailPage() {
 }
 
 /** One agreed commitment: what was detected, what was promised, how it stands. */
+/**
+ * The line under "Compromisos", which leads with the commitments themselves.
+ *
+ * It used to count only the aspects, and that reads as a miscount: two
+ * commitments filed under the same aspect printed "1 de 5 aspectos con
+ * compromisos" directly above two cards. The same happened to a commitment left
+ * without an aspect — it showed below, uncounted. The coverage of the five
+ * aspects of the official form is still worth saying, so it follows as context,
+ * and is left out while the catalogue is on its way: "0 de 0" says nothing.
+ *
+ * @example
+ * commitmentsSummary(2) // → '2 compromisos'
+ */
+function commitmentsSummary(total: number): string {
+  return `${total} ${total === 1 ? 'compromiso' : 'compromisos'} `
+}
+
 function CommitmentCard({ item }: { item: PlanItem }) {
   return (
     <li className="border-border rounded-md border p-3">

@@ -103,22 +103,8 @@ function CreatePlanSkeleton({ withTeacher = false }: { withTeacher?: boolean }) 
 
         <div className="space-y-1.5">
           <Skeleton className="h-3.5 w-24" />
-          <Skeleton className="h-[4.5rem] w-full" />
+          <Skeleton className="h-18 w-full" />
         </div>
-
-        {/* Facultad · Departamento académico · Programa académico */}
-        <div className="flex flex-wrap gap-4">
-          {['w-16', 'w-48', 'w-40'].map((labelWidth) => (
-            <Field
-              key={labelWidth}
-              labelWidth={labelWidth}
-              className="w-full"
-              wrapperClassName="min-w-56 flex-1"
-            />
-          ))}
-        </div>
-
-        {/* Acta N.º y su fecha, tras la línea que los separa en el formulario. */}
         <div className="flex flex-wrap gap-4 border-t pt-4">
           <Field labelWidth="w-16" className="w-full" wrapperClassName="min-w-40" />
           <Field labelWidth="w-28" className="w-full" wrapperClassName="min-w-56" />

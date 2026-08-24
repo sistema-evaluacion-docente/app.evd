@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -9,9 +11,19 @@ import {
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { focusField } from '../lib/planValidation'
 
 /** Campos planos del formulario: sin sombra y con el borde siempre visible. */
 const FIELD_CLASS = 'border-border shadow-none'
+
+/** Cuál de las tres observaciones se está editando. */
+export type ObservationKind = 'council' | 'department' | 'program'
+
+const FIELD_ID: Record<ObservationKind, string> = {
+  council: 'council-obs',
+  department: 'department-obs',
+  program: 'program-obs',
+}
 
 export interface PlanObservationsDialogProps {
   open: boolean
@@ -24,6 +36,8 @@ export interface PlanObservationsDialogProps {
   onProgramObservationsChange: (value: string) => void
   /** Un acta firmada rechaza las observaciones del Consejo, que le pertenecen. */
   councilDisabled?: boolean
+  /** Campo al que saltar al abrir, cuando se entra desde una tarjeta concreta. */
+  focus?: ObservationKind | null
 }
 
 /**
@@ -33,20 +47,40 @@ export interface PlanObservationsDialogProps {
  *
  * Vivían como tres cajas de texto al pie del paso 3, casi siempre vacías, que
  * alargaban la sección y separaban el listado de compromisos del selector de
- * asignaturas. Detrás de un botón ocupan una línea y siguen a un clic de
- * distancia, con el número de las que ya están escritas en la propia pastilla.
+ * asignaturas. Detrás de un botón ocupan una línea, y las que ya están escritas
+ * se listan como tarjetas junto a los compromisos (`PlanObservationsList`).
  *
- * Escriben directo en el estado de la página — no hay «guardar» que pulsar ni
- * copia local que sincronizar — así que el pie sólo cierra. Tampoco es un
- * `<form>`: el diálogo se monta dentro del formulario del plan y un submit
- * anidado, aunque viaje por un portal, sube igual hasta él.
+ * Escribe sobre una copia local y sólo la vuelca al estado de la página al
+ * pulsar «Guardar»: es lo que hace que «Cancelar» pueda descartar, y lo que
+ * evita que cerrar con Esc deje escrito medio párrafo. La copia se rehace en
+ * cada apertura remontando el formulario con una `key`, en vez de sincronizar
+ * prop→estado con un efecto.
+ *
+ * No es un `<form>`: el diálogo se monta dentro del formulario del plan y un
+ * submit anidado, aunque viaje por un portal, sube igual hasta él.
  *
  * @example
- * <PlanObservationsDialog open={open} onOpenChange={setOpen} {...observations} />
+ * <PlanObservationsDialog open={open} onOpenChange={setOpen} focus="council" {...observations} />
  */
 export function PlanObservationsDialog({
   open,
   onOpenChange,
+  ...rest
+}: PlanObservationsDialogProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg">
+        {open && <ObservationsForm onClose={() => onOpenChange(false)} {...rest} />}
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+/**
+ * Los campos, separados para que el diálogo los remonte limpios en cada
+ * apertura sin un efecto que copie las props al estado.
+ */
+function ObservationsForm({
   councilObservations,
   onCouncilObservationsChange,
   departmentObservations,
@@ -54,59 +88,81 @@ export function PlanObservationsDialog({
   programObservations,
   onProgramObservationsChange,
   councilDisabled = false,
-}: PlanObservationsDialogProps) {
+  focus = null,
+  onClose,
+}: Omit<PlanObservationsDialogProps, 'open' | 'onOpenChange'> & { onClose: () => void }) {
+  const [council, setCouncil] = useState(councilObservations)
+  const [department, setDepartment] = useState(departmentObservations)
+  const [program, setProgram] = useState(programObservations)
+
+  // El diálogo se lleva el foco al abrirse; `focusField` va en un
+  // `requestAnimationFrame`, así que llega después y gana.
+  useEffect(() => {
+    if (focus) focusField(FIELD_ID[focus])
+  }, [focus])
+
+  function save() {
+    // El acta firmada congela las observaciones del Consejo: el campo está
+    // deshabilitado, y no se vuelca para que no viajen ni por accidente.
+    if (!councilDisabled) onCouncilObservationsChange(council)
+    onDepartmentObservationsChange(department)
+    onProgramObservationsChange(program)
+    onClose()
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Observaciones</DialogTitle>
-          <DialogDescription>
-            Opcionales. Se imprimen en el Formato 2, bajo los compromisos acordados.
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <DialogHeader>
+        <DialogTitle>Observaciones</DialogTitle>
+        <DialogDescription>
+          Opcionales. Se imprimen en el Formato 2, bajo los compromisos acordados.
+        </DialogDescription>
+      </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="council-obs">Observaciones del Consejo de Departamento</Label>
-            <Textarea
-              id="council-obs"
-              rows={3}
-              className={FIELD_CLASS}
-              value={councilObservations}
-              onChange={(event) => onCouncilObservationsChange(event.target.value)}
-              disabled={councilDisabled}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="department-obs">Observaciones del director de departamento</Label>
-            <Textarea
-              id="department-obs"
-              rows={3}
-              className={FIELD_CLASS}
-              value={departmentObservations}
-              onChange={(event) => onDepartmentObservationsChange(event.target.value)}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="program-obs">Observaciones del director de programa</Label>
-            <Textarea
-              id="program-obs"
-              rows={3}
-              className={FIELD_CLASS}
-              value={programObservations}
-              onChange={(event) => onProgramObservationsChange(event.target.value)}
-            />
-          </div>
+      <div className="space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor={FIELD_ID.council}>Observaciones del Consejo de Departamento</Label>
+          <Textarea
+            id={FIELD_ID.council}
+            rows={3}
+            className={FIELD_CLASS}
+            value={council}
+            onChange={(event) => setCouncil(event.target.value)}
+            disabled={councilDisabled}
+          />
         </div>
 
-        <DialogFooter>
-          <Button type="button" onClick={() => onOpenChange(false)}>
-            Listo
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        <div className="space-y-1.5">
+          <Label htmlFor={FIELD_ID.department}>Observaciones del director de departamento</Label>
+          <Textarea
+            id={FIELD_ID.department}
+            rows={3}
+            className={FIELD_CLASS}
+            value={department}
+            onChange={(event) => setDepartment(event.target.value)}
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor={FIELD_ID.program}>Observaciones del director de programa</Label>
+          <Textarea
+            id={FIELD_ID.program}
+            rows={3}
+            className={FIELD_CLASS}
+            value={program}
+            onChange={(event) => setProgram(event.target.value)}
+          />
+        </div>
+      </div>
+
+      <DialogFooter>
+        <Button type="button" variant="outline" onClick={onClose}>
+          Cancelar
+        </Button>
+        <Button type="button" onClick={save}>
+          Guardar
+        </Button>
+      </DialogFooter>
+    </>
   )
 }

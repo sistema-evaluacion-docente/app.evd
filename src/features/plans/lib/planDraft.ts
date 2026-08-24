@@ -100,6 +100,7 @@ export function courseOfSubject(option: PlanSubjectOption): PlanCourseInput {
     course_name: option.course_name,
     course_code: option.course_code,
     group_name: option.group_name,
+    program_name: option.program_name,
   }
 }
 
@@ -287,8 +288,11 @@ function suggestionsOf(
  * evidences and the verified result attached to it — and a row left out is
  * deleted outright.
  *
- * The subject an indicator was picked under is not persisted, so the drafts
- * come back at teacher level and the picker matches them by indicator alone.
+ * The subject an indicator was picked under is not persisted — the API keeps
+ * `plan.courses` for the whole plan, not per commitment — so the drafts come
+ * back without one. They are not matched by indicator to make up for it: two
+ * commitments can share an indicator, and the picker reports them as a count
+ * instead (see `committedCounts` in `PlanFormPage`).
  *
  * @example
  * const [items] = useState(() => planItemsToDrafts(plan.items, indicators))
@@ -301,12 +305,15 @@ export function planItemsToDrafts(items: PlanItem[], catalogue?: PlanIndicators)
 
       return {
         key: nextKey(),
-        selection_id:
-          commentIds.length > 0
-            ? commentSelectionId(commentIds[0])
-            : item.target_ref != null
-              ? indicatorSelectionId(null, item.target_type, item.target_ref)
-              : nextKey(),
+        // Unique per row, never derived from the indicator: a plan can hold two
+        // commitments on the same one — the same question, read on two
+        // asignaturas — and an id derived from the indicator made them a single
+        // identity. Toggling it in the picker then filtered *both* out at once,
+        // so adding a third asignatura deleted the two already agreed.
+        //
+        // A citation keeps the comment's own id: two commitments can't cite the
+        // same comment, and it is what lets the picker show it as already cited.
+        selection_id: commentIds.length > 0 ? commentSelectionId(commentIds[0]) : nextKey(),
         id: item.id,
         description: item.description,
         commitment: item.commitment ?? '',

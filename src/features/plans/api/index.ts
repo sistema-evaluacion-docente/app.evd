@@ -322,17 +322,26 @@ export function useGetPlanCandidates(periodId?: number, departmentId?: number) {
   })
 }
 
-/** Academic periods with evaluations loaded, selectable as the plan origin. */
-export function useGetPlanPeriods(departmentId?: number) {
+/**
+ * Academic periods with evaluations loaded, selectable as the plan origin.
+ *
+ * `enabled` is there for the callers that only need them behind a panel — the
+ * teacher profile should not pay for a request a director may never open.
+ */
+export function useGetPlanPeriods(
+  departmentId?: number,
+  { enabled = true }: { enabled?: boolean } = {},
+) {
   return useQuery({
     queryKey: [...plansKeys.periods(), departmentId],
     queryFn: () => getPlanPeriods(departmentId),
+    enabled,
   })
 }
 
 /** Catalogue of indicators and the five aspects of the official forms. */
-export function useGetPlanIndicators() {
-  return useQuery({ queryKey: plansKeys.indicators(), queryFn: getPlanIndicators })
+export function useGetPlanIndicators({ enabled = true }: { enabled?: boolean } = {}) {
+  return useQuery({ queryKey: plansKeys.indicators(), queryFn: getPlanIndicators, enabled })
 }
 
 /** Asignaturas the teacher taught in a period, to prefill the forms. */

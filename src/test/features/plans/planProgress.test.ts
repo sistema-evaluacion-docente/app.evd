@@ -70,8 +70,8 @@ describe('planProgress', () => {
   })
 
   it('un plan cerrado está terminado, aunque le falten cortes', () => {
+    expect(planProgress(buildPlan({ status: 'CERRADO_CUMPLIDO' }))).toBe(100)
     expect(planProgress(buildPlan({ status: 'CERRADO_NO_CUMPLIDO' }))).toBe(100)
-    expect(planProgress(buildPlan({ status: 'CERRADO_MANUAL' }))).toBe(100)
   })
 
   it('no depende del cumplimiento que calcula la API, que no se mueve en todo el semestre', () => {

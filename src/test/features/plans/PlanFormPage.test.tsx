@@ -23,6 +23,7 @@ import {
 import PlanFormPage from '@/features/plans/pages/PlanFormPage'
 import { toast } from 'sonner'
 import type {
+  IndicatorDimension,
   Plan,
   PlanCandidate,
   PlanIndicators,
@@ -125,7 +126,34 @@ const HEALTHY_CANDIDATE: PlanCandidate = {
   below_threshold: false,
 }
 
-/** What the evaluation report says the teacher taught. */
+/** One dimension with one question, enough for the picker to paint both rows. */
+const MATRIX: IndicatorDimension[] = [
+  {
+    dimension: 'Dimensión 2',
+    target_type: 'DIMENSION',
+    target_ref: 'Metodología',
+    average: 3.05,
+    below_threshold: true,
+    suggestions: [],
+    questions: [
+      {
+        target_type: 'QUESTION',
+        target_ref: '011',
+        code: '011',
+        text: 'Asiste puntualmente a clase',
+        average: 3.31,
+        below_threshold: true,
+        suggestions: [],
+      },
+    ],
+  },
+]
+
+/**
+ * What the evaluation report says the teacher taught. Two carreras distintas a
+ * propósito: es el caso que el plan tenía que dejar de aplanar — un docente de
+ * un departamento dictando en varios programas.
+ */
 const SUBJECTS: PlanSubjectOption[] = [
   {
     key: 'group:11',
@@ -134,14 +162,16 @@ const SUBJECTS: PlanSubjectOption[] = [
     course_code: '1155201',
     group_name: 'A',
     academic_group_id: 11,
+    program_name: 'INGENIERIA DE SISTEMAS',
   },
   {
     key: 'group:12',
     label: 'Cálculo I · Grupo B',
     course_name: 'Cálculo I',
-    course_code: '1155202',
+    course_code: '1195202',
     group_name: 'B',
     academic_group_id: 12,
+    program_name: 'INGENIERIA INDUSTRIAL',
   },
 ]
 
@@ -153,6 +183,8 @@ function mockQueries({
   candidatesLoading = false,
   candidates = [CANDIDATE],
   subjects = [],
+  dimensions = [],
+  activeSubject = null,
   plan,
   updateMutate = vi.fn(),
   createMutate = vi.fn(),
@@ -163,6 +195,10 @@ function mockQueries({
   candidatesLoading?: boolean
   candidates?: PlanCandidate[]
   subjects?: PlanSubjectOption[]
+  /** The matrix the picker paints. Empty by default: most tests never open it. */
+  dimensions?: IndicatorDimension[]
+  /** The asignatura the subject filter is on, or `null` for "General". */
+  activeSubject?: PlanSubjectOption | null
   plan?: Plan
   updateMutate?: ReturnType<typeof vi.fn>
   createMutate?: ReturnType<typeof vi.fn>
@@ -208,9 +244,11 @@ function mockQueries({
   vi.mocked(usePlanWorkbench).mockReturnValue({
     allSubjects: subjects,
     subjectOptions: subjects,
-    activeSubject: null,
-    effectiveSubjectKey: 'ALL',
-    dimensions: [],
+    activeSubject,
+    effectiveSubjectKey: activeSubject?.key ?? 'ALL',
+    dimensions,
+    matrixOf: () => dimensions,
+    allComments: [],
     comments: { byDimension: {}, uncategorized: [] },
     weakCount: 0,
     riskyCount: 0,
@@ -296,9 +334,73 @@ describe('PlanFormPage · creación', () => {
       await screen.findByLabelText(/director de programa/),
       'Se acompañará desde el programa',
     )
-    await userEvent.click(screen.getByRole('button', { name: 'Listo' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
 
     expect(screen.getByRole('button', { name: /^Observaciones/ })).toHaveTextContent('1')
+  })
+
+  it('descarta lo escrito si se cancela en vez de guardar', async () => {
+    mockQueries()
+
+    renderAt(<PlanFormPage />)
+
+    await userEvent.click(screen.getByRole('button', { name: /^Observaciones/ }))
+    await userEvent.type(
+      await screen.findByLabelText(/director de programa/),
+      'Esto no debería quedar',
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+
+    // Ni cuenta en la pastilla ni aparece como tarjeta: el diálogo escribe
+    // sobre una copia y sólo «Guardar» la vuelca.
+    expect(screen.getByRole('button', { name: /^Observaciones/ })).toHaveTextContent(
+      /^Observaciones$/,
+    )
+    expect(screen.queryByText('Esto no debería quedar')).not.toBeInTheDocument()
+  })
+
+  it('lista las observaciones guardadas junto a los compromisos, y deja quitarlas', async () => {
+    mockQueries()
+
+    renderAt(<PlanFormPage />)
+
+    await userEvent.click(screen.getByRole('button', { name: /^Observaciones/ }))
+    await userEvent.type(
+      await screen.findByLabelText(/director de departamento/),
+      'Acompañamiento quincenal',
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+
+    expect(await screen.findByText('Acompañamiento quincenal')).toBeInTheDocument()
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /Quitar la observación del director de departamento/ }),
+    )
+
+    expect(screen.queryByText('Acompañamiento quincenal')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Observaciones/ })).toHaveTextContent(
+      /^Observaciones$/,
+    )
+  })
+
+  it('abre el diálogo en la observación que se pide editar', async () => {
+    mockQueries()
+
+    renderAt(<PlanFormPage />)
+
+    await userEvent.click(screen.getByRole('button', { name: /^Observaciones/ }))
+    await userEvent.type(await screen.findByLabelText(/director de programa/), 'Desde el programa')
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+
+    await userEvent.click(
+      await screen.findByRole('button', { name: /Editar la observación del director de programa/ }),
+    )
+
+    // Etiqueta completa: en pantalla está también la tarjeta, cuyo botón dice
+    // «Editar la observación del director de programa».
+    expect(await screen.findByLabelText(/Observaciones del director de programa/)).toHaveValue(
+      'Desde el programa',
+    )
   })
 
   it('says it is looking for the teachers instead of just going dead', () => {
@@ -484,21 +586,6 @@ describe('PlanFormPage · creación', () => {
     )
   })
 
-  it('does not submit when Enter picks an option out of a combobox', async () => {
-    const createMutate = vi.fn()
-
-    mockQueries({ createMutate })
-
-    renderAt(<PlanFormPage />)
-
-    // Enter inside an open suggestion list belongs to the list, not to the
-    // form: choosing a programme must not try to save the plan behind it.
-    await userEvent.type(screen.getByLabelText(/^Programa académico/), 'INGENIER{Enter}')
-
-    expect(createMutate).not.toHaveBeenCalled()
-    expect(vi.mocked(toast.warning)).not.toHaveBeenCalled()
-  })
-
   it('paints the header of the format red too, and sends the cursor to the first of it', async () => {
     mockQueries()
 
@@ -508,13 +595,14 @@ describe('PlanFormPage · creación', () => {
 
     expect(screen.getByLabelText(/^Acta N\.º/)).toHaveAttribute('aria-invalid', 'true')
 
-    // Programa and la fecha del acta arrive already resolved — from the
-    // director's own department and from today — so there is nothing to paint
-    // on them. Facultad y departamento ya ni se preguntan.
-    expect(screen.getByLabelText(/^Programa académico/)).toHaveValue('Ingeniería de Sistemas')
+    // La fecha del acta llega ya resuelta — hoy — así que no hay nada que
+    // pintarle. Ninguna de las tres columnas del encabezado se pregunta: la
+    // facultad y el departamento salen del docente, y el programa académico ya
+    // no es uno solo, lo trae cada asignatura.
     expect(screen.getByLabelText(/^Fecha del acta/)).not.toHaveAttribute('aria-invalid', 'true')
     expect(screen.queryByLabelText(/^Facultad/)).not.toBeInTheDocument()
     expect(screen.queryByLabelText(/^Departamento académico/)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/^Programa académico/)).not.toBeInTheDocument()
   })
 
   it('paints the fecha del acta red once it is cleared away', async () => {
@@ -526,23 +614,6 @@ describe('PlanFormPage · creación', () => {
     await userEvent.click(screen.getByRole('button', { name: /Crear plan/ }))
 
     expect(screen.getByLabelText(/^Fecha del acta/)).toHaveAttribute('aria-invalid', 'true')
-  })
-
-  it('paints a combobox of the header red once it is emptied out', async () => {
-    mockQueries()
-
-    renderAt(<PlanFormPage />)
-
-    const program = screen.getByLabelText(/^Programa académico/)
-
-    await userEvent.clear(program)
-    await userEvent.tab()
-
-    // The red rides on the group of the combobox, not on the input inside it.
-    expect(program.closest('[data-slot="autocomplete-input-group"]')).toHaveAttribute(
-      'aria-invalid',
-      'true',
-    )
   })
 
   it('keeps the institutional observations optional, asterisk and all', async () => {
@@ -625,6 +696,49 @@ describe('PlanFormPage · creación', () => {
 
     expect(screen.getByText('Álgebra Lineal')).toBeInTheDocument()
     expect(screen.getByText('Cálculo I')).toBeInTheDocument()
+  })
+
+  it('lee la carrera de cada asignatura al lado de su código', async () => {
+    mockQueries({ subjects: SUBJECTS })
+
+    renderAt(<PlanFormPage />, '/planes/nuevo?teacher=7&period=2')
+
+    await userEvent.click(screen.getByRole('button', { name: /Añadir asignatura/ }))
+    await userEvent.click(
+      await screen.findByRole('menuitem', { name: /Añadir todas las del docente/ }),
+    )
+
+    // Dos carreras distintas, que es lo que el formulario aplanaba: preguntaba
+    // un programa y lo estampaba en todas las filas.
+    expect(screen.getByText('INGENIERIA DE SISTEMAS')).toBeInTheDocument()
+    expect(screen.getByText('INGENIERIA INDUSTRIAL')).toBeInTheDocument()
+  })
+
+  it('manda la carrera de cada asignatura, no una sola para todas', async () => {
+    const createMutate = vi.fn()
+
+    mockQueries({ subjects: SUBJECTS, createMutate })
+
+    renderAt(<PlanFormPage />, '/planes/nuevo?teacher=7&period=2')
+
+    // Un compromiso a mano se escribe a nivel de docente, así que arrastra
+    // todas sus asignaturas al paso 4.
+    await userEvent.click(screen.getByRole('button', { name: /Añadir compromiso/ }))
+    await userEvent.click(await screen.findByRole('menuitem', { name: /Planeación del curso/ }))
+    await userEvent.type(screen.getByLabelText(/Título del compromiso/), 'Metodología')
+    await userEvent.type(screen.getByLabelText(/Descripción del compromiso/), 'Rediseñar las guías')
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+
+    await userEvent.type(screen.getByLabelText(/Acta N/), '012')
+    await userEvent.click(screen.getByRole('button', { name: /Crear plan/ }))
+
+    const [payload] = createMutate.mock.calls[0] as [Record<string, unknown>]
+    const courses = payload.courses as { course_code: string; program_name: string }[]
+
+    expect(courses.map((course) => [course.course_code, course.program_name])).toEqual([
+      ['1155201', 'INGENIERIA DE SISTEMAS'],
+      ['1195202', 'INGENIERIA INDUSTRIAL'],
+    ])
   })
 
   it('keeps letters out of the acta number', async () => {
@@ -737,6 +851,26 @@ describe('PlanFormPage · creación', () => {
 })
 
 /** A saved plan, reduced to the fields the form reads back. */
+/** One agreed commitment, on the dimension `MATRIX` paints. */
+function savedItem(overrides: Partial<Plan['items'][number]> = {}): Plan['items'][number] {
+  return {
+    id: 41,
+    plan_id: 8,
+    description: 'Metodología — Álgebra (2.80)',
+    commitment: 'Rediseñar las guías de clase',
+    aspect: 1,
+    target_type: 'DIMENSION',
+    target_ref: 'Metodología',
+    baseline_value: 2.8,
+    target_value: 3.5,
+    result_value: null,
+    status: 'PENDIENTE',
+    order: 0,
+    comments: [],
+    ...overrides,
+  }
+}
+
 function savedPlan(overrides: Partial<Plan> = {}): Plan {
   return {
     id: 8,
@@ -783,7 +917,7 @@ function savedPlan(overrides: Partial<Plan> = {}): Plan {
         course_name: 'Álgebra Lineal',
         course_code: '1155201',
         group_name: 'A',
-        program_name: 'Ingeniería de Sistemas',
+        program_name: 'INGENIERIA DE SISTEMAS',
         order: 0,
       },
     ],
@@ -812,7 +946,6 @@ describe('PlanFormPage · autoguardado', () => {
         periodId: 2,
         titleOverride: 'Plan a medio escribir',
         description: 'Lo que quedó sin enviar',
-        programOverride: null,
         actaDate: '2026-08-19',
         actaNumber: '012',
         councilObservations: '',
@@ -924,6 +1057,43 @@ describe('PlanFormPage · autoguardado', () => {
   })
 })
 
+describe('PlanFormPage · indicadores traídos del perfil', () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('siembra los indicadores seleccionados como compromisos por escribir', async () => {
+    mockQueries({ dimensions: MATRIX, subjects: SUBJECTS })
+
+    renderAt(<PlanFormPage />, '/planes/nuevo?teacher=7&picks=q%3A011')
+
+    // The card is there with its baseline read off the matrix, and empty where
+    // only the director can write.
+    expect(await screen.findByText('011 · Asiste puntualmente a clase (3.31)')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Redactar el compromiso/ })).toBeInTheDocument()
+  })
+
+  it('trae las asignaturas que el indicador obliga a listar', async () => {
+    mockQueries({ dimensions: MATRIX, subjects: SUBJECTS })
+
+    renderAt(<PlanFormPage />, '/planes/nuevo?teacher=7&picks=q%3A011')
+
+    await screen.findByText('011 · Asiste puntualmente a clase (3.31)')
+
+    // Picked at teacher level, so every asignatura he taught comes with it.
+    expect(screen.queryByText(/Todavía no hay asignaturas/)).not.toBeInTheDocument()
+    expect(screen.getByText(/Álgebra Lineal/)).toBeInTheDocument()
+  })
+
+  it('ignora un parámetro que no nombra ningún indicador', () => {
+    mockQueries({ dimensions: MATRIX, subjects: SUBJECTS })
+
+    renderAt(<PlanFormPage />, '/planes/nuevo?teacher=7&picks=zzz')
+
+    expect(screen.getByText(/Todavía no hay compromisos|Agrega al menos un indicador/)).toBeTruthy()
+  })
+})
+
 describe('PlanFormPage · edición', () => {
   afterEach(() => {
     vi.clearAllMocks()
@@ -1001,26 +1171,27 @@ describe('PlanFormPage · edición', () => {
     expect(payload.faculty_name).toBe('Ingeniería')
   })
 
-  it('sólo pregunta el programa: facultad y departamento vienen del docente', async () => {
+  it('no pregunta el encabezado: facultad y departamento vienen del docente', async () => {
     const updateMutate = vi.fn()
 
     mockQueries({ plan: savedPlan(), updateMutate })
 
     renderAt(<PlanFormPage />, '/planes/8/editar')
 
-    expect(screen.getByLabelText(/^Programa académico/)).toHaveValue('Ingeniería de Sistemas')
     expect(screen.queryByLabelText(/^Facultad/)).not.toBeInTheDocument()
     expect(screen.queryByLabelText(/^Departamento académico/)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/^Programa académico/)).not.toBeInTheDocument()
 
-    // Dejaron de ser campos, no de existir: el encabezado de los formatos sigue
-    // viajando en el payload, heredado del plan guardado.
+    // Dejaron de ser campos, no de existir: facultad y departamento siguen
+    // viajando en el payload, heredados del plan guardado. El programa ya no
+    // viaja suelto — no hay uno solo que valga para todas las asignaturas.
     await userEvent.click(screen.getByRole('button', { name: /Guardar cambios/ }))
 
     const [payload] = updateMutate.mock.calls[0] as [Record<string, unknown>]
 
     expect(payload.faculty_name).toBe('Ingeniería')
     expect(payload.department_name).toBe('Departamento de Sistemas')
-    expect(payload.program_name).toBe('Ingeniería de Sistemas')
+    expect(payload).not.toHaveProperty('program_name')
   })
 
   it('pide la fecha una sola vez: la del acta es la de inicio', () => {
@@ -1030,5 +1201,100 @@ describe('PlanFormPage · edición', () => {
 
     expect(screen.getByLabelText(/^Fecha del acta/)).toBeInTheDocument()
     expect(screen.queryByLabelText('Fecha de inicio')).not.toBeInTheDocument()
+  })
+
+  /**
+   * A plan holds one commitment per indicator *and asignatura*: the same
+   * question, low in two courses, is two agreements with their own evidences.
+   * Editing used to key the picker on the indicator alone, so adding a third
+   * asignatura matched both of the existing ones and filtered them out — the
+   * click meant to add deleted what was already agreed.
+   */
+  /**
+   * Arriving from the profile with indicators already picked, the alternative
+   * to a run was one trip down to a card and back per commitment.
+   */
+  it('escribe los compromisos pendientes uno tras otro, sin cerrar el diálogo', async () => {
+    mockQueries({
+      plan: savedPlan({
+        items: [
+          savedItem({ id: 41, commitment: '', target_value: null }),
+          savedItem({ id: 42, description: 'Metodología — Cálculo (3.10)', commitment: '' }),
+        ],
+      }),
+    })
+
+    renderAt(<PlanFormPage />, '/planes/8/editar')
+
+    await userEvent.click(screen.getByRole('button', { name: /Redactar los compromisos/ }))
+
+    // Opens on the first pending one and says where the run is.
+    expect(await screen.findByRole('dialog')).toHaveTextContent('Compromiso 1 de 2')
+
+    await userEvent.type(screen.getByLabelText(/Descripción del compromiso/), 'Publicar guías')
+    await userEvent.type(screen.getByLabelText(/Meta esperada/), '4')
+    await userEvent.click(screen.getByRole('button', { name: /Guardar y siguiente/ }))
+
+    // Straight on to the second, still in the same dialog.
+    expect(await screen.findByRole('dialog')).toHaveTextContent('Compromiso 2 de 2')
+    expect(screen.getByRole('button', { name: /Guardar y terminar/ })).toBeInTheDocument()
+  })
+
+  it('cuenta los compromisos que todavía no se pueden guardar', () => {
+    mockQueries({
+      plan: savedPlan({
+        items: [savedItem({ id: 41 }), savedItem({ id: 42, commitment: '' })],
+      }),
+    })
+
+    renderAt(<PlanFormPage />, '/planes/8/editar')
+
+    expect(screen.getByRole('button', { name: /Redactar el compromiso/ })).toHaveTextContent(
+      '1 pendiente',
+    )
+    expect(screen.getByRole('status')).toHaveTextContent('1 de 2 compromisos completos')
+  })
+
+  it('no borra los compromisos acordados al agregar el mismo indicador en otra asignatura', async () => {
+    mockQueries({
+      plan: savedPlan({
+        items: [
+          savedItem({ id: 41, description: 'Metodología — Álgebra (2.80)' }),
+          savedItem({ id: 42, description: 'Metodología — Cálculo (3.10)' }),
+        ],
+      }),
+      dimensions: MATRIX,
+      subjects: SUBJECTS,
+      activeSubject: SUBJECTS[0],
+    })
+
+    renderAt(<PlanFormPage />, '/planes/8/editar')
+
+    // The dimension row, which both saved commitments are about.
+    await userEvent.click(screen.getAllByRole('button', { name: 'Agregar' })[0])
+
+    // Neither was taken out, and the click opened a third one to write.
+    expect(screen.getByText('Metodología — Álgebra (2.80)')).toBeInTheDocument()
+    expect(screen.getByText('Metodología — Cálculo (3.10)')).toBeInTheDocument()
+    expect(await screen.findByRole('dialog')).toBeInTheDocument()
+  })
+
+  it('dice cuántos compromisos ya tiene el indicador en el plan', () => {
+    mockQueries({
+      plan: savedPlan({
+        items: [
+          savedItem({ id: 41, description: 'Metodología — Álgebra (2.80)' }),
+          savedItem({ id: 42, description: 'Metodología — Cálculo (3.10)' }),
+        ],
+      }),
+      dimensions: MATRIX,
+      subjects: SUBJECTS,
+      activeSubject: SUBJECTS[0],
+    })
+
+    renderAt(<PlanFormPage />, '/planes/8/editar')
+
+    // The dimension has two; the question below it none, so it stays silent.
+    expect(screen.getByText(/en el plan/)).toHaveTextContent('2 en el plan')
   })
 })

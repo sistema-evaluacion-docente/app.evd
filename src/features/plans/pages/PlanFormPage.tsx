@@ -13,7 +13,6 @@ import {
   X,
 } from 'lucide-react'
 
-import { Combobox } from '@/components/common/Combobox'
 import { DatePicker } from '@/components/common/DatePicker'
 import { FieldError } from '@/components/common/FieldError'
 import { InlineError } from '@/components/common/InlineError'
@@ -39,6 +38,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Progress } from '@/components/ui/progress'
 import {
   Select,
   SelectContent,
@@ -48,7 +48,6 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
-import { useAuthStore } from '@/features/auth'
 // Deep-imported from the feature's `api` barrel rather than its root on
 // purpose: `features/suggested-actions` imports `features/plans` for the
 // aspect catalogue, so going through the barrel would close an import cycle.
@@ -68,14 +67,15 @@ import {
   useUploadPlanDocument,
 } from '../api'
 import { PlanCaseReportUpload } from '../components/PlanCaseReportUpload'
-import { PlanObservationsDialog } from '../components/PlanObservationsDialog'
+import { type ObservationKind, PlanObservationsDialog } from '../components/PlanObservationsDialog'
+import { PlanObservationsList } from '../components/PlanObservationsList'
 import { CommitmentDialog } from '../components/CommitmentDialog'
 import { CommitmentsEditor } from '../components/CommitmentsEditor'
 import { IndicatorPicker } from '../components/IndicatorPicker'
-import { facultyOfProgram, PROGRAM_NAMES, programsOfFaculty } from '../config/academicCatalog'
 import { usePlanWorkbench } from '../hooks/usePlanWorkbench'
 import { SUBJECT_ALL } from '../lib/indicatorMatrix'
 import { usePlanFormDraft } from '../hooks/usePlanFormDraft'
+import { parsePicks, seedFromPicks } from '../lib/planPicks'
 import {
   clearPlanDraft,
   type PlanFormDraft,
@@ -103,7 +103,9 @@ import { isPlanSuggested, planSuggestionReason } from '../lib/planSuggestion'
 import {
   COMMITMENTS_ANCHOR_ID,
   COURSES_ANCHOR_ID,
+  commitmentErrors,
   focusField,
+  itemsInPaintedOrder,
   planFormErrors,
 } from '../lib/planValidation'
 import type {
@@ -124,15 +126,14 @@ type FormMode = 'create' | 'edit'
 
 /**
  * Seed of every field the form owns. The `*Override` ones are `null` while the
- * value is still derived from context, which is how the creation flow starts and
- * how a plan that never recorded, say, a programme comes back for editing.
+ * value is still derived from context — the title from the docente and the
+ * periodo, the periodo from the route — which is how the creation flow starts.
  */
 interface PlanFormInitial {
   periodId?: number
   teacherId?: number
   titleOverride: string | null
   description: string
-  programOverride: string | null
   actaDate: string
   actaNumber: string
   councilObservations: string
@@ -164,6 +165,8 @@ export default function PlanFormPage() {
   const presetPeriod = searchParams.get('period')
   /** The teacher profile links with the period code it was showing. */
   const presetPeriodCode = searchParams.get('period_code')
+  /** Indicators marked on the profile, in `IndicatorSelectionSheet`. */
+  const rawPicks = searchParams.get('picks')
 
   // Periods and the indicator catalogue make up the shell of the form: the five
   // aspects, the threshold and the period list. The page waits for both instead
@@ -236,7 +239,6 @@ export default function PlanFormPage() {
           teacherId: plan.teacher_id,
           titleOverride: plan.title,
           description: plan.description ?? '',
-          programOverride: plan.program_name,
           actaDate: plan.acta_date ?? plan.start_date ?? '',
           actaNumber: plan.acta_number ?? '',
           councilObservations: plan.council_observations ?? '',
@@ -250,7 +252,6 @@ export default function PlanFormPage() {
           teacherId: presetTeacher ? Number(presetTeacher) : undefined,
           titleOverride: null,
           description: '',
-          programOverride: null,
           // The plan is drawn up the day the Consejo de Departamento approves it.
           actaDate: todayISO(),
           actaNumber: '',
@@ -274,6 +275,7 @@ export default function PlanFormPage() {
       periods={periods}
       indicators={indicators}
       presetPeriodCode={presetPeriodCode}
+      rawPicks={rawPicks}
       draftKey={draftKey}
       restoredAt={restored?.savedAt ?? null}
       onDiscardDraft={() => {
@@ -318,7 +320,6 @@ function restoredFields(draft: PlanFormDraft): Partial<PlanFormInitial> {
     teacherId: draft.teacherId,
     titleOverride: draft.titleOverride,
     description: draft.description,
-    programOverride: draft.programOverride,
     actaDate: draft.actaDate,
     actaNumber: draft.actaNumber,
     councilObservations: draft.councilObservations,
@@ -336,6 +337,7 @@ function PlanForm({
   periods,
   indicators,
   presetPeriodCode,
+  rawPicks,
   draftKey,
   restoredAt,
   onDiscardDraft,
@@ -346,6 +348,8 @@ function PlanForm({
   periods: PlanPeriod[]
   indicators: PlanIndicators
   presetPeriodCode: string | null
+  /** The `picks` parameter, still unparsed. `null` when nothing was handed over. */
+  rawPicks: string | null
   /** Where this form's local backup is filed. */
   draftKey: string
   /** When the restored draft was written, or `null` if nothing was restored. */
@@ -353,6 +357,7 @@ function PlanForm({
   onDiscardDraft: () => void
 }) {
   const [, navigate] = useLocation()
+  const [, setSearchParams] = useSearchParams()
 
   const isEdit = mode === 'edit'
   // Once the acta is signed the API refuses its content — commitments, courses,
@@ -366,7 +371,6 @@ function PlanForm({
   const [teacherId, setTeacherId] = useState<number | undefined>(initial.teacherId)
   const [titleOverride, setTitleOverride] = useState<string | null>(initial.titleOverride)
   const [description, setDescription] = useState(initial.description)
-  const [programOverride, setProgramOverride] = useState<string | null>(initial.programOverride)
   // One date for both: the agreement starts the day the acta backing it is
   // signed. Formato 2 prints it as "FECHA" and Formato 3 as "Fecha".
   const [actaDate, setActaDate] = useState(initial.actaDate)
@@ -379,6 +383,19 @@ function PlanForm({
 
   /** Las tres observaciones viven detrás de un botón del paso 3. */
   const [observationsOpen, setObservationsOpen] = useState(false)
+  /** Observación a la que saltar al abrir; null cuando se abre por el botón. */
+  const [observationsFocus, setObservationsFocus] = useState<ObservationKind | null>(null)
+
+  function setObservation(kind: ObservationKind, value: string) {
+    if (kind === 'council') setCouncilObservations(value)
+    else if (kind === 'department') setDepartmentObservations(value)
+    else setProgramObservations(value)
+  }
+
+  function openObservations(focus: ObservationKind | null = null) {
+    setObservationsFocus(focus)
+    setObservationsOpen(true)
+  }
 
   // Deliberately outside the autosaved snapshot: a File can't be serialised, so
   // it is re-picked after a reload rather than silently lost on submit.
@@ -404,6 +421,16 @@ function PlanForm({
   } | null>(null)
 
   /**
+   * The commitments still to be written, in the order section 3 lays them out,
+   * captured when the director asked to write them.
+   *
+   * A fixed list and not "whatever is incomplete right now": the run has to
+   * keep saying «2 de 4» as they are filled in, and a live count would shrink
+   * under the director's feet. `null` while no run is going.
+   */
+  const [queue, setQueue] = useState<string[] | null>(null)
+
+  /**
    * Where the focus was when the dialog opened, to put it back afterwards.
    *
    * The whole point of the dialog is that the director keeps picking without
@@ -422,6 +449,7 @@ function PlanForm({
 
   const closeCommitment = useCallback(() => {
     setPending(null)
+    setQueue(null)
 
     const target = returnFocusRef.current
     returnFocusRef.current = null
@@ -501,25 +529,18 @@ function PlanForm({
 
   const title = titleOverride ?? defaultTitle
 
-  // At UFPS the director's own "department" is named after the programme it
-  // serves, so it seeds PROGRAMA ACADÉMICO — la única de las tres que sigue
-  // siendo un campo, porque es la que el director puede querer corregir.
+  // Ninguna de las tres columnas del encabezado de los formatos se pregunta ya.
+  // Facultad y departamento académico salen del registro del docente evaluado (o
+  // del plan guardado, al editar), así que pedirlos era hacer escribir dos veces
+  // algo que el sistema ya sabe; se leen, ya resueltos, en el detalle del plan.
   //
-  // Facultad y departamento académico ya no se preguntan: salen del registro
-  // del docente evaluado (o del plan guardado, al editar) y sólo se imprimen en
-  // el encabezado de los formatos, así que pedirlos era hacer escribir dos
-  // veces algo que el sistema ya sabe. Se muestran, ya resueltos, en el detalle
-  // del plan. La facultad del programa es el último recurso.
-  const authDepartment = useAuthStore((state) => state.user?.department_name) ?? ''
-  const programName = programOverride ?? authDepartment
+  // El programa académico tampoco: no es uno solo. Un docente adscrito a un
+  // departamento da clase en varias carreras, y preguntar uno obligaba a
+  // estampar el mismo en todas las asignaturas — que es justo lo que hacía decir
+  // al plan que toda materia es de la carrera del departamento. Ahora cada
+  // asignatura trae la suya, resuelta por la API desde su código.
   const departmentName = plan?.department_name ?? candidate?.department_name ?? ''
-  const facultyName =
-    plan?.faculty_name ?? candidate?.faculty_name ?? facultyOfProgram(programName)?.name ?? ''
-
-  const programOptions = useMemo(
-    () => (facultyName ? programsOfFaculty(facultyName) : PROGRAM_NAMES),
-    [facultyName],
-  )
+  const facultyName = plan?.faculty_name ?? candidate?.faculty_name ?? ''
 
   const aspectByDimension = useMemo(
     () =>
@@ -532,35 +553,57 @@ function PlanForm({
   )
 
   /**
-   * How a drafted commitment answers to the picker.
+   * How a drafted commitment answers to the picker: by its own `selection_id`,
+   * the same way whether the plan is being created or edited.
    *
-   * While creating, the same indicator picked under two subjects is two
-   * different commitments. A saved plan doesn't record which subject each one
-   * came from, so when editing the indicator alone is the identity — one
-   * commitment per indicator, which is what the official form prints anyway.
-   * Without this an already-agreed indicator would show up unpicked and
-   * clicking it would file a duplicate.
-   */
-  const pickerScope =
-    workbench.effectiveSubjectKey === SUBJECT_ALL ? null : workbench.effectiveSubjectKey
-
-  /**
+   * Editing used to key on the indicator alone, on the grounds that a saved
+   * plan doesn't record which asignatura each commitment came from. But a plan
+   * legitimately holds two commitments on one indicator — the same question
+   * read on two asignaturas, each carrying its own evidences — and a shared
+   * identity made them a single row: toggling it filtered *both* out, so
+   * adding a third asignatura deleted the two already agreed. What editing
+   * cannot reconstruct is now reported rather than guessed, by
+   * `committedCounts` below.
+   *
    * Keyed on the ids themselves, not on `items`: the array is rebuilt on every
    * keystroke inside a commitment, and a fresh `Set` on each of those would
    * re-render the whole picker for a change it does not care about.
    */
-  const selectionKey = items
-    .map((item) =>
-      isEdit && item.target_ref != null
-        ? indicatorSelectionId(pickerScope, item.target_type, item.target_ref)
-        : item.selection_id,
-    )
-    .join('\u0000')
+  const selectionKey = items.map((item) => item.selection_id).join('\u0000')
 
   const selectedIds = useMemo(
     () => new Set(selectionKey ? selectionKey.split('\u0000') : []),
     [selectionKey],
   )
+
+  /**
+   * How many commitments the plan already holds for each indicator.
+   *
+   * A row can only be shown as picked when a commitment carries this
+   * asignatura's `selection_id`, which a restored one never does. Without this,
+   * the indicators of a saved plan came back looking untouched and the director
+   * had no way to tell "nobody has looked at this yet" from "already agreed,
+   * under another asignatura". The count says so without pretending to know
+   * which asignatura it was.
+   *
+   * Built off a joined key for the same reason as `selectionKey`: a keystroke
+   * inside a commitment must not rebuild it.
+   */
+  const committedKey = items
+    .map((item) => (item.target_ref == null ? '' : indicatorKey(item.target_type, item.target_ref)))
+    .join('\u0000')
+
+  const committedCounts = useMemo(() => {
+    const counts = new Map<string, number>()
+
+    for (const key of committedKey.split('\u0000')) {
+      if (key === '') continue
+
+      counts.set(key, (counts.get(key) ?? 0) + 1)
+    }
+
+    return counts
+  }, [committedKey])
 
   /**
    * The commitments as they stand right now, for the handlers below.
@@ -576,14 +619,70 @@ function PlanForm({
     itemsRef.current = items
   }, [items])
 
-  /** Identity a drafted commitment is matched by when toggling it off. */
-  const matchKeyOf = useCallback(
-    (item: DraftItem): string =>
-      isEdit && item.target_ref != null
-        ? indicatorKey(item.target_type, item.target_ref)
-        : item.selection_id,
-    [isEdit],
-  )
+  /**
+   * Brings the selection made on the teacher's profile into the form, once.
+   *
+   * It waits for the workbench: a pick names an indicator and an asignatura,
+   * and turning either into a commitment needs the scores that are still on
+   * their way. Seeding *after* the draft was restored rather than instead of it
+   * is the whole point — arriving with picks on a plan already half written
+   * used to be a choice between the two, and silently kept the wrong one.
+   * Anything already in the form is skipped by `selection_id`.
+   *
+   * The parameter is dropped from the URL on the way out so a reload doesn't
+   * file the same commitments a second time.
+   */
+  const seeded = useRef(false)
+
+  useEffect(() => {
+    if (seeded.current || !rawPicks || workbench.isLoading) return
+
+    const picks = parsePicks(rawPicks)
+
+    seeded.current = true
+    setSearchParams(
+      (previous) => {
+        const next = new URLSearchParams(previous)
+
+        next.delete('picks')
+
+        return next
+      },
+      { replace: true },
+    )
+
+    if (picks.length === 0) return
+
+    const { items: incoming, courses: incomingCourses } = seedFromPicks(picks, {
+      catalogue: indicators,
+      subjects: workbench.allSubjects,
+      matrixOf: workbench.matrixOf,
+      comments: workbench.allComments,
+    })
+
+    const known = new Set(itemsRef.current.map((item) => item.selection_id))
+    const added = incoming.filter((item) => !known.has(item.selection_id))
+
+    if (added.length === 0) return
+
+    setItems((current) => [...current, ...added])
+    setCourses((current) => mergeCourses(current, incomingCourses))
+
+    toast.success(
+      added.length === 1
+        ? 'Se agregó el indicador que seleccionaste.'
+        : `Se agregaron los ${added.length} indicadores que seleccionaste.`,
+      { description: 'Redacta el compromiso de cada uno para poder guardar el plan.' },
+    )
+  }, [
+    rawPicks,
+    workbench.isLoading,
+    workbench.allSubjects,
+    workbench.matrixOf,
+    workbench.allComments,
+    indicators,
+    setSearchParams,
+  ])
 
   function resetPicking() {
     setItems([])
@@ -595,11 +694,13 @@ function PlanForm({
     (pick: IndicatorPick) => {
       const subject = workbench.activeSubject
       const id = indicatorSelectionId(subject?.key ?? null, pick.target_type, pick.target_ref)
-      const matchKey = isEdit ? indicatorKey(pick.target_type, pick.target_ref) : id
       const current = itemsRef.current
 
-      if (current.some((item) => matchKeyOf(item) === matchKey)) {
-        const next = current.filter((item) => matchKeyOf(item) !== matchKey)
+      // Only this asignatura's own commitment is taken back out. The same
+      // indicator agreed under another one is a different commitment, with its
+      // own evidences, and is removed from its card in section 3.
+      if (current.some((item) => item.selection_id === id)) {
+        const next = current.filter((item) => item.selection_id !== id)
 
         setItems(next)
         setCourses((courses) => pruneCourses(courses, next))
@@ -616,7 +717,7 @@ function PlanForm({
         courses: coursesOfSubject(subject, workbench.allSubjects),
       })
     },
-    [isEdit, matchKeyOf, openCommitment, workbench.activeSubject, workbench.allSubjects],
+    [openCommitment, workbench.activeSubject, workbench.allSubjects],
   )
 
   const toggleComment = useCallback(
@@ -679,6 +780,50 @@ function PlanForm({
     closeCommitment()
   }
 
+  /** The commitments that still can't be saved, in the order they are painted. */
+  const incomplete = useMemo(
+    () => itemsInPaintedOrder(items, aspects).filter((item) => commitmentErrors(item).length > 0),
+    [items, aspects],
+  )
+
+  /**
+   * Opens the pending commitments one after another, starting on the first.
+   *
+   * Arriving from the profile with four indicators picked, the alternative was
+   * four trips down to a card and back — or four modals fired in a row, which
+   * traps the director in a chain he can't step out of to look at the plan. The
+   * run is a queue he can leave at any point: the cards stay, and the counter
+   * above them says what is left.
+   */
+  function writePending() {
+    if (incomplete.length === 0) return
+
+    setQueue(incomplete.map((item) => item.key))
+    openCommitment({ draft: incomplete[0], mode: 'edit', courses: [] })
+  }
+
+  /** Saves the commitment on screen and moves on to the next one of the run. */
+  function commitAndAdvance(draft: DraftItem) {
+    const next = itemsRef.current.map((item) => (item.key === draft.key ? draft : item))
+
+    setItems(next)
+
+    const following = queue
+      ?.slice(queue.indexOf(draft.key) + 1)
+      .map((key) => next.find((item) => item.key === key))
+      .find((item) => item != null && commitmentErrors(item).length > 0)
+
+    if (!following) {
+      closeCommitment()
+      return
+    }
+
+    // Straight into the next one, keeping the focus the dialog already holds:
+    // `openCommitment` would record the dialog's own button as the place to
+    // return to when the run ends.
+    setPending({ draft: following, mode: 'edit', courses: [] })
+  }
+
   const removeItem = useCallback((key: string) => {
     const next = itemsRef.current.filter((item) => item.key !== key)
 
@@ -731,7 +876,6 @@ function PlanForm({
     periodId,
     titleOverride,
     description,
-    programOverride,
     actaDate,
     actaNumber,
     councilObservations,
@@ -757,7 +901,6 @@ function PlanForm({
         items,
         aspects,
         courses,
-        programName,
         actaNumber,
         actaDate,
       }),
@@ -770,7 +913,6 @@ function PlanForm({
       items,
       aspects,
       courses,
-      programName,
       actaNumber,
       actaDate,
     ],
@@ -832,7 +974,12 @@ function PlanForm({
         course_name: course.course_name.trim(),
         course_code: course.course_code,
         group_name: course.group_name,
-        program_name: programName.trim() || undefined,
+        // Cada fila con la suya: la que la API resolvió desde el código de la
+        // asignatura. Antes iba aquí el único programa del formulario, el mismo
+        // en todas, y por eso una materia de otra carrera salía impresa como si
+        // fuera del departamento. La API la vuelve a resolver al guardar, así
+        // que esto es lo que se ve mientras se redacta, no la última palabra.
+        program_name: course.program_name,
         order: index,
       }))
   }
@@ -862,7 +1009,6 @@ function PlanForm({
     const shared = {
       title: title.trim(),
       description: description.trim() || undefined,
-      program_name: programName.trim() || undefined,
       faculty_name: facultyName.trim() || undefined,
       department_name: departmentName.trim() || undefined,
       department_director_observations: departmentObservations.trim() || undefined,
@@ -1146,6 +1292,7 @@ function PlanForm({
             threshold={threshold}
             comments={workbench.comments}
             selectedIds={selectedIds}
+            committedCounts={committedCounts}
             onToggleIndicator={toggleIndicator}
             onToggleComment={toggleComment}
             aspectByDimension={aspectByDimension}
@@ -1174,16 +1321,36 @@ function PlanForm({
 
           <div className="flex shrink-0 flex-wrap items-center gap-3">
             {items.length > 0 && (
-              <p className="text-muted-foreground text-sm" role="status">
-                <span className="num font-semibold">{completeCount}</span> de{' '}
-                <span className="num font-semibold">{items.length}</span>{' '}
-                {items.length === 1 ? 'compromiso completo' : 'compromisos completos'}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-muted-foreground text-sm" role="status">
+                  <span className="num font-semibold">{completeCount}</span> de{' '}
+                  <span className="num font-semibold">{items.length}</span>{' '}
+                  {items.length === 1 ? 'compromiso completo' : 'compromisos completos'}
+                </p>
+
+                <Progress
+                  value={(completeCount / items.length) * 100}
+                  aria-hidden="true"
+                  className="h-1 w-16"
+                />
+              </div>
             )}
 
-            <Button type="button" variant="outline" onClick={() => setObservationsOpen(true)}>
+            {/* The way through a plan that arrived with its indicators already
+                picked: every card is there but empty, and this writes them one
+                after another instead of once per scroll. */}
+            {!actaLocked && incomplete.length > 0 && (
+              <Button type="button" onClick={writePending}>
+                <NotebookPen className="size-4" aria-hidden="true" />
+                Redactar {incomplete.length === 1 ? 'el compromiso' : 'los compromisos'} (
+                <span className="num">{incomplete.length}</span>{' '}
+                {incomplete.length === 1 ? 'pendiente' : 'pendientes'})
+              </Button>
+            )}
+
+            <Button type="button" variant="outline" onClick={() => openObservations()}>
               <NotebookPen className="size-4" aria-hidden="true" />
-              Observaciones
+              Añadir Observaciones
               {writtenObservations > 0 && (
                 <Badge variant="secondary" className="num ml-0.5 min-w-5 justify-center px-1.5">
                   {writtenObservations}
@@ -1239,6 +1406,15 @@ function PlanForm({
             disabled={actaLocked}
           />
         )}
+
+        <PlanObservationsList
+          council={councilObservations}
+          department={departmentObservations}
+          program={programObservations}
+          onEdit={openObservations}
+          onRemove={(kind) => setObservation(kind, '')}
+          councilDisabled={actaLocked}
+        />
       </section>
 
       {teacherId != null && (
@@ -1320,9 +1496,9 @@ function PlanForm({
               añádelas con el selector de arriba.
             </p>
           ) : (
-            // Read-only on purpose: the name, the code and the group are what
-            // the evaluation report says the teacher taught, and a plan that
-            // renames them stops matching the record it is built on.
+            // Read-only on purpose: the name, the code, the group and la carrera
+            // are what the evaluation report says the teacher taught, and a plan
+            // that renames them stops matching the record it is built on.
             <ul className="divide-border border-border divide-y rounded-md border">
               {courses.map((course) => (
                 <li key={course.key} className="flex flex-wrap items-center gap-3 px-4 py-2.5">
@@ -1330,6 +1506,14 @@ function PlanForm({
 
                   {course.course_code && (
                     <span className="text-muted-foreground num text-xs">{course.course_code}</span>
+                  )}
+
+                  {/* Al lado del código porque de ahí sale: los tres primeros
+                      dígitos son el COD_CARRERA. Va en el tono callado de los
+                      metadatos para no competir con el nombre de la materia, que
+                      es lo que el director está leyendo. */}
+                  {course.program_name && (
+                    <span className="text-muted-foreground text-xs">{course.program_name}</span>
                   )}
 
                   {course.group_name && (
@@ -1392,31 +1576,12 @@ function PlanForm({
           />
         </div>
 
-        {/* Lo que queda del encabezado de los formatos oficiales, junto al acto
-            administrativo que lo respalda: el programa académico, y el
-            "ACTO ADMINISTRATIVO: ACTA No. ___ FECHA: ___" que cierra la Ficha
+        {/* El "ACTO ADMINISTRATIVO: ACTA No. ___ FECHA: ___" que cierra la Ficha
             de acuerdo, salido del Consejo de Departamento que aprueba el plan.
-            Facultad y departamento ya no se piden — se heredan del docente
-            evaluado y se leen en el detalle del plan. */}
+            Es lo único que queda del encabezado de los formatos: facultad y
+            departamento se heredan del docente evaluado y se leen en el detalle,
+            y el programa académico lo trae cada asignatura desde su código. */}
         <div className="flex flex-wrap gap-4 border-t pt-4">
-          <div className="min-w-56 flex-1 space-y-1.5">
-            <Label htmlFor="program">
-              Programa académico <Required />
-            </Label>
-            <Combobox
-              id="program"
-              value={programName}
-              onValueChange={setProgramOverride}
-              options={programOptions}
-              placeholder="Programa"
-              invalid={invalidFields.has('program')}
-              describedBy={invalidFields.has('program') ? fieldErrorId('program') : undefined}
-              onBlur={() => markTouched('program')}
-            />
-
-            <FieldError fieldId="program" message={invalidFields.get('program')} />
-          </div>
-
           <div className="min-w-40 space-y-1.5">
             <Label htmlFor="acta-number">
               Acta N.º <Required />
@@ -1506,11 +1671,13 @@ function PlanForm({
         </LoadingButton>
       </div>
 
-      {/* Keyed on the draft so each commitment opens the dialog with a clean
-          copy of itself, instead of an effect syncing prop to state. */}
       <PlanObservationsDialog
         open={observationsOpen}
-        onOpenChange={setObservationsOpen}
+        onOpenChange={(open) => {
+          setObservationsOpen(open)
+          if (!open) setObservationsFocus(null)
+        }}
+        focus={observationsFocus}
         councilObservations={councilObservations}
         onCouncilObservationsChange={setCouncilObservations}
         departmentObservations={departmentObservations}
@@ -1520,6 +1687,8 @@ function PlanForm({
         councilDisabled={actaLocked}
       />
 
+      {/* Keyed on the draft so each commitment opens the dialog with a clean
+          copy of itself, instead of an effect syncing prop to state. */}
       <CommitmentDialog
         key={pending?.draft.key ?? 'none'}
         draft={pending?.draft ?? null}
@@ -1527,6 +1696,12 @@ function PlanForm({
         aspects={aspects}
         defaultActions={defaultActions}
         onSave={commitPending}
+        queue={
+          queue && pending
+            ? { index: Math.max(queue.indexOf(pending.draft.key), 0), total: queue.length }
+            : undefined
+        }
+        onSaveAndNext={commitAndAdvance}
         onCancel={closeCommitment}
       />
     </form>

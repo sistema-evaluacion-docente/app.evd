@@ -5,7 +5,7 @@ import { ScoreProgress } from '@/components/common/ScoreProgress'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { dimensionColor } from '@/lib/dimensionLabel'
 import { cn } from '@/lib/utils'
-import type { CourseDetail, DimensionDetail } from '../types'
+import type { DimensionDetail } from '../types'
 
 export interface CourseComparisonSource {
   dimensions: Array<{
@@ -16,42 +16,48 @@ export interface CourseComparisonSource {
 }
 
 export interface CourseDimensionBreakdownProps {
-  course: CourseDetail
-  /** Same course from another point of comparison, if available, to show trends against. */
-  previousCourse?: CourseComparisonSource
-  /** Label naming what `previousCourse` represents. Defaults to `'periodo anterior'`. */
+  /**
+   * The dimensions to lay out. A course's own, or the teacher's across every
+   * group he taught — the shape is the same and so is the reading, so the
+   * profile's period-wide panel is this component with a different source.
+   */
+  dimensions: DimensionDetail[]
+  /** The same set from another point of comparison, to show trends against. */
+  previous?: CourseComparisonSource['dimensions']
+  /** Label naming what `previous` represents. Defaults to `'periodo anterior'`. */
   previousLabel?: string
   className?: string
 }
 
 /**
- * Per-dimension breakdown of one course: each dimension shows its average
- * (with a trend against `previousCourse` when given) and expands to reveal
- * its individual questions with a score bar. Shared by the collapsed course
- * row in `TeacherCourseResults` and any full-page view of a single course.
- *
- * @example
- * <CourseDimensionBreakdown course={course} previousCourse={previousCourse} />
+ * Per-dimension breakdown: each dimension shows its average (with a trend
+ * against `previous` when given) and expands to reveal its individual
+ * questions with a score bar. Shared by the collapsed course row in
+ * `TeacherCourseResults`, the full-page view of a single course, and the
+ * period-wide panel of a teacher's profile.
  *
  * @example
  * <CourseDimensionBreakdown
- *   course={course}
- *   previousCourse={selectedHistoryItem}
- *   previousLabel={selectedHistoryItem.period_name}
+ *   dimensions={course.dimensions}
+ *   previous={previousCourse?.dimensions}
+ * />
+ *
+ * @example
+ * <CourseDimensionBreakdown
+ *   dimensions={teacher.dimensions}
+ *   previous={teacher.previous_period?.dimensions}
  * />
  */
 export function CourseDimensionBreakdown({
-  course,
-  previousCourse,
+  dimensions,
+  previous,
   previousLabel = 'periodo anterior',
   className,
 }: CourseDimensionBreakdownProps) {
   return (
     <div className={cn('divide-border divide-y', className)}>
-      {course.dimensions.map((dimension) => {
-        const previousDimension = previousCourse?.dimensions.find(
-          (previous) => previous.dimension === dimension.dimension,
-        )
+      {dimensions.map((dimension) => {
+        const previousDimension = previous?.find((entry) => entry.dimension === dimension.dimension)
 
         return (
           <DimensionRow

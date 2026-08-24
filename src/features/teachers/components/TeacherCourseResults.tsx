@@ -114,8 +114,8 @@ function CourseRow({
 
       <CollapsibleContent>
         <CourseDimensionBreakdown
-          course={course}
-          previousCourse={previousCourse}
+          dimensions={course.dimensions}
+          previous={previousCourse?.dimensions}
           className="px-6 pb-2"
         />
       </CollapsibleContent>

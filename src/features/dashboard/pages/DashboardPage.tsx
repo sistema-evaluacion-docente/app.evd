@@ -38,7 +38,7 @@ export default function DashboardPage() {
   }
 
   if (selectedRole === 'ADMIN') {
-    navigate('/admin/logs')
+    navigate('/admin/historial')
     return
   }
 
