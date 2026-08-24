@@ -24,6 +24,7 @@ import { useGetDepartmentPeriodRangeStats } from '../api'
 import { DepartmentCommentPeriodBreakdown } from './DepartmentCommentPeriodBreakdown'
 import { DepartmentCommentsSummary } from './DepartmentCommentsSummary'
 import { DepartmentDimensionsChart } from './DepartmentDimensionsChart'
+import { DepartmentDimensionsPeriodComparison } from './DepartmentDimensionsPeriodComparison'
 import { DepartmentStatsHero } from './DepartmentStatsHero'
 // Materia/docente mover badges temporarily disabled — see the commented block
 // below (search "MOVER BADGES DISABLED"). Re-add these imports when re-enabling:
@@ -304,7 +305,13 @@ export function DepartmentPeriodRangeSummary({
                   </PdfSection>
                 )}
 
-                <PdfSection title="Promedios por dimensión pedagógica">
+                <PdfSection
+                  title={
+                    rangeCompareActive
+                      ? 'Promedios por dimensión pedagógica, por periodo'
+                      : 'Promedios por dimensión pedagógica'
+                  }
+                >
                   <PdfChartImage src={images.dimensions} />
                 </PdfSection>
               </PdfPage>
@@ -486,16 +493,32 @@ export function DepartmentPeriodRangeSummary({
             ref={dimensionsCardRef}
             className="border-border bg-background rounded-md border"
           >
-            <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
-              Promedios por dimensión pedagógica
-            </h2>
+            <div className="border-border border-b px-6 py-4">
+              <h2 className="text-muted-foreground text-sm font-medium">
+                Promedios por dimensión pedagógica
+              </h2>
+
+              {rangeCompareActive && (
+                <p className="text-muted-foreground/80 mt-0.5 text-xs">
+                  Una barra por periodo en cada dimensión, del más antiguo al más reciente.
+                </p>
+              )}
+            </div>
 
             <div className="px-6 py-4">
-              <DepartmentDimensionsChart
-                dimensions={data?.data?.dimensions}
-                referenceValue={data?.data?.overall_average}
-                referenceLabel="Promedio general"
-              />
+              {rangeCompareActive ? (
+                <DepartmentDimensionsPeriodComparison
+                  periods={data?.data?.periods ?? []}
+                  referenceValue={data?.data?.overall_average}
+                  referenceLabel="Promedio del rango"
+                />
+              ) : (
+                <DepartmentDimensionsChart
+                  dimensions={data?.data?.dimensions}
+                  referenceValue={data?.data?.overall_average}
+                  referenceLabel="Promedio general"
+                />
+              )}
             </div>
           </section>
 
