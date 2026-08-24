@@ -39,6 +39,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Progress } from '@/components/ui/progress'
 import {
   Select,
   SelectContent,
@@ -77,6 +78,7 @@ import { facultyOfProgram, PROGRAM_NAMES, programsOfFaculty } from '../config/ac
 import { usePlanWorkbench } from '../hooks/usePlanWorkbench'
 import { SUBJECT_ALL } from '../lib/indicatorMatrix'
 import { usePlanFormDraft } from '../hooks/usePlanFormDraft'
+import { parsePicks, seedFromPicks } from '../lib/planPicks'
 import {
   clearPlanDraft,
   type PlanFormDraft,
@@ -104,7 +106,9 @@ import { isPlanSuggested, planSuggestionReason } from '../lib/planSuggestion'
 import {
   COMMITMENTS_ANCHOR_ID,
   COURSES_ANCHOR_ID,
+  commitmentErrors,
   focusField,
+  itemsInPaintedOrder,
   planFormErrors,
 } from '../lib/planValidation'
 import type {
@@ -165,6 +169,8 @@ export default function PlanFormPage() {
   const presetPeriod = searchParams.get('period')
   /** The teacher profile links with the period code it was showing. */
   const presetPeriodCode = searchParams.get('period_code')
+  /** Indicators marked on the profile, in `IndicatorSelectionSheet`. */
+  const rawPicks = searchParams.get('picks')
 
   // Periods and the indicator catalogue make up the shell of the form: the five
   // aspects, the threshold and the period list. The page waits for both instead
@@ -275,6 +281,7 @@ export default function PlanFormPage() {
       periods={periods}
       indicators={indicators}
       presetPeriodCode={presetPeriodCode}
+      rawPicks={rawPicks}
       draftKey={draftKey}
       restoredAt={restored?.savedAt ?? null}
       onDiscardDraft={() => {
@@ -337,6 +344,7 @@ function PlanForm({
   periods,
   indicators,
   presetPeriodCode,
+  rawPicks,
   draftKey,
   restoredAt,
   onDiscardDraft,
@@ -347,6 +355,8 @@ function PlanForm({
   periods: PlanPeriod[]
   indicators: PlanIndicators
   presetPeriodCode: string | null
+  /** The `picks` parameter, still unparsed. `null` when nothing was handed over. */
+  rawPicks: string | null
   /** Where this form's local backup is filed. */
   draftKey: string
   /** When the restored draft was written, or `null` if nothing was restored. */
@@ -354,6 +364,7 @@ function PlanForm({
   onDiscardDraft: () => void
 }) {
   const [, navigate] = useLocation()
+  const [, setSearchParams] = useSearchParams()
 
   const isEdit = mode === 'edit'
   // Once the acta is signed the API refuses its content — commitments, courses,
@@ -418,6 +429,16 @@ function PlanForm({
   } | null>(null)
 
   /**
+   * The commitments still to be written, in the order section 3 lays them out,
+   * captured when the director asked to write them.
+   *
+   * A fixed list and not "whatever is incomplete right now": the run has to
+   * keep saying «2 de 4» as they are filled in, and a live count would shrink
+   * under the director's feet. `null` while no run is going.
+   */
+  const [queue, setQueue] = useState<string[] | null>(null)
+
+  /**
    * Where the focus was when the dialog opened, to put it back afterwards.
    *
    * The whole point of the dialog is that the director keeps picking without
@@ -436,6 +457,7 @@ function PlanForm({
 
   const closeCommitment = useCallback(() => {
     setPending(null)
+    setQueue(null)
 
     const target = returnFocusRef.current
     returnFocusRef.current = null
@@ -612,6 +634,71 @@ function PlanForm({
     itemsRef.current = items
   }, [items])
 
+  /**
+   * Brings the selection made on the teacher's profile into the form, once.
+   *
+   * It waits for the workbench: a pick names an indicator and an asignatura,
+   * and turning either into a commitment needs the scores that are still on
+   * their way. Seeding *after* the draft was restored rather than instead of it
+   * is the whole point — arriving with picks on a plan already half written
+   * used to be a choice between the two, and silently kept the wrong one.
+   * Anything already in the form is skipped by `selection_id`.
+   *
+   * The parameter is dropped from the URL on the way out so a reload doesn't
+   * file the same commitments a second time.
+   */
+  const seeded = useRef(false)
+
+  useEffect(() => {
+    if (seeded.current || !rawPicks || workbench.isLoading) return
+
+    const picks = parsePicks(rawPicks)
+
+    seeded.current = true
+    setSearchParams(
+      (previous) => {
+        const next = new URLSearchParams(previous)
+
+        next.delete('picks')
+
+        return next
+      },
+      { replace: true },
+    )
+
+    if (picks.length === 0) return
+
+    const { items: incoming, courses: incomingCourses } = seedFromPicks(picks, {
+      catalogue: indicators,
+      subjects: workbench.allSubjects,
+      matrixOf: workbench.matrixOf,
+      comments: workbench.allComments,
+    })
+
+    const known = new Set(itemsRef.current.map((item) => item.selection_id))
+    const added = incoming.filter((item) => !known.has(item.selection_id))
+
+    if (added.length === 0) return
+
+    setItems((current) => [...current, ...added])
+    setCourses((current) => mergeCourses(current, incomingCourses))
+
+    toast.success(
+      added.length === 1
+        ? 'Se agregó el indicador que seleccionaste.'
+        : `Se agregaron los ${added.length} indicadores que seleccionaste.`,
+      { description: 'Redacta el compromiso de cada uno para poder guardar el plan.' },
+    )
+  }, [
+    rawPicks,
+    workbench.isLoading,
+    workbench.allSubjects,
+    workbench.matrixOf,
+    workbench.allComments,
+    indicators,
+    setSearchParams,
+  ])
+
   function resetPicking() {
     setItems([])
     setCourses([])
@@ -706,6 +793,50 @@ function PlanForm({
     }
 
     closeCommitment()
+  }
+
+  /** The commitments that still can't be saved, in the order they are painted. */
+  const incomplete = useMemo(
+    () => itemsInPaintedOrder(items, aspects).filter((item) => commitmentErrors(item).length > 0),
+    [items, aspects],
+  )
+
+  /**
+   * Opens the pending commitments one after another, starting on the first.
+   *
+   * Arriving from the profile with four indicators picked, the alternative was
+   * four trips down to a card and back — or four modals fired in a row, which
+   * traps the director in a chain he can't step out of to look at the plan. The
+   * run is a queue he can leave at any point: the cards stay, and the counter
+   * above them says what is left.
+   */
+  function writePending() {
+    if (incomplete.length === 0) return
+
+    setQueue(incomplete.map((item) => item.key))
+    openCommitment({ draft: incomplete[0], mode: 'edit', courses: [] })
+  }
+
+  /** Saves the commitment on screen and moves on to the next one of the run. */
+  function commitAndAdvance(draft: DraftItem) {
+    const next = itemsRef.current.map((item) => (item.key === draft.key ? draft : item))
+
+    setItems(next)
+
+    const following = queue
+      ?.slice(queue.indexOf(draft.key) + 1)
+      .map((key) => next.find((item) => item.key === key))
+      .find((item) => item != null && commitmentErrors(item).length > 0)
+
+    if (!following) {
+      closeCommitment()
+      return
+    }
+
+    // Straight into the next one, keeping the focus the dialog already holds:
+    // `openCommitment` would record the dialog's own button as the place to
+    // return to when the run ends.
+    setPending({ draft: following, mode: 'edit', courses: [] })
   }
 
   const removeItem = useCallback((key: string) => {
@@ -1204,11 +1335,31 @@ function PlanForm({
 
           <div className="flex shrink-0 flex-wrap items-center gap-3">
             {items.length > 0 && (
-              <p className="text-muted-foreground text-sm" role="status">
-                <span className="num font-semibold">{completeCount}</span> de{' '}
-                <span className="num font-semibold">{items.length}</span>{' '}
-                {items.length === 1 ? 'compromiso completo' : 'compromisos completos'}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-muted-foreground text-sm" role="status">
+                  <span className="num font-semibold">{completeCount}</span> de{' '}
+                  <span className="num font-semibold">{items.length}</span>{' '}
+                  {items.length === 1 ? 'compromiso completo' : 'compromisos completos'}
+                </p>
+
+                <Progress
+                  value={(completeCount / items.length) * 100}
+                  aria-hidden="true"
+                  className="h-1 w-16"
+                />
+              </div>
+            )}
+
+            {/* The way through a plan that arrived with its indicators already
+                picked: every card is there but empty, and this writes them one
+                after another instead of once per scroll. */}
+            {!actaLocked && incomplete.length > 0 && (
+              <Button type="button" onClick={writePending}>
+                <NotebookPen className="size-4" aria-hidden="true" />
+                Redactar {incomplete.length === 1 ? 'el compromiso' : 'los compromisos'} (
+                <span className="num">{incomplete.length}</span>{' '}
+                {incomplete.length === 1 ? 'pendiente' : 'pendientes'})
+              </Button>
             )}
 
             <Button type="button" variant="outline" onClick={() => openObservations()}>
@@ -1570,6 +1721,12 @@ function PlanForm({
         aspects={aspects}
         defaultActions={defaultActions}
         onSave={commitPending}
+        queue={
+          queue && pending
+            ? { index: Math.max(queue.indexOf(pending.draft.key), 0), total: queue.length }
+            : undefined
+        }
+        onSaveAndNext={commitAndAdvance}
         onCancel={closeCommitment}
       />
     </form>

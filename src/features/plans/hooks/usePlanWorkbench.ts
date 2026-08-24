@@ -1,10 +1,10 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 
 // Imported from the api module instead of the feature root on purpose:
 // `features/teachers` imports `features/plans` for `TeacherPlanAction`, so
 // going through the barrel would close an import cycle between the two.
 import { useGetTeacherComments, useGetTeacherDetail } from '@/features/teachers/api'
-import type { CourseDetail } from '@/features/teachers/types'
+import type { CourseDetail, TeacherComment } from '@/features/teachers/types'
 import { useGetTeacherCourses } from '../api'
 import { countRisky, groupComments, type GroupedComments } from '../lib/commentGroups'
 import {
@@ -41,7 +41,16 @@ export interface PlanWorkbench {
   /** Falls back to `SUBJECT_ALL` when the chosen subject is filtered out. */
   effectiveSubjectKey: string
   dimensions: IndicatorDimension[]
+  /**
+   * The scored matrix of any asignatura, or of the teacher when `null` —
+   * independent of the filter `dimensions` follows. Seeding a selection made on
+   * the profile needs the scores of every asignatura it touched, not only of
+   * the one the picker happens to be showing.
+   */
+  matrixOf: (subjectKey: string | null) => IndicatorDimension[]
   comments: GroupedComments
+  /** Every comment of the period, flat, for the ones cited by id. */
+  allComments: TeacherComment[]
   weakCount: number
   riskyCount: number
   aiStatus: string | null
@@ -141,24 +150,30 @@ export function usePlanWorkbench({
 
   const activeSubject = subjectOptions.find((option) => option.key === effectiveSubjectKey) ?? null
 
-  const dimensions = useMemo(() => {
-    if (activeSubject) {
-      return buildDimensionsFromDetail(
-        detailByKey.get(activeSubject.key)?.dimensions,
-        catalogue,
-        threshold,
-      )
-    }
+  const matrixOf = useCallback(
+    (scope: string | null): IndicatorDimension[] => {
+      if (scope != null) {
+        return buildDimensionsFromDetail(detailByKey.get(scope)?.dimensions, catalogue, threshold)
+      }
 
-    // Teacher-wide the API already computed the matrix, thresholds included.
-    if (candidate) return candidate.dimensions
+      // Teacher-wide the API already computed the matrix, thresholds included.
+      if (candidate) return candidate.dimensions
 
-    return buildDimensionsFromDetail(detail?.dimensions, catalogue, threshold)
-  }, [activeSubject, detailByKey, catalogue, threshold, candidate, detail])
+      return buildDimensionsFromDetail(detail?.dimensions, catalogue, threshold)
+    },
+    [detailByKey, catalogue, threshold, candidate, detail],
+  )
+
+  const dimensions = useMemo(() => matrixOf(activeSubject?.key ?? null), [matrixOf, activeSubject])
 
   const comments = useMemo(
     () => groupComments(commentCourses, activeSubject?.key),
     [commentCourses, activeSubject],
+  )
+
+  const allComments = useMemo(
+    () => (commentCourses ?? []).flatMap((course) => course.comments),
+    [commentCourses],
   )
 
   return {
@@ -167,7 +182,9 @@ export function usePlanWorkbench({
     activeSubject,
     effectiveSubjectKey,
     dimensions,
+    matrixOf,
     comments,
+    allComments,
     weakCount: countWeak(dimensions),
     riskyCount: countRisky(comments),
     aiStatus: commentsResponse?.data?.ai_status ?? null,
