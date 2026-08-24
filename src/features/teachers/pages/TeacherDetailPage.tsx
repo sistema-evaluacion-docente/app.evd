@@ -207,11 +207,7 @@ export default function TeacherDetailPage() {
         }
       />
 
-      <TeacherPlanAction
-        teacherId={teacher.teacher_id}
-        teacherName={teacher.name}
-        periodCode={teacher.period_code}
-      />
+      
     </div>
   )
 }
