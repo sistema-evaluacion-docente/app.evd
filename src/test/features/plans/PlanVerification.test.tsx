@@ -158,4 +158,22 @@ describe('PlanVerification', () => {
       screen.getByText(/No modifica el resultado con el que se cerró el plan/),
     ).toBeInTheDocument()
   })
+
+  it('carries whatever the caller offers next to the verdict', () => {
+    render(
+      <PlanVerification
+        verification={verification({ result: 'NO_MEJORO' })}
+        verificationPeriodCode="2025-2"
+        action={<button type="button">Crear plan de mejoramiento</button>}
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: 'Crear plan de mejoramiento' })).toBeInTheDocument()
+  })
+
+  it('offers nothing of its own when the caller passes no action', () => {
+    render(<PlanVerification verification={verification()} verificationPeriodCode="2025-2" />)
+
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
+  })
 })

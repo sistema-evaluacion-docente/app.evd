@@ -165,4 +165,41 @@ describe('MultiFileDropzone', () => {
 
     expect(screen.getByLabelText('Archivos')).toBeDisabled()
   })
+
+  it('opens the picked PDF in a tab of its own', async () => {
+    const user = userEvent.setup()
+    const open = vi.spyOn(window, 'open').mockReturnValue(null)
+    const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:presencial')
+
+    render(
+      <MultiFileDropzone
+        files={[makeFile()]}
+        onFilesAdded={vi.fn()}
+        onRemove={vi.fn()}
+        maxFiles={2}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Ver presencial.pdf' }))
+
+    expect(open).toHaveBeenCalledWith('blob:presencial', '_blank', 'noopener')
+
+    open.mockRestore()
+    createObjectURL.mockRestore()
+  })
+
+  it('does not offer to view a file the browser would only download', () => {
+    // The dropzone is generic: `accept` can name anything.
+    render(
+      <MultiFileDropzone
+        files={[makeFile('notas.csv', 512, 'text/csv')]}
+        onFilesAdded={vi.fn()}
+        onRemove={vi.fn()}
+        maxFiles={2}
+      />,
+    )
+
+    expect(screen.queryByRole('button', { name: /^Ver / })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Quitar notas.csv' })).toBeInTheDocument()
+  })
 })

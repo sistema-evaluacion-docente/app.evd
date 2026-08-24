@@ -1,13 +1,16 @@
 import { describe, expect, it } from 'vitest'
 
+import { formatPicks } from '@/features/plans/lib/planPicks'
 import {
   alertComments,
   contextComments,
+  followUpPicks,
   hasFindings,
   hiddenWeakCourses,
   indicatorLabel,
 } from '@/features/plans/lib/verification'
 import type {
+  PlanIndicators,
   PlanVerification,
   PlanVerificationComment,
   PlanVerificationCourse,
@@ -143,5 +146,109 @@ describe('hasFindings', () => {
 
   it('is true when only comments came back', () => {
     expect(hasFindings(verification({ comment_findings: [comment()] }))).toBe(true)
+  })
+})
+
+const catalogue: PlanIndicators = {
+  threshold: 3.5,
+  aspects: [
+    { aspect: 1, label: 'Desarrollo del Conocimiento', dimension: 'Desarrollo del Conocimiento' },
+    { aspect: 2, label: 'Desempeño Docente', dimension: 'Desempeño Docente' },
+    { aspect: 5, label: 'Observaciones de los Estudiantes', dimension: null },
+  ],
+  overall: { target_type: 'OVERALL_AVERAGE', target_ref: null, label: 'General', suggestions: [] },
+  dimensions: [
+    {
+      dimension: 'Desempeño Docente',
+      target_type: 'DIMENSION',
+      target_ref: 'Desempeño Docente',
+      label: 'Desempeño Docente',
+      suggestions: [],
+      questions: [
+        {
+          target_type: 'QUESTION',
+          target_ref: '011',
+          code: '011',
+          text: 'Asiste puntualmente a clase.',
+          suggestions: [],
+        },
+      ],
+    },
+  ],
+}
+
+describe('followUpPicks', () => {
+  it('carries the indicators that were missed, and the alerts that came back', () => {
+    const picks = followUpPicks(
+      verification({
+        result: 'NO_MEJORO',
+        items: [
+          item({ id: 1, target_type: 'QUESTION', target_ref: '011', met: false }),
+          item({ id: 2, target_type: 'DIMENSION', target_ref: 'Desempeño Docente', met: false }),
+        ],
+        comment_findings: [comment({ comment_id: 4821, is_alert: true })],
+      }),
+      catalogue,
+    )
+
+    expect(formatPicks(picks)).toBe('q:011,d:2,c:4821')
+  })
+
+  it('files everything at teacher level, which is what the acta agreed on', () => {
+    const picks = followUpPicks(
+      verification({ items: [item({ met: false, courses: [course()] })] }),
+      catalogue,
+    )
+
+    expect(picks).toEqual([{ kind: 'question', ref: '011', subjectKey: null }])
+  })
+
+  it('leaves out what improved and what had no grades to compare', () => {
+    const picks = followUpPicks(
+      verification({
+        items: [
+          item({ id: 1, met: true }),
+          item({ id: 2, target_ref: '012', met: null, result_value: null }),
+        ],
+      }),
+      catalogue,
+    )
+
+    expect(picks).toEqual([])
+  })
+
+  it('leaves out the medium-risk comments, which raise no alert on their own', () => {
+    const picks = followUpPicks(
+      verification({
+        comment_findings: [comment({ comment_id: 9, risk_level_name: 'MEDIO', is_alert: false })],
+      }),
+      catalogue,
+    )
+
+    expect(picks).toEqual([])
+  })
+
+  it('skips the overall average, which the form has no way to preselect', () => {
+    const picks = followUpPicks(
+      verification({
+        items: [item({ target_type: 'OVERALL_AVERAGE', target_ref: null, met: false })],
+      }),
+      catalogue,
+    )
+
+    expect(picks).toEqual([])
+  })
+
+  it('drops a dimension whose aspect the catalogue cannot name', () => {
+    // Filing it under the wrong section of the acta would be worse than
+    // losing one preselection.
+    const picks = followUpPicks(
+      verification({
+        items: [item({ target_type: 'DIMENSION', target_ref: 'Dimensión inventada', met: false })],
+      }),
+      catalogue,
+    )
+
+    expect(picks).toEqual([])
   })
 })
