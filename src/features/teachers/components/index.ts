@@ -46,4 +46,8 @@ export type { TeacherReportDownloadButtonProps } from './TeacherReportDownloadBu
 export { TeacherSelect } from './TeacherSelect'
 export type { TeacherSelectProps } from './TeacherSelect'
 export { TeachersList } from './TeachersList'
+export { TeacherStatsHero } from './TeacherStatsHero'
+export type { TeacherStatsHeroProps } from './TeacherStatsHero'
+export { TeacherStatsHeroSkeleton } from './TeacherStatsHeroSkeleton'
+export type { TeacherStatsHeroSkeletonProps } from './TeacherStatsHeroSkeleton'
 export { TeacherUploadForm } from './TeacherUploadForm'

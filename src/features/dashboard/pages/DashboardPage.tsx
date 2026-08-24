@@ -2,7 +2,7 @@ import { PageTitle } from '@/components/common/PageTitle'
 import { UserNotAuth } from '@/features/auth'
 import { PeriodAverageTrend } from '@/features/periods'
 import { DepartmentPeriodRangeSummary } from '@/features/stats'
-import { TeacherPeriodInsights } from '@/features/teachers'
+import { TeacherPeriodInsights, TeacherStatsHero } from '@/features/teachers'
 import useAuth from '@/hooks/useAuth'
 import { useNavigate } from '@/hooks/useNavigate'
 
@@ -12,6 +12,8 @@ function TeacherDashboard() {
       <PageTitle>Mi resumen</PageTitle>
 
       <div className="space-y-8 rounded">
+        <TeacherStatsHero />
+
         <PeriodAverageTrend />
 
         <TeacherPeriodInsights />

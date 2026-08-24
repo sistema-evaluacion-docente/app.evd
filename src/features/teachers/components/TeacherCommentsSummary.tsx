@@ -19,6 +19,10 @@ import { CommentCard } from './CommentCard'
 /** Excludes "Sin categoría" — a non-classification, not useful for analysis. */
 const ANALYZABLE_CATEGORIES = CATEGORIES.filter((category) => category.code !== UNCATEGORIZED)
 
+/** Legend line widths of the loading state, one per risk level/category. */
+const RISK_LEGEND_WIDTHS = ['w-32', 'w-36', 'w-28']
+const CATEGORY_LEGEND_WIDTHS = ['w-40', 'w-32', 'w-36', 'w-28']
+
 type ViewMode = 'pie' | 'bar'
 
 /** Risk/category counts for one set of comments — shared by the current and comparison periods. */
@@ -168,14 +172,8 @@ export function TeacherCommentsSummary({
 
       {isPending ? (
         <div className="divide-border grid divide-y sm:grid-cols-2 sm:divide-x sm:divide-y-0">
-          <div className="px-6 py-4">
-            <Skeleton className="mb-3 h-3 w-24" />
-            <Skeleton className="h-40 w-full rounded-md" />
-          </div>
-          <div className="px-6 py-4">
-            <Skeleton className="mb-3 h-3 w-32" />
-            <Skeleton className="h-40 w-full rounded-md" />
-          </div>
+          <ChartColumnSkeleton headingWidth="w-24" legendWidths={RISK_LEGEND_WIDTHS} />
+          <ChartColumnSkeleton headingWidth="w-32" legendWidths={CATEGORY_LEGEND_WIDTHS} />
         </div>
       ) : showAiPendingNotice && aiStatusConfig ? (
         <div className="flex flex-wrap items-center gap-2 px-6 py-4 text-sm">
@@ -238,5 +236,41 @@ export function TeacherCommentsSummary({
         </div>
       )}
     </section>
+  )
+}
+
+/**
+ * One column of the loading state: heading, donut and legend rows, laid out
+ * like the `CountPieChart` that replaces it (the default view mode), so the
+ * card doesn't resize when the comments land.
+ */
+function ChartColumnSkeleton({
+  headingWidth,
+  legendWidths,
+}: {
+  headingWidth: string
+  legendWidths: string[]
+}) {
+  return (
+    <div className="px-6 py-4">
+      <Skeleton className={cn('mb-3 h-3', headingWidth)} />
+
+      <div className="flex h-56 items-center justify-center">
+        <div className="relative">
+          <Skeleton className="size-40 rounded-full" />
+
+          <div aria-hidden="true" className="bg-background absolute inset-8 rounded-full" />
+        </div>
+      </div>
+
+      <div className="mt-2 flex flex-col gap-1">
+        {legendWidths.map((width, index) => (
+          <div key={index} className="flex items-center gap-1.5">
+            <Skeleton className="size-2.5 shrink-0 rounded-full" />
+            <Skeleton className={cn('h-3', width)} />
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
