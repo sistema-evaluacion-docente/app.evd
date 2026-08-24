@@ -296,9 +296,73 @@ describe('PlanFormPage · creación', () => {
       await screen.findByLabelText(/director de programa/),
       'Se acompañará desde el programa',
     )
-    await userEvent.click(screen.getByRole('button', { name: 'Listo' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
 
     expect(screen.getByRole('button', { name: /^Observaciones/ })).toHaveTextContent('1')
+  })
+
+  it('descarta lo escrito si se cancela en vez de guardar', async () => {
+    mockQueries()
+
+    renderAt(<PlanFormPage />)
+
+    await userEvent.click(screen.getByRole('button', { name: /^Observaciones/ }))
+    await userEvent.type(
+      await screen.findByLabelText(/director de programa/),
+      'Esto no debería quedar',
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+
+    // Ni cuenta en la pastilla ni aparece como tarjeta: el diálogo escribe
+    // sobre una copia y sólo «Guardar» la vuelca.
+    expect(screen.getByRole('button', { name: /^Observaciones/ })).toHaveTextContent(
+      /^Observaciones$/,
+    )
+    expect(screen.queryByText('Esto no debería quedar')).not.toBeInTheDocument()
+  })
+
+  it('lista las observaciones guardadas junto a los compromisos, y deja quitarlas', async () => {
+    mockQueries()
+
+    renderAt(<PlanFormPage />)
+
+    await userEvent.click(screen.getByRole('button', { name: /^Observaciones/ }))
+    await userEvent.type(
+      await screen.findByLabelText(/director de departamento/),
+      'Acompañamiento quincenal',
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+
+    expect(await screen.findByText('Acompañamiento quincenal')).toBeInTheDocument()
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /Quitar la observación del director de departamento/ }),
+    )
+
+    expect(screen.queryByText('Acompañamiento quincenal')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Observaciones/ })).toHaveTextContent(
+      /^Observaciones$/,
+    )
+  })
+
+  it('abre el diálogo en la observación que se pide editar', async () => {
+    mockQueries()
+
+    renderAt(<PlanFormPage />)
+
+    await userEvent.click(screen.getByRole('button', { name: /^Observaciones/ }))
+    await userEvent.type(await screen.findByLabelText(/director de programa/), 'Desde el programa')
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+
+    await userEvent.click(
+      await screen.findByRole('button', { name: /Editar la observación del director de programa/ }),
+    )
+
+    // Etiqueta completa: en pantalla está también la tarjeta, cuyo botón dice
+    // «Editar la observación del director de programa».
+    expect(await screen.findByLabelText(/Observaciones del director de programa/)).toHaveValue(
+      'Desde el programa',
+    )
   })
 
   it('says it is looking for the teachers instead of just going dead', () => {
