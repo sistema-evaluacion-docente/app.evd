@@ -48,7 +48,7 @@ describe('DepartmentDimensionsPeriodComparison', () => {
     expect(useGetDepartmentPeriodBreakdowns).toHaveBeenCalledWith(['2024-2', '2025-1'])
   })
 
-  it('draws one series per period alongside the dimension axis', () => {
+  it('draws one chart per dimension, each spanning every period', () => {
     mockBreakdowns([
       { data: stats(4.1, 3.9), isPending: false },
       { data: stats(4.4, 4.2), isPending: false },
@@ -58,10 +58,15 @@ describe('DepartmentDimensionsPeriodComparison', () => {
     // `document.body`, so queries stay scoped to this test's container.
     const { container } = render(<DepartmentDimensionsPeriodComparison periods={PERIODS} />)
 
-    expect(within(container).getByText('Desempeño Docente')).toBeInTheDocument()
-    expect(within(container).getByText('Procesos de Evaluación')).toBeInTheDocument()
-    expect(within(container).getByText('2024-II')).toBeInTheDocument()
-    expect(within(container).getByText('2025-I')).toBeInTheDocument()
+    const titles = within(container).getAllByRole('heading', { level: 3 })
+    expect(titles.map((title) => title.textContent)).toEqual([
+      'Desempeño Docente',
+      'Procesos de Evaluación',
+    ])
+
+    // One x axis per chart, both periods on each.
+    expect(within(container).getAllByText('2024-II')).toHaveLength(2)
+    expect(within(container).getAllByText('2025-I')).toHaveLength(2)
   })
 
   it('shows a skeleton while any period is still loading', () => {

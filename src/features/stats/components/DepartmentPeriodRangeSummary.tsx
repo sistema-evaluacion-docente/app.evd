@@ -500,7 +500,7 @@ export function DepartmentPeriodRangeSummary({
 
               {rangeCompareActive && (
                 <p className="text-muted-foreground/80 mt-0.5 text-xs">
-                  Una barra por periodo en cada dimensión, del más antiguo al más reciente.
+                  Una gráfica por dimensión, un punto por periodo.
                 </p>
               )}
             </div>
