@@ -10,7 +10,6 @@ import { PdfPage } from '@/components/common/pdf/PdfPage'
 import { PdfSection } from '@/components/common/pdf/PdfSection'
 import { PeriodSelect } from '@/components/common/PeriodSelect'
 import { Label } from '@/components/ui/label'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { Switch } from '@/components/ui/switch'
 import { useGetAcademicPeriods } from '@/features/periods'
@@ -25,9 +24,11 @@ import { DepartmentCommentPeriodBreakdown } from './DepartmentCommentPeriodBreak
 import { DepartmentCommentsSummary } from './DepartmentCommentsSummary'
 import { DepartmentDimensionsChart } from './DepartmentDimensionsChart'
 import { DepartmentDimensionsPeriodComparison } from './DepartmentDimensionsPeriodComparison'
+import { DepartmentPeriodRangeSummarySkeleton } from './DepartmentPeriodRangeSummarySkeleton'
 import { DepartmentStatsHero } from './DepartmentStatsHero'
 // Materia/docente mover badges temporarily disabled — see the commented block
 // below (search "MOVER BADGES DISABLED"). Re-add these imports when re-enabling:
+//   import { Skeleton } from '@/components/ui/skeleton'
 //   import { TrendingDown, TrendingUp } from 'lucide-react'
 //   import { useGetTeachers, type TeacherRecord } from '@/features/teachers'
 //   import { findBestWorstMover, type MoverEntry } from '@/lib/bestWorstMover'
@@ -365,10 +366,10 @@ export function DepartmentPeriodRangeSummary({
       {error && <InlineError message={error.message} />}
 
       {isPending && !error && (
-        <div className="space-y-6">
-          <Skeleton className="h-48 w-full rounded-md" />
-          <Skeleton className="h-64 w-full rounded-md" />
-        </div>
+        <DepartmentPeriodRangeSummarySkeleton
+          showTrendChart={showTrendChart}
+          rangeCompare={rangeCompareActive}
+        />
       )}
 
       {!isPending && data?.data && (
