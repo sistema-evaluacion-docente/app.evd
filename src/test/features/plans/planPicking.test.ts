@@ -62,6 +62,7 @@ const SUBJECT: PlanSubjectOption = {
   course_code: 'CAL',
   group_name: 'A',
   academic_group_id: 7,
+  program_name: 'INGENIERIA DE SISTEMAS',
 }
 
 const OTHER_SUBJECT: PlanSubjectOption = {
@@ -71,6 +72,7 @@ const OTHER_SUBJECT: PlanSubjectOption = {
   course_code: 'FIS',
   group_name: 'B',
   academic_group_id: 8,
+  program_name: 'INGENIERIA INDUSTRIAL',
 }
 
 describe('groupComments', () => {

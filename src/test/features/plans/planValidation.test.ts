@@ -35,6 +35,7 @@ const COURSES: DraftCourse[] = [
     course_name: 'Cálculo I',
     course_code: '1155201',
     group_name: 'A',
+    program_name: 'INGENIERIA DE SISTEMAS',
     order: 0,
   },
 ]
@@ -49,7 +50,6 @@ function errorsOf(overrides: Partial<Parameters<typeof planFormErrors>[0]> = {})
     items: [filled(1)],
     aspects: ASPECTS,
     courses: COURSES,
-    programName: 'Ingeniería de Sistemas',
     actaNumber: '012',
     actaDate: '2026-03-04',
     ...overrides,
@@ -147,19 +147,9 @@ describe('planFormErrors', () => {
   })
 
   it('walks the datos del plan in the order the section prints them', () => {
-    const errors = errorsOf({
-      title: '  ',
-      programName: '',
-      actaNumber: '',
-      actaDate: '',
-    })
+    const errors = errorsOf({ title: '  ', actaNumber: '', actaDate: '' })
 
-    expect(errors.map((error) => error.id)).toEqual([
-      'title',
-      'program',
-      'acta-number',
-      'acta-date',
-    ])
+    expect(errors.map((error) => error.id)).toEqual(['title', 'acta-number', 'acta-date'])
   })
 
   it('asks for nothing the signed acta would refuse anyway', () => {
@@ -168,16 +158,13 @@ describe('planFormErrors', () => {
     expect(errors).toEqual([])
   })
 
-  it('still asks a locked acta for the header of the format, which it does not own', () => {
-    const errors = errorsOf({
-      actaLocked: true,
-      isEdit: true,
-      programName: '',
-      actaNumber: '',
-      actaDate: '',
-    })
+  it('no reclama el programa académico: ya no es un campo del formulario', () => {
+    // Lo trae cada asignatura desde su código, así que no hay dónde escribirlo
+    // ni nada que reclamar — ni siquiera con el acta firmada, que antes sí lo
+    // pedía porque era la única columna del encabezado que seguía preguntándose.
+    const errors = errorsOf({ actaLocked: true, isEdit: true, actaNumber: '', actaDate: '' })
 
-    expect(errors.map((error) => error.id)).toEqual(['program'])
+    expect(errors).toEqual([])
   })
 
   it('keeps the title ahead of the header columns, where the form prints it', () => {

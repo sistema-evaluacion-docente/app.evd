@@ -23,6 +23,7 @@ const SUBJECTS: PlanSubjectOption[] = [
     course_code: '1155201',
     group_name: 'A',
     academic_group_id: 11,
+    program_name: 'INGENIERIA DE SISTEMAS',
   },
   {
     key: '1155202::B',
@@ -31,6 +32,7 @@ const SUBJECTS: PlanSubjectOption[] = [
     course_code: '1155202',
     group_name: 'B',
     academic_group_id: 12,
+    program_name: 'INGENIERIA DE SISTEMAS',
   },
 ]
 

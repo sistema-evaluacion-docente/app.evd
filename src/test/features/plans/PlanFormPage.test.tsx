@@ -149,7 +149,11 @@ const MATRIX: IndicatorDimension[] = [
   },
 ]
 
-/** What the evaluation report says the teacher taught. */
+/**
+ * What the evaluation report says the teacher taught. Two carreras distintas a
+ * propósito: es el caso que el plan tenía que dejar de aplanar — un docente de
+ * un departamento dictando en varios programas.
+ */
 const SUBJECTS: PlanSubjectOption[] = [
   {
     key: 'group:11',
@@ -158,14 +162,16 @@ const SUBJECTS: PlanSubjectOption[] = [
     course_code: '1155201',
     group_name: 'A',
     academic_group_id: 11,
+    program_name: 'INGENIERIA DE SISTEMAS',
   },
   {
     key: 'group:12',
     label: 'Cálculo I · Grupo B',
     course_name: 'Cálculo I',
-    course_code: '1155202',
+    course_code: '1195202',
     group_name: 'B',
     academic_group_id: 12,
+    program_name: 'INGENIERIA INDUSTRIAL',
   },
 ]
 
@@ -580,21 +586,6 @@ describe('PlanFormPage · creación', () => {
     )
   })
 
-  it('does not submit when Enter picks an option out of a combobox', async () => {
-    const createMutate = vi.fn()
-
-    mockQueries({ createMutate })
-
-    renderAt(<PlanFormPage />)
-
-    // Enter inside an open suggestion list belongs to the list, not to the
-    // form: choosing a programme must not try to save the plan behind it.
-    await userEvent.type(screen.getByLabelText(/^Programa académico/), 'INGENIER{Enter}')
-
-    expect(createMutate).not.toHaveBeenCalled()
-    expect(vi.mocked(toast.warning)).not.toHaveBeenCalled()
-  })
-
   it('paints the header of the format red too, and sends the cursor to the first of it', async () => {
     mockQueries()
 
@@ -604,13 +595,14 @@ describe('PlanFormPage · creación', () => {
 
     expect(screen.getByLabelText(/^Acta N\.º/)).toHaveAttribute('aria-invalid', 'true')
 
-    // Programa and la fecha del acta arrive already resolved — from the
-    // director's own department and from today — so there is nothing to paint
-    // on them. Facultad y departamento ya ni se preguntan.
-    expect(screen.getByLabelText(/^Programa académico/)).toHaveValue('Ingeniería de Sistemas')
+    // La fecha del acta llega ya resuelta — hoy — así que no hay nada que
+    // pintarle. Ninguna de las tres columnas del encabezado se pregunta: la
+    // facultad y el departamento salen del docente, y el programa académico ya
+    // no es uno solo, lo trae cada asignatura.
     expect(screen.getByLabelText(/^Fecha del acta/)).not.toHaveAttribute('aria-invalid', 'true')
     expect(screen.queryByLabelText(/^Facultad/)).not.toBeInTheDocument()
     expect(screen.queryByLabelText(/^Departamento académico/)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/^Programa académico/)).not.toBeInTheDocument()
   })
 
   it('paints the fecha del acta red once it is cleared away', async () => {
@@ -622,23 +614,6 @@ describe('PlanFormPage · creación', () => {
     await userEvent.click(screen.getByRole('button', { name: /Crear plan/ }))
 
     expect(screen.getByLabelText(/^Fecha del acta/)).toHaveAttribute('aria-invalid', 'true')
-  })
-
-  it('paints a combobox of the header red once it is emptied out', async () => {
-    mockQueries()
-
-    renderAt(<PlanFormPage />)
-
-    const program = screen.getByLabelText(/^Programa académico/)
-
-    await userEvent.clear(program)
-    await userEvent.tab()
-
-    // The red rides on the group of the combobox, not on the input inside it.
-    expect(program.closest('[data-slot="autocomplete-input-group"]')).toHaveAttribute(
-      'aria-invalid',
-      'true',
-    )
   })
 
   it('keeps the institutional observations optional, asterisk and all', async () => {
@@ -721,6 +696,49 @@ describe('PlanFormPage · creación', () => {
 
     expect(screen.getByText('Álgebra Lineal')).toBeInTheDocument()
     expect(screen.getByText('Cálculo I')).toBeInTheDocument()
+  })
+
+  it('lee la carrera de cada asignatura al lado de su código', async () => {
+    mockQueries({ subjects: SUBJECTS })
+
+    renderAt(<PlanFormPage />, '/planes/nuevo?teacher=7&period=2')
+
+    await userEvent.click(screen.getByRole('button', { name: /Añadir asignatura/ }))
+    await userEvent.click(
+      await screen.findByRole('menuitem', { name: /Añadir todas las del docente/ }),
+    )
+
+    // Dos carreras distintas, que es lo que el formulario aplanaba: preguntaba
+    // un programa y lo estampaba en todas las filas.
+    expect(screen.getByText('INGENIERIA DE SISTEMAS')).toBeInTheDocument()
+    expect(screen.getByText('INGENIERIA INDUSTRIAL')).toBeInTheDocument()
+  })
+
+  it('manda la carrera de cada asignatura, no una sola para todas', async () => {
+    const createMutate = vi.fn()
+
+    mockQueries({ subjects: SUBJECTS, createMutate })
+
+    renderAt(<PlanFormPage />, '/planes/nuevo?teacher=7&period=2')
+
+    // Un compromiso a mano se escribe a nivel de docente, así que arrastra
+    // todas sus asignaturas al paso 4.
+    await userEvent.click(screen.getByRole('button', { name: /Añadir compromiso/ }))
+    await userEvent.click(await screen.findByRole('menuitem', { name: /Planeación del curso/ }))
+    await userEvent.type(screen.getByLabelText(/Título del compromiso/), 'Metodología')
+    await userEvent.type(screen.getByLabelText(/Descripción del compromiso/), 'Rediseñar las guías')
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+
+    await userEvent.type(screen.getByLabelText(/Acta N/), '012')
+    await userEvent.click(screen.getByRole('button', { name: /Crear plan/ }))
+
+    const [payload] = createMutate.mock.calls[0] as [Record<string, unknown>]
+    const courses = payload.courses as { course_code: string; program_name: string }[]
+
+    expect(courses.map((course) => [course.course_code, course.program_name])).toEqual([
+      ['1155201', 'INGENIERIA DE SISTEMAS'],
+      ['1195202', 'INGENIERIA INDUSTRIAL'],
+    ])
   })
 
   it('keeps letters out of the acta number', async () => {
@@ -899,7 +917,7 @@ function savedPlan(overrides: Partial<Plan> = {}): Plan {
         course_name: 'Álgebra Lineal',
         course_code: '1155201',
         group_name: 'A',
-        program_name: 'Ingeniería de Sistemas',
+        program_name: 'INGENIERIA DE SISTEMAS',
         order: 0,
       },
     ],
@@ -928,7 +946,6 @@ describe('PlanFormPage · autoguardado', () => {
         periodId: 2,
         titleOverride: 'Plan a medio escribir',
         description: 'Lo que quedó sin enviar',
-        programOverride: null,
         actaDate: '2026-08-19',
         actaNumber: '012',
         councilObservations: '',
@@ -1154,26 +1171,27 @@ describe('PlanFormPage · edición', () => {
     expect(payload.faculty_name).toBe('Ingeniería')
   })
 
-  it('sólo pregunta el programa: facultad y departamento vienen del docente', async () => {
+  it('no pregunta el encabezado: facultad y departamento vienen del docente', async () => {
     const updateMutate = vi.fn()
 
     mockQueries({ plan: savedPlan(), updateMutate })
 
     renderAt(<PlanFormPage />, '/planes/8/editar')
 
-    expect(screen.getByLabelText(/^Programa académico/)).toHaveValue('Ingeniería de Sistemas')
     expect(screen.queryByLabelText(/^Facultad/)).not.toBeInTheDocument()
     expect(screen.queryByLabelText(/^Departamento académico/)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/^Programa académico/)).not.toBeInTheDocument()
 
-    // Dejaron de ser campos, no de existir: el encabezado de los formatos sigue
-    // viajando en el payload, heredado del plan guardado.
+    // Dejaron de ser campos, no de existir: facultad y departamento siguen
+    // viajando en el payload, heredados del plan guardado. El programa ya no
+    // viaja suelto — no hay uno solo que valga para todas las asignaturas.
     await userEvent.click(screen.getByRole('button', { name: /Guardar cambios/ }))
 
     const [payload] = updateMutate.mock.calls[0] as [Record<string, unknown>]
 
     expect(payload.faculty_name).toBe('Ingeniería')
     expect(payload.department_name).toBe('Departamento de Sistemas')
-    expect(payload.program_name).toBe('Ingeniería de Sistemas')
+    expect(payload).not.toHaveProperty('program_name')
   })
 
   it('pide la fecha una sola vez: la del acta es la de inicio', () => {
