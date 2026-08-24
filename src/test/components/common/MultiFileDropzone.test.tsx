@@ -166,7 +166,7 @@ describe('MultiFileDropzone', () => {
     expect(screen.getByLabelText('Archivos')).toBeDisabled()
   })
 
-  it('opens the picked PDF in a tab of its own', async () => {
+  it('opens the picked PDF in a tab of its own when its name is clicked', async () => {
     const user = userEvent.setup()
     const open = vi.spyOn(window, 'open').mockReturnValue(null)
     const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:presencial')
@@ -180,7 +180,7 @@ describe('MultiFileDropzone', () => {
       />,
     )
 
-    await user.click(screen.getByRole('button', { name: 'Ver presencial.pdf' }))
+    await user.click(screen.getByRole('button', { name: 'presencial.pdf' }))
 
     expect(open).toHaveBeenCalledWith('blob:presencial', '_blank', 'noopener')
 
@@ -188,7 +188,7 @@ describe('MultiFileDropzone', () => {
     createObjectURL.mockRestore()
   })
 
-  it('does not offer to view a file the browser would only download', () => {
+  it('leaves the name as plain text for a file the browser would only download', () => {
     // The dropzone is generic: `accept` can name anything.
     render(
       <MultiFileDropzone
@@ -199,7 +199,8 @@ describe('MultiFileDropzone', () => {
       />,
     )
 
-    expect(screen.queryByRole('button', { name: /^Ver / })).not.toBeInTheDocument()
+    expect(screen.getByText('notas.csv')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'notas.csv' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Quitar notas.csv' })).toBeInTheDocument()
   })
 })

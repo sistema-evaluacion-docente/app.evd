@@ -4,6 +4,7 @@ import { useId, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { formatBytes } from '@/lib/formatBytes'
+import { openLocalFile } from '@/lib/openLocalFile'
 import { cn } from '@/lib/utils'
 import { InlineError } from './InlineError'
 
@@ -108,9 +109,27 @@ export function FileDropzone({
               )}
             </div>
 
-            <div className="text-sm font-medium">
-              {isUploading ? 'Subiendo archivo…' : file.name}
-            </div>
+            {/* The name itself opens it, the way a signed format opens from
+                `PlanDocuments`. `stopPropagation` because the whole box is the
+                file picker, and previewing must not reopen it. Only for PDFs,
+                and never mid-upload, when the name is not what is on screen. */}
+            {!isUploading && file.type === 'application/pdf' ? (
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  openLocalFile(file)
+                }}
+                title={`Previsualizar ${file.name} en una pestaña nueva`}
+                className="max-w-full cursor-pointer truncate text-sm font-medium underline-offset-2 hover:underline"
+              >
+                {file.name}
+              </button>
+            ) : (
+              <div className="text-sm font-medium">
+                {isUploading ? 'Subiendo archivo…' : file.name}
+              </div>
+            )}
 
             <div className="text-muted-foreground text-xs tabular-nums">
               {formatBytes(file.size)}
