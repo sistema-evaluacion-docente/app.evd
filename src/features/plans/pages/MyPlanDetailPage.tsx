@@ -120,7 +120,6 @@ export default function MyPlanDetailPage() {
                             </span>
                           </span>
                         )}
-                        <Badge variant="outline">{item.status}</Badge>
                       </div>
 
                       {item.comments.length > 0 && (
