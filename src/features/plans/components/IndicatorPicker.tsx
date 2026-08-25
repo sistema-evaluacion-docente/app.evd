@@ -67,6 +67,12 @@ interface IndicatorPickerProps {
   onlyWeak: boolean
   onOnlyWeakChange: (value: boolean) => void
   subjectOptions: PlanSubjectOption[]
+  /**
+   * Every asignatura with something below the threshold, whatever the filter
+   * is showing. It is what the "General" scope needs to say that its own
+   * average clearing the bar is not the same as there being nothing wrong.
+   */
+  subjectsWithFindings?: PlanSubjectOption[]
   subjectKey: string
   onSubjectChange: (value: string) => void
   /**
@@ -111,6 +117,7 @@ export const IndicatorPicker = memo(function IndicatorPicker({
   onlyWeak,
   onOnlyWeakChange,
   subjectOptions,
+  subjectsWithFindings = [],
   subjectKey,
   onSubjectChange,
   isLoading = false,
@@ -145,6 +152,14 @@ export const IndicatorPicker = memo(function IndicatorPicker({
 
   const isEmpty = blocks.length === 0 && uncategorized.length === 0
 
+  /**
+   * The teacher's own average can clear the threshold while one of his courses
+   * sits under it, so "nothing here" at teacher level is not "nothing at all".
+   * Only asked at teacher level: inside a course there is nowhere further down
+   * to look.
+   */
+  const hiddenElsewhere = subjectKey === SUBJECT_ALL ? subjectsWithFindings : []
+
   return (
     <div className="space-y-4">
       <div className="border-border flex flex-wrap items-center justify-between gap-3 rounded-md border p-3">
@@ -162,6 +177,17 @@ export const IndicatorPicker = memo(function IndicatorPicker({
                   {' · '}
                   <span className="num font-semibold">{riskyCount}</span>{' '}
                   {riskyCount === 1 ? 'comentario' : 'comentarios'} en riesgo
+                </>
+              )}
+              {/* Said here too, and not only in the empty state: with one low
+                  indicator of his own the panel is not empty, and the count
+                  would still be reading as the whole answer. */}
+              {hiddenElsewhere.length > 0 && (
+                <>
+                  {' · '}
+                  <span className="num font-semibold">{hiddenElsewhere.length}</span>{' '}
+                  {hiddenElsewhere.length === 1 ? 'asignatura' : 'asignaturas'} con hallazgos
+                  propios
                 </>
               )}
             </p>
@@ -191,7 +217,7 @@ export const IndicatorPicker = memo(function IndicatorPicker({
               <SelectItem value={SUBJECT_ALL}>General · todas las asignaturas</SelectItem>
               {subjectOptions.map((option) => (
                 <SelectItem key={option.key} value={option.key}>
-                  {option.label}
+                  <SubjectOptionLabel option={option} />
                 </SelectItem>
               ))}
             </SelectContent>
@@ -222,7 +248,56 @@ export const IndicatorPicker = memo(function IndicatorPicker({
         </div>
       ) : (
         <>
-          {isEmpty && onlyWeak && (
+          {isEmpty && onlyWeak && hiddenElsewhere.length > 0 && (
+            <div className="border-border flex flex-col items-center gap-3 rounded-md border border-dashed px-6 py-8 text-center">
+              <AlertTriangle
+                className="size-8 text-amber-600 dark:text-amber-500"
+                aria-hidden="true"
+              />
+
+              <div className="space-y-1">
+                <p className="text-sm font-medium">
+                  El promedio del docente está bien, pero{' '}
+                  {hiddenElsewhere.length === 1
+                    ? 'una asignatura no'
+                    : `${hiddenElsewhere.length} asignaturas no`}
+                </p>
+                <p className="text-muted-foreground mx-auto max-w-lg text-sm">
+                  Ninguno de sus promedios generales quedó por debajo de{' '}
+                  <span className="num">{threshold.toFixed(1)}</span> — un promedio sobre todos los
+                  grupos puede pasar el umbral mientras un curso se queda debajo. Revisa las
+                  asignaturas donde sí hay algo:
+                </p>
+              </div>
+
+              {/* Listed and not merely mentioned: the panel already knows which
+                  ones they are, and sending the director to hunt for them
+                  through the selector is the friction this replaces. */}
+              <ul className="flex flex-wrap justify-center gap-2">
+                {hiddenElsewhere.map((option) => (
+                  <li key={option.key}>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onSubjectChange(option.key)}
+                    >
+                      <AlertTriangle
+                        className="size-3.5 text-amber-600 dark:text-amber-500"
+                        aria-hidden="true"
+                      />
+                      {option.label}{' '}
+                      <span className="text-muted-foreground num">
+                        · {option.weakCount + option.riskyCount}
+                      </span>
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {isEmpty && onlyWeak && hiddenElsewhere.length === 0 && (
             <div className="border-border flex flex-col items-center gap-3 rounded-md border border-dashed px-6 py-8 text-center">
               <CircleCheck className="size-8 text-emerald-500" aria-hidden="true" />
 
@@ -644,5 +719,37 @@ function PickButton({ picked, onClick }: { picked: boolean; onClick: () => void 
         </>
       )}
     </Button>
+  )
+}
+
+/**
+ * One asignatura in the scope selector: its name, flagged when it has
+ * something of its own below the threshold.
+ *
+ * Mirrors `CandidateOption` in the plan form on purpose — the same amber
+ * triangle means the same thing in both pickers, and the reason is spelled out
+ * for whoever cannot tell the colour apart.
+ */
+function SubjectOptionLabel({ option }: { option: PlanSubjectOption }) {
+  const findings = option.weakCount + option.riskyCount
+
+  return (
+    <>
+      {findings > 0 && (
+        <>
+          <AlertTriangle
+            className="size-4 shrink-0 text-amber-600 dark:text-amber-500"
+            aria-hidden="true"
+          />
+          <span className="sr-only">
+            {option.weakCount > 0 &&
+              `${option.weakCount} ${option.weakCount === 1 ? 'indicador bajo' : 'indicadores bajos'}. `}
+            {option.riskyCount > 0 &&
+              `${option.riskyCount} ${option.riskyCount === 1 ? 'comentario' : 'comentarios'} en riesgo. `}
+          </span>
+        </>
+      )}
+      {option.label}
+    </>
   )
 }

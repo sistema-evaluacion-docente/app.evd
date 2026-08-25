@@ -1,5 +1,8 @@
+import { Layers } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { useState } from 'react'
 
+import { BackButton } from '@/components/common/BackButton'
 import { DimensionComparisonChart } from '@/components/common/DimensionComparisonChart'
 import { PageTitle } from '@/components/common/PageTitle'
 import { PeriodSelect, type PeriodSelectOption } from '@/components/common/PeriodSelect'
@@ -12,6 +15,24 @@ import { courseHref } from '../config'
 /** Chart axis labels have limited room — long materia names get cut off past this. */
 function shortenCourseName(name: string, maxLength = 24): string {
   return name.length > maxLength ? `${name.slice(0, maxLength - 1)}…` : name
+}
+
+/**
+ * What the page says when it has no materias to show.
+ *
+ * Same shape the rest of the app already uses for an empty page — the icon of
+ * the section, a headline and a line explaining what would fill it — so a
+ * teacher without evaluations does not land on a bare sentence that reads like
+ * something broke. The icon is the one the sidebar puts next to "Materias".
+ */
+function MateriasEmpty({ headline, children }: { headline: string; children: ReactNode }) {
+  return (
+    <div className="border-border text-muted-foreground flex flex-col items-center gap-2 rounded-md border border-dashed py-16 text-center">
+      <Layers className="size-8" aria-hidden="true" />
+      <p className="font-medium">{headline}</p>
+      <p className="max-w-prose px-6 text-sm">{children}</p>
+    </div>
+  )
 }
 
 /**
@@ -52,10 +73,14 @@ export default function TeacherMateriasPage() {
       <>
         <PageTitle>Mis materias</PageTitle>
 
-        <p className="text-muted-foreground py-10 text-center text-sm">
-          Su usuario no está vinculado a un registro de docente. Contacte al administrador del
-          sistema.
-        </p>
+        <MateriasEmpty headline="Su usuario no está vinculado a un registro de docente.">
+          Sin ese vínculo no hay materias que mostrar. Contacte al administrador del sistema para
+          que lo asocie a su registro.
+        </MateriasEmpty>
+
+        <div className="mt-6 flex justify-center">
+          <BackButton href="/home" label="Volver a mi resumen" />
+        </div>
       </>
     )
   }
@@ -65,9 +90,18 @@ export default function TeacherMateriasPage() {
       {isHistoryPending ? (
         <TeacherMateriasSkeleton withHeader />
       ) : periods.length === 0 ? (
-        <p className="text-muted-foreground py-10 text-center text-sm">
-          Aún no tiene evaluaciones registradas.
-        </p>
+        <>
+          <PageTitle>Mis materias</PageTitle>
+
+          <MateriasEmpty headline="Aún no tiene evaluaciones registradas.">
+            Cuando la dirección de su departamento cargue la evaluación de un periodo, las materias
+            que dictó aparecerán aquí con su promedio.
+          </MateriasEmpty>
+
+          <div className="mt-6 flex justify-center">
+            <BackButton href="/home" label="Volver a mi resumen" />
+          </div>
+        </>
       ) : (
         <div className="space-y-6">
           <PageTitle className="flex w-full flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -91,9 +125,12 @@ export default function TeacherMateriasPage() {
           {isLoading ? (
             <TeacherMateriasSkeleton />
           ) : !teacher ? (
-            <p className="text-muted-foreground py-10 text-center text-sm">
-              No se encontraron materias para este periodo.
-            </p>
+            /* The title and the period selector are already on screen here, so
+               this only needs to say what is missing — changing the period is
+               the way out, not going back. */
+            <MateriasEmpty headline="No se encontraron materias para este periodo.">
+              Elija otro periodo en el selector de arriba para ver las materias que dictó.
+            </MateriasEmpty>
           ) : (
             <>
               {teacher.courses.length > 0 && (

@@ -24,6 +24,8 @@ const SUBJECTS: PlanSubjectOption[] = [
     group_name: 'A',
     academic_group_id: 11,
     program_name: 'INGENIERIA DE SISTEMAS',
+    weakCount: 0,
+    riskyCount: 0,
   },
   {
     key: '1155202::B',
@@ -33,6 +35,8 @@ const SUBJECTS: PlanSubjectOption[] = [
     group_name: 'B',
     academic_group_id: 12,
     program_name: 'INGENIERIA DE SISTEMAS',
+    weakCount: 0,
+    riskyCount: 0,
   },
 ]
 

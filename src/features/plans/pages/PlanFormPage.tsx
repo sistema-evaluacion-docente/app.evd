@@ -904,18 +904,7 @@ function PlanForm({
         actaNumber,
         actaDate,
       }),
-    [
-      isEdit,
-      actaLocked,
-      teacherId,
-      periodId,
-      title,
-      items,
-      aspects,
-      courses,
-      actaNumber,
-      actaDate,
-    ],
+    [isEdit, actaLocked, teacherId, periodId, title, items, aspects, courses, actaNumber, actaDate],
   )
 
   /**
@@ -1299,6 +1288,7 @@ function PlanForm({
             onlyWeak={onlyWeak}
             onOnlyWeakChange={setOnlyWeak}
             subjectOptions={workbench.subjectOptions}
+            subjectsWithFindings={workbench.subjectsWithFindings}
             subjectKey={workbench.effectiveSubjectKey}
             onSubjectChange={setSubjectKey}
             isLoading={workbench.isLoading}

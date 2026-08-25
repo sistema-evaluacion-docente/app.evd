@@ -63,6 +63,8 @@ const SUBJECT: PlanSubjectOption = {
   group_name: 'A',
   academic_group_id: 7,
   program_name: 'INGENIERIA DE SISTEMAS',
+  weakCount: 0,
+  riskyCount: 0,
 }
 
 const OTHER_SUBJECT: PlanSubjectOption = {
@@ -73,6 +75,8 @@ const OTHER_SUBJECT: PlanSubjectOption = {
   group_name: 'B',
   academic_group_id: 8,
   program_name: 'INGENIERIA INDUSTRIAL',
+  weakCount: 0,
+  riskyCount: 0,
 }
 
 describe('groupComments', () => {

@@ -5,6 +5,8 @@ import { ScoreBadge } from '@/components/common/ScoreBadge'
 import { ScoreLegend } from '@/components/common/ScoreLegend'
 import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import type { IndicatorSelectionApi } from '@/features/plans/hooks/useIndicatorSelection'
+import { courseKey, courseLabel } from '@/features/plans/lib/indicatorMatrix'
 import type { CourseDetail, TeacherDetail } from '../types'
 import { CourseDimensionBreakdown } from './CourseDimensionBreakdown'
 
@@ -17,6 +19,13 @@ interface TeacherCourseResultsProps {
    * teacher, which has no per-course detail page of its own yet).
    */
   getCourseHref?: (course: CourseDetail) => string
+  /**
+   * Lets the indicators inside each course be marked for an improvement plan.
+   * Forwarded down with the course as the scope, so the same question marked
+   * here and in the period-wide panel stays two different commitments — which
+   * is what the acta means by them.
+   */
+  selection?: IndicatorSelectionApi
 }
 
 /**
@@ -33,7 +42,11 @@ interface TeacherCourseResultsProps {
  *   getCourseHref={(course) => courseHref(teacher.period_code, course.course_code, course.group_name)}
  * />
  */
-export function TeacherCourseResults({ teacher, getCourseHref }: TeacherCourseResultsProps) {
+export function TeacherCourseResults({
+  teacher,
+  getCourseHref,
+  selection,
+}: TeacherCourseResultsProps) {
   return (
     <section className="border-border bg-background rounded-md border">
       <div className="border-border flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4">
@@ -55,6 +68,7 @@ export function TeacherCourseResults({ teacher, getCourseHref }: TeacherCourseRe
               course={course}
               previousCourse={previousCourse}
               href={getCourseHref?.(course)}
+              selection={selection}
             />
           )
         })}
@@ -67,10 +81,12 @@ function CourseRow({
   course,
   previousCourse,
   href,
+  selection,
 }: {
   course: CourseDetail
   previousCourse?: CourseDetail
   href?: string
+  selection?: IndicatorSelectionApi
 }) {
   return (
     <Collapsible className="group/row relative">
@@ -116,6 +132,9 @@ function CourseRow({
         <CourseDimensionBreakdown
           dimensions={course.dimensions}
           previous={previousCourse?.dimensions}
+          selection={selection}
+          subjectKey={courseKey(course)}
+          subjectLabel={courseLabel(course)}
           className="px-6 pb-2"
         />
       </CollapsibleContent>

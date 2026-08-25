@@ -5,6 +5,7 @@ export { default as PlanDetailPage } from './pages/PlanDetailPage'
 export { default as PlansPage } from './pages/PlansPage'
 
 export { TeacherPlanAction } from './components/TeacherPlanAction'
+export { IndicatorSelectionBar } from './components/IndicatorSelectionBar'
 export { DeletePlanDialog } from './components/DeletePlanDialog'
 export { PlanDocuments } from './components/PlanDocuments'
 export { PlanEvidences } from './components/PlanEvidences'
@@ -33,5 +34,13 @@ export {
   useDeletePlan,
   useUploadPlanDocument,
 } from './api'
+
+export { useIndicatorSelection } from './hooks/useIndicatorSelection'
+export type {
+  IndicatorSelection,
+  IndicatorSelectionApi,
+  SelectionEntry,
+  SelectionKind,
+} from './hooks/useIndicatorSelection'
 
 export * from './types'

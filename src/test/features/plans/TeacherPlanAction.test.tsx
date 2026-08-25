@@ -10,13 +10,6 @@ import type { Plan } from '@/features/plans/types'
 
 vi.mock('@/features/plans/api', () => ({ useGetPlans: vi.fn() }))
 
-// The selection panel has its own tests and pulls three queries of its own;
-// stubbed here so this one stays on what the profile strip decides to offer.
-vi.mock('@/features/plans/components/IndicatorSelectionSheet', () => ({
-  IndicatorSelectionSheet: ({ open, target }: { open: boolean; target: { kind: string } }) =>
-    open ? <div data-testid="selection-sheet">{target.kind}</div> : null,
-}))
-
 /** The role the director is signed in as, which is what gates the actions. */
 let selectedRole = 'DIRECTOR DE DEPARTAMENTO'
 
@@ -49,7 +42,17 @@ function renderAction({
   plans = [PLAN],
   name,
   isPending = false,
-}: { plans?: Plan[]; name?: string; isPending?: boolean } = {}) {
+  selecting = false,
+  withSelection = true,
+}: {
+  plans?: Plan[]
+  name?: string
+  isPending?: boolean
+  selecting?: boolean
+  /** Mounted without the mode, the way a page that cannot receive it would. */
+  withSelection?: boolean
+} = {}) {
+  const onStartSelection = vi.fn()
   vi.mocked(useGetPlans).mockReturnValue({
     data: isPending ? undefined : { data: plans },
     isPending,
@@ -59,11 +62,17 @@ function renderAction({
 
   const { container } = render(
     <Router hook={hook}>
-      <TeacherPlanAction teacherId={42} teacherName={name} periodCode={PERIOD} />
+      <TeacherPlanAction
+        teacherId={42}
+        teacherName={name}
+        periodCode={PERIOD}
+        selecting={selecting}
+        onStartSelection={withSelection ? onStartSelection : undefined}
+      />
     </Router>,
   )
 
-  return { container, history }
+  return { container, history, onStartSelection }
 }
 
 afterEach(() => {
@@ -108,26 +117,36 @@ describe('TeacherPlanAction', () => {
     expect(screen.queryByRole('button', { name: 'Ver historial' })).not.toBeInTheDocument()
   })
 
-  it('abre el panel de selección desde el perfil, para empezar un plan', async () => {
+  it('pide al perfil entrar en modo selección, en vez de abrir un panel aparte', async () => {
     const user = userEvent.setup()
-
-    renderAction({ plans: [] })
+    const { onStartSelection } = renderAction({ plans: [] })
 
     await user.click(screen.getByRole('button', { name: 'Seleccionar indicadores' }))
 
-    expect(await screen.findByTestId('selection-sheet')).toHaveTextContent('new')
+    expect(onStartSelection).toHaveBeenCalledTimes(1)
   })
 
   // With a plan already in force the selection has somewhere to land: its
   // commitments, not a second plan the semester cannot have.
-  it('con un plan en curso, la selección se agrega a ese plan', async () => {
+  it('con un plan en curso, ofrece agregar al plan que ya existe', async () => {
     const user = userEvent.setup()
-
-    renderAction()
+    const { onStartSelection } = renderAction()
 
     await user.click(screen.getByRole('button', { name: 'Agregar indicadores al plan' }))
 
-    expect(await screen.findByTestId('selection-sheet')).toHaveTextContent('edit')
+    expect(onStartSelection).toHaveBeenCalledTimes(1)
+  })
+
+  it('se apaga mientras el perfil ya está marcando', () => {
+    renderAction({ plans: [], selecting: true })
+
+    expect(screen.getByRole('button', { name: 'Marcando indicadores…' })).toBeDisabled()
+  })
+
+  it('no ofrece marcar cuando la página no sabe recibir la selección', () => {
+    renderAction({ plans: [], withSelection: false })
+
+    expect(screen.queryByRole('button', { name: /indicadores/ })).not.toBeInTheDocument()
   })
 
   it('no ofrece agregar indicadores a un acta ya firmada', () => {

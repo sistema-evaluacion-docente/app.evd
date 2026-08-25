@@ -1,10 +1,18 @@
 import type { ReactNode, RefObject } from 'react'
 
+import { Checkbox } from '@/components/ui/checkbox'
 import { DimensionComparisonChart } from '@/components/common/DimensionComparisonChart'
+import { IndicatorSelectionBar } from '@/features/plans/components/IndicatorSelectionBar'
+import { TeacherPlanAction } from '@/features/plans/components/TeacherPlanAction'
+import {
+  useIndicatorSelection,
+  type SelectionEntry,
+} from '@/features/plans/hooks/useIndicatorSelection'
 import { PeriodAverageTrend } from '@/features/periods'
 import { dimensionColor } from '@/lib/dimensionLabel'
 import { cn } from '@/lib/utils'
 import type { CourseDetail, TeacherDetail } from '../types'
+import { CommentCard } from './CommentCard'
 import { CourseDimensionBreakdown } from './CourseDimensionBreakdown'
 import { TeacherComments } from './TeacherComments'
 import { TeacherCourseResults } from './TeacherCourseResults'
@@ -34,6 +42,11 @@ export interface TeacherEvaluationDetailProps {
  * report — the director's teacher detail and the teacher's own period detail —
  * so both stay identical as sections are added.
  *
+ * It also owns the indicator selection, because it is the only common parent of
+ * the three sections a plan is drawn from and of the strip that starts it.
+ * `useIndicatorSelection` stays idle for anyone who is not the department
+ * director, so the teacher reading their own report sees the page unchanged.
+ *
  * @example
  * <TeacherEvaluationDetail teacher={teacher} />
  *
@@ -50,8 +63,35 @@ export function TeacherEvaluationDetail({
   overviewActions,
   className,
 }: TeacherEvaluationDetailProps) {
+  const selection = useIndicatorSelection({
+    teacherId: teacher.teacher_id,
+    periodCode: teacher.period_code,
+  })
+
+  const active = selection.active ? selection : undefined
+
+  /**
+   * The questions of the period that sit at or below the institutional
+   * threshold, at teacher level. With twenty-one indicators, the three to six
+   * that are actually low is the whole answer nine times out of ten — which is
+   * what the bar's shortcut offers.
+   */
+  const weakEntries: SelectionEntry[] = selection.active
+    ? teacher.dimensions.flatMap((dimension) =>
+        dimension.questions
+          .filter((question) => question.score != null && question.score <= selection.threshold)
+          .map((question) => ({
+            kind: 'question' as const,
+            ref: question.code,
+            subjectKey: null,
+            label: `${question.code} · ${question.text}`,
+            subjectLabel: null,
+          })),
+      )
+    : []
+
   return (
-    <div className={cn('space-y-6', className)}>
+    <div className={cn('space-y-6', selection.active && 'pb-24', className)}>
       <TeacherOverview teacher={teacher} extraActions={overviewActions} />
 
       <section ref={dimensionsChartRef} className="border-border bg-background rounded-md border">
@@ -81,11 +121,14 @@ export function TeacherEvaluationDetail({
         </div>
       </section>
 
-      {/* The same twenty-one indicators the asignaturas below break down, but
-          for the teacher as a whole. They were in the payload all along and
-          nowhere on screen: the chart above only carries the four dimension
-          averages, so a question dragging every course at once had no place it
-          could be read. */}
+      <TeacherPlanAction
+        teacherId={teacher.teacher_id}
+        teacherName={teacher.name}
+        periodCode={teacher.period_code}
+        selecting={selection.active}
+        onStartSelection={selection.start}
+      />
+
       <section className="border-border bg-background rounded-md border">
         <div className="border-border border-b px-6 py-4">
           <h2 className="text-sm font-medium">Indicadores del periodo</h2>
@@ -97,17 +140,52 @@ export function TeacherEvaluationDetail({
         <CourseDimensionBreakdown
           dimensions={teacher.dimensions}
           previous={teacher.previous_period?.dimensions}
+          selection={active}
+          subjectKey={null}
           className="px-6 pb-2"
         />
       </section>
 
-      <TeacherCourseResults teacher={teacher} getCourseHref={getCourseHref} />
+      <TeacherCourseResults teacher={teacher} getCourseHref={getCourseHref} selection={active} />
 
       {!hideComments && (
         <TeacherComments
           evaluationId={teacher.evaluation_id}
           teacherId={teacher.teacher_id}
           title={commentsTitle}
+          // The panel already renders one card per comment; the checkbox rides
+          // in the card's own actions slot, so nothing about the comments
+          // themselves had to change to become selectable.
+          renderComment={
+            selection.active
+              ? (comment, index) => {
+                  const picked = selection.isSelected('comment', String(comment.id), null)
+
+                  return (
+                    <CommentCard
+                      comment={comment}
+                      index={index}
+                      highlighted={picked}
+                      actions={
+                        <Checkbox
+                          checked={picked}
+                          onCheckedChange={() =>
+                            selection.toggle({
+                              kind: 'comment',
+                              ref: String(comment.id),
+                              subjectKey: null,
+                              label: `Comentario${comment.course_name ? ` · ${comment.course_name}` : ''}`,
+                              subjectLabel: null,
+                            })
+                          }
+                          aria-label={`${picked ? 'Quitar' : 'Seleccionar'} el comentario ${comment.id}`}
+                        />
+                      }
+                    />
+                  )
+                }
+              : undefined
+          }
         />
       )}
 
@@ -120,6 +198,10 @@ export function TeacherEvaluationDetail({
           <PeriodAverageTrend teacherId={teacher.teacher_id} title={null} />
         </div>
       </section>
+
+      {selection.active && (
+        <IndicatorSelectionBar selection={selection} weakEntries={weakEntries} />
+      )}
     </div>
   )
 }

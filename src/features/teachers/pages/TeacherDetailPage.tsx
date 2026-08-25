@@ -10,7 +10,6 @@ import { PdfPage } from '@/components/common/pdf/PdfPage'
 import { PdfSection } from '@/components/common/pdf/PdfSection'
 import { PdfTable } from '@/components/common/pdf/PdfTable'
 import TeacherDetailSkeleton from '@/components/skeletons/TeacherDetailSkeleton'
-import { TeacherPlanAction } from '@/features/plans/components/TeacherPlanAction'
 import { CATEGORIES, categoryLabel, UNCATEGORIZED } from '@/lib/categoryLabel'
 import { formatPdfAverage } from '@/lib/pdf/formatPdfAverage'
 import { pdfColors } from '@/lib/pdf/pdfColors'
@@ -205,12 +204,6 @@ export default function TeacherDetailPage() {
             course.group_name,
           )
         }
-      />
-
-      <TeacherPlanAction
-        teacherId={teacher.teacher_id}
-        teacherName={teacher.name}
-        periodCode={teacher.period_code}
       />
     </div>
   )
