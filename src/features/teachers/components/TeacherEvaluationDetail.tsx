@@ -75,20 +75,27 @@ export function TeacherEvaluationDetail({
    * threshold, at teacher level. With twenty-one indicators, the three to six
    * that are actually low is the whole answer nine times out of ten — which is
    * what the bar's shortcut offers.
+   *
+   * Empty while the threshold is still on its way: the bar hides the shortcut
+   * when nothing is pending, and offering "los bajos" against a guessed cut
+   * would mark a set the director never agreed to.
    */
-  const weakEntries: SelectionEntry[] = selection.active
-    ? teacher.dimensions.flatMap((dimension) =>
-        dimension.questions
-          .filter((question) => question.score != null && question.score <= selection.threshold)
-          .map((question) => ({
-            kind: 'question' as const,
-            ref: question.code,
-            subjectKey: null,
-            label: `${question.code} · ${question.text}`,
-            subjectLabel: null,
-          })),
-      )
-    : []
+  const threshold = selection.threshold
+
+  const weakEntries: SelectionEntry[] =
+    selection.active && threshold != null
+      ? teacher.dimensions.flatMap((dimension) =>
+          dimension.questions
+            .filter((question) => question.score != null && question.score <= threshold)
+            .map((question) => ({
+              kind: 'question' as const,
+              ref: question.code,
+              subjectKey: null,
+              label: `${question.code} · ${question.text}`,
+              subjectLabel: null,
+            })),
+        )
+      : []
 
   return (
     <div className={cn('space-y-6', selection.active && 'pb-24', className)}>

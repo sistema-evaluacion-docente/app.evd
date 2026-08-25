@@ -495,7 +495,10 @@ function PlanForm({
   // teacher select dead with no explanation.
   const { data: candidatesResponse, isLoading: candidatesLoading } = useGetPlanCandidates(periodId)
   const candidates = useMemo(() => candidatesResponse?.data ?? [], [candidatesResponse])
-  const threshold = indicators.threshold ?? 3.5
+  // Straight from the catalogue, never defaulted: `improvement_plan.score_threshold`
+  // is the director's to change in the admin settings, and a fallback number
+  // here would silently outrank it the day the request shape shifts.
+  const threshold = indicators.threshold
 
   const candidate = candidates.find((entry) => entry.teacher_id === teacherId)
 
@@ -1232,8 +1235,10 @@ function PlanForm({
             <ScoreBadge value={candidate.overall_average} showMax />
             {candidate.below_threshold && (
               // Coloured by the score, not fixed red: "bajo el umbral" is the
-              // institutional cut (3.5), and painting it red next to an amber
-              // 3.55 had the same row saying two different things at once.
+              // institutional cut (`improvement_plan.score_threshold`), while
+              // `ScoreBadge` reads its own 3.0/3.6 semaphore — painting the
+              // badge red next to an amber score had the same row saying two
+              // different things at once.
               <Badge
                 className={
                   candidate.overall_average != null

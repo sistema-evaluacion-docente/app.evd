@@ -37,7 +37,7 @@ export function courseLabel(course: {
  * a subject was not asked every question.
  *
  * @example
- * const dimensions = buildDimensionsFromDetail(course.dimensions, indicators, 3.5)
+ * const dimensions = buildDimensionsFromDetail(course.dimensions, indicators, indicators.threshold)
  */
 export function buildDimensionsFromDetail(
   source: DimensionDetail[] | undefined,
