@@ -1,5 +1,4 @@
 import { ClipboardList, Eye, History, ListChecks, Plus } from 'lucide-react'
-import { useState } from 'react'
 import { useLocation } from 'wouter'
 
 import { Button } from '@/components/ui/button'
@@ -8,7 +7,6 @@ import { ROLE, useAuthStore } from '@/features/auth'
 import { cn } from '@/lib/utils'
 import { useGetPlans } from '../api'
 import { isPlanClosed } from '../lib/planStatus'
-import { IndicatorSelectionSheet } from './IndicatorSelectionSheet'
 import { PlanStatusBadge } from './PlanStatusBadge'
 
 interface TeacherPlanActionProps {
@@ -17,6 +15,14 @@ interface TeacherPlanActionProps {
   teacherName?: string
   /** Period code the profile is showing, so the plan starts on the same one. */
   periodCode?: string
+  /** Whether the profile is already in selection mode. */
+  selecting?: boolean
+  /**
+   * Turns the profile's own sections into something selectable. Owned by the
+   * page rather than by this strip, since the indicators being marked live in
+   * three sections this strip is only a sibling of.
+   */
+  onStartSelection?: () => void
   className?: string
 }
 
@@ -49,10 +55,11 @@ export function TeacherPlanAction({
   teacherId,
   teacherName,
   periodCode,
+  selecting = false,
+  onStartSelection,
   className,
 }: TeacherPlanActionProps) {
   const [, navigate] = useLocation()
-  const [selecting, setSelecting] = useState(false)
   // Only the department director runs improvement plans, and only while that is
   // the role they are signed in as.
   const canManage = useAuthStore((state) => state.selectedRole) === ROLE.DEPARTMENT_DIRECTOR
@@ -154,10 +161,14 @@ export function TeacherPlanAction({
             screen, and land on the form with them already drafted. «Crear
             plan» stays as the direct route for a director who would rather
             start from the form. */}
-        {canSelect && (
-          <Button variant="outline" size="sm" onClick={() => setSelecting(true)}>
+        {canSelect && onStartSelection && (
+          <Button variant="outline" size="sm" onClick={onStartSelection} disabled={selecting}>
             <ListChecks className="size-4" aria-hidden="true" />
-            {current ? 'Agregar indicadores al plan' : 'Seleccionar indicadores'}
+            {selecting
+              ? 'Marcando indicadores…'
+              : current
+                ? 'Agregar indicadores al plan'
+                : 'Seleccionar indicadores'}
           </Button>
         )}
 
@@ -191,19 +202,6 @@ export function TeacherPlanAction({
           </Button>
         )}
       </div>
-
-      {/* Mounted from the start but idle: every query it makes is held back by
-          `open`, so the profile pays nothing until the director asks for it —
-          and the panel keeps its selection, and its closing animation, instead
-          of being torn out mid-transition. */}
-      <IndicatorSelectionSheet
-        open={selecting}
-        onOpenChange={setSelecting}
-        teacherId={teacherId}
-        teacherName={name ?? undefined}
-        periodCode={periodCode}
-        target={current ? { kind: 'edit', planId: current.id } : { kind: 'new' }}
-      />
     </section>
   )
 }
