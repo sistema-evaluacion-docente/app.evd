@@ -42,7 +42,11 @@ import type { IndicatorDimension, IndicatorQuestion, PlanSubjectOption } from '.
 interface IndicatorPickerProps {
   /** Matrix of the teacher, or of the subject in the filter. */
   dimensions: IndicatorDimension[]
-  /** Institutional threshold under which an indicator counts as weak. */
+  /**
+   * Institutional threshold under which an indicator counts as weak, as the
+   * catalogue reports it (`improvement_plan.score_threshold`). Never defaulted
+   * here — it is shown to the director as the rule the marks were made under.
+   */
   threshold: number
   /** Student comments grouped by the dimension they talk about. */
   comments: GroupedComments
@@ -101,7 +105,7 @@ interface IndicatorPickerProps {
  * keeps its props identity-stable so this can bail out.
  *
  * @example
- * <IndicatorPicker dimensions={dimensions} threshold={3.5} comments={comments}
+ * <IndicatorPicker dimensions={dimensions} threshold={indicators.threshold} comments={comments}
  *   selectedIds={ids} onToggleIndicator={toggle} onToggleComment={toggleComment} />
  */
 export const IndicatorPicker = memo(function IndicatorPicker({
@@ -463,10 +467,11 @@ function DimensionBlock({
           <span className="text-sm font-medium">{dimension.dimension}</span>
           {dimension.below_threshold && (
             // Coloured by the average, not fixed red: "bajo" is the
-            // institutional cut (3.5) and the `ScoreBadge` two elements along
-            // reads 3.0/3.6, so a 3.55 used to show a red chip beside an amber
-            // score. The chip still says it is below; the colour says by how
-            // much.
+            // institutional cut (`improvement_plan.score_threshold`) and the
+            // `ScoreBadge` two elements along reads its own 3.0/3.6 semaphore,
+            // so a score just over the cut used to show a red chip beside an
+            // amber number. The chip still says it is below; the colour says by
+            // how much.
             <Badge
               className={
                 dimension.average != null

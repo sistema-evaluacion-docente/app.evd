@@ -6,9 +6,6 @@ import { useGetPlanIndicators, useGetPlans } from '../api'
 import { commentSelectionId, indicatorSelectionId } from '../lib/planDraft'
 import { formatPicks, type PlanPick } from '../lib/planPicks'
 
-/** Fallback while the institutional threshold is on its way. */
-const DEFAULT_THRESHOLD = 3.5
-
 /** How far back to look for the plan this period already has. */
 const PLAN_LOOKUP_LIMIT = 20
 
@@ -41,8 +38,13 @@ export interface SelectionEntry {
  * aspect or a plan route is.
  */
 export interface IndicatorSelectionApi {
-  /** Institutional threshold; an indicator at or below it counts as weak. */
-  threshold: number
+  /**
+   * Institutional threshold (`improvement_plan.score_threshold`); an indicator
+   * at or below it counts as weak. `null` until the catalogue lands — never a
+   * stand-in number: the setting is the director's to change, and a guessed
+   * default would quietly mark the wrong indicators as low.
+   */
+  threshold: number | null
   isSelected: (kind: SelectionKind, ref: string, subjectKey: string | null) => boolean
   toggle: (entry: SelectionEntry) => void
   /**
@@ -262,7 +264,7 @@ export function useIndicatorSelection({
       setActive(false)
       setMarked(new Map())
     },
-    threshold: catalogue?.threshold ?? DEFAULT_THRESHOLD,
+    threshold: catalogue?.threshold ?? null,
     entries,
     count: marked.size,
     isSelected,
