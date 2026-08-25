@@ -163,6 +163,8 @@ const SUBJECTS: PlanSubjectOption[] = [
     group_name: 'A',
     academic_group_id: 11,
     program_name: 'INGENIERIA DE SISTEMAS',
+    weakCount: 0,
+    riskyCount: 0,
   },
   {
     key: 'group:12',
@@ -172,6 +174,8 @@ const SUBJECTS: PlanSubjectOption[] = [
     group_name: 'B',
     academic_group_id: 12,
     program_name: 'INGENIERIA INDUSTRIAL',
+    weakCount: 0,
+    riskyCount: 0,
   },
 ]
 
