@@ -513,6 +513,17 @@ export interface PlanSubjectOption {
   group_name: string | null
   academic_group_id: number | null
   program_name: string | null
+  /**
+   * Indicators of this asignatura below the institutional threshold, and
+   * comments of it in risk.
+   *
+   * Carried on the option rather than recomputed by whoever needs it because
+   * the teacher's own average can clear the threshold while one of his courses
+   * sits under it: "General" showing nothing is not the same as there being
+   * nothing, and the picker has to be able to say which course to look at.
+   */
+  weakCount: number
+  riskyCount: number
 }
 
 /** A commitment being drafted before the plan is saved. */
