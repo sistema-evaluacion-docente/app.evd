@@ -8,7 +8,7 @@ import { RouteFallback } from './RouteFallback'
 import { Button } from '@/components/ui/button'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { isAuthorizedForPage, pagesForPath } from '@/config/security'
-import { UserNotAuth } from '@/features/auth'
+import { ROLES_LABEL, UserNotAuth } from '@/features/auth'
 import { nextParamFor } from '@/features/auth/lib/nextPath'
 import useAuth from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
@@ -44,6 +44,29 @@ function pageBlockReason(
   return allowedByRole ? 'department' : 'role'
 }
 
+/**
+ * Another role of the same account that *would* open this page, if there is one.
+ *
+ * An account can hold both roles — a director who is also a teacher, which is
+ * what a plan drawn up on oneself looks like — and the notice about that plan
+ * links to `/mis-planes/:id`, a route only the DOCENTE role opens. Landing there
+ * as a director is not a permission problem: the person may read it, they are
+ * just wearing the other hat. Sending them to "acceso no autorizado" over that
+ * is how the link dead-ends.
+ */
+function switchableRole(
+  location: string,
+  roles: string[],
+  selectedRole: string | null,
+  hasDepartment: boolean,
+): string | null {
+  return (
+    roles.find(
+      (role) => role !== selectedRole && isAuthorizedForPage(location, role, { hasDepartment }),
+    ) ?? null
+  )
+}
+
 export function AppLayout({
   children,
   mainClassName = 'max-w-6xl space-y-5',
@@ -52,7 +75,7 @@ export function AppLayout({
 }: AppLayoutProps) {
   const [location] = useLocation()
   const [searchParams] = useSearchParams()
-  const { isLoading, selectedRole, loggedIn, user } = useAuth()
+  const { isLoading, selectedRole, loggedIn, user, setSelectedRole } = useAuth()
 
   if (isLoading) {
     return <AppLayoutSkeleton />
@@ -65,15 +88,22 @@ export function AppLayout({
     return <UserNotAuth />
   }
 
-  const blocked = pageBlockReason(location, selectedRole, user?.department_id != null)
+  const hasDepartment = user?.department_id != null
+  const blocked = pageBlockReason(location, selectedRole, hasDepartment)
+  const otherRole =
+    blocked === 'role'
+      ? switchableRole(location, user?.roles ?? [], selectedRole, hasDepartment)
+      : null
 
   return (
     <SidebarProvider>
       <AppLayoutContent
         blocked={blocked}
+        otherRole={otherRole}
+        onSwitchRole={setSelectedRole}
         location={location}
         role={selectedRole}
-        hasDepartment={user?.department_id != null}
+        hasDepartment={hasDepartment}
         mainClassName={mainClassName}
         header={header}
         title={title}
@@ -87,6 +117,9 @@ export function AppLayout({
 interface AppLayoutContentProps {
   children: ReactNode
   blocked: 'role' | 'department' | null
+  /** Role of the same account that opens this page, when the block is by role. */
+  otherRole: string | null
+  onSwitchRole: (role: string) => void
   location: string
   role: string | null
   hasDepartment: boolean
@@ -98,6 +131,8 @@ interface AppLayoutContentProps {
 function AppLayoutContent({
   children,
   blocked,
+  otherRole,
+  onSwitchRole,
   location,
   role,
   hasDepartment,
@@ -127,7 +162,7 @@ function AppLayoutContent({
                 <Suspense fallback={<RouteFallback />}>{children}</Suspense>
               </ErrorBoundary>
             ) : (
-              <PageBlocked reason={blocked} />
+              <PageBlocked reason={blocked} otherRole={otherRole} onSwitchRole={onSwitchRole} />
             )}
           </main>
         </div>
@@ -136,8 +171,19 @@ function AppLayoutContent({
   )
 }
 
-/** The dead end, worded for whichever of the two reasons put the user here. */
-function PageBlocked({ reason }: { reason: 'role' | 'department' }) {
+/**
+ * The dead end, worded for whichever of the two reasons put the user here — and
+ * not a dead end at all when another role of the same account opens the page.
+ */
+function PageBlocked({
+  reason,
+  otherRole,
+  onSwitchRole,
+}: {
+  reason: 'role' | 'department'
+  otherRole: string | null
+  onSwitchRole: (role: string) => void
+}) {
   const isDepartment = reason === 'department'
 
   return (
@@ -151,18 +197,32 @@ function PageBlocked({ reason }: { reason: 'role' | 'department' }) {
       </div>
 
       <h2 className="animate-rise text-2xl font-bold tracking-tight">
-        {isDepartment ? 'Sin departamento asignado' : 'Acceso no autorizado'}
+        {isDepartment
+          ? 'Sin departamento asignado'
+          : otherRole
+            ? 'Esta página es de otro de tus roles'
+            : 'Acceso no autorizado'}
       </h2>
 
       <p className="text-muted-foreground mt-2 mb-6 max-w-sm">
         {isDepartment
           ? 'Su usuario no está vinculado a un departamento. Contacte al administrador del sistema.'
-          : 'No tienes permisos para acceder a esta página.'}
+          : otherRole
+            ? `Tu cuenta puede abrirla como ${ROLES_LABEL[otherRole] ?? otherRole}. Cambia de rol para continuar.`
+            : 'No tienes permisos para acceder a esta página.'}
       </p>
 
-      <Link to="/">
-        <Button>Volver al inicio</Button>
-      </Link>
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        {otherRole && (
+          <Button onClick={() => onSwitchRole(otherRole)}>
+            Continuar como {ROLES_LABEL[otherRole] ?? otherRole}
+          </Button>
+        )}
+
+        <Link to="/">
+          <Button variant={otherRole ? 'outline' : 'default'}>Volver al inicio</Button>
+        </Link>
+      </div>
     </div>
   )
 }
