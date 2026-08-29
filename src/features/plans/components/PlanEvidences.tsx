@@ -547,11 +547,14 @@ function NewRequestDialog({
                     </SelectValue>
                   </SelectTrigger>
 
-                  <SelectContent className="w-auto max-w-(--available-width)">
+                  {/* Commitments are full sentences: the list keeps the width
+                      of the trigger and wraps them instead of stretching the
+                      panel past the dialog and clipping the text. */}
+                  <SelectContent className="max-w-(--available-width)">
                     <SelectItem value={null}>Sin relacionar</SelectItem>
                     {plan.items.map((item) => (
                       <SelectItem key={item.id} value={item.id}>
-                        {item.description}
+                        <span className="whitespace-normal">{item.description}</span>
                       </SelectItem>
                     ))}
                   </SelectContent>
