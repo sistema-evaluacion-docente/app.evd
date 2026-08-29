@@ -5,7 +5,7 @@ import { CountPieChart } from '@/components/common/CountPieChart'
 import { Button } from '@/components/ui/button'
 import { CATEGORIES, categoryColor, categoryLabel, UNCATEGORIZED } from '@/lib/categoryLabel'
 import { cn } from '@/lib/utils'
-import { RISK_LEVELS } from '@/lib/riskLevel'
+import { RISK_LEVELS, type RiskLevelMeta } from '@/lib/riskLevel'
 import { DepartmentCommentCategoriesChart } from './DepartmentCommentCategoriesChart'
 import { DepartmentCommentRiskChart } from './DepartmentCommentRiskChart'
 
@@ -17,6 +17,17 @@ type ViewMode = 'bar' | 'pie' | 'both'
 export interface DepartmentCommentsSummaryProps {
   riskCounts: { BAJO: number; MEDIO: number; ALTO: number } | undefined
   categoryCounts: Record<string, number> | undefined
+  /** Counts from the range's starting period, when comparing a genuine range — enables the delta indicator (donut mode only). */
+  previousRiskCounts?: { BAJO: number; MEDIO: number; ALTO: number }
+  previousCategoryCounts?: Record<string, number>
+  /** Start/end period names, when comparing a genuine range — swaps the generic subtitle for "Comparando X con Y". */
+  comparisonLabel?: { start: string; end: string }
+  /**
+   * Makes the risk breakdown clickable — bar, donut slice and donut legend
+   * alike — handing back the level picked, e.g. to open its comments. Omit to
+   * leave the charts as a read-only figure.
+   */
+  onRiskLevelClick?: (level: RiskLevelMeta) => void
   className?: string
 }
 
@@ -36,10 +47,19 @@ export interface DepartmentCommentsSummaryProps {
  *   riskCounts={stats.comments_risk_counts}
  *   categoryCounts={stats.comments_pedagogical_category_counts}
  * />
+ *
+ * @example
+ * // Risk breakdown that opens the comments of the level clicked.
+ * <DepartmentCommentsSummary
+ *   riskCounts={counts}
+ *   categoryCounts={categories}
+ *   onRiskLevelClick={(level) => navigate(`/comentarios?riskLevel=${level.id}`)}
+ * />
  */
 export function DepartmentCommentsSummary({
   riskCounts,
   categoryCounts,
+  onRiskLevelClick,
   className,
 }: DepartmentCommentsSummaryProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('bar')
@@ -50,6 +70,8 @@ export function DepartmentCommentsSummary({
     value: riskCounts?.[level.key] ?? 0,
     color: level.color,
   }))
+
+  const riskLevelByKey = new Map(RISK_LEVELS.map((level) => [level.key, level]))
 
   const categoryEntries = ANALYZABLE_CATEGORIES.map((category) => ({
     key: category.code,
@@ -115,12 +137,29 @@ export function DepartmentCommentsSummary({
             Por nivel de riesgo
           </h3>
 
-          {viewMode !== 'pie' && <DepartmentCommentRiskChart counts={riskCounts} />}
+          {onRiskLevelClick && (
+            <p className="text-muted-foreground mb-3 text-xs">
+              Haz clic en un nivel para ver sus comentarios.
+            </p>
+          )}
+
+          {viewMode !== 'pie' && (
+            <DepartmentCommentRiskChart counts={riskCounts} onRiskLevelClick={onRiskLevelClick} />
+          )}
 
           {viewMode !== 'bar' && (
             <CountPieChart
               entries={riskEntries}
               emptyMessage="No hay comentarios clasificados por nivel de riesgo en este rango de periodos."
+              onEntryClick={
+                onRiskLevelClick
+                  ? (entry) => {
+                      const level = riskLevelByKey.get(entry.key as RiskLevelMeta['key'])
+
+                      if (level) onRiskLevelClick(level)
+                    }
+                  : undefined
+              }
               className={viewMode === 'both' ? 'border-border mt-4 border-t pt-4' : undefined}
             />
           )}

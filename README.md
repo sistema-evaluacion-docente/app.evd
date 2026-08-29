@@ -1,5 +1,7 @@
 # Sistema de Evaluación Docente — Frontend Web
 
+[![Build and Push Docker Image](https://github.com/sistema-evaluacion-docente/app.evd/actions/workflows/docker-build.yml/badge.svg)](https://github.com/sistema-evaluacion-docente/app.evd/actions/workflows/docker-build.yml)
+
 **Frontend Web**
 _Sistema de Evaluación Docente — Universidad Francisco de Paula Santander (UFPS)_
 

@@ -105,6 +105,12 @@ export interface DimensionComparisonChartProps {
   valueFormatter?: (value: number) => string
   /** Shortens a dimension label for the axis (e.g. `shortenDimensionLabel`). */
   labelFormatter?: (dimension: string) => string
+  /**
+   * Makes every bar clickable, handing back the `DimensionAxis.key` it was
+   * drawn for — e.g. jumping from a risk level to its comments. Bars only:
+   * the radar variant ignores it.
+   */
+  onDimensionClick?: (dimension: string) => void
   /** Classes for the chart box — set the height here (defaults to `h-64`). */
   chartClassName?: string
   className?: string
@@ -186,6 +192,10 @@ const PALETTE = [
  * />
  *
  * @example
+ * // Bars that link somewhere — e.g. a risk level to its comments.
+ * <DimensionComparisonChart series={series} onDimensionClick={(key) => navigate(hrefFor(key))} />
+ *
+ * @example
  * <DimensionComparisonChart
  *   variant="radar"
  *   series={[teacherSeries, departmentSeries]}
@@ -215,6 +225,7 @@ export function DimensionComparisonChart({
   colorByDimension = true,
   valueFormatter,
   labelFormatter,
+  onDimensionClick,
   chartClassName,
   className,
 }: DimensionComparisonChartProps) {
@@ -520,6 +531,18 @@ export function DimensionComparisonChart({
                 radius={4}
                 maxBarSize={28}
                 isAnimationActive={false}
+                // `cursor` is inherited by the rectangles inside the layer, so
+                // the whole bar reads as clickable without touching each cell.
+                className={onDimensionClick ? 'cursor-pointer' : undefined}
+                onClick={
+                  onDimensionClick
+                    ? (_, index) => {
+                        const dimension = axis[index]?.key
+
+                        if (dimension) onDimensionClick(dimension)
+                      }
+                    : undefined
+                }
               >
                 {paintByDimension &&
                   axis.map((dimension, dimensionIndex) => (

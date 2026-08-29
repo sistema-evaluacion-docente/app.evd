@@ -360,10 +360,13 @@ export function AverageTrendChart({
               isAnimationActive: false,
             }
 
+            // Straight segments between measured points: a smoothed curve
+            // bends past the values it joins, inventing averages no period
+            // ever had.
             return type === 'area' ? (
-              <Area key={entry.id} {...common} type="monotone" fill={color} fillOpacity={0.12} />
+              <Area key={entry.id} {...common} type="linear" fill={color} fillOpacity={0.12} />
             ) : (
-              <Line key={entry.id} {...common} type="monotone" />
+              <Line key={entry.id} {...common} type="linear" />
             )
           })}
         </ChartRoot>

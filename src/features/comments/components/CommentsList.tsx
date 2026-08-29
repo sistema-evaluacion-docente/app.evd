@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { useAuthStore } from '@/features/auth'
 import { CommentCard, CommentList, TeacherSelect } from '@/features/teachers'
 import { useModalityFilter } from '@/hooks/useModalityFilter'
+import { useRiskLevelFilter } from '@/hooks/useRiskLevelFilter'
 import { useTableFilters } from '@/hooks/useTableFilters'
 import { CATEGORIES } from '@/lib/categoryLabel'
 import { MODALITIES } from '@/lib/modality'
@@ -89,9 +90,10 @@ interface CommentsListProps {
 /**
  * Displays the paginated list of comments (`GET /comments/`) of a selected
  * academic period, with server-side search and filters by teacher, risk
- * level, pedagogical category and modality. The period and the modality are
- * read from/written to the `period` and `modality` URL query params, so a
- * narrowed read stays linkable.
+ * level, pedagogical category and modality. The period, the modality and the
+ * risk level are read from/written to the `period`, `modality` and `riskLevel`
+ * URL query params, so a narrowed read stays linkable — the department
+ * summary's risk chart links straight into one level's comments.
  *
  * @example
  * <CommentsList />
@@ -132,11 +134,11 @@ export function CommentsList({
   }
 
   const { modality, setModality } = useModalityFilter()
+  const { riskLevel: urlRiskLevel, setRiskLevel } = useRiskLevelFilter()
 
   const { filters, setFilters } = useTableFilters(
     riskLevel ? `comments-risk-${riskLevel}` : 'comments',
     {
-      riskLevel: undefined as number | undefined,
       pedagogicalCategoryId: undefined as string | undefined,
     },
   )
@@ -145,7 +147,7 @@ export function CommentsList({
     ? filterConfig.filter((filter) => filter.name !== 'riskLevel')
     : filterConfig
 
-  const selectedRiskLevel = riskLevel ?? (filters.riskLevel ? Number(filters.riskLevel) : undefined)
+  const selectedRiskLevel = riskLevel ?? urlRiskLevel
 
   const resetPage = useDebouncedCallback(() => setPage(1), 400)
 
@@ -223,17 +225,14 @@ export function CommentsList({
 
         <DataTableFilters
           filters={availableFilters}
-          // The modality lives in the URL, the rest in the table's own state;
-          // the panel reads them as one set of values and hands them back the
-          // same way, so they are split again here.
-          values={{ ...filters, modality }}
-          onChange={({ modality: nextModality, ...rest }) => {
+          values={{ ...filters, modality, riskLevel: urlRiskLevel }}
+          onChange={({ modality: nextModality, riskLevel: nextRiskLevel, ...rest }) => {
             setFilters(rest)
             setModality(nextModality as string | undefined)
 
-            // A modality change swaps the whole result set, so page 1 has to
-            // travel with the very next request instead of 400ms later.
-            if (nextModality === modality) resetPage()
+            if (!riskLevel) setRiskLevel(nextRiskLevel as number | undefined)
+
+            if (nextModality === modality && nextRiskLevel === urlRiskLevel) resetPage()
             else setPage(1)
           }}
         />

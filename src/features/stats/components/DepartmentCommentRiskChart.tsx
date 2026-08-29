@@ -1,9 +1,11 @@
 import { DimensionComparisonChart } from '@/components/common/DimensionComparisonChart'
-import { RISK_LEVELS } from '@/lib/riskLevel'
+import { RISK_LEVELS, type RiskLevelMeta } from '@/lib/riskLevel'
 
 export interface DepartmentCommentRiskChartProps {
   /** Comment count per risk level (BAJO/MEDIO/ALTO), as returned by the API. */
   counts: { BAJO: number; MEDIO: number; ALTO: number } | undefined
+  /** Makes each bar clickable, e.g. to open that level's comments. */
+  onRiskLevelClick?: (level: RiskLevelMeta) => void
   className?: string
 }
 
@@ -15,8 +17,16 @@ export interface DepartmentCommentRiskChartProps {
  *
  * @example
  * <DepartmentCommentRiskChart counts={stats.comments_risk_counts} />
+ *
+ * @example
+ * // Each bar opens the comments filtered by the level clicked.
+ * <DepartmentCommentRiskChart counts={counts} onRiskLevelClick={(level) => navigate(hrefFor(level))} />
  */
-export function DepartmentCommentRiskChart({ counts, className }: DepartmentCommentRiskChartProps) {
+export function DepartmentCommentRiskChart({
+  counts,
+  onRiskLevelClick,
+  className,
+}: DepartmentCommentRiskChartProps) {
   const entries = RISK_LEVELS.map((level) => ({
     key: level.key,
     label: level.name,
@@ -46,6 +56,15 @@ export function DepartmentCommentRiskChart({ counts, className }: DepartmentComm
       decimals={0}
       showLegend={false}
       emptyMessage="No hay comentarios clasificados por nivel de riesgo en este rango de periodos."
+      onDimensionClick={
+        onRiskLevelClick
+          ? (key) => {
+              const level = RISK_LEVELS.find((entry) => entry.key === key)
+
+              if (level) onRiskLevelClick(level)
+            }
+          : undefined
+      }
       className={className}
     />
   )

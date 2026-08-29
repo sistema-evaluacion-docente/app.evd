@@ -10,21 +10,25 @@ import { PdfPage } from '@/components/common/pdf/PdfPage'
 import { PdfSection } from '@/components/common/pdf/PdfSection'
 import { PeriodSelect } from '@/components/common/PeriodSelect'
 import { Label } from '@/components/ui/label'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { Switch } from '@/components/ui/switch'
 import { useGetAcademicPeriods } from '@/features/periods'
+import { useNavigate } from '@/hooks/useNavigate'
 import { CATEGORIES, categoryLabel, UNCATEGORIZED } from '@/lib/categoryLabel'
 import { formatPdfAverage } from '@/lib/pdf/formatPdfAverage'
 import { pdfColors } from '@/lib/pdf/pdfColors'
+import type { RiskLevelMeta } from '@/lib/riskLevel'
 import { cn } from '@/lib/utils'
 import { useGetDepartmentPeriodRangeStats } from '../api'
 import { DepartmentCommentPeriodBreakdown } from './DepartmentCommentPeriodBreakdown'
 import { DepartmentCommentsSummary } from './DepartmentCommentsSummary'
 import { DepartmentDimensionsChart } from './DepartmentDimensionsChart'
+import { DepartmentDimensionsPeriodComparison } from './DepartmentDimensionsPeriodComparison'
+import { DepartmentPeriodRangeSummarySkeleton } from './DepartmentPeriodRangeSummarySkeleton'
 import { DepartmentStatsHero } from './DepartmentStatsHero'
 // Materia/docente mover badges temporarily disabled — see the commented block
 // below (search "MOVER BADGES DISABLED"). Re-add these imports when re-enabling:
+//   import { Skeleton } from '@/components/ui/skeleton'
 //   import { TrendingDown, TrendingUp } from 'lucide-react'
 //   import { useGetTeachers, type TeacherRecord } from '@/features/teachers'
 //   import { findBestWorstMover, type MoverEntry } from '@/lib/bestWorstMover'
@@ -57,6 +61,7 @@ export function DepartmentPeriodRangeSummary({
   className,
 }: DepartmentPeriodRangeSummaryProps) {
   const compareRangeId = useId()
+  const navigate = useNavigate()
   const { data: periodsData, isPending: isPeriodsPending } = useGetAcademicPeriods()
   const periods = periodsData?.data ?? []
   const sortedPeriods = [...periods].sort((a, b) => a.code.localeCompare(b.code))
@@ -209,6 +214,19 @@ export function DepartmentPeriodRangeSummary({
 
   const showTrendChart = compareRange && startPeriod !== endPeriod
 
+  /**
+   * Comments of one risk level, in the period the charts are showing — the
+   * range's last one while comparing, since that's the period the risk
+   * breakdown itself is drawn from.
+   */
+  const commentsHrefForRisk = (level: RiskLevelMeta) => {
+    const params = new URLSearchParams({ riskLevel: String(level.id) })
+
+    if (endPeriod?.name) params.set('period', endPeriod.name)
+
+    return `/comentarios?${params.toString()}`
+  }
+
   const departmentName = data?.data?.department_name
   const reportTitle = departmentName
     ? `Resumen del departamento (${departmentName})`
@@ -288,7 +306,13 @@ export function DepartmentPeriodRangeSummary({
                   </PdfSection>
                 )}
 
-                <PdfSection title="Promedios por dimensión pedagógica">
+                <PdfSection
+                  title={
+                    rangeCompareActive
+                      ? 'Promedios por dimensión pedagógica, por periodo'
+                      : 'Promedios por dimensión pedagógica'
+                  }
+                >
                   <PdfChartImage src={images.dimensions} />
                 </PdfSection>
               </PdfPage>
@@ -342,10 +366,10 @@ export function DepartmentPeriodRangeSummary({
       {error && <InlineError message={error.message} />}
 
       {isPending && !error && (
-        <div className="space-y-6">
-          <Skeleton className="h-48 w-full rounded-md" />
-          <Skeleton className="h-64 w-full rounded-md" />
-        </div>
+        <DepartmentPeriodRangeSummarySkeleton
+          showTrendChart={showTrendChart}
+          rangeCompare={rangeCompareActive}
+        />
       )}
 
       {!isPending && data?.data && (
@@ -423,20 +447,6 @@ export function DepartmentPeriodRangeSummary({
             )}
           */}
 
-          {(data?.data?.comments_risk_counts ||
-            data?.data?.comments_pedagogical_category_counts) && (
-            <div ref={commentsCardRef}>
-              {rangeCompareActive ? (
-                <DepartmentCommentPeriodBreakdown periods={data?.data?.periods ?? []} />
-              ) : (
-                <DepartmentCommentsSummary
-                  riskCounts={data?.data?.comments_risk_counts}
-                  categoryCounts={data?.data?.comments_pedagogical_category_counts}
-                />
-              )}
-            </div>
-          )}
-
           {showTrendChart && (
             <section ref={trendCardRef} className="border-border bg-background rounded-md border">
               <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
@@ -462,20 +472,54 @@ export function DepartmentPeriodRangeSummary({
             </section>
           )}
 
+          {(data?.data?.comments_risk_counts ||
+            data?.data?.comments_pedagogical_category_counts) && (
+            <div ref={commentsCardRef}>
+              {rangeCompareActive ? (
+                <DepartmentCommentPeriodBreakdown periods={data?.data?.periods ?? []} />
+              ) : (
+                <DepartmentCommentsSummary
+                  riskCounts={data?.data?.comments_risk_counts}
+                  categoryCounts={data?.data?.comments_pedagogical_category_counts}
+                  onRiskLevelClick={(level) => {
+                    const href = commentsHrefForRisk(level)
+                    navigate(href)
+                  }}
+                />
+              )}
+            </div>
+          )}
+
           <section
             ref={dimensionsCardRef}
             className="border-border bg-background rounded-md border"
           >
-            <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">
-              Promedios por dimensión pedagógica
-            </h2>
+            <div className="border-border border-b px-6 py-4">
+              <h2 className="text-muted-foreground text-sm font-medium">
+                Promedios por dimensión pedagógica
+              </h2>
+
+              {rangeCompareActive && (
+                <p className="text-muted-foreground/80 mt-0.5 text-xs">
+                  Una gráfica por dimensión, un punto por periodo.
+                </p>
+              )}
+            </div>
 
             <div className="px-6 py-4">
-              <DepartmentDimensionsChart
-                dimensions={data?.data?.dimensions}
-                referenceValue={data?.data?.overall_average}
-                referenceLabel="Promedio general"
-              />
+              {rangeCompareActive ? (
+                <DepartmentDimensionsPeriodComparison
+                  periods={data?.data?.periods ?? []}
+                  referenceValue={data?.data?.overall_average}
+                  referenceLabel="Promedio del rango"
+                />
+              ) : (
+                <DepartmentDimensionsChart
+                  dimensions={data?.data?.dimensions}
+                  referenceValue={data?.data?.overall_average}
+                  referenceLabel="Promedio general"
+                />
+              )}
             </div>
           </section>
 

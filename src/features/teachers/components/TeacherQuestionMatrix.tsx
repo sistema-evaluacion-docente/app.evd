@@ -115,8 +115,9 @@ export function TeacherQuestionMatrix({
 
       <div className="border-border bg-background rounded-md border">
         {isPending ? (
-          <div className="p-6">
-            <Skeleton className="h-40 w-full rounded-md" />
+          <div className="flex items-center gap-1.5 px-5 py-3">
+            <Skeleton className="size-3.5 shrink-0 rounded-sm" />
+            <Skeleton className="h-3 w-32" />
           </div>
         ) : courses.length === 0 ? (
           <p className="text-muted-foreground px-6 py-6 text-center text-sm">
@@ -124,7 +125,7 @@ export function TeacherQuestionMatrix({
           </p>
         ) : (
           <Collapsible>
-            <CollapsibleTrigger className="text-muted-foreground hover:bg-muted/40 group flex w-full items-center gap-1.5 px-5 py-3 text-left text-xs font-medium transition-colors">
+            <CollapsibleTrigger className="cursor-pointer text-muted-foreground hover:bg-muted/40 group flex w-full items-center gap-1.5 px-5 py-3 text-left text-sm font-medium transition-colors">
               <ChevronRight
                 aria-hidden="true"
                 className="size-3.5 shrink-0 transition-transform group-data-panel-open:rotate-90"
