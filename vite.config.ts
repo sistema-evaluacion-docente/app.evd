@@ -21,5 +21,12 @@ export default defineConfig(({ mode }) => ({
     setupFiles: './src/test/setup.ts',
     globals: true,
     css: false,
+    coverage: {
+      include: ['src/**'],
+      exclude: ['src/test/**', 'src/**/*.d.ts'],
+      reporter: ['text', 'html'],
+      // Sin esto vitest omite el reporte cuando algún test falla.
+      reportOnFailure: true,
+    },
   },
 }))
