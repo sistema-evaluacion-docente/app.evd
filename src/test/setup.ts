@@ -48,3 +48,38 @@ window.scrollTo = () => {}
 if (!Element.prototype.scrollTo) {
   Element.prototype.scrollTo = () => {}
 }
+
+/**
+ * Node 26 ships its own `localStorage` global, left `undefined` unless the
+ * process gets `--localstorage-file`. In vitest's jsdom environment `window`
+ * *is* `globalThis`, so that own property shadows the working implementation
+ * jsdom would otherwise install — and everything built on `planFormStorage`
+ * dies on `localStorage.getItem` of undefined.
+ *
+ * Replaced with an in-memory `Storage`, which is what tests want anyway: no
+ * file on disk, and `clear()` in a `beforeEach` really starts from nothing.
+ */
+if (!window.localStorage) {
+  const store = new Map<string, string>()
+  const storage: Storage = {
+    get length() {
+      return store.size
+    },
+    key: (i) => [...store.keys()][i] ?? null,
+    getItem: (k) => store.get(String(k)) ?? null,
+    setItem: (k, v) => void store.set(String(k), String(v)),
+    removeItem: (k) => void store.delete(String(k)),
+    clear: () => store.clear(),
+  }
+  Object.defineProperty(window, 'localStorage', { value: storage, configurable: true })
+}
+
+/**
+ * jsdom implements neither half of the object-URL pair, and every protected
+ * file in the app (plan forms, signed scans, evidences, evaluation PDFs) is
+ * fetched as a blob and handed to the browser through one.
+ */
+if (!URL.createObjectURL) {
+  URL.createObjectURL = () => 'blob:evd/test'
+  URL.revokeObjectURL = () => {}
+}

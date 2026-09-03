@@ -5,7 +5,7 @@ import { ScoreBadge } from '@/components/common/ScoreBadge'
 
 describe('ScoreBadge', () => {
   it('renders the score with two decimal by default', () => {
-    render(<ScoreBadge value={2.80} />)
+    render(<ScoreBadge value={2.8} />)
 
     expect(screen.getByText('2.80')).toBeInTheDocument()
   })
@@ -29,13 +29,13 @@ describe('ScoreBadge', () => {
   })
 
   it('defaults to the small font size', () => {
-    render(<ScoreBadge value={2.80} />)
+    render(<ScoreBadge value={2.8} />)
 
     expect(screen.getByText('2.80')).toHaveClass('text-sm')
   })
 
   it('applies the requested font size to the score', () => {
-    render(<ScoreBadge value={2.80} size="lg" />)
+    render(<ScoreBadge value={2.8} size="lg" />)
 
     expect(screen.getByText('2.80')).toHaveClass('text-lg')
   })
