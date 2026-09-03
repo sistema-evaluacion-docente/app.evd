@@ -10,6 +10,22 @@ jobs:
   vitest:
     runs-on: ubuntu-latest
 
+    # `src/config/firebase.ts` calls `getAuth()` at module scope, so an empty
+    # `VITE_FIREBASE_API_KEY` throws `auth/invalid-api-key` and takes down every
+    # test file that reaches it — `.env` is gitignored, so CI has none.
+    #
+    # Deliberately fake rather than `secrets.*` (which is what docker-build.yml
+    # uses, because the bundle it ships has to talk to the real project): these
+    # tests mock auth and never call Firebase, and secrets are not exposed to
+    # pull requests from forks — using them would fail exactly this way again.
+    env:
+      VITE_FIREBASE_API_KEY: ci-fake-api-key
+      VITE_FIREBASE_AUTH_DOMAIN: evd-ci.firebaseapp.com
+      VITE_FIREBASE_PROJECT_ID: evd-ci
+      VITE_FIREBASE_STORAGE_BUCKET: evd-ci.appspot.com
+      VITE_FIREBASE_MESSAGING_SENDER_ID: '0'
+      VITE_FIREBASE_APP_ID: '1:0:web:0'
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
