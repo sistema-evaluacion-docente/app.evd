@@ -102,7 +102,8 @@ describe('SuggestedActionsList', () => {
 
   it('says there is nothing yet when the key has no value at all', async () => {
     mockApi.get.mockImplementation((url: string) => {
-      if (url.startsWith('/settings/by-key')) return Promise.reject(new ApiError('nf', { status: 404 }))
+      if (url.startsWith('/settings/by-key'))
+        return Promise.reject(new ApiError('nf', { status: 404 }))
       if (url === '/improvement-plans/indicators') return Promise.resolve({ data: INDICATORS })
       return Promise.resolve({ data: null })
     })
@@ -117,9 +118,7 @@ describe('SuggestedActionsList', () => {
 
     renderRouted(<SuggestedActionsList />)
 
-    expect(
-      await screen.findByText('No se pudo abrir la configuración'),
-    ).toBeInTheDocument()
+    expect(await screen.findByText('No se pudo abrir la configuración')).toBeInTheDocument()
     expect(screen.getByText(/no tiene un departamento asignado/)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Nueva acción' })).not.toBeInTheDocument()
   })
@@ -146,7 +145,7 @@ describe('SuggestedActionsList', () => {
         }),
       ),
     )
-    const created = JSON.parse(mockApi.post.mock.calls[0][1].value)
+    const created = JSON.parse((mockApi.post.mock.calls[0][1] as { value: string }).value)
     expect(created).toHaveLength(2)
     expect(created[1].action).toBe('Reforzar la puntualidad')
   })
@@ -185,7 +184,7 @@ describe('SuggestedActionsList', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Eliminar' }))
 
     await waitFor(() => expect(mockApi.post).toHaveBeenCalled())
-    const created = JSON.parse(mockApi.post.mock.calls[0][1].value)
+    const created = JSON.parse((mockApi.post.mock.calls[0][1] as { value: string }).value)
     expect(created).toEqual([])
   })
 
@@ -202,7 +201,9 @@ describe('SuggestedActionsList', () => {
 
     await user.click(screen.getByRole('button', { name: 'Historial' }))
 
-    await waitFor(() => expect(mockApi.get).toHaveBeenCalledWith('/settings/2/history', expect.any(Object)))
+    await waitFor(() =>
+      expect(mockApi.get).toHaveBeenCalledWith('/settings/2/history', expect.any(Object)),
+    )
   })
 
   it('does not offer a history button on the institutional list', async () => {
