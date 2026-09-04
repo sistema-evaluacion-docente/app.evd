@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import api from '@/config/axios'
 import { DepartmentSubjectsTable } from '@/features/stats/components/DepartmentSubjectsTable'
 import type { DepartmentSubjectAverage } from '@/features/stats/types'
-import { renderRouted, screen, waitFor, within } from '@/test/render'
+import { renderRouted, screen, waitFor } from '@/test/render'
 
 vi.mock('@/config/axios', () => ({ default: { get: vi.fn() } }))
 

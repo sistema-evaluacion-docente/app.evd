@@ -19,7 +19,9 @@ describe('parseSuggestedActions', () => {
   it('parses a well-formed list', () => {
     const value = JSON.stringify([{ id: 'a', aspect: 2, action: 'Asistir a tutorías' }])
 
-    expect(parseSuggestedActions(value)).toEqual([{ id: 'a', aspect: 2, action: 'Asistir a tutorías' }])
+    expect(parseSuggestedActions(value)).toEqual([
+      { id: 'a', aspect: 2, action: 'Asistir a tutorías' },
+    ])
   })
 
   it('drops entries that are not objects, or carry no action text', () => {
