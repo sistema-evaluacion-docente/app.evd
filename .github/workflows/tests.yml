@@ -1,0 +1,54 @@
+name: Tests
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  vitest:
+    runs-on: ubuntu-latest
+
+    # `src/config/firebase.ts` calls `getAuth()` at module scope, so an empty
+    # `VITE_FIREBASE_API_KEY` throws `auth/invalid-api-key` and takes down every
+    # test file that reaches it — `.env` is gitignored, so CI has none.
+    #
+    # Deliberately fake rather than `secrets.*` (which is what docker-build.yml
+    # uses, because the bundle it ships has to talk to the real project): these
+    # tests mock auth and never call Firebase, and secrets are not exposed to
+    # pull requests from forks — using them would fail exactly this way again.
+    env:
+      VITE_FIREBASE_API_KEY: ci-fake-api-key
+      VITE_FIREBASE_AUTH_DOMAIN: evd-ci.firebaseapp.com
+      VITE_FIREBASE_PROJECT_ID: evd-ci
+      VITE_FIREBASE_STORAGE_BUCKET: evd-ci.appspot.com
+      VITE_FIREBASE_MESSAGING_SENDER_ID: '0'
+      VITE_FIREBASE_APP_ID: '1:0:web:0'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Must come before setup-node: `cache: pnpm` needs the binary to exist so
+      # it can resolve the store path. Pinned to 11 because `pnpm-workspace.yaml`
+      # configures `allowBuilds`, which pnpm 9 (what the Dockerfile builds with)
+      # does not know about, and because 11 is what wrote the lockfile.
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      # Vite 8 requires ^20.19 || >=22.12 and Vitest 4 rules out odd majors, so
+      # 22 is the LTS both accept. The Dockerfile still builds the bundle on 20.
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: pnpm test:coverage

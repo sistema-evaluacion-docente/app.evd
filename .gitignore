@@ -28,3 +28,6 @@ dist-ssr
 # Docker
 .env.local
 .claude
+
+# Coverage artifacts
+coverage
