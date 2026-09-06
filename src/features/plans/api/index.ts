@@ -41,8 +41,14 @@ async function getPlan(planId: number): Promise<ResponseAPI<Plan>> {
   return api.get(`/improvement-plans/${planId}`)
 }
 
-async function getMyPlans(): Promise<ResponseAPI<Plan[]>> {
-  return api.get('/improvement-plans/my')
+async function getMyPlans(params: {
+  page: number
+  limit: number
+  period_id?: number
+  status?: string
+  search?: string
+}): Promise<ResponseAPI<Plan[]>> {
+  return api.get('/improvement-plans/my', { params })
 }
 
 async function getPlanCandidates(params: {
@@ -303,9 +309,41 @@ export function useGetPlan(planId?: number) {
   })
 }
 
-/** Plans of the signed-in teacher. */
-export function useGetMyPlans() {
-  return useQuery({ queryKey: plansKeys.mine(), queryFn: getMyPlans })
+/**
+ * Paginated list of the signed-in teacher's own plans. Same filters the
+ * director's directory has, minus the department: the teacher is the scope.
+ *
+ * @example
+ * const { data, isPending } = useGetMyPlans({ page, limit, status })
+ */
+export function useGetMyPlans({
+  page = 1,
+  limit = 10,
+  periodId,
+  status,
+  search,
+  enabled = true,
+}: {
+  page?: number
+  limit?: number
+  periodId?: number
+  status?: string
+  search?: string
+  /** Held back while the caller resolves a filter, to avoid a throwaway fetch. */
+  enabled?: boolean
+} = {}) {
+  return useQuery({
+    queryKey: [...plansKeys.mine(), { page, limit, periodId, status, search }],
+    queryFn: () =>
+      getMyPlans({
+        page,
+        limit,
+        period_id: periodId,
+        status: status || undefined,
+        search: search || undefined,
+      }),
+    enabled,
+  })
 }
 
 /**

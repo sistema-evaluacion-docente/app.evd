@@ -20,6 +20,7 @@ import { pdfColors } from '@/lib/pdf/pdfColors'
 import type { RiskLevelMeta } from '@/lib/riskLevel'
 import { cn } from '@/lib/utils'
 import { useGetDepartmentPeriodRangeStats } from '../api'
+import { usePeriodCommentsAnalysis } from '../hooks/usePeriodCommentsAnalysis'
 import { DepartmentCommentPeriodBreakdown } from './DepartmentCommentPeriodBreakdown'
 import { DepartmentCommentsSummary } from './DepartmentCommentsSummary'
 import { DepartmentDimensionsChart } from './DepartmentDimensionsChart'
@@ -115,6 +116,11 @@ export function DepartmentPeriodRangeSummary({
     startPeriod !== undefined &&
     endPeriod !== undefined &&
     startPeriod !== endPeriod
+
+  // Whether the comment counts of the period on screen mean anything yet, and
+  // the way to make them mean something. Only for the single-period card: the
+  // range breakdown spans several evaluations, each with its own analysis.
+  const commentsAnalysis = usePeriodCommentsAnalysis(rangeCompareActive ? undefined : endPeriod?.id)
 
   /* MOVER BADGES DISABLED — pending fix: for a single period, the "previous
      period" is picked purely by chronological code order, which can land on
@@ -481,6 +487,10 @@ export function DepartmentPeriodRangeSummary({
                 <DepartmentCommentsSummary
                   riskCounts={data?.data?.comments_risk_counts}
                   categoryCounts={data?.data?.comments_pedagogical_category_counts}
+                  aiStatus={commentsAnalysis.aiStatus}
+                  isStatusPending={commentsAnalysis.isStatusPending}
+                  isAnalyzing={commentsAnalysis.isAnalyzing}
+                  onAnalyze={commentsAnalysis.analyze}
                   onRiskLevelClick={(level) => {
                     const href = commentsHrefForRisk(level)
                     navigate(href)

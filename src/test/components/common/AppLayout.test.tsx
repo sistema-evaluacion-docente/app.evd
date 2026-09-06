@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { Router } from 'wouter'
 import { memoryLocation } from 'wouter/memory-location'
@@ -11,6 +12,11 @@ vi.mock('@/hooks/useAuth')
 vi.mock('@/features/auth', () => ({
   Avatar: () => <div data-testid="avatar" />,
   UserNotAuth: () => <div>No autenticado</div>,
+  ROLES_LABEL: {
+    ADMIN: 'Administrador',
+    DOCENTE: 'Docente',
+    'DIRECTOR DE DEPARTAMENTO': 'Director de Departamento',
+  },
 }))
 
 vi.mock('@/features/notifications', () => ({
@@ -159,6 +165,47 @@ describe('AppLayout', () => {
     renderAt('/docentes')
 
     expect(screen.getByText('Contenido protegido')).toBeInTheDocument()
+  })
+
+  it('offers the other role of the account instead of a dead end', async () => {
+    // A director who is also a teacher — which is what a plan drawn up on
+    // oneself looks like. The notice about it links to the teacher's route, and
+    // "acceso no autorizado" would be the wrong answer: the page is theirs, it
+    // just belongs to their other hat.
+    const setSelectedRole = vi.fn()
+
+    mockAuth({
+      selectedRole: 'DIRECTOR DE DEPARTAMENTO',
+      setSelectedRole,
+      user: {
+        department_id: 3,
+        roles: ['DIRECTOR DE DEPARTAMENTO', 'DOCENTE'],
+      } as ReturnType<typeof useAuth>['user'],
+    })
+
+    renderAt('/mis-planes/42')
+
+    expect(screen.getByText('Esta página es de otro de tus roles')).toBeInTheDocument()
+    expect(screen.queryByText('Acceso no autorizado')).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar como Docente' }))
+
+    expect(setSelectedRole).toHaveBeenCalledWith('DOCENTE')
+  })
+
+  it('still refuses the page when no role of the account opens it', () => {
+    mockAuth({
+      selectedRole: 'DIRECTOR DE DEPARTAMENTO',
+      user: {
+        department_id: 3,
+        roles: ['DIRECTOR DE DEPARTAMENTO'],
+      } as ReturnType<typeof useAuth>['user'],
+    })
+
+    renderAt('/mis-planes/42')
+
+    expect(screen.getByText('Acceso no autorizado')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Continuar como/ })).not.toBeInTheDocument()
   })
 
   it('renders the app chrome once authenticated', () => {

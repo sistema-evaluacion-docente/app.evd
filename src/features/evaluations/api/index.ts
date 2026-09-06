@@ -234,10 +234,19 @@ export function useGetEvaluation(evaluationId?: number, modality?: CourseModalit
 /**
  * Fetches the paginated evaluations of the authenticated director's department
  * (`GET /evaluations`). The department id is read from the auth store and always
- * sent so results stay scoped to the current user.
+ * sent so results stay scoped to the current user. Polls itself every 5s while
+ * any evaluation on the page is still `ANALYZING`, so a reader watching an
+ * analysis run sees it finish without reloading.
+ *
+ * `enabled: false` holds the request back — for a caller that only wants the
+ * evaluation of a period it hasn't picked yet.
  *
  * @example
  * const { data, isPending } = useGetEvaluations({ page, limit, search });
+ *
+ * @example
+ * // One period's evaluation, and nothing at all until a period is chosen.
+ * const { data } = useGetEvaluations({ period_id: periodId, limit: 1, enabled: periodId != null });
  */
 export function useGetEvaluations({
   page = 1,
@@ -248,7 +257,8 @@ export function useGetEvaluations({
   active,
   status,
   ai_status,
-}: Partial<EvaluationListParams> = {}) {
+  enabled = true,
+}: Partial<EvaluationListParams> & { enabled?: boolean } = {}) {
   const departmentId = useAuthStore((state) => state.user?.department_id) ?? undefined
 
   return useQuery({
@@ -278,9 +288,17 @@ export function useGetEvaluations({
         ai_status,
         department_id: departmentId,
       }),
-    enabled: departmentId != null,
+    enabled: enabled && departmentId != null,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
+    // An analysis runs in the background, and nothing pushes its end to this
+    // list: without the poll an evaluation stays on "Analizando" — and so does
+    // anything reading `ai_status` off it — until something else invalidates
+    // the query. Same fallback `useGetEvaluation` keeps for `PROCESSING`.
+    refetchInterval: (query) =>
+      query.state.data?.data?.some((evaluation) => evaluation.ai_status === 'ANALYZING')
+        ? EVALUATION_POLL_INTERVAL
+        : false,
   })
 }
 

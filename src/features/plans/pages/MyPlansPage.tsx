@@ -1,11 +1,16 @@
 import { useMemo, useState } from 'react'
 import { useLocation } from 'wouter'
 import type { ColumnDef, SortingState } from '@tanstack/react-table'
+import { useDebounce } from 'use-debounce'
 import { ClipboardCheck } from 'lucide-react'
 
 import { DataTable } from '@/components/common/DataTable'
 import { PageTitle } from '@/components/common/PageTitle'
 import { ScoreProgress } from '@/components/common/ScoreProgress'
+import {
+  SelectLoadingLabel,
+  selectLoadingTriggerClass,
+} from '@/components/common/SelectLoadingLabel'
 import {
   Select,
   SelectContent,
@@ -13,74 +18,83 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { cn } from '@/lib/utils'
 import formatDate from '@/lib/formatDate'
-import { useGetMyPlans } from '../api'
+import { useGetMyPlans, useGetPlanPeriods } from '../api'
 import { ActaStatusBadge, PlanStatusBadge } from '../components/PlanStatusBadge'
+import { usePlansFilters } from '../hooks/usePlansFilters'
 import { PLAN_STATUS_LABEL, planProgress } from '../lib/planStatus'
 import type { Plan, PlanStatus } from '../types'
-
-const PAGE_SIZE = 10
-
-/** `''` es "todos": el valor que el select deja cuando no hay filtro. */
-type StatusFilter = PlanStatus | ''
 
 /**
  * History of the teacher's own improvement plans — the director's follow-up
  * table, narrowed to what is theirs and without the "Docente" column, which
  * would say the same name on every row.
  *
- * `GET /improvement-plans/my` answers with the whole list and no pagination,
- * so the search, the filters and the paging are resolved here rather than on
- * the API. Los dos filtros son los mismos que tiene el director en `/planes`
- * (periodo y estado); los periodos salen de los propios planes y no de
- * `useGetPlanPeriods`, que devuelve los del departamento y no los del docente.
+ * `GET /improvement-plans/my` paginates and filters on the server, like the
+ * director's directory, so the search, the period, the estado and the page all
+ * travel to the API instead of being resolved over a list held in memory. The
+ * filters live in the query string (`usePlansFilters`, shared with `/planes`),
+ * so the view survives a reload and can be shared.
+ *
+ * Unlike `/planes` this one leads with **every** period rather than the newest:
+ * the page is a history, and a teacher who opens it wants to see the plans they
+ * have had, not only this semester's.
  *
  * Route: `/mis-planes`
  */
 export default function MyPlansPage() {
   const [, navigate] = useLocation()
-  const { data, isPending, isFetching } = useGetMyPlans()
 
-  const [search, setSearch] = useState('')
-  const [periodCode, setPeriodCode] = useState<string | null>(null)
-  const [status, setStatus] = useState<StatusFilter>('')
+  const {
+    search,
+    status,
+    periodCode,
+    pageIndex,
+    pageSize,
+    setSearch,
+    setStatus,
+    setPeriodCode,
+    setPagination,
+  } = usePlansFilters()
+
   const [sorting, setSorting] = useState<SortingState>([])
-  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: PAGE_SIZE })
 
-  const plans = useMemo(() => data?.data ?? [], [data])
+  // The box stays responsive while the list waits for the teacher to stop
+  // typing, instead of firing a request per keystroke.
+  const [debouncedSearch] = useDebounce(search, 400)
 
-  /** Los periodos que este docente tiene de verdad, del más reciente al más viejo. */
-  const periodCodes = useMemo(
-    () =>
-      [...new Set(plans.map((plan) => plan.origin_period_code).filter(Boolean))].sort((a, b) =>
-        String(b).localeCompare(String(a)),
-      ) as string[],
-    [plans],
-  )
+  // Scoped to the teacher's own department by the API, whatever it is asked.
+  const { data: periodsResponse, isLoading: periodsLoading } = useGetPlanPeriods()
+  const periods = useMemo(() => periodsResponse?.data ?? [], [periodsResponse])
 
-  const filtered = useMemo(() => {
-    const query = search.trim().toLowerCase()
+  // `undefined` (nothing chosen) and `null` ("todos los periodos") both mean no
+  // period reaches the API — the difference only matters on `/planes`, where
+  // nothing chosen leads with the newest semester.
+  const periodId = useMemo(() => {
+    if (!periodCode) return undefined
 
-    return plans.filter((plan) => {
-      if (periodCode && plan.origin_period_code !== periodCode) return false
-      if (status && plan.status !== status) return false
-      if (query.length === 0) return true
+    return periods.find((entry) => entry.code === periodCode)?.id
+  }, [periodCode, periods])
 
-      return Boolean(
-        plan.title?.toLowerCase().includes(query) ||
-        plan.origin_period_code?.toLowerCase().includes(query),
-      )
-    })
-  }, [plans, search, periodCode, status])
+  const pagination = useMemo(() => ({ pageIndex, pageSize }), [pageIndex, pageSize])
 
-  /** Cualquier filtro estrecha la lista, y la página que se miraba puede sobrar. */
-  const resetPage = () => setPagination((current) => ({ ...current, pageIndex: 0 }))
+  const { data, isPending, isFetching } = useGetMyPlans({
+    page: pageIndex + 1,
+    limit: pageSize,
+    search: debouncedSearch,
+    status,
+    periodId,
+    // Waits for the periods so a page opened on `?periodo=2025-1` already comes
+    // filtered, instead of painting every plan and swapping it a moment later.
+    enabled: !periodsLoading,
+  })
 
-  const page = useMemo(() => {
-    const start = pagination.pageIndex * pagination.pageSize
+  const plans = data?.data ?? []
+  const pageCount = data?.pagination?.pages ?? 0
 
-    return filtered.slice(start, start + pagination.pageSize)
-  }, [filtered, pagination])
+  /** Nothing narrowing the list, so an empty answer means there is nothing. */
+  const unfiltered = !debouncedSearch && !status && !periodId
 
   const columns = useMemo<ColumnDef<Plan>[]>(
     () => [
@@ -133,8 +147,11 @@ export default function MyPlansPage() {
   )
 
   // The empty state is worth more than an empty table here: most teachers never
-  // get a plan at all, and the table alone would read like something failed.
-  if (!isPending && plans.length === 0) {
+  // get a plan at all, and the table alone would read like something failed. It
+  // only stands in for the real thing when no filter is narrowing the list —
+  // otherwise it would claim the teacher has no plans when they just filtered
+  // them all out.
+  if (!isPending && unfiltered && plans.length === 0) {
     return (
       <>
         <PageTitle>Mis planes de mejoramiento</PageTitle>
@@ -155,57 +172,54 @@ export default function MyPlansPage() {
 
       <DataTable
         columns={columns}
-        data={page}
+        data={plans}
         isLoading={isPending}
         isFetching={isFetching}
-        pageCount={Math.max(1, Math.ceil(filtered.length / pagination.pageSize))}
+        pageCount={pageCount}
         sorting={sorting}
         onSortingChange={setSorting}
         pagination={pagination}
         onPaginationChange={(updater) =>
-          setPagination((current) => (typeof updater === 'function' ? updater(current) : updater))
+          setPagination(typeof updater === 'function' ? updater(pagination) : updater)
         }
         search={search}
-        onSearchChange={(value) => {
-          setSearch(value)
-          resetPage()
-        }}
-        searchPlaceholder="Buscar por título o periodo..."
+        onSearchChange={setSearch}
+        searchPlaceholder="Buscar por título..."
         emptyMessage="No hay planes que coincidan."
         onRowClick={(row) => navigate(`/mis-planes/${row.id}`)}
         toolbar={
           <>
             <Select
-              value={periodCode}
-              onValueChange={(value) => {
-                setPeriodCode(value as string | null)
-                resetPage()
-              }}
-              disabled={periodCodes.length === 0}
+              value={periodId ?? null}
+              onValueChange={(value) =>
+                setPeriodCode(periods.find((entry) => entry.id === value)?.code ?? null)
+              }
+              disabled={periodsLoading}
             >
-              <SelectTrigger aria-label="Periodo" className="w-56">
-                <SelectValue placeholder="Todos los periodos">
-                  {periodCode ?? 'Todos los periodos'}
-                </SelectValue>
+              <SelectTrigger
+                aria-label="Periodo"
+                className={cn('w-56', periodsLoading && selectLoadingTriggerClass)}
+              >
+                {periodsLoading ? (
+                  <SelectLoadingLabel>Cargando periodos…</SelectLoadingLabel>
+                ) : (
+                  <SelectValue placeholder="Todos los periodos">
+                    {periodCode ?? 'Todos los periodos'}
+                  </SelectValue>
+                )}
               </SelectTrigger>
 
               <SelectContent>
                 <SelectItem value={null}>Todos los periodos</SelectItem>
-                {periodCodes.map((code) => (
-                  <SelectItem key={code} value={code}>
-                    {code}
+                {periods.map((period) => (
+                  <SelectItem key={period.id} value={period.id}>
+                    {period.code}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
-            <Select
-              value={status}
-              onValueChange={(value) => {
-                setStatus(value as StatusFilter)
-                resetPage()
-              }}
-            >
+            <Select value={status} onValueChange={(value) => setStatus(value as PlanStatus | '')}>
               <SelectTrigger aria-label="Estado del plan" className="w-52">
                 <SelectValue>
                   {status ? PLAN_STATUS_LABEL[status] : 'Todos los estados'}
