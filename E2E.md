@@ -19,6 +19,9 @@ Cubren estos RF:
   distancia).**
 - **El director puede cargar los PDF oficiales de evaluación correspondientes a un periodo y a su
   departamento.**
+- **El sistema debe aceptar hasta dos PDF por evaluación, uno para programas presenciales y otro
+  para programas a distancia. Ambos deben coincidir en periodo y departamento y pertenecer a
+  modalidades distintas.**
 - **El sistema permite renombrar una materia conservando su código, para preservar el histórico y
   las comparaciones entre periodos.**
 
@@ -234,6 +237,29 @@ evaluación — y no hay forma de borrarlos en bloque, así que quedan puestos e
 la prueba limpia es lo suyo: la evaluación creada (borrarla exige el token del propio director del
 departamento, ni siquiera ADMIN vale — `require_roles([DIRECTOR_DE_DEPARTAMENTO])` en la ruta) y las
 dos cuentas de director desechables.
+
+`cypress/e2e/evaluations/upload-modalities.cy.ts`
+
+- Un director sube en un solo formulario `cypress/files/2025-1.pdf` (presencial) y
+  `cypress/files/2025-1-DISTANCIA.pdf` (a distancia) — dos reportes reales, no fabricados — y la API
+  los fusiona en una sola evaluación: mismo periodo (`2025-2`) y departamento (`99`) que traen
+  grabados, un documento guardado por modalidad (`pdf_urls`) y docentes propios en cada una.
+- El selector de archivos ya impide elegir el mismo PDF dos veces (mismo nombre y tamaño → "Ya
+  adjuntó..."), así que nunca llegaría a probar la validación del backend que exige modalidades
+  distintas. Esa parte del RF se prueba llamando al endpoint real directamente, sin pasar por la
+  interfaz: el mismo PDF de distancia subido dos veces con nombres de archivo distintos vuelve `422`
+  con "Los dos PDFs corresponden a la misma modalidad".
+
+Comparte el departamento fijo `99` con `upload.cy.ts` (impreso en el PDF, no aleatorizable) y el
+mismo residuo entre corridas: los profesores, cursos y grupos que deja el procesamiento en segundo
+plano no se pueden borrar en bloque. La prueba de la validación de modalidad no puede pasar por
+`cy.request`: manda el cuerpo como string y corrompe cualquier byte mayor a 127, lo que rompe un PDF
+real antes de que el backend llegue a comparar modalidades (se vio como un `400` de "PDF dañado" en
+vez del `422` esperado). En su lugar usa un `cy.task` (`uploadMultipart`, en `cypress.config.ts`) que
+arma el `multipart/form-data` con un `Blob` real desde Node, byte a byte. Lo que no cubre: un
+desajuste de periodo o de departamento _entre los dos PDF_ — los dos fixtures disponibles comparten
+ambos a propósito, y fabricar un tercer PDF solo para forzar el desajuste iría en contra de usar
+únicamente reportes reales de la universidad.
 
 `cypress/e2e/evaluations/rename-course.cy.ts`
 
