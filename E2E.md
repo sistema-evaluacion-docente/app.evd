@@ -1,6 +1,6 @@
 # Pruebas end-to-end (Cypress)
 
-Cubren dos RF:
+Cubren estos RF:
 
 - **Inicio de sesión con correo y con cuenta de Google, validación del token en cada petición y
   rechazo del token vencido o ausente.**
@@ -8,6 +8,8 @@ Cubren dos RF:
 - **El administrador crea usuarios, los lista, reemplaza sus roles y activa o desactiva su estado.**
 - **Cada endpoint y cada ruta están restringidos por rol, y el menú oculta lo que el rol no puede
   abrir. El filtrado del menú es una comodidad de interfaz; el control efectivo vive en la API.**
+- **Un director está aislado de los recursos de otro departamento: pedir el detalle de un recurso
+  ajeno responde `403`, no un listado vacío.**
 
 Corren contra la pila real: el proyecto real de Firebase y el backend real. No hay mocks de
 autenticación ni de la API — `cy.intercept` aparece solo para _observar_ una petición o para
@@ -140,6 +142,17 @@ en `localStorage` (sin pasar por el selector de rol, que sí valida) consigue qu
 lo crean — pero la petición que la página de Usuarios dispara sale con su token real de docente, y la
 API la rechaza igual. El dato nunca llega, disfraz o no: la comodidad de interfaz es exactamente eso,
 comodidad; el candado real está en la API.
+
+`cypress/e2e/security/department-isolation.cy.ts`
+
+- Un director asignado de verdad a un departamento (vía `POST /departments/{id}/director`, no solo
+  con `department_id` en su usuario) accede al historial de un docente de su propio departamento.
+- Pedir el historial de un docente de otro departamento responde `403`, no un `200` con datos vacíos:
+  el listado de docentes (`GET /teachers/`) sí resuelve el aislamiento sustituyendo en silencio el
+  `department_id` de la consulta por el del director, pero el detalle por ID no tiene ese filtro que
+  aplicar — sin la comprobación explícita, un director vería el historial de cualquier docente de la
+  universidad. Los dos docentes de la prueba y la asignación de director se crean y se limpian solos,
+  sin dejar nada detrás.
 
 `cypress/e2e/auth/token.cy.ts`
 
