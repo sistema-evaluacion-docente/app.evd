@@ -34,8 +34,10 @@ next to the code they cover.
 
 End-to-end tests live in `cypress/e2e/` and run against the **real** stack: real Firebase project and
 real backend, no mocks. That means they need `.env` filled in, the API reachable at `VITE_API_URL`,
-and a test account: copy `cypress.env.example.json` to `cypress.env.json` (gitignored) with the
-`email` and `password` of that account, or export `CYPRESS_email` / `CYPRESS_password`. Public config
+and a test account **with at least two roles** (one spec covers role switching): copy
+`cypress.env.example.json` to `cypress.env.json` (gitignored) with the `email` and `password` of that
+account, or export `CYPRESS_email` / `CYPRESS_password`. They run in Chromium, not the bundled
+Electron — `E2E.md` explains why. Public config
 is read with `Cypress.expose('apiUrl')`; the credentials with `cy.env([...])`, which keeps them out of
 the logs. `cy.intercept` appears only to *observe* or to *tamper with* a request on its way to the
 real API (`cy.watchApi()`, `cy.tamperToken()`) — never to fake a response. Setup, commands and known
