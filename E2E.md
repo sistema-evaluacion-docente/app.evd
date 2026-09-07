@@ -11,6 +11,8 @@ Cubren estos RF:
 - **Un director está aislado de los recursos de otro departamento: pedir el detalle de un recurso
   ajeno responde `403`, no un listado vacío.**
 - **El administrador crea, consulta, actualiza y elimina facultades.**
+- **El administrador crea, consulta, actualiza y elimina departamentos, y asigna o retira el
+  director de cada uno.**
 
 Corren contra la pila real: el proyecto real de Firebase y el backend real. No hay mocks de
 autenticación ni de la API — `cy.intercept` aparece solo para _observar_ una petición o para
@@ -136,6 +138,24 @@ A diferencia de usuarios, `/faculties/` sí expone borrado real: cada prueba cre
 desechable por API y la deja limpia — sin `institutional_code` ni Firebase de por medio, no hace
 falta nada del rastro que sí dejan las de usuarios.
 
+`cypress/e2e/admin/departments.cy.ts`
+
+- Crea un departamento desde el formulario y lo encuentra después en el listado, sin director.
+- Busca un departamento por nombre o código.
+- Actualiza el nombre, el código y el estado de un departamento; al desactivarlo, desaparece de la
+  búsqueda por defecto.
+- Elimina un departamento, que desaparece del listado.
+- Asigna un director desde la lista de usuarios elegibles (`DOCENTE` o `DIRECTOR DE DEPARTAMENTO`) y
+  lo desasigna, verificando en ambos casos lo que muestra la fila (`Sin asignar` frente al nombre del
+  director) y que desasignar retira también el rol `DIRECTOR DE DEPARTAMENTO` del usuario (asignar sí
+  lo añade), no solo la fila de `directors`.
+
+Como `/faculties/`, `/departments/` expone borrado real: cada departamento es su propio fixture
+desechable por API. Las dos pruebas de director comparten una única cuenta Firebase de un solo rol
+(`DOCENTE`), creada una vez porque cada alta es un registro real — igual que en
+`security/department-isolation.cy.ts` — y cada una la deja sin departamento asignado al terminar para
+no depender del orden en que corran.
+
 `cypress/e2e/security/access-control.cy.ts`
 
 Tres capas, tres formas distintas de probar el mismo RF:
@@ -255,7 +275,42 @@ Es Firebase, no la prueba: correr la suite muchas veces seguidas en poco tiempo 
 inicios de sesión reales contra el mismo proyecto en un par de minutos) puede disparar un límite de
 tasa transitorio. Espera un minuto y repite; si persiste, ahí sí es la cuenta.
 
-## Dos fallos que estas pruebas destaparon
+## Fallos que estas pruebas destaparon
+
+**Arreglado — un departamento sin director no se podía eliminar (`api.evd`).** Al preparar
+`admin/departments.cy.ts` apareció un departamento imposible de borrar tras asignarle un director y
+luego retirarlo, aunque `GET /departments/{id}` ya mostraba `director: null`. Tres capas del mismo
+descuido en `api/repositories/departments.py` y `api/repositories/directors.py`:
+
+1. `has_active_director` contaba cualquier fila de `directors` para ese departamento, sin filtrar por
+   `active`, así que un director ya retirado (`active=False`, la fila no se borra, solo se desactiva)
+   seguía bloqueando el borrado para siempre.
+2. Al corregir eso, `assign_director` dejaba pasar la reasignación de un ex-director a otro
+   departamento pero el `INSERT` violaba la restricción única de `directors.user_id` — esa fila
+   inactiva seguía ahí. Se corrigió reutilizando la fila existente del usuario (o la del
+   departamento) en vez de intentar crear una nueva, igual que ya hacía el código para el caso
+   simétrico por `department_id`.
+3. Incluso con eso, borrar el departamento seguía fallando: la fila inactiva del director conserva su
+   `department_id` y hay una FK dura hacia `departments`. `delete_department` ahora borra esa fila
+   (ya se validó que no hay director activo) antes de borrar el departamento.
+
+Las tres correcciones están en `api.evd`, verificadas con su suite de tests y contra el stack real
+antes de escribir el spec. Quedaron superadas por el siguiente cambio: `unassign_director` pasó de
+desactivar la fila a borrarla, así que ya no hay fila inactiva que limpiar ni FK que violar — ver
+abajo.
+
+**Cambiado — desasignar un director ahora borra la fila, no la desactiva (`api.evd`).** Con el
+esquema anterior (`active=False`), un director retirado seguía apareciendo en `/admin/directores`
+como "Inactivo" pero con su departamento de siempre en la columna correspondiente — como si aún lo
+dirigiera, solo que inactivo. `unassign_director` ahora hace lo mismo que "Eliminar" en esa pantalla:
+borra la fila de `directors` de verdad. Dos consecuencias:
+
+- El rol `DIRECTOR DE DEPARTAMENTO` del usuario también se retira al desasignar (mirror de que
+  `assign_director` ya lo añadía) — salvo que fuera su único rol, porque `UserUpdate.roles` exige al
+  menos uno.
+- El filtro "Inactivo" y la acción "Eliminar" de `/admin/directores` quedan sin nada que mostrar en el
+  flujo normal (una fila ya no puede quedar inactiva) — no se tocó esa pantalla, es candidata a
+  simplificar más adelante.
 
 **Arreglado — la edición de usuarios no llegaba a la API.** `useUpdateUser` hacía
 `PUT /users/{id}` con el id numérico, una ruta que la API no tiene: respondía
