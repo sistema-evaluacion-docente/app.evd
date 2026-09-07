@@ -84,6 +84,7 @@ export function LoginForm() {
           <Input
             id="email"
             name="email"
+            data-testid="login-email"
             type="email"
             autoComplete="email"
             placeholder="usuario@ufps.edu.co"
@@ -101,6 +102,7 @@ export function LoginForm() {
             <Input
               id="password"
               name="password"
+              data-testid="login-password"
               type={showPassword ? 'text' : 'password'}
               autoComplete="current-password"
               placeholder="••••••••"
@@ -124,6 +126,7 @@ export function LoginForm() {
         <Button
           type="submit"
           size="lg"
+          data-testid="login-submit"
           disabled={isLoadingEmailLogin}
           aria-busy={isLoadingEmailLogin}
           className="h-11 w-full"
@@ -147,6 +150,7 @@ export function LoginForm() {
           size="lg"
           onClick={handleLoginWithGoogle}
           aria-busy={isLoadingLogin}
+          data-testid="login-google"
           className="shadow-card h-11 w-full gap-3 border transition-shadow duration-200"
         >
           <img src="/google.svg" alt="Google" className="h-5 w-5" />
