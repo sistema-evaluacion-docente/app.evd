@@ -21,7 +21,7 @@ describe('Token de sesión', () => {
 
     // Navegación dentro de la app: ninguna petición sale sin firmar, y todas
     // llevan un token vigente de esta sesión.
-    cy.visit('/docentes')
+    cy.visit('/notificaciones')
     cy.wait('@apiRequest')
 
     cy.get('@apiRequest.all').then((calls) => {
@@ -45,7 +45,7 @@ describe('Token de sesión', () => {
   it('no envía ninguna petición sin sesión y manda al login', () => {
     cy.watchApi()
 
-    cy.visitApp('/evaluaciones')
+    cy.visitApp('/notificaciones')
 
     cy.location('pathname').should('eq', '/login')
     cy.contains('Acceso al sistema').should('be.visible')

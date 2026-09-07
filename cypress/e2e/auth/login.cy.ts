@@ -58,6 +58,17 @@ describe('Inicio de sesión', () => {
       cy.contains('Ingrese su correo y contraseña').should('be.visible')
       cy.get('@firebaseSignIn.all').should('have.length', 0)
     })
+
+    it('devuelve al usuario a donde iba antes de que le pidieran iniciar sesión', () => {
+      cy.visitApp('/notificaciones')
+
+      cy.location('pathname').should('eq', '/login')
+      cy.location('search').should('eq', '?next=%2Fnotificaciones')
+
+      cy.loginWithEmail()
+
+      cy.location('pathname').should('eq', '/notificaciones')
+    })
   })
 
   describe('con cuenta de Google', () => {
