@@ -148,12 +148,20 @@ describe('CommitmentDialog', () => {
 
     await userEvent.type(screen.getByLabelText(/Descripción del compromiso/), 'Aplicar rúbricas')
     await userEvent.type(screen.getByLabelText(/Meta esperada/), '7')
+
+    // El campo ya no deja entrar el valor: `7` nunca llega al borrador, así que
+    // la meta se queda vacía en vez de guardarse fuera de la escala. El
+    // `max` del input sigue siendo una pista — el formulario es `noValidate` —
+    // pero quien guarda es el `onChange`.
+    expect(screen.getByLabelText(/Meta esperada/)).toHaveValue(null)
+
     await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
 
-    // The `max` on the input is a hint, not a guard: the form is `noValidate`
-    // and typing straight over the spinner goes past it.
+    // Y sin meta no se guarda: la regla de rango vive en `commitmentErrors`,
+    // que es donde la prueba de `planValidation` la cubre para los planes que
+    // llegan del servidor con una meta que ya está fuera.
     expect(onSave).not.toHaveBeenCalled()
-    expect(screen.getByText('La meta debe estar entre 0.0 y 5.0.')).toBeInTheDocument()
+    expect(screen.getByText('Falta la meta esperada.')).toBeInTheDocument()
   })
 
   it('takes a meta at the top of the scale', async () => {
