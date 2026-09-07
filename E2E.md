@@ -14,6 +14,8 @@ Cubren estos RF:
 - **El administrador crea, consulta, actualiza y elimina departamentos, y asigna o retira el
   director de cada uno.**
 - **El administrador gestiona los programas académicos: los crea, consulta, actualiza y elimina.**
+- **El sistema gestiona cursos y grupos académicos, incluida la modalidad del grupo (presencial o a
+  distancia).**
 
 Corren contra la pila real: el proyecto real de Firebase y el backend real. No hay mocks de
 autenticación ni de la API — `cy.intercept` aparece solo para _observar_ una petición o para
@@ -168,6 +170,25 @@ no depender del orden en que corran.
 Como `/faculties/`, `/programs/` expone borrado real y no tiene relaciones con otros recursos (a
 diferencia de departamentos, sin facultad ni director que gestionar): cada prueba crea su propio
 programa desechable por API y lo deja limpio.
+
+`cypress/e2e/admin/academic-groups.cy.ts`
+
+- Crea un curso, lo consulta, actualiza su nombre y lo elimina.
+- Crea un grupo académico en modalidad presencial y lo encuentra filtrando el listado por esa
+  modalidad, no por la otra.
+- Cambia la modalidad de un grupo de presencial a distancia y lo comprueba tanto en el grupo como en
+  los dos filtros.
+- Elimina un grupo académico, que desaparece del listado.
+
+A diferencia de las demás pruebas de administración, no hay pantalla para esto: ni `/courses/` ni
+`/academic-groups/` tienen una página de gestión en la interfaz. En producción el sistema crea estos
+recursos al procesar el PDF de una evaluación — la modalidad se lee del título de cada página del
+documento, no de un formulario (`api/utils/modalities.py` en `api.evd`) — y lo único que toca la
+interfaz es de solo lectura (`CourseSelect`) o de edición parcial (`EvaluationCoursesReview`, que solo
+renombra un curso ya extraído). El resto de la gestión solo existe en la API, así que la prueba se
+queda en esa capa, como la parte "API" de `security/access-control.cy.ts`. Un periodo académico y un
+docente desechables se comparten entre las cuatro pruebas (`before`/`after`); cada curso y cada grupo
+son propios de su prueba y se borran al terminar.
 
 `cypress/e2e/security/access-control.cy.ts`
 
