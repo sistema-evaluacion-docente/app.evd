@@ -107,7 +107,7 @@ export function TeacherQuestionMatrix({
     <section className={className}>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-          Detalle por pregunta
+          Detalle por dimensión pedagógica
         </h2>
 
         <ScoreLegend />
@@ -130,7 +130,7 @@ export function TeacherQuestionMatrix({
                 aria-hidden="true"
                 className="size-3.5 shrink-0 transition-transform group-data-panel-open:rotate-90"
               />
-              Ver preguntas ({codes.length})
+              Ver indicadores ({codes.length})
             </CollapsibleTrigger>
 
             <CollapsibleContent>
@@ -172,15 +172,15 @@ export function TeacherQuestionMatrix({
                       />
                     ))}
 
-                    <tr className="border-border border-t font-medium">
-                      <td className="py-2 pr-2" colSpan={2}>
+                    <tr className="border-border border-t font-medium bg-muted/40">
+                      <td className="py-2 pr-2 font-semibold" colSpan={2}>
                         Promedio
                       </td>
 
                       {courses.map((course) => (
                         <td
                           key={course.course_name}
-                          className={`px-2 py-2 text-center tabular-nums ${getScoreToneClass(course.overall_average)}`}
+                          className={`px-2 py-2 text-center tabular-nums ${getScoreToneClass(course.overall_average)} font-bold`}
                         >
                           {course.overall_average.toFixed(2)}
                         </td>
