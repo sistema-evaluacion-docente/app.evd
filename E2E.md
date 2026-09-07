@@ -18,6 +18,8 @@ Cubren estos RF:
   distancia).**
 - **El director puede cargar los PDF oficiales de evaluación correspondientes a un periodo y a su
   departamento.**
+- **El sistema permite renombrar una materia conservando su código, para preservar el histórico y
+  las comparaciones entre periodos.**
 
 Corren contra la pila real: el proyecto real de Firebase y el backend real. No hay mocks de
 autenticación ni de la API — `cy.intercept` aparece solo para _observar_ una petición o para
@@ -213,6 +215,29 @@ la prueba limpia es lo suyo: la evaluación creada (borrarla exige el token del 
 departamento, ni siquiera ADMIN vale — `require_roles([DIRECTOR_DE_DEPARTAMENTO])` en la ruta) y las
 dos cuentas de director desechables.
 
+`cypress/e2e/evaluations/rename-course.cy.ts`
+
+- Un director sube el PDF real de evaluación, entra a "Revisar materias" y renombra una materia
+  en línea; el código, al lado, no cambia.
+
+Como `academic-groups.cy.ts` documenta, un curso no tiene pantalla de alta propia — solo existe a
+partir de un PDF procesado — así que el fixture es el mismo PDF de `upload.cy.ts`
+(`cypress/files/2025-1.pdf`, departamento fijo `99`) y una materia real que trae grabada
+("SISTEMAS OPERATIVOS", código `1155604`). El curso tiene grupos académicos asociados y
+`DELETE /courses/{id}` los rechaza, así que no se puede borrar: la prueba restaura el nombre
+original al terminar en vez de dejarlo con un nombre de prueba, y solo limpia del todo lo que sí
+puede — la evaluación que ella misma crea y la cuenta de director.
+
+Al verificar el RF contra el servidor real apareció un bug real: la única función que llama a esto
+en el frontend (`useUpdateCourse`) pedía `PUT /courses/{id}`, restringido a `ADMIN` en la API —
+pero las dos pantallas que la usan (esta y `/materias`) están restringidas a
+`DIRECTOR DE DEPARTAMENTO` en `security.ts`. Un director real que no fuera también `ADMIN` (el caso
+normal) recibía 403 y no podía renombrar nada. Se arregló en este repo (no hacía falta tocar
+`api.evd`, que ya tenía el endpoint correcto): ahora llama a `PATCH /courses/{id}/name`, restringido
+al director y a su propio departamento. Por eso la prueba usa una cuenta de un solo rol, creada de
+cero, en vez de la cuenta compartida multirol — con `ADMIN` de por medio el bug habría quedado
+invisible.
+
 `cypress/e2e/security/access-control.cy.ts`
 
 Tres capas, tres formas distintas de probar el mismo RF:
@@ -375,6 +400,15 @@ borra la fila de `directors` de verdad. Dos consecuencias:
 rutas que sí existen, `PUT /users/{uid}/roles` y `PATCH /users/{uid}/status`, direccionadas por el
 `uid` de Firebase. De paso, el formulario de edición dejó de ofrecer nombre y avatar: la API no tiene
 ninguna ruta para cambiarlos en otro usuario, así que esos campos solo podían tirar lo escrito.
+
+**Arreglado — renombrar una materia daba 403 a un director real.** `useUpdateCourse` llamaba a
+`PUT /courses/{id}`, restringido a `ADMIN` en la API. Las dos pantallas que lo usan
+(`EvaluationCoursesReview` en `/evaluaciones/:id/materias` y `SubjectsList` en `/materias`) están
+restringidas a `DIRECTOR DE DEPARTAMENTO` en `security.ts` — un director real que no fuera también
+`ADMIN` (el caso normal) recibía 403 al intentar renombrar. La API ya tenía el endpoint correcto,
+`PATCH /courses/{id}/name`, restringido al director y a su propio departamento; el frontend
+simplemente no lo usaba. Ahora `updateCourse()` llama a ese, y ambas pantallas quedaron corregidas
+con un solo cambio.
 
 **Pendiente, y es del backend — el rol `ADMIN` no se puede quitar.** `PUT /users/{uid}/roles`
 reemplaza bien salvo por ese rol, que se queda pegado:
