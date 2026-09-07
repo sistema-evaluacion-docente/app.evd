@@ -31,3 +31,9 @@ dist-ssr
 
 # Coverage artifacts
 coverage
+
+# Cypress
+cypress.env.json
+cypress/screenshots
+cypress/videos
+cypress/downloads
