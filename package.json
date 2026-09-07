@@ -13,8 +13,8 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "e2e": "cypress run",
-    "e2e:open": "cypress open --e2e --browser electron",
+    "e2e": "cypress run --browser chromium",
+    "e2e:open": "cypress open --e2e --browser chromium",
     "test:e2e": "start-server-and-test dev http://localhost:5173 e2e"
   },
   "dependencies": {
