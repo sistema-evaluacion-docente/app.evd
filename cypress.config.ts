@@ -14,6 +14,7 @@ export default defineConfig({
     expose: {
       apiUrl: env.VITE_API_URL || 'http://localhost:8000',
       authDomain: env.VITE_FIREBASE_AUTH_DOMAIN,
+      firebaseApiKey: env.VITE_FIREBASE_API_KEY,
     },
   },
 })
