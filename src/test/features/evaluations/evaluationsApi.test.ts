@@ -31,6 +31,17 @@ beforeEach(() => {
   mockApi.delete.mockResolvedValue({ data: null })
 })
 
+/**
+ * El envelope de un listado, que trae un array en `data`.
+ *
+ * El `{ data: {} }` que sirve para un recurso suelto no vale aquí: la lista se
+ * repuebla sola mientras haya un análisis en curso, y el `refetchInterval`
+ * recorre ese array en cuanto la respuesta entra en la caché.
+ */
+function listResponse(items: unknown[] = []) {
+  mockApi.get.mockResolvedValue({ data: items })
+}
+
 async function mutate<V>(hook: () => { mutateAsync: (vars: V) => Promise<unknown> }, vars: V) {
   const { result } = renderApiHook(hook)
 
@@ -52,6 +63,8 @@ describe('evaluationsKeys', () => {
 
 describe('queries', () => {
   it('drops the filters the table left empty', async () => {
+    listResponse()
+
     const call = await requestOf(() => evaluationsApi.useGetEvaluations(), mockApi.get)
 
     expect(call[0]).toBe('/evaluations')
@@ -59,6 +72,8 @@ describe('queries', () => {
   })
 
   it('sends every filter the table has on', async () => {
+    listResponse()
+
     const call = await requestOf(
       () =>
         evaluationsApi.useGetEvaluations({

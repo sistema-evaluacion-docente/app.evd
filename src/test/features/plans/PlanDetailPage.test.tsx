@@ -141,30 +141,42 @@ describe('PlanDetailPage · compromisos', () => {
     expect(screen.queryByText('Sin compromisos.')).not.toBeInTheDocument()
   })
 
-  it('counts the commitments, and the aspects they cover as context', () => {
+  it('counts the commitments under the heading', () => {
     mockPlan([item(1, 1, 'Expresa sus ideas'), item(2, 3, 'Retroalimenta tarde')])
 
     renderPage()
 
-    expect(screen.getByText('2 compromisos · 2 de 5 aspectos del formato.')).toBeInTheDocument()
+    expect(screen.getByText('2 compromisos')).toBeInTheDocument()
   })
 
-  // Two commitments on the same aspect used to read "1 de 5 aspectos con
-  // compromisos" right above two cards, which looks like the page lost one.
+  it('says it in singular when the plan agreed on one', () => {
+    mockPlan([item(1, 1, 'Expresa sus ideas')])
+
+    renderPage()
+
+    expect(screen.getByText('1 compromiso')).toBeInTheDocument()
+  })
+
+  // The line used to count the aspects instead, and that reads as a miscount:
+  // two commitments filed under the same one printed «1 de 5 aspectos con
+  // compromisos» directly above two cards. It counts the commitments
+  // themselves now, so sharing an aspect takes nothing off the total.
   it('counts both commitments when they share an aspect', () => {
     mockPlan([item(1, 2, 'Asiste puntualmente · Redes'), item(2, 2, 'Asiste puntualmente · Elect')])
 
     renderPage()
 
-    expect(screen.getByText('2 compromisos · 1 de 5 aspectos del formato.')).toBeInTheDocument()
+    expect(screen.getByText('2 compromisos')).toBeInTheDocument()
   })
 
+  // Same reason the other way round: a commitment without an aspect is shown
+  // under «Sin aspecto asignado», and used to be left out of the count.
   it('counts a commitment left without an aspect, which no aspect covers', () => {
     mockPlan([item(1, 1, 'Expresa sus ideas'), item(2, null, 'Compromiso suelto')])
 
     renderPage()
 
-    expect(screen.getByText('2 compromisos · 1 de 5 aspectos del formato.')).toBeInTheDocument()
+    expect(screen.getByText('2 compromisos')).toBeInTheDocument()
   })
 
   it('surfaces commitments left without an aspect instead of dropping them', () => {
