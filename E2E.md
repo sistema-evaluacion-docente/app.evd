@@ -13,6 +13,7 @@ Cubren estos RF:
 - **El administrador crea, consulta, actualiza y elimina facultades.**
 - **El administrador crea, consulta, actualiza y elimina departamentos, y asigna o retira el
   director de cada uno.**
+- **El administrador gestiona los programas académicos: los crea, consulta, actualiza y elimina.**
 
 Corren contra la pila real: el proyecto real de Firebase y el backend real. No hay mocks de
 autenticación ni de la API — `cy.intercept` aparece solo para _observar_ una petición o para
@@ -155,6 +156,18 @@ desechable por API. Las dos pruebas de director comparten una única cuenta Fire
 (`DOCENTE`), creada una vez porque cada alta es un registro real — igual que en
 `security/department-isolation.cy.ts` — y cada una la deja sin departamento asignado al terminar para
 no depender del orden en que corran.
+
+`cypress/e2e/admin/programs.cy.ts`
+
+- Crea un programa académico desde el formulario y lo encuentra después en el listado.
+- Busca un programa por nombre o código.
+- Actualiza el nombre, el código y el estado de un programa; al desactivarlo, desaparece de la
+  búsqueda por defecto.
+- Elimina un programa, que desaparece del listado.
+
+Como `/faculties/`, `/programs/` expone borrado real y no tiene relaciones con otros recursos (a
+diferencia de departamentos, sin facultad ni director que gestionar): cada prueba crea su propio
+programa desechable por API y lo deja limpio.
 
 `cypress/e2e/security/access-control.cy.ts`
 
