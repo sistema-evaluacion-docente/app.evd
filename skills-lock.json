@@ -17,6 +17,12 @@
       "sourceType": "autoskills-registry",
       "computedHash": "c124390cc3441844903ada94cb5820b23d922f2d0ad34e01e029e410197c8a32"
     },
+    "cypress": {
+      "source": "mindrally/skills",
+      "sourceType": "github",
+      "skillPath": "cypress/SKILL.md",
+      "computedHash": "c42eb6d509c085e0777dd28d58e292927cacae1a48581dd889ab4c63011ec1c5"
+    },
     "frontend-design": {
       "source": "anthropics/skills",
       "sourceType": "autoskills-registry",
