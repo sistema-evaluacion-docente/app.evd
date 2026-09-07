@@ -23,7 +23,7 @@ import { askedNothing, renderApiHook, requestOf, settled } from '@/test/apiHarne
  */
 
 vi.mock('@/config/axios', () => ({
-  default: { get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn() },
+  default: { get: vi.fn(), post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() },
 }))
 
 const authUser = { current: { department_id: 3, teacher_id: 11 } as Record<string, number> | null }
@@ -40,6 +40,7 @@ beforeEach(() => {
   mockApi.get.mockResolvedValue({ data: {} })
   mockApi.post.mockResolvedValue({ data: {} })
   mockApi.put.mockResolvedValue({ data: {} })
+  mockApi.patch.mockResolvedValue({ data: {} })
   mockApi.delete.mockResolvedValue({ data: undefined })
 })
 
@@ -214,11 +215,14 @@ describe('users', () => {
     await mutate(() => users.useCreateUser(), { email: 'ada@ufps.edu.co' } as never)
     expect(mockApi.post).toHaveBeenCalledWith('/users/', { email: 'ada@ufps.edu.co' })
 
+    // Roles y estado viajan por rutas distintas, ambas direccionadas por el
+    // `uid` de Firebase y no por el id numérico que muestra el listado.
     await mutate(() => users.useUpdateUser(), {
-      userId: 7,
-      payload: { active: false } as never,
+      uid: 'abc123',
+      payload: { active: false, roles: ['DOCENTE'] },
     })
-    expect(mockApi.put).toHaveBeenCalledWith('/users/7', { active: false })
+    expect(mockApi.put).toHaveBeenCalledWith('/users/abc123/roles', { roles: ['DOCENTE'] })
+    expect(mockApi.patch).toHaveBeenCalledWith('/users/abc123/status', { active: false })
   })
 })
 
