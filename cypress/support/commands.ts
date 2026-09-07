@@ -4,7 +4,8 @@ declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Cypress {
     interface Chainable {
-      visitApp(path: string): Chainable<void>
+      visitApp(path: string, role?: string): Chainable<void>
+      api(method: string, path: string, body?: unknown): Chainable<Cypress.Response<unknown>>
       watchApi(): Chainable<void>
       tamperToken(mode: 'expired' | 'missing'): Chainable<void>
       loginWithEmail(email?: string, password?: string): Chainable<void>
@@ -40,14 +41,61 @@ export function credentials(): Cypress.Chainable<{ email: string; password: stri
  * `cy.visit` más un borrado de la base IndexedDB donde Firebase guarda la
  * sesión: el aislamiento entre pruebas limpia cookies y storage, pero no esa,
  * y sin esto una prueba autenticada filtra su sesión a la siguiente.
+ *
+ * @param role Rol con el que debe arrancar la sesión, para una cuenta que tiene
+ * varios. Se deja en `localStorage` antes de que cargue la app, que es de donde
+ * la propia app lo lee al restaurar la sesión — el mismo camino que usa un
+ * usuario que ya eligió su rol en una visita anterior.
  */
-Cypress.Commands.add('visitApp', (path: string) => {
+Cypress.Commands.add('visitApp', (path: string, role?: string) => {
   cy.visit(path, {
     onBeforeLoad(win) {
       win.indexedDB.deleteDatabase('firebaseLocalStorageDb')
+
+      if (role) win.localStorage.setItem('selectedRole', role)
     },
   })
 })
+
+let cachedToken: string | undefined
+
+/** ID token de la cuenta de pruebas, pedido a Firebase una sola vez por spec. */
+function apiToken(): Cypress.Chainable<string> {
+  if (cachedToken) return cy.wrap(cachedToken, { log: false })
+
+  return credentials().then(({ email, password }) =>
+    cy
+      .request<{ idToken: string }>({
+        method: 'POST',
+        url: `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${Cypress.expose('firebaseApiKey')}`,
+        body: { email, password, returnSecureToken: true },
+        log: false,
+      })
+      .then((response) => {
+        cachedToken = response.body.idToken
+
+        return cachedToken
+      }),
+  )
+}
+
+/**
+ * Llama a la API real autenticado como la cuenta de pruebas.
+ *
+ * Es para **preparar y limpiar datos**, no para probar la app: lo que se prueba
+ * pasa por la interfaz. Falla la prueba si la API responde error, que es lo que
+ * se quiere de un `before` que no pudo dejar el escenario listo.
+ */
+Cypress.Commands.add('api', (method: string, path: string, body?: unknown) =>
+  apiToken().then((token) =>
+    cy.request<unknown>({
+      method,
+      url: apiUrl(path),
+      body: body as Cypress.RequestBody,
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+  ),
+)
 
 /**
  * Observa las peticiones a la API sin tocarlas: `req.continue()` las deja
