@@ -6,6 +6,8 @@ Cubren dos RF:
   rechazo del token vencido o ausente.**
 - **Un usuario con varios roles elige con cuál opera, y esa elección persiste en el navegador.**
 - **El administrador crea usuarios, los lista, reemplaza sus roles y activa o desactiva su estado.**
+- **Cada endpoint y cada ruta están restringidos por rol, y el menú oculta lo que el rol no puede
+  abrir. El filtrado del menú es una comodidad de interfaz; el control efectivo vive en la API.**
 
 Corren contra la pila real: el proyecto real de Firebase y el backend real. No hay mocks de
 autenticación ni de la API — `cy.intercept` aparece solo para _observar_ una petición o para
@@ -30,11 +32,29 @@ usuario que tiene varios, y sin un segundo rol no hay nada que elegir — `roles
 primera aserción con un mensaje que lo dice.
 
 Uno de esos roles tiene que ser **`ADMIN`**: `admin/users.cy.ts` entra a `/admin/usuarios`, que solo
-ese rol puede abrir.
+ese rol puede abrir. `security/access-control.cy.ts` necesita los tres roles del enum
+(`ADMIN`, `DOCENTE`, `DIRECTOR DE DEPARTAMENTO`) para la parte del menú, aunque esa parte la cubre la
+misma cuenta que ya usa todo lo demás — no hace falta nada nuevo ahí.
 
 Por lo demás los roles concretos dan igual. Las pruebas de autenticación no dan por hecho ninguno:
 leen los que la cuenta tenga y navegan solo a `/home` y `/notificaciones`, permitidas para los tres
 (ver `src/config/security.ts`).
+
+### Cuentas que las pruebas crean solas
+
+`security/access-control.cy.ts` no puede probar la restricción por rol con una cuenta que tiene los
+tres roles a la vez — necesita cuentas que genuinamente **no** tengan el rol que se está negando. Así
+que en su `before()` crea dos cuentas reales y desechables, una con solo `DOCENTE` y otra con solo
+`DIRECTOR DE DEPARTAMENTO`: primero un alta de verdad en Firebase
+(`accounts:signUp`, con la `firebaseApiKey` expuesta en `cypress.config.ts`), luego el alta en el
+backend con `cy.api()` fijando ese único rol. `after()` las deja inactivas, igual que
+`admin/users.cy.ts` con su usuario de prueba.
+
+Un `POST /users/` fallido a mitad de esa creación (un `institutional_code` repetido, por ejemplo)
+puede dejar un usuario de Firebase sin su contraparte en el backend — inofensivo, invisible en
+cualquier listado, pero no limpiable sin acceso al Admin SDK. El código de cada cuenta incluye la
+marca de tiempo de la corrida (`institutional_code: \`${marca}-${label}\``) precisamente para que dos
+corridas nunca choquen entre sí.
 
 ### Datos que dejan las pruebas
 
@@ -98,8 +118,28 @@ pnpm e2e --spec cypress/e2e/auth/token.cy.ts   # un solo archivo
 - Lista los usuarios y los busca por correo, con su código, roles y estado.
 - Crea un usuario desde el formulario y lo encuentra después en el listado.
 - Rechaza un correo que no es institucional y exige al menos un rol.
-- Reemplaza los roles de un usuario. **Falla hoy**, ver _Lo que no cubren_.
-- Desactiva y vuelve a activar a un usuario. **Falla hoy**, por lo mismo.
+- Reemplaza los roles de un usuario, cambiando entre Docente y Director.
+- Desactiva a un usuario, que desaparece del listado, y vuelve a activarlo.
+
+`cypress/e2e/security/access-control.cy.ts`
+
+Tres capas, tres formas distintas de probar el mismo RF:
+
+- **Menú** (comodidad de interfaz) — con la cuenta de tres roles cambiando de rol, como en
+  `roles.cy.ts`: cada rol ve en el menú lateral lo suyo y no lo de los otros dos.
+- **Rutas** (control de la interfaz, pero de verdad) — con las cuentas de un solo rol, entrando por
+  la interfaz: escribir a mano una ruta que el rol operado no puede abrir muestra «Acceso no
+  autorizado», no solo la esconde del menú; las suyas sí abren.
+- **API** (el control real) — llamando a los endpoints directamente con el token de esas cuentas, sin
+  pasar por la interfaz: los de solo administrador rechazan a ambas cuentas; los de solo director
+  rechazan a la de docente y aceptan a la de director; los comunes a cualquier autenticado aceptan a
+  las dos.
+
+Y la prueba que las conecta: un docente que fuerza el rol operado a `ADMIN` escribiendo directamente
+en `localStorage` (sin pasar por el selector de rol, que sí valida) consigue que el menú y la ruta se
+lo crean — pero la petición que la página de Usuarios dispara sale con su token real de docente, y la
+API la rechaza igual. El dato nunca llega, disfraz o no: la comodidad de interfaz es exactamente eso,
+comodidad; el candado real está en la API.
 
 `cypress/e2e/auth/token.cy.ts`
 
@@ -113,12 +153,13 @@ pnpm e2e --spec cypress/e2e/auth/token.cy.ts   # un solo archivo
 
 ### Comandos propios (`cypress/support/commands.ts`)
 
-| Comando                                  | Qué hace                                                                                                                                                                                                                                                                                           |
-| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `cy.visitApp(ruta)`                      | `cy.visit` + borrado de la IndexedDB donde Firebase guarda la sesión. El aislamiento entre pruebas limpia cookies y storage, pero no esa base: sin este borrado una prueba autenticada le filtra la sesión a la siguiente. Para navegar **dentro** de una sesión ya abierta usa `cy.visit` normal. |
-| `cy.watchApi()`                          | Registra las peticiones a la API bajo el alias `@apiRequest` sin tocarlas (`req.continue()`).                                                                                                                                                                                                      |
-| `cy.tamperToken('expired' \| 'missing')` | Sustituye el token por uno caducado o quita la cabecera `Authorization`, y deja que la petición llegue al backend: así el 401 lo emite el backend de verdad.                                                                                                                                       |
-| `cy.loginWithEmail()`                    | Rellena y envía el formulario. Sin argumentos usa la cuenta de pruebas.                                                                                                                                                                                                                            |
+| Comando                                            | Qué hace                                                                                                                                                                                                                                                                                           |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cy.visitApp(ruta)`                                | `cy.visit` + borrado de la IndexedDB donde Firebase guarda la sesión. El aislamiento entre pruebas limpia cookies y storage, pero no esa base: sin este borrado una prueba autenticada le filtra la sesión a la siguiente. Para navegar **dentro** de una sesión ya abierta usa `cy.visit` normal. |
+| `cy.watchApi()`                                    | Registra las peticiones a la API bajo el alias `@apiRequest` sin tocarlas (`req.continue()`).                                                                                                                                                                                                      |
+| `cy.tamperToken('expired' \| 'missing')`           | Sustituye el token por uno caducado o quita la cabecera `Authorization`, y deja que la petición llegue al backend: así el 401 lo emite el backend de verdad.                                                                                                                                       |
+| `cy.loginWithEmail()`                              | Rellena y envía el formulario. Sin argumentos usa la cuenta de pruebas.                                                                                                                                                                                                                            |
+| `cy.apiAs(email, password, método, ruta, cuerpo?)` | Como `cy.api()`, pero autenticado como una cuenta arbitraria en vez de la de pruebas por defecto — para comprobar qué le deja hacer la API a un rol concreto. A diferencia de `cy.api()`, no falla ante una respuesta de error: un 403 aquí suele ser justo lo que la prueba espera.               |
 
 ### Selectores
 
@@ -182,6 +223,11 @@ Compruébalo primero a mano:
 ```bash
 curl -i "$VITE_API_URL/users/auth"    # debe responder 401 AUTHENTICATION_FAILED
 ```
+
+**Un `before()` falla con `400 Bad Request` de Firebase, y las mismas credenciales funcionan a mano.**
+Es Firebase, no la prueba: correr la suite muchas veces seguidas en poco tiempo (varias decenas de
+inicios de sesión reales contra el mismo proyecto en un par de minutos) puede disparar un límite de
+tasa transitorio. Espera un minuto y repite; si persiste, ahí sí es la cuenta.
 
 ## Dos fallos que estas pruebas destaparon
 

@@ -6,6 +6,13 @@ declare global {
     interface Chainable {
       visitApp(path: string, role?: string): Chainable<void>
       api(method: string, path: string, body?: unknown): Chainable<Cypress.Response<unknown>>
+      apiAs(
+        email: string,
+        password: string,
+        method: string,
+        path: string,
+        body?: unknown,
+      ): Chainable<Cypress.Response<unknown>>
       watchApi(): Chainable<void>
       tamperToken(mode: 'expired' | 'missing'): Chainable<void>
       loginWithEmail(email?: string, password?: string): Chainable<void>
@@ -57,26 +64,30 @@ Cypress.Commands.add('visitApp', (path: string, role?: string) => {
   })
 })
 
-let cachedToken: string | undefined
+const tokenCache = new Map<string, string>()
 
-/** ID token de la cuenta de pruebas, pedido a Firebase una sola vez por spec. */
+/** ID token de una cuenta, pedido a Firebase una sola vez por spec y por correo. */
+function tokenFor(email: string, password: string): Cypress.Chainable<string> {
+  const cached = tokenCache.get(email)
+  if (cached) return cy.wrap(cached, { log: false })
+
+  return cy
+    .request<{ idToken: string }>({
+      method: 'POST',
+      url: `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${Cypress.expose('firebaseApiKey')}`,
+      body: { email, password, returnSecureToken: true },
+      log: false,
+    })
+    .then((response) => {
+      tokenCache.set(email, response.body.idToken)
+
+      return response.body.idToken
+    })
+}
+
+/** ID token de la cuenta de pruebas por defecto. */
 function apiToken(): Cypress.Chainable<string> {
-  if (cachedToken) return cy.wrap(cachedToken, { log: false })
-
-  return credentials().then(({ email, password }) =>
-    cy
-      .request<{ idToken: string }>({
-        method: 'POST',
-        url: `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${Cypress.expose('firebaseApiKey')}`,
-        body: { email, password, returnSecureToken: true },
-        log: false,
-      })
-      .then((response) => {
-        cachedToken = response.body.idToken
-
-        return cachedToken
-      }),
-  )
+  return credentials().then(({ email, password }) => tokenFor(email, password))
 }
 
 /**
@@ -95,6 +106,26 @@ Cypress.Commands.add('api', (method: string, path: string, body?: unknown) =>
       headers: { Authorization: `Bearer ${token}` },
     }),
   ),
+)
+
+/**
+ * Llama a la API real autenticado como una cuenta arbitraria, no la de pruebas
+ * por defecto. Para comprobar qué le deja hacer la API a un rol concreto: a
+ * diferencia de `cy.api`, no falla ante una respuesta de error — un 403 aquí
+ * es a menudo el resultado que la prueba espera, no un contratiempo.
+ */
+Cypress.Commands.add(
+  'apiAs',
+  (email: string, password: string, method: string, path: string, body?: unknown) =>
+    tokenFor(email, password).then((token) =>
+      cy.request<unknown>({
+        method,
+        url: apiUrl(path),
+        body: body as Cypress.RequestBody,
+        headers: { Authorization: `Bearer ${token}` },
+        failOnStatusCode: false,
+      }),
+    ),
 )
 
 /**
