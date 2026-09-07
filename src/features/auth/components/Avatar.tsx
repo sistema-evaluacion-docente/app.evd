@@ -60,7 +60,10 @@ export function Avatar() {
       </div>
 
       <DropdownMenu>
-        <DropdownMenuTrigger className="ring-offset-background focus-visible:ring-ring cursor-pointer rounded-full outline-none focus-visible:ring-2 focus-visible:ring-offset-2">
+        <DropdownMenuTrigger
+          data-testid="user-menu"
+          className="ring-offset-background focus-visible:ring-ring cursor-pointer rounded-full outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+        >
           <AvatarPrimitive size="lg" className="transition-shadow">
             <AvatarImage src={user?.avatar_url} alt={userName} />
 
