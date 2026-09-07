@@ -13,6 +13,7 @@ Cubren estos RF:
 - **El administrador crea, consulta, actualiza y elimina facultades.**
 - **El administrador crea, consulta, actualiza y elimina departamentos, y asigna o retira el
   director de cada uno.**
+- **El administrador gestiona los directores de departamento.**
 - **El administrador gestiona los programas académicos: los crea, consulta, actualiza y elimina.**
 - **El sistema gestiona cursos y grupos académicos, incluida la modalidad del grupo (presencial o a
   distancia).**
@@ -162,6 +163,25 @@ desechable por API. Las dos pruebas de director comparten una única cuenta Fire
 (`DOCENTE`), creada una vez porque cada alta es un registro real — igual que en
 `security/department-isolation.cy.ts` — y cada una la deja sin departamento asignado al terminar para
 no depender del orden en que corran.
+
+`cypress/e2e/admin/directors.cy.ts`
+
+- Busca y encuentra a un director en `/admin/directores`, con su departamento y su código
+  institucional visibles en la tabla.
+- Elimina un director desde esta pantalla (`DELETE /directors/{id}`, distinto del
+  `DELETE /departments/{id}/director` que prueba `admin/departments.cy.ts`): desaparece de la tabla,
+  el usuario pierde el rol `DIRECTOR DE DEPARTAMENTO` (conservando sus demás roles) y su departamento
+  vuelve a quedar sin director.
+
+Como en `departments.cy.ts`, no hay pantalla de alta ni de edición — la API expone
+`POST`/`PUT /directors/`, pero el frontend no los usa — así que el único camino real para que exista
+un director sigue siendo asignarlo desde un departamento (`POST /departments/{id}/director`). Cada
+prueba crea su propio departamento desechable y reutiliza la misma cuenta de un solo rol (`DOCENTE`).
+
+Límite conocido, sin arreglar a pedido del usuario: `GET /directors/` busca por nombre, correo y
+nombre/código del departamento, pero no por el `institutional_code` del director, aunque la columna
+"Código" lo muestra y el tipo `DirectorParams` del frontend documenta que sí se busca por él. La
+prueba busca por nombre, que sí funciona.
 
 `cypress/e2e/admin/programs.cy.ts`
 
@@ -409,6 +429,21 @@ restringidas a `DIRECTOR DE DEPARTAMENTO` en `security.ts` — un director real 
 `PATCH /courses/{id}/name`, restringido al director y a su propio departamento; el frontend
 simplemente no lo usaba. Ahora `updateCourse()` llama a ese, y ambas pantallas quedaron corregidas
 con un solo cambio.
+
+**Arreglado, y es del backend — eliminar un director desde `/admin/directores` no le quitaba el
+rol.** `DELETE /directors/{id}` borraba la fila pero nunca retiraba `DIRECTOR DE DEPARTAMENTO` del
+usuario, a diferencia de `DELETE /departments/{id}/director` (el otro camino de borrado), que sí lo
+hacía. El propio comentario del código de ese segundo camino decía que retirar el rol "ya era trabajo
+de `DirectorService.delete`" — pero `delete()` nunca lo hizo. Un director eliminado desde esta
+pantalla se quedaba viendo el menú y las rutas de director para siempre, sin ningún departamento a
+cargo. Se corrigió compartiendo la lógica entre los dos métodos (`_retire_director_role`, en
+`api.evd`).
+
+**Pendiente, a pedido del usuario — `GET /directors/` no busca por código institucional.** La columna
+"Código" de `/admin/directores` muestra el `institutional_code` del director, y el tipo
+`DirectorParams` del frontend documenta que la búsqueda lo cubre — pero `DirectorsRepository.search`
+solo filtra por nombre, correo y nombre/código del departamento. No bloquea el RF (buscar por nombre o
+correo funciona), así que se dejó tal cual; `admin/directors.cy.ts` busca por nombre por esta razón.
 
 **Pendiente, y es del backend — el rol `ADMIN` no se puede quitar.** `PUT /users/{uid}/roles`
 reemplaza bien salvo por ese rol, que se queda pegado:
