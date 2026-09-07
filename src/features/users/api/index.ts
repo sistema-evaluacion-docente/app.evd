@@ -23,11 +23,21 @@ async function createUser(payload: CreateUserPayload): Promise<ResponseAPI<Admin
   return api.post('/users/', payload)
 }
 
+/**
+ * Replaces a user's roles and sets their active status.
+ *
+ * There is no single endpoint that updates another user: `PUT /users/` only
+ * touches the caller's own record, so roles and status each have their own
+ * route. Both address the user by their Firebase `uid` — the numeric `id` that
+ * the list shows is not a key the API answers to.
+ */
 async function updateUser(
-  userId: number,
+  uid: string,
   payload: UpdateUserPayload,
 ): Promise<ResponseAPI<AdminUser>> {
-  return api.put(`/users/${userId}`, payload)
+  await api.put(`/users/${uid}/roles`, { roles: payload.roles })
+
+  return api.patch(`/users/${uid}/status`, { active: payload.active })
 }
 
 /** Query-key factory so list invalidations stay consistent. */
@@ -65,18 +75,18 @@ export function useGetUsers({
 }
 
 /**
- * Updates a user's profile (`PUT /users/{user_id}`).
- * Invalidates the users list on success.
+ * Replaces a user's roles and status (`PUT /users/{uid}/roles` plus
+ * `PATCH /users/{uid}/status`). Invalidates the users list on success.
  *
  * @example
  * const { mutate: updateUser } = useUpdateUser();
- * updateUser({ userId: 1, payload: { name: 'Juan', active: true, avatar_url: '', roles: ['DOCENTE'] } });
+ * updateUser({ uid: 'abc123', payload: { active: true, roles: ['DOCENTE'] } });
  */
 export function useUpdateUser() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ userId, payload }: { userId: number; payload: UpdateUserPayload }) =>
-      updateUser(userId, payload),
+    mutationFn: ({ uid, payload }: { uid: string; payload: UpdateUserPayload }) =>
+      updateUser(uid, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: usersKeys.lists() })
     },

@@ -23,12 +23,17 @@ export interface UserParams {
   limit: number
 }
 
-/** Payload for updating a user via `PUT /users/{user_id}`. */
+/**
+ * What an admin can change about another user, via `PUT /users/{uid}/roles` and
+ * `PATCH /users/{uid}/status`.
+ *
+ * Name and avatar are deliberately absent: the API has no route to change them
+ * on someone else's record, so offering them in the form would only mean
+ * throwing the input away in silence.
+ */
 export interface UpdateUserPayload {
-  name: string
   active: boolean
-  avatar_url: string
-  /** Roles assigned to the user (e.g. `['DOCENTE']`). */
+  /** Roles assigned to the user, replacing whatever they had (e.g. `['DOCENTE']`). */
   roles: string[]
 }
 
