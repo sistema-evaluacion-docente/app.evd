@@ -16,6 +16,8 @@ Cubren estos RF:
 - **El administrador gestiona los programas académicos: los crea, consulta, actualiza y elimina.**
 - **El sistema gestiona cursos y grupos académicos, incluida la modalidad del grupo (presencial o a
   distancia).**
+- **El director puede cargar los PDF oficiales de evaluación correspondientes a un periodo y a su
+  departamento.**
 
 Corren contra la pila real: el proyecto real de Firebase y el backend real. No hay mocks de
 autenticación ni de la API — `cy.intercept` aparece solo para _observar_ una petición o para
@@ -189,6 +191,27 @@ renombra un curso ya extraído). El resto de la gestión solo existe en la API, 
 queda en esa capa, como la parte "API" de `security/access-control.cy.ts`. Un periodo académico y un
 docente desechables se comparten entre las cuatro pruebas (`before`/`after`); cada curso y cada grupo
 son propios de su prueba y se borran al terminar.
+
+`cypress/e2e/evaluations/upload.cy.ts`
+
+- Un director asignado de verdad (`POST /departments/{id}/director`) a un departamento sube
+  `cypress/files/2025-1.pdf` — un PDF real de la universidad, no uno fabricado para la prueba — y
+  termina viendo la evaluación creada, con el periodo y el departamento que el propio PDF trae
+  grabados, no elegidos en el formulario.
+- Un director de otro departamento intenta subir el mismo PDF y la API lo rechaza: el departamento
+  que imprime el documento no es el suyo.
+
+El backend no recibe el periodo ni el departamento como campos del formulario: los lee del contenido
+del PDF (`api/utils/pdf_parser.py` en `api.evd`) — el título de cada página ("... Segundo Semestre de
+2025" → periodo `2025-2`) y la línea de departamento ("99 TESTING" → código `99`). Por eso, a
+diferencia del resto de fixtures de este repo, el departamento de la prueba no puede aleatorizarse con
+`marca`: viene fijo en el PDF, así que la prueba busca (o crea, si no existe) el departamento de
+código `99` y lo usa tal cual. El procesamiento en segundo plano crea profesores, cursos y grupos bajo
+ese departamento y ese periodo — igual que documenta `academic-groups.cy.ts` para el resto de PDFs de
+evaluación — y no hay forma de borrarlos en bloque, así que quedan puestos entre corridas. Lo único que
+la prueba limpia es lo suyo: la evaluación creada (borrarla exige el token del propio director del
+departamento, ni siquiera ADMIN vale — `require_roles([DIRECTOR_DE_DEPARTAMENTO])` en la ruta) y las
+dos cuentas de director desechables.
 
 `cypress/e2e/security/access-control.cy.ts`
 
