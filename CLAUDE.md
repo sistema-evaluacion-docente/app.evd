@@ -37,8 +37,10 @@ real backend, no mocks. That means they need `.env` filled in, the API reachable
 and a test account **with at least two roles, one of them `ADMIN`** (specs cover role switching and
 the admin user management): copy
 `cypress.env.example.json` to `cypress.env.json` (gitignored) with the `email` and `password` of that
-account, or export `CYPRESS_email` / `CYPRESS_password`. They run in Chromium, not the bundled
-Electron — `E2E.md` explains why. Public config
+account, or export `CYPRESS_email` / `CYPRESS_password`. The role-restriction spec additionally
+creates its own single-role scratch accounts on the fly (Firebase signup + backend user), since
+proving a role is denied needs an account that genuinely lacks it. They run in Chromium, not the
+bundled Electron — `E2E.md` explains why. Public config
 is read with `Cypress.expose('apiUrl')`; the credentials with `cy.env([...])`, which keeps them out of
 the logs. `cy.intercept` appears only to _observe_ or to _tamper with_ a request on its way to the
 real API (`cy.watchApi()`, `cy.tamperToken()`) — never to fake a response. Setup, commands and known
