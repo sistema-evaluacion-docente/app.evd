@@ -2,6 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 
 import type { ResponseAPI } from '@/@types/Response'
 import api from '@/config/axios'
+import { directorsKeys } from '@/features/directors'
 import type {
   CreateDepartmentPayload,
   Department,
@@ -152,7 +153,8 @@ export function useDeleteDepartment() {
 
 /**
  * Assigns a user as director of a department (`POST /departments/{department_id}/director`).
- * Invalidates the departments list on success.
+ * Invalidates the departments and directors lists on success — the assignment
+ * shows up in both `/admin/departamentos` and `/admin/directores`.
  *
  * @example
  * const { mutate: assignDirector } = useAssignDirector();
@@ -165,13 +167,15 @@ export function useAssignDirector() {
       assignDirector(departmentId, { user_id: userId }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: departmentsKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: directorsKeys.lists() })
     },
   })
 }
 
 /**
  * Unassigns the director of a department (`DELETE /departments/{department_id}/director`).
- * Invalidates the departments list on success.
+ * Invalidates the departments and directors lists on success — unassigning
+ * removes the record from `/admin/directores` too.
  *
  * @example
  * const { mutate: unassignDirector } = useUnassignDirector();
@@ -183,6 +187,7 @@ export function useUnassignDirector() {
     mutationFn: (departmentId: number) => unassignDirector(departmentId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: departmentsKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: directorsKeys.lists() })
     },
   })
 }
