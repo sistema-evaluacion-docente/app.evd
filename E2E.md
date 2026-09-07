@@ -24,6 +24,8 @@ Cubren estos RF:
   modalidades distintas.**
 - **El sistema permite renombrar una materia conservando su código, para preservar el histórico y
   las comparaciones entre periodos.**
+- **Extracción del docente, el curso, el grupo, las 22 preguntas, las 4 dimensiones, los puntajes y
+  los comentarios.**
 
 Corren contra la pila real: el proyecto real de Firebase y el backend real. No hay mocks de
 autenticación ni de la API — `cy.intercept` aparece solo para _observar_ una petición o para
@@ -283,6 +285,23 @@ normal) recibía 403 y no podía renombrar nada. Se arregló en este repo (no ha
 al director y a su propio departamento. Por eso la prueba usa una cuenta de un solo rol, creada de
 cero, en vez de la cuenta compartida multirol — con `ADMIN` de por medio el bug habría quedado
 invisible.
+
+`cypress/e2e/evaluations/pdf-extraction.cy.ts`
+
+- Un director sube el PDF real de evaluación y, tras esperar (sondeando `GET /evaluations/{id}`) a
+  que el procesamiento en segundo plano termine, comprueba lo que produjo: el docente aparece en
+  `GET /evaluations/period/{period_id}/teachers`, y su detalle
+  (`GET /evaluations/teachers/{teacher_id}/detail`) trae, por cada curso (materia + grupo) que
+  dictó, sus 4 dimensiones con las 22 preguntas — sin repetirse — y el puntaje de cada una.
+- Los comentarios de los estudiantes (`GET /evaluations/{evaluation_id}/teachers/{teacher_id}/comments`)
+  ya traen su texto extraído aunque el análisis de IA (`ai_status`) siga `PENDING`: la extracción no
+  depende de esa clasificación posterior.
+
+Como `academic-groups.cy.ts` y `upload.cy.ts`, no hay pantalla que "haga" esta extracción — es el
+resultado del procesamiento del PDF — así que la prueba se queda en la capa de API. Comparte el
+departamento fijo `99` y el mismo residuo entre corridas (profesores, cursos y grupos que el
+procesamiento deja y no se pueden borrar en bloque); solo limpia la evaluación que ella misma crea y
+su cuenta de director.
 
 `cypress/e2e/security/access-control.cy.ts`
 
