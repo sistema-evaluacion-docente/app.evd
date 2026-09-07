@@ -6,7 +6,7 @@ export interface CourseRecord {
   department_id: number | null
 }
 
-/** Payload for updating a course's name via `PUT /courses/{course_id}`. */
+/** Payload for renaming a course via `PATCH /courses/{course_id}/name`. */
 export interface UpdateCoursePayload {
   name: string
 }
