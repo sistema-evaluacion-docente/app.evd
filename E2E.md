@@ -1,7 +1,10 @@
 # Pruebas end-to-end (Cypress)
 
-Cubren el RF de **inicio de sesión con correo y con cuenta de Google, validación del token en cada
-petición y rechazo del token vencido o ausente**.
+Cubren dos RF:
+
+- **Inicio de sesión con correo y con cuenta de Google, validación del token en cada petición y
+  rechazo del token vencido o ausente.**
+- **Un usuario con varios roles elige con cuál opera, y esa elección persiste en el navegador.**
 
 Corren contra la pila real: el proyecto real de Firebase y el backend real. No hay mocks de
 autenticación ni de la API — `cy.intercept` aparece solo para _observar_ una petición o para
@@ -20,10 +23,14 @@ lentas y dependientes del entorno, y a cambio prueban lo que de verdad pasa en p
 
 ### La cuenta de pruebas
 
-Tiene que existir **en Firebase** (correo y contraseña) **y en el backend**, con el rol
-`DIRECTOR DE DEPARTAMENTO` y con departamento asignado: varias pruebas navegan a `/evaluaciones` y a
-`/docentes`, que son rutas de ese rol (ver `src/config/security.ts`). Con otro rol esas pruebas
-fallan en el `AppLayout`, no en la autenticación.
+Tiene que existir **en Firebase** (correo y contraseña) **y en el backend**, activa, y con **al menos
+dos roles**. Lo de los dos roles no es opcional: el RF de selección de rol trata justamente de un
+usuario que tiene varios, y sin un segundo rol no hay nada que elegir — `roles.cy.ts` falla en su
+primera aserción con un mensaje que lo dice.
+
+Los roles concretos dan igual. Las pruebas no dan por hecho ninguno: leen los que la cuenta tenga y
+navegan solo a `/home` y `/notificaciones`, que están permitidas para los tres roles (ver
+`src/config/security.ts`).
 
 Las credenciales son sensibles, así que no van en `cypress.config.ts` sino en `env`, que Cypress
 oculta de los logs. Dos formas, elige una:
@@ -62,6 +69,14 @@ pnpm e2e --spec cypress/e2e/auth/token.cy.ts   # un solo archivo
 - Devuelve al usuario a la ruta que pedía antes de que le mandaran al login (`?next=`).
 - El botón de Google abre el consentimiento contra el proyecto correcto de Firebase.
 
+`cypress/e2e/auth/roles.cy.ts`
+
+- El menú del avatar ofrece los roles de la cuenta y marca con cuál se está operando.
+- Al cambiar de rol cambia también el menú lateral, es decir, lo que el usuario puede hacer.
+- La elección queda guardada en el navegador y sobrevive a recargar y a volver a entrar.
+- Sin nada guardado, la app arranca en el primer rol de la cuenta.
+- Cerrar el menú sin elegir no cambia nada; cerrar sesión olvida el rol elegido.
+
 `cypress/e2e/auth/token.cy.ts`
 
 - Cada petición al backend viaja firmada con un ID token vigente de esta sesión.
@@ -83,22 +98,38 @@ pnpm e2e --spec cypress/e2e/auth/token.cy.ts   # un solo archivo
 
 ### Selectores
 
-Por `data-testid` (`login-email`, `login-password`, `login-submit`, `login-google`), no por clases de
-Tailwind ni por jerarquía de etiquetas. Si añades una prueba que necesita un elemento nuevo, añade
-también su `data-testid` en el componente.
+Por `data-testid` (`login-email`, `login-password`, `login-submit`, `login-google`, `user-menu`), no
+por clases de Tailwind ni por jerarquía de etiquetas. Si añades una prueba que necesita un elemento
+nuevo, añade también su `data-testid` en el componente.
+
+Para los menús desplegables se usan los `data-slot` que ya emiten los primitivos de shadcn
+(`dropdown-menu-content`, `dropdown-menu-radio-item`) y su `aria-checked` / `aria-expanded`, que son
+parte del contrato accesible del componente y no un detalle de estilo.
 
 ### Configuración
 
 `Cypress.expose('apiUrl')` y `Cypress.expose('authDomain')` para lo público; `cy.env([...])` para las
 credenciales. Ojo: Cypress 16 **eliminó** `Cypress.env()`, no lo uses.
 
+### Por qué Chromium
+
+Los scripts pasan `--browser chromium` a propósito. Con el Electron que Cypress trae de serie —que
+además está deprecado como navegador de pruebas— el `requestAnimationFrame` del iframe de la app no
+llega a dispararse, y eso rompe dos cosas de las que depende media suite:
+
+- `useNavigate` envuelve cada navegación en `document.startViewTransition`, cuyo callback es quien
+  cambia la ruta: la app se queda clavada en la pantalla anterior para siempre.
+- Los menús de Base UI abren dentro de un `requestAnimationFrame`, así que el menú del avatar nunca
+  llega a desplegarse.
+
+Ninguna de las dos es un fallo de la app: en Chromium, y en cualquier navegador de verdad, funcionan.
+Si alguna vez ves navegaciones que no ocurren o menús que no abren, comprueba primero con qué
+navegador estás corriendo.
+
 ### Detalles del entorno de pruebas
 
-- Las animaciones se apagan globalmente en `cypress/support/e2e.ts`: el navegador headless deja
-  `animation-fill-mode: both` clavado en su primer fotograma y `.animate-rise` se queda en
-  `opacity: 0`, con lo que Cypress da por invisible el formulario de acceso.
-- Las excepciones no capturadas se ignoran: una tabla que se atraganta pintando datos reales no es un
-  fallo de la autenticación, que es lo único que se prueba aquí.
+Las excepciones no capturadas se ignoran (`cypress/support/e2e.ts`): una tabla que se atraganta
+pintando datos reales no es un fallo de la autenticación, que es lo único que se prueba aquí.
 
 ## Problemas conocidos
 
@@ -109,6 +140,9 @@ exporta `ELECTRON_RUN_AS_NODE=1`. Pasa al correr desde una terminal integrada de
 env -u ELECTRON_RUN_AS_NODE pnpm e2e
 ```
 
+**Navegaciones que no ocurren, menús que no abren.** Estás corriendo en Electron. Usa `pnpm e2e`, que
+ya pasa `--browser chromium`; ver _Por qué Chromium_.
+
 **`cy.screenshot() timed out` en cada fallo.** En algunas configuraciones de display (Wayland) la
 captura se cuelga y tapa el error real con 30 s de espera. Para ver el fallo de verdad:
 
@@ -117,7 +151,8 @@ pnpm e2e --config screenshotOnRunFailure=false
 ```
 
 **Las pruebas que inician sesión fallan todas juntas.** Casi siempre es la cuenta: no existe en el
-backend, está inactiva, o no tiene el rol `DIRECTOR DE DEPARTAMENTO`. Compruébalo primero a mano:
+backend o está inactiva. Y si lo único que falla es `roles.cy.ts`, es que tiene un solo rol.
+Compruébalo primero a mano:
 
 ```bash
 curl -i "$VITE_API_URL/users/auth"    # debe responder 401 AUTHENTICATION_FAILED
