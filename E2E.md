@@ -10,6 +10,7 @@ Cubren estos RF:
   abrir. El filtrado del menú es una comodidad de interfaz; el control efectivo vive en la API.**
 - **Un director está aislado de los recursos de otro departamento: pedir el detalle de un recurso
   ajeno responde `403`, no un listado vacío.**
+- **El administrador crea, consulta, actualiza y elimina facultades.**
 
 Corren contra la pila real: el proyecto real de Firebase y el backend real. No hay mocks de
 autenticación ni de la API — `cy.intercept` aparece solo para _observar_ una petición o para
@@ -122,6 +123,18 @@ pnpm e2e --spec cypress/e2e/auth/token.cy.ts   # un solo archivo
 - Rechaza un correo que no es institucional y exige al menos un rol.
 - Reemplaza los roles de un usuario, cambiando entre Docente y Director.
 - Desactiva a un usuario, que desaparece del listado, y vuelve a activarlo.
+
+`cypress/e2e/admin/faculties.cy.ts`
+
+- Crea una facultad desde el formulario y la encuentra después en el listado, sin departamentos.
+- Busca una facultad por nombre o código.
+- Actualiza el nombre, el código y el estado de una facultad; al desactivarla, desaparece de la
+  búsqueda por defecto (que solo muestra activas).
+- Elimina una facultad, que desaparece del listado.
+
+A diferencia de usuarios, `/faculties/` sí expone borrado real: cada prueba crea su propia facultad
+desechable por API y la deja limpia — sin `institutional_code` ni Firebase de por medio, no hace
+falta nada del rastro que sí dejan las de usuarios.
 
 `cypress/e2e/security/access-control.cy.ts`
 
