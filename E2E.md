@@ -40,6 +40,10 @@ Cubren estos RF:
 - **El director debe poder corregir manualmente el nivel de riesgo y las categorías pedagógicas
   asignadas a un comentario.**
 - **El sistema debe listar como alertas los comentarios de riesgo alto asociados a un docente.**
+- **Toda mutación debe registrar un evento de auditoría con el usuario responsable y con una
+  descripción legible.**
+- **El administrador debe poder consultar el historial de auditoría de forma paginada y por
+  identificador.**
 
 Corren contra la pila real: el proyecto real de Firebase y el backend real. No hay mocks de
 autenticación ni de la API — `cy.intercept` aparece solo para _observar_ una petición o para
@@ -232,6 +236,35 @@ renombra un curso ya extraído). El resto de la gestión solo existe en la API, 
 queda en esa capa, como la parte "API" de `security/access-control.cy.ts`. Un periodo académico y un
 docente desechables se comparten entre las cuatro pruebas (`before`/`after`); cada curso y cada grupo
 son propios de su prueba y se borran al terminar.
+
+`cypress/e2e/admin/audit-log.cy.ts`
+
+- Crear, actualizar y eliminar una facultad por la interfaz deja un evento `CREATE`/`UPDATE`/`DELETE`
+  en `GET /audits/`, con el `user_id` y el correo de quien la hizo y una descripción en español que
+  nombra la facultad y su código (el cambio concreto, en el caso del `UPDATE`).
+- El evento del borrado sigue ahí después de que el recurso desaparece: la auditoría sobrevive a lo
+  auditado.
+- `/admin/historial` muestra el evento con su responsable (nombre y correo), la entidad
+  (`Facultades`) y la operación (`Crear`), y el detalle revela la descripción completa.
+
+Las facultades son la mutación representativa (`FacultyService` registra las tres operaciones con el
+`id` de quien llama): probar "toda mutación" entidad por entidad multiplicaría la suite sin
+probar ningún mecanismo nuevo. Como `/audits/` no expone borrado, cada ejecución deja sus eventos
+(con el prefijo `e2e-auditoria-`); las facultades sí se eliminan y no queda ninguna.
+
+`cypress/e2e/admin/audit-history.cy.ts`
+
+- El listado pagina en el servidor (`page`/`limit`, con `total` y `pages`): tres páginas de dos
+  eventos cubren los seis del fixture sin perder ni repetir ninguno.
+- `GET /audits/{id}` devuelve el registro completo (operación, elemento, descripción y actor), y un
+  identificador inexistente responde `404`.
+- `/admin/historial` pagina de verdad: con "Filas por página" en 5, seis eventos dan "Página 1 de 2"
+  y "Página 2 de 2", y el detalle de la última fila abre el registro que la API lista en último lugar.
+
+El fixture son seis facultades (seis eventos `CREATE` buscables juntos): seis porque el tamaño mínimo
+que ofrece la interfaz es 5 y hacen falta más de cinco para que haya dos páginas. Cada ejecución deja
+doce eventos (los seis `CREATE` más los seis `DELETE` de limpiar las facultades); no queda ninguna
+facultad.
 
 `cypress/e2e/evaluations/upload.cy.ts`
 
