@@ -35,6 +35,8 @@ Cubren estos RF:
   permisos. Los archivos subidos nunca se sirven como contenido estático.**
 - **El sistema debe clasificar cada comentario por nivel de riesgo y por categoría pedagógica
   mediante modelos de HuggingFace ejecutados de forma local.**
+- **El director debe poder consultar los comentarios filtrados y contarlos por departamento y
+  periodo, así como por docente y periodo.**
 
 Corren contra la pila real: el proyecto real de Firebase y el backend real. No hay mocks de
 autenticación ni de la API — `cy.intercept` aparece solo para _observar_ una petición o para
@@ -373,6 +375,38 @@ de una corrida anterior sin limpiar) que bloqueaba la subida con `409`; se borr�
 correr el spec — ver _Fallos que estas pruebas destaparon_ para el bug de roles que además destapó
 esa misma limpieza.
 
+`cypress/e2e/evaluations/comments.cy.ts`
+
+- Un director filtra, en `/comentarios`, los comentarios de su departamento por periodo (URL
+  `?period=`) y por docente (combobox "Docente"): el listado y su paginación coinciden con lo que
+  `GET /comments/` reporta para ese mismo filtro.
+- El conteo por departamento y periodo (`GET /comments/count`) y por docente y periodo
+  (`GET /comments/teacher-count`) coincide con el total que el propio listado filtrado reporta —
+  comprobado contra ese total, no contra un número fijo, para no depender de cuántos comentarios
+  trae exactamente el PDF de pruebas.
+- El conteo por departamento aísla en silencio (como `GET /comments/`): el de un director de otro
+  departamento siempre resuelve contra su propio `department_id`, nunca el ajeno.
+
+Ninguno de los dos conteos tiene pantalla propia — nada en el frontend consume esos dos endpoints —
+así que esa mitad de la prueba se queda en la capa de API, como el resumen y los promedios por
+dimensión de `security/evaluation-access.cy.ts`. El fixture es el mismo PDF real de
+`upload.cy.ts`/`pdf-extraction.cy.ts` (departamento fijo `99`, periodo `2025-2`), subido por un
+director recién creado; un segundo director, de un departamento real distinto, prueba el
+aislamiento. Mismo residuo entre corridas que esos specs (profesores/cursos/grupos que el
+procesamiento deja); esta prueba solo limpia la evaluación que crea y las dos cuentas de director.
+
+Arreglado, y es del backend — `GET /comments/teacher-count` no tenía ningún control de acceso.
+Verificado contra el servidor real antes de escribir esta prueba: la ruta dependía solo de
+`get_current_user`, sin `require_roles` ni comprobación de departamento, así que cualquier
+autenticado (probado con una cuenta de solo `DOCENTE`) podía pedir el conteo de comentarios de
+cualquier docente de cualquier departamento con solo su `teacher_id` — a diferencia de
+`GET /comments/` y `GET /comments/count`, los otros dos endpoints del mismo router, que sí exigen
+`DIRECTOR DE DEPARTAMENTO` y se acotan al departamento propio de quien llama. Se corrigió en
+`api.evd` (`count_comments_by_teacher_and_period`, en `api/routes/comments.py`): ahora exige ese
+mismo rol y compara el departamento del docente contra el del director que llama, el mismo patrón
+que ya usa `EvaluationService._assert_can_view_department`. Verificado con la suite de `api.evd` y
+de nuevo contra el servidor real (un director de otro departamento recibe `403`, no el conteo).
+
 `cypress/e2e/security/access-control.cy.ts`
 
 Tres capas, tres formas distintas de probar el mismo RF:
@@ -627,6 +661,17 @@ departamento. Solo `GET /evaluations/{id}/dimensions/detail` ya tenía la compro
 (`director.department_id == evaluation.department_id`). Se corrigió aplicando esa misma regla a los
 otros cuatro (`EvaluationService._assert_can_view_department`, en `api.evd`), verificado con la suite
 de `api.evd` y con `security/evaluation-access.cy.ts`.
+
+**Arreglado, y es del backend — `GET /comments/teacher-count` no tenía ningún control de acceso.**
+Al preparar `evaluations/comments.cy.ts` apareció que esta ruta dependía solo de
+`get_current_user`, sin `require_roles` ni comprobación de departamento — a diferencia de
+`GET /comments/` y `GET /comments/count`, los otros dos endpoints del mismo router, que sí exigen
+`DIRECTOR DE DEPARTAMENTO` y se acotan al departamento propio de quien llama. Cualquier autenticado
+(probado con una cuenta de solo `DOCENTE`) podía pedir el conteo de comentarios de cualquier
+docente de cualquier departamento con solo su `teacher_id`. Se corrigió en `api.evd`
+(`count_comments_by_teacher_and_period`, en `api/routes/comments.py`): ahora exige el rol
+`DIRECTOR DE DEPARTAMENTO` y compara el departamento del docente contra el del director que llama,
+el mismo patrón que ya usa `EvaluationService._assert_can_view_department`.
 
 ## Lo que no cubren
 
