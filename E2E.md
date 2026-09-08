@@ -31,6 +31,8 @@ Cubren estos RF:
 - **El sistema debe permitir consultar evaluaciones por identificador, por periodo y en listado
   paginado, junto con su resumen, sus promedios por dimensión y su detalle por dimensión. Solo por
   el director que tenga asignado ese departamento.**
+- **El director debe poder descargar el PDF original desde un endpoint con verificación de
+  permisos. Los archivos subidos nunca se sirven como contenido estático.**
 
 Corren contra la pila real: el proyecto real de Firebase y el backend real. No hay mocks de
 autenticación ni de la API — `cy.intercept` aparece solo para _observar_ una petición o para
@@ -332,6 +334,16 @@ que abre el socket desde Node en el instante en que llega el `202` — con el `W
 tarea, así que esa rama es inalcanzable con cualquier PDF, dañado o no: uno dañado nunca llega a esa
 tarea, porque el parseo (síncrono) responde `400`/`422` antes de programarla. No se fabricó un PDF
 para forzar esa rama porque, tal como está el código, no hay entrada que la alcance.
+
+`cypress/e2e/evaluations/pdf-download.cy.ts`
+
+- Un director de otro departamento pide el PDF y recibe `403`, por la API y por la interfaz
+  (`/evaluaciones/:id/pdf` muestra "No tiene permiso para ver este documento.", no un PDF).
+- El director del departamento de la evaluación lo descarga por la API (`200`) y la interfaz lo
+  muestra incrustado en esa misma ruta.
+- Sin token, `401`; el archivo guardado en disco, pedido directamente por su ruta
+  (`uploads/evaluations/...`), responde `404` — no hay `StaticFiles` montado en `api.evd` que lo
+  sirva como contenido estático, así que la única vía es el endpoint autenticado.
 
 `cypress/e2e/security/access-control.cy.ts`
 
