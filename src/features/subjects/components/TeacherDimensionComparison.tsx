@@ -217,7 +217,7 @@ function DimensionCard({
       {best && worst && best.entry !== worst.entry && (
         <div className="border-border text-muted-foreground border-b px-5 py-2 text-xs">
           <p>
-            <span className="font-medium text-green-600 dark:text-green-400">Mejor:</span>{' '}
+            <span className="font-medium text-green-600 dark:text-green-400">Mayor nota:</span>{' '}
             {best.entry.teacher_name} ({best.dimension.average.toFixed(2)})
           </p>
           <p>
