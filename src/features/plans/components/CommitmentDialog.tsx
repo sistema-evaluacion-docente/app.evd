@@ -354,21 +354,28 @@ function CommitmentForm({
                 max={SCORE_MAX}
                 className="w-28"
                 value={item.target_value ?? ''}
+                // The scale is what the meta means, so a number outside it
+                // never reaches the draft: the keystroke is dropped and the
+                // field keeps the last good value. `min`/`max` alone would not
+                // do it — the form is `noValidate` on purpose, so nothing stops
+                // a 7 typed straight over the spinner.
+                //
+                // Emptying the field is not the same as typing something wrong:
+                // it clears the meta back to «sin decidir», which is what the
+                // save then refuses with «Falta la meta esperada.».
                 onChange={(event) => {
-                  const inputValue = event.target.value;
-                  if (inputValue === '') {
-                    patch({ target_value: null });
-                    return; 
+                  const value = event.target.value
+
+                  if (value === '') {
+                    patch({ target_value: null })
+                    return
                   }
-              
-                  const numericValue = Number(inputValue);
-              
-                  if (numericValue < SCORE_MIN || numericValue > SCORE_MAX) {
-                    return; 
-                  }
-              
-                  // 3. Si pasa la validación, actualizamos el estado
-                  patch({ target_value: numericValue });
+
+                  const score = Number(value)
+
+                  if (score < SCORE_MIN || score > SCORE_MAX) return
+
+                  patch({ target_value: score })
                 }}
                 onBlur={() => markTouched(targetId)}
                 aria-invalid={Boolean(invalidFields.get(targetId))}

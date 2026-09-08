@@ -317,7 +317,7 @@ describe('PlanFormPage · creación', () => {
     // alargar la sección con tres cajas de texto en blanco.
     expect(screen.queryByLabelText(/Observaciones del Consejo/)).not.toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole('button', { name: /^Observaciones/ }))
+    await userEvent.click(screen.getByRole('button', { name: /^Añadir Observaciones/ }))
 
     expect(await screen.findByLabelText(/Observaciones del Consejo/)).toBeInTheDocument()
     expect(screen.getByLabelText(/director de departamento/)).toBeInTheDocument()
@@ -329,9 +329,9 @@ describe('PlanFormPage · creación', () => {
 
     renderAt(<PlanFormPage />)
 
-    const open = screen.getByRole('button', { name: /^Observaciones/ })
+    const open = screen.getByRole('button', { name: /^Añadir Observaciones/ })
 
-    expect(open).toHaveTextContent(/^Observaciones$/)
+    expect(open).toHaveTextContent(/^Añadir Observaciones$/)
 
     await userEvent.click(open)
     await userEvent.type(
@@ -340,7 +340,7 @@ describe('PlanFormPage · creación', () => {
     )
     await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
 
-    expect(screen.getByRole('button', { name: /^Observaciones/ })).toHaveTextContent('1')
+    expect(screen.getByRole('button', { name: /^Añadir Observaciones/ })).toHaveTextContent('1')
   })
 
   it('descarta lo escrito si se cancela en vez de guardar', async () => {
@@ -348,7 +348,7 @@ describe('PlanFormPage · creación', () => {
 
     renderAt(<PlanFormPage />)
 
-    await userEvent.click(screen.getByRole('button', { name: /^Observaciones/ }))
+    await userEvent.click(screen.getByRole('button', { name: /^Añadir Observaciones/ }))
     await userEvent.type(
       await screen.findByLabelText(/director de programa/),
       'Esto no debería quedar',
@@ -357,8 +357,8 @@ describe('PlanFormPage · creación', () => {
 
     // Ni cuenta en la pastilla ni aparece como tarjeta: el diálogo escribe
     // sobre una copia y sólo «Guardar» la vuelca.
-    expect(screen.getByRole('button', { name: /^Observaciones/ })).toHaveTextContent(
-      /^Observaciones$/,
+    expect(screen.getByRole('button', { name: /^Añadir Observaciones/ })).toHaveTextContent(
+      /^Añadir Observaciones$/,
     )
     expect(screen.queryByText('Esto no debería quedar')).not.toBeInTheDocument()
   })
@@ -368,7 +368,7 @@ describe('PlanFormPage · creación', () => {
 
     renderAt(<PlanFormPage />)
 
-    await userEvent.click(screen.getByRole('button', { name: /^Observaciones/ }))
+    await userEvent.click(screen.getByRole('button', { name: /^Añadir Observaciones/ }))
     await userEvent.type(
       await screen.findByLabelText(/director de departamento/),
       'Acompañamiento quincenal',
@@ -382,8 +382,8 @@ describe('PlanFormPage · creación', () => {
     )
 
     expect(screen.queryByText('Acompañamiento quincenal')).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /^Observaciones/ })).toHaveTextContent(
-      /^Observaciones$/,
+    expect(screen.getByRole('button', { name: /^Añadir Observaciones/ })).toHaveTextContent(
+      /^Añadir Observaciones$/,
     )
   })
 
@@ -392,7 +392,7 @@ describe('PlanFormPage · creación', () => {
 
     renderAt(<PlanFormPage />)
 
-    await userEvent.click(screen.getByRole('button', { name: /^Observaciones/ }))
+    await userEvent.click(screen.getByRole('button', { name: /^Añadir Observaciones/ }))
     await userEvent.type(await screen.findByLabelText(/director de programa/), 'Desde el programa')
     await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
 
@@ -625,7 +625,7 @@ describe('PlanFormPage · creación', () => {
 
     renderAt(<PlanFormPage />)
 
-    await userEvent.click(screen.getByRole('button', { name: /^Observaciones/ }))
+    await userEvent.click(screen.getByRole('button', { name: /^Añadir Observaciones/ }))
     await screen.findByLabelText(/Observaciones del Consejo/)
 
     for (const label of [/Observaciones del Consejo/, /director de departamento/]) {

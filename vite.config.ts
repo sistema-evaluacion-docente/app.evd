@@ -21,6 +21,11 @@ export default defineConfig(({ mode }) => ({
     setupFiles: './src/test/setup.ts',
     globals: true,
     css: false,
+    // Los 5s por defecto se quedan cortos con la suite entera en paralelo y el
+    // coverage instrumentando encima: los tests que teclean con `userEvent`
+    // pasan de sobra en aislado y caducaban de a dos o tres, distintos en cada
+    // corrida. Lo que tardan es la máquina, no el componente.
+    testTimeout: 15_000,
     coverage: {
       include: ['src/**'],
       exclude: ['src/test/**', 'src/**/*.d.ts'],

@@ -166,14 +166,41 @@ describe('EvaluationsList', () => {
     await waitFor(() => expect(mockApi.delete).toHaveBeenCalledWith('/evaluations/9'))
   })
 
-  it('offers the AI analysis only where it has not run yet', async () => {
+  // Se espera al menú con `findBy` en vez de mirar el documento de una vez: el
+  // contenido sale por un portal, y una aserción síncrona sobre la ausencia del
+  // ítem pasaba sin haberlo visto abrirse siquiera.
+  it('keeps the AI analysis on offer for a report already analysed', async () => {
     const user = userEvent.setup()
 
     renderRouted(<EvaluationsList />)
     await openRowMenu(user, '2028-1')
 
-    // This one is already ANALYZED.
-    expect(screen.queryByRole('menuitem', { name: 'Analizar con IA' })).not.toBeInTheDocument()
+    // Ya está ANALYZED, y aun así se ofrece: volver a correrlo es la vía para
+    // reclasificar los comentarios cuando cambian los modelos.
+    expect(await screen.findByRole('menuitem', { name: 'Analizar con IA' })).not.toHaveAttribute(
+      'data-disabled',
+    )
+  })
+
+  it('holds it back while an analysis is already running on that report', async () => {
+    const user = userEvent.setup()
+    const analyzing = [{ ...EVALUATIONS[0], ai_status: 'ANALYZING' }]
+
+    mockApi.get.mockImplementation((url: string) => {
+      if (url.includes('/academic-periods')) return Promise.resolve({ data: PERIODS })
+      if (url.startsWith('/evaluations')) return Promise.resolve(page(analyzing))
+
+      return Promise.resolve(page([]))
+    })
+
+    renderRouted(<EvaluationsList />)
+    await openRowMenu(user, '2028-1')
+
+    // Pedirlo dos veces lanzaría un segundo análisis sobre los mismos
+    // comentarios, así que el ítem sigue a la vista pero sin poder pulsarse.
+    expect(await screen.findByRole('menuitem', { name: 'Analizar con IA' })).toHaveAttribute(
+      'data-disabled',
+    )
   })
 
   it('searches on the server', async () => {
