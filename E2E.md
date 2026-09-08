@@ -33,6 +33,8 @@ Cubren estos RF:
   el director que tenga asignado ese departamento.**
 - **El director debe poder descargar el PDF original desde un endpoint con verificación de
   permisos. Los archivos subidos nunca se sirven como contenido estático.**
+- **El sistema debe clasificar cada comentario por nivel de riesgo y por categoría pedagógica
+  mediante modelos de HuggingFace ejecutados de forma local.**
 
 Corren contra la pila real: el proyecto real de Firebase y el backend real. No hay mocks de
 autenticación ni de la API — `cy.intercept` aparece solo para _observar_ una petición o para
@@ -345,6 +347,32 @@ para forzar esa rama porque, tal como está el código, no hay entrada que la al
   (`uploads/evaluations/...`), responde `404` — no hay `StaticFiles` montado en `api.evd` que lo
   sirva como contenido estático, así que la única vía es el endpoint autenticado.
 
+`cypress/e2e/evaluations/ai-analysis.cy.ts`
+
+- Un director sube el PDF real de evaluación y, ya `COMPLETED`, entra a `/evaluaciones/:id` y hace
+  clic en "Analizar" (el mismo disparador que "Analizar con IA" en el listado): el badge de
+  "Análisis con IA" pasa de "Pendiente" a "Completado" solo, sin que la prueba sondee la API — el
+  análisis corre en segundo plano (`POST /evaluations/{id}/analyze`, `BackgroundTasks`) y reporta
+  por el mismo canal WebSocket que ya usa la subida del PDF, así que la app invalida la consulta y
+  refresca el badge cuando termina.
+- Confirma por API que cada comentario de la evaluación quedó con nivel de riesgo, su puntaje y el
+  modelo de HuggingFace local que lo asignó, y que al menos uno tiene categoría pedagógica con su
+  propio modelo — los dos pipelines de `api/utils/ai_analyzer.py` (`transformers`, modelos cargados
+  una sola vez y reutilizados, no un servicio externo) corrieron de verdad.
+
+A diferencia de las demás pruebas de evaluaciones, esta no da de alta una cuenta de Firebase nueva:
+el self-signup está deshabilitado en el proyecto (`accounts:signUp` responde
+`400 ADMIN_ONLY_OPERATION`), así que reutiliza una directora ya existente — cualquier cuenta que otra
+prueba haya creado y dejado inactiva y sin departamento en su `after()` — la promueve temporalmente
+al departamento `99` que exige el PDF, y al terminar la deja como la encontró. Si el entorno no tiene
+ninguna (recién sembrado, sin residuo de otras pruebas), falla con un mensaje explícito en vez de
+intentar darla de alta.
+
+Al preparar esta prueba apareció una evaluación huérfana en el departamento `99` (periodo `2025-2`,
+de una corrida anterior sin limpiar) que bloqueaba la subida con `409`; se borró a mano antes de
+correr el spec — ver _Fallos que estas pruebas destaparon_ para el bug de roles que además destapó
+esa misma limpieza.
+
 `cypress/e2e/security/access-control.cy.ts`
 
 Tres capas, tres formas distintas de probar el mismo RF:
@@ -574,6 +602,21 @@ PUT   roles=['DIRECTOR']  ->  ['DIRECTOR', 'ADMIN']
 Por eso la prueba de reemplazo cambia entre Docente y Director sin pasar por Administrador: con
 ADMIN de por medio estaría comprobando un reemplazo que el backend no llega a hacer. El arreglo va en
 `api.evd`, no aquí.
+
+**Pendiente, y es del backend — `PUT /users/{uid}/roles` le regala ADMIN a cualquier usuario que un
+admin edite, no solo cuando el objetivo ya era admin.** Descubierto preparando
+`ai-analysis.cy.ts`: `UserService.replace_roles` añade `RoleName.ADMIN` a la lista de roles
+_siempre que el llamador (`requester_roles`) sea admin_, sin comprobar si el usuario objetivo lo era.
+Es más amplio que el bug de arriba (que solo describe que ADMIN no se puede _quitar_ de una cuenta
+que ya lo tenía): aquí una llamada tan inocente como "reemplaza los roles de este docente por
+`['DOCENTE']`", hecha por cualquier admin, dejaría a ese docente también como ADMIN. Se disparó sin
+querer al limpiar el fixture de `ai-analysis.cy.ts` (una restauración de roles que ya no hace falta,
+ver ese spec) y, combinado con el bug de arriba, dejó una cuenta de prueba
+(`e2e-analisis-1788833038229@ufps.edu.co`, id `355`) con `ADMIN` pegado para siempre — inofensiva
+(es una cuenta desechable más, como la que deja `admin/users.cy.ts`), pero ya no sirve como director
+de pruebas: `ai-analysis.cy.ts` la excluye sola de sus candidatos porque busca por
+`roles=DIRECTOR DE DEPARTAMENTO`, que esta cuenta ya no tiene. No se arregló a pedido del usuario; el
+arreglo va en `api.evd` (`UserService.replace_roles`), no aquí.
 
 **Arreglado, y es del backend — 4 de las 6 formas de consultar una evaluación no aislaban por
 departamento.** `GET /evaluations/{id}`, `GET /evaluations/by-period/{id}`,
