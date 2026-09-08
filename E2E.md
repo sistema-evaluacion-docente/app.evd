@@ -39,6 +39,7 @@ Cubren estos RF:
   periodo, así como por docente y periodo.**
 - **El director debe poder corregir manualmente el nivel de riesgo y las categorías pedagógicas
   asignadas a un comentario.**
+- **El sistema debe listar como alertas los comentarios de riesgo alto asociados a un docente.**
 
 Corren contra la pila real: el proyecto real de Firebase y el backend real. No hay mocks de
 autenticación ni de la API — `cy.intercept` aparece solo para _observar_ una petición o para
@@ -428,6 +429,26 @@ elegido al azar. Verificado contra el servidor real antes de escribir el spec: n
 bug, el aislamiento por departamento ya funcionaba. Mismo fixture y mismo residuo entre corridas que
 `evaluations/comments.cy.ts` (PDF real, departamento fijo `99`, profesores/cursos/grupos que el
 procesamiento deja); esta prueba solo limpia la evaluación que crea y las dos cuentas de director.
+
+`cypress/e2e/evaluations/alerts.cy.ts`
+
+- `/alertas` lista el comentario de riesgo alto de un docente y no el de riesgo bajo de otro,
+  aunque los dos estén clasificados y en el mismo departamento y periodo.
+- `/alertas/:teacherId` acota además por docente: el docente con el comentario de riesgo alto lo
+  ve; el docente cuyo único comentario clasificado es de riesgo bajo ve el mensaje vacío propio de
+  esta pantalla, no las alertas de otro.
+
+"Alertas" es la misma pantalla y el mismo `GET /comments/` que `/comentarios`
+(`evaluations/comments.cy.ts`), con el nivel de riesgo fijado a `ALTO` (`AlertsPage` pasa
+`riskLevel={3}` a `CommentsList`, que entonces oculta el filtro "Nivel de riesgo"). El fixture usa
+la corrección manual del director (`PATCH /comments/{id}`, el mismo mecanismo que
+`comment-classification.cy.ts`) para clasificar dos comentarios recién extraídos del PDF — uno
+`ALTO`, otro `BAJO` — en vez de correr el análisis de IA completo (varios minutos): más rápido, y
+necesario para comprobar que la lista de alertas discrimina por nivel, no que solo excluye lo
+todavía sin clasificar. Verificado contra el servidor real antes de escribir la prueba: no apareció
+ningún bug. Mismo fixture y mismo residuo entre corridas que esos dos specs (PDF real, departamento
+fijo `99`, profesores/cursos/grupos que el procesamiento deja); esta prueba solo limpia la
+evaluación que crea y su cuenta de director.
 
 `cypress/e2e/security/access-control.cy.ts`
 
