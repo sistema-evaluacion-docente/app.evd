@@ -26,6 +26,8 @@ Cubren estos RF:
   las comparaciones entre periodos.**
 - **Extracción del docente, el curso, el grupo, las 22 preguntas, las 4 dimensiones, los puntajes y
   los comentarios.**
+- **El procesamiento de las evaluaciones debe ejecutarse en segundo plano y reportar su progreso en
+  tiempo real. La evaluación transita por los estados PROCESSING, COMPLETED o FAILED.**
 
 Corren contra la pila real: el proyecto real de Firebase y el backend real. No hay mocks de
 autenticación ni de la API — `cy.intercept` aparece solo para _observar_ una petición o para
@@ -302,6 +304,31 @@ resultado del procesamiento del PDF — así que la prueba se queda en la capa d
 departamento fijo `99` y el mismo residuo entre corridas (profesores, cursos y grupos que el
 procesamiento deja y no se pueden borrar en bloque); solo limpia la evaluación que ella misma crea y
 su cuenta de director.
+
+`cypress/e2e/evaluations/processing-status.cy.ts`
+
+- Subir un PDF responde `202` con la evaluación ya creada pero en `status: "PROCESSING"` — el
+  procesamiento se ejecuta en segundo plano, no bloquea la respuesta.
+- El canal de progreso en tiempo real (`GET /ws/evaluations/{id}`, un WebSocket, la vía rápida que usa
+  `useEvaluationLogsStore`) recibe eventos mientras la tarea corre, y el último trae el estado final:
+  `stage: "UPLOADING"`, `status: "COMPLETED"`. Ese mismo estado es el que después confirma
+  `GET /evaluations/{id}` — las dos vías de reporte (WebSocket en vivo, sondeo de respaldo) concuerdan.
+
+Como `upload.cy.ts` y `pdf-extraction.cy.ts`, no hay pantalla propia para "el procesamiento" — es lo
+que pasa tras subir un PDF — así que la prueba se queda en la capa de API, con un añadido: el backend
+no reproduce eventos para un cliente que se conecta tarde a ese WebSocket, y el procesamiento de este
+PDF termina en menos de un segundo, así que un comando normal de Cypress (que pierde tiempo yendo y
+viniendo entre el navegador y el proceso de Cypress) llega tarde a la carrera. La subida y la escucha
+del WebSocket corren juntas en un solo `cy.task` (`uploadAndWatchProgress`, en `cypress.config.ts`),
+que abre el socket desde Node en el instante en que llega el `202` — con el `WebSocket` global de Node
+20, sin añadir el paquete `ws`.
+
+`FAILED`, verificado y no forzado: el único punto donde el procesamiento en segundo plano pone
+`status: "FAILED"` es si el periodo o el departamento no existen tras parsear el PDF — pero
+`prepare_upload` (en `api.evd`) ya crea el periodo y valida el departamento _antes_ de programar esa
+tarea, así que esa rama es inalcanzable con cualquier PDF, dañado o no: uno dañado nunca llega a esa
+tarea, porque el parseo (síncrono) responde `400`/`422` antes de programarla. No se fabricó un PDF
+para forzar esa rama porque, tal como está el código, no hay entrada que la alcance.
 
 `cypress/e2e/security/access-control.cy.ts`
 
