@@ -37,6 +37,8 @@ Cubren estos RF:
   mediante modelos de HuggingFace ejecutados de forma local.**
 - **El director debe poder consultar los comentarios filtrados y contarlos por departamento y
   periodo, así como por docente y periodo.**
+- **El director debe poder corregir manualmente el nivel de riesgo y las categorías pedagógicas
+  asignadas a un comentario.**
 
 Corren contra la pila real: el proyecto real de Firebase y el backend real. No hay mocks de
 autenticación ni de la API — `cy.intercept` aparece solo para _observar_ una petición o para
@@ -406,6 +408,26 @@ cualquier docente de cualquier departamento con solo su `teacher_id` — a difer
 mismo rol y compara el departamento del docente contra el del director que llama, el mismo patrón
 que ya usa `EvaluationService._assert_can_view_department`. Verificado con la suite de `api.evd` y
 de nuevo contra el servidor real (un director de otro departamento recibe `403`, no el conteo).
+
+`cypress/e2e/evaluations/comment-classification.cy.ts`
+
+- Un director corrige, desde `/comentarios`, el nivel de riesgo y la categoría pedagógica de un
+  comentario recién extraído del PDF y sin clasificar todavía (`risk_level: null`,
+  `pedagogical_categories: []`) — el popover "Editar clasificación" que cuelga de cada tarjeta
+  cuando quien mira opera como director (`PATCH /comments/{comment_id}`).
+- Lo guardado coincide con lo que muestra la interfaz: el nivel y la categoría elegidos, el puntaje
+  de certeza en `1` (una decisión humana, no una estimación de IA), sin modelo de IA asociado, y las
+  dos marcas de "modificado por el director".
+- Un director de otro departamento recibe `403` al intentar la misma corrección, y el comentario
+  sigue con la clasificación que puso el dueño, no la que intentó el de afuera.
+
+El comentario objetivo se elige por API (`GET /comments/` sin más filtro que el periodo, la misma
+consulta que hace `CommentsList` al entrar a la página), no por su texto ni por su posición en el
+DOM — así la prueba no depende de qué trae exactamente el PDF ni de en qué página cae un comentario
+elegido al azar. Verificado contra el servidor real antes de escribir el spec: no apareció ningún
+bug, el aislamiento por departamento ya funcionaba. Mismo fixture y mismo residuo entre corridas que
+`evaluations/comments.cy.ts` (PDF real, departamento fijo `99`, profesores/cursos/grupos que el
+procesamiento deja); esta prueba solo limpia la evaluación que crea y las dos cuentas de director.
 
 `cypress/e2e/security/access-control.cy.ts`
 
