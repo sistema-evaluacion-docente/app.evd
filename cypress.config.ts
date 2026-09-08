@@ -1,11 +1,19 @@
 import { readFileSync } from 'node:fs'
 
 import { defineConfig } from 'cypress'
+import mochawesomeReporterPlugin from 'cypress-mochawesome-reporter/plugin'
 import { loadEnv } from 'vite'
 
 const env = loadEnv('development', process.cwd(), 'VITE_')
 
 export default defineConfig({
+  reporter: 'cypress-mochawesome-reporter',
+  reporterOptions: {
+    reportDir: 'cypress/reports',
+    charts: true,
+    embeddedScreenshots: true,
+    inlineAssets: true,
+  },
   e2e: {
     baseUrl: 'http://localhost:5173',
     supportFile: 'cypress/support/e2e.ts',
@@ -13,13 +21,41 @@ export default defineConfig({
     video: false,
     viewportWidth: 1280,
     viewportHeight: 800,
+    // Backend real + procesamiento/IA de por medio: el default de Cypress
+    // (4s de comando, 5s de request/response) se queda corto y varios specs
+    // ya lo pisaban caso por caso con `{ timeout: 15000 }`. Subirlo acá
+    // cubre esos casos sin repetirlo, y a los pocos que de verdad necesitan
+    // más (el análisis de IA en `ai-analysis.cy.ts` espera hasta 500s) no
+    // les estorba, porque un override puntual sigue ganándole a este default.
+    defaultCommandTimeout: 30000,
+    requestTimeout: 30000,
+    responseTimeout: 30000,
+    taskTimeout: 120000,
     expose: {
       apiUrl: env.VITE_API_URL || 'http://localhost:8000',
       authDomain: env.VITE_FIREBASE_AUTH_DOMAIN,
       firebaseApiKey: env.VITE_FIREBASE_API_KEY,
     },
     setupNodeEvents(on) {
+      mochawesomeReporterPlugin(on)
+
+      // Caché de ID tokens de Firebase, compartida entre specs (el proceso
+      // Node vive toda la corrida; el navegador se recarga por spec y
+      // perdería un caché ahí). Evita repetir signInWithPassword por cada
+      // spec y toparse con la cuota de Firebase. Ver `tokenFor` en commands.ts.
+      const tokenCache = new Map<string, string>()
+
       on('task', {
+        cachedToken({ email }: { email: string }) {
+          return tokenCache.get(email) ?? null
+        },
+
+        cacheToken({ email, token }: { email: string; token: string }) {
+          tokenCache.set(email, token)
+
+          return null
+        },
+
         async uploadMultipart({
           url,
           token,

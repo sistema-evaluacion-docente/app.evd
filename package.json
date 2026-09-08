@@ -70,6 +70,7 @@
     "@vitest/coverage-v8": "^4.1.11",
     "babel-plugin-react-compiler": "^1.0.0",
     "cypress": "^16.0.0",
+    "cypress-mochawesome-reporter": "^5.0.0",
     "eslint": "^10.4.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
