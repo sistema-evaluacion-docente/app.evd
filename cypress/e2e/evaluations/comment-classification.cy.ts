@@ -34,7 +34,7 @@
  * cuentas de director.
  */
 
-import { apiUrl } from '../../support/commands'
+import { apiUrl, tokenFor } from '../../support/commands'
 
 const marca = `e2e-clasificacion-${Date.now()}`
 const FIXTURE = 'cypress/files/2025-1.pdf'
@@ -146,17 +146,6 @@ function findDepartmentWithoutDirector(excludingCode: string): Cypress.Chainable
   })
 }
 
-/** ID token de Firebase de una cuenta, para el `cy.task` que sube el PDF. */
-function idToken(account: DirectorAccount): Cypress.Chainable<string> {
-  return cy
-    .request<{ idToken: string }>({
-      method: 'POST',
-      url: `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${Cypress.expose('firebaseApiKey')}`,
-      body: { email: account.email, password: account.password, returnSecureToken: true },
-    })
-    .then((signIn) => signIn.body.idToken)
-}
-
 /** Sondea `GET /evaluations/{id}` hasta que el procesamiento del PDF termina. */
 function waitForProcessedEvaluation(
   evaluationId: number,
@@ -213,7 +202,7 @@ before(() => {
 
       cy.api('POST', `/departments/${fixtureDepartment.id}/director`, { user_id: account.id }).then(
         () => {
-          idToken(owner).then((token) => {
+          tokenFor(owner.email, owner.password).then((token) => {
             cy.task('uploadMultipart', {
               url: apiUrl('/evaluations/upload'),
               token,
@@ -285,6 +274,17 @@ describe('Corrección manual del nivel de riesgo y la categoría pedagógica de 
     // corrección — nivel de riesgo, categoría y las marcas de "Editado" que
     // distinguen una corrección humana de una clasificación de IA.
     cy.get('[data-slot="popover-content"]').should('not.exist')
+
+    // La lista se recarga en la página/orden por defecto, que no garantiza
+    // que el comentario editado siga cayendo ahí — un departamento con mucho
+    // historial lo puede correr de la página 1 con solo cambiar su
+    // `risk_level`. En vez de perseguir la paginación, se fija por id con el
+    // mismo mecanismo de `#<id>` que usa un enlace de notificación
+    // (`useLinkedCommentId` en `CommentsList`), que lo trae aparte con
+    // `GET /comments/{id}` sin importar dónde caiga en la lista paginada.
+    cy.window().then((win) => {
+      win.location.hash = `#${targetCommentId}`
+    })
 
     cy.get(`article#${targetCommentId}`).within(() => {
       cy.contains('ALTO').should('be.visible')

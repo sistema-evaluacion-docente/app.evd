@@ -64,25 +64,33 @@ Cypress.Commands.add('visitApp', (path: string, role?: string) => {
   })
 })
 
-const tokenCache = new Map<string, string>()
+/**
+ * ID token de una cuenta, pedido a Firebase una sola vez por correo y
+ * reutilizado en el resto de la corrida. El caché vive en el proceso Node
+ * (vía `cy.task`, ver `cypress.config.ts`), no en memoria del navegador: cada
+ * spec recarga el navegador y perdería un caché local, y Firebase limita
+ * cuántos `signInWithPassword` acepta por proyecto en una ventana de tiempo —
+ * con ~15 specs pidiendo login cada uno, se agota esa cuota.
+ * ponytail: el token cacheado no expira aquí; si la corrida completa dura más
+ * de 1h (vida del ID token), añadir expiración por timestamp.
+ */
+export function tokenFor(email: string, password: string): Cypress.Chainable<string> {
+  return cy.task<string | null>('cachedToken', { email }, { log: false }).then((cached) => {
+    if (cached) return cy.wrap(cached, { log: false })
 
-/** ID token de una cuenta, pedido a Firebase una sola vez por spec y por correo. */
-function tokenFor(email: string, password: string): Cypress.Chainable<string> {
-  const cached = tokenCache.get(email)
-  if (cached) return cy.wrap(cached, { log: false })
+    return cy
+      .request<{ idToken: string }>({
+        method: 'POST',
+        url: `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${Cypress.expose('firebaseApiKey')}`,
+        body: { email, password, returnSecureToken: true },
+        log: false,
+      })
+      .then((response) => {
+        const token = response.body.idToken
 
-  return cy
-    .request<{ idToken: string }>({
-      method: 'POST',
-      url: `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${Cypress.expose('firebaseApiKey')}`,
-      body: { email, password, returnSecureToken: true },
-      log: false,
-    })
-    .then((response) => {
-      tokenCache.set(email, response.body.idToken)
-
-      return response.body.idToken
-    })
+        return cy.task('cacheToken', { email, token }, { log: false }).then(() => token)
+      })
+  })
 }
 
 /** ID token de la cuenta de pruebas por defecto. */

@@ -16,16 +16,11 @@
  * refresca el badge sola cuando el análisis termina, sin que la prueba tenga
  * que sondear la API a mano.
  *
- * A diferencia de otras pruebas de evaluaciones, esta no da de alta una cuenta
- * de Firebase nueva (el proyecto tiene el alta por self-signup deshabilitada):
- * reutiliza una directora ya existente en el sistema — cualquier cuenta que
- * otra prueba haya creado y dejado inactiva y sin departamento en su `after()`
- * (`upload.cy.ts`, `pdf-extraction.cy.ts`, etc. dejan varias, todas con la
- * misma contraseña de convención `Prueba-e2e-1!`) — la reactiva, la asigna
- * *temporalmente* al departamento `99` que exige el PDF, y al terminar la
- * deja exactamente como la encontró: sin departamento, inactiva. Si no
- * encuentra ninguna (entorno recién sembrado, sin residuo de otras pruebas),
- * falla con un mensaje explícito en vez de intentar darla de alta.
+ * Da de alta, por API, una directora nueva — igual que `upload.cy.ts` y
+ * `pdf-extraction.cy.ts` — en vez de reutilizar una existente: no depende de
+ * que otro spec de `evaluations/` haya corrido antes y dejado residuo, lo que
+ * importa porque este archivo es alfabéticamente el primero del directorio y
+ * en una corrida completa desde cero sería el primero en necesitarlo.
  *
  * La subida del PDF (paso previo, ya cubierto por `upload.cy.ts`) se hace por
  * API con el mismo `cy.task('uploadMultipart', ...)` que usa
@@ -37,8 +32,9 @@
  * evaluación que ella misma crea y la asignación de director.
  */
 
-import { apiUrl } from '../../support/commands'
+import { apiUrl, tokenFor } from '../../support/commands'
 
+const marca = `e2e-analisis-${Date.now()}`
 const FIXTURE = 'cypress/files/2025-1.pdf'
 const MAX_POLL_ATTEMPTS = 20
 
@@ -54,7 +50,7 @@ interface EvaluationOut {
   status: 'PROCESSING' | 'COMPLETED' | 'FAILED'
 }
 
-interface DirectorUser {
+interface DirectorAccount {
   uid: string
   email: string
   id: number
@@ -85,31 +81,37 @@ function findOrCreateFixtureDepartment(): Cypress.Chainable<{ id: number; hasDir
   })
 }
 
-/** Encuentra una cuenta de director ya existente, inactiva y sin
- * departamento — el residuo desechable que dejan otras pruebas — en vez de
- * dar de alta una cuenta nueva (el self-signup de Firebase está
- * deshabilitado en este proyecto). */
-function findExistingSpareDirector(): Cypress.Chainable<DirectorUser> {
+/** Crea, por API, una cuenta real de Firebase con el rol de director, sin
+ * asignarla todavía a ningún departamento (igual que `upload.cy.ts` y
+ * `pdf-extraction.cy.ts`). */
+function createDirectorAccount(): Cypress.Chainable<DirectorAccount> {
+  const email = `${marca}@ufps.edu.co`
+
   return cy
-    .api('GET', '/users/?active=false&roles=DIRECTOR%20DE%20DEPARTAMENTO&search=e2e-&limit=100')
-    .then((response) => {
-      const users = (
-        response.body as {
-          data: Array<{ id: number; uid: string; email: string; department_id: number | null }>
-        }
-      ).data
-      const spare = users.find((user) => user.department_id == null)
+    .request<{ localId: string }>({
+      method: 'POST',
+      url: `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${Cypress.expose('firebaseApiKey')}`,
+      body: { email, password: THROWAWAY_PASSWORD, returnSecureToken: true },
+    })
+    .then((signUp) => {
+      const uid = signUp.body.localId
 
-      if (!spare) {
-        throw new Error(
-          'No se encontró ninguna cuenta de director inactiva y sin departamento para ' +
-            'reutilizar. El self-signup de Firebase está deshabilitado, así que esta prueba no ' +
-            'puede dar de alta una nueva: corra primero otra prueba que cree y libere una ' +
-            '(p. ej. upload.cy.ts o pdf-extraction.cy.ts), o reactive el self-signup.',
-        )
-      }
+      return cy
+        .api('POST', '/users/', {
+          uid,
+          email,
+          name: `Director de prueba ${marca}`,
+          active: true,
+          avatar_url: '',
+          institutional_code: marca,
+          contract_type: 'Tiempo completo',
+          roles: ['DIRECTOR DE DEPARTAMENTO'],
+        })
+        .then((response) => {
+          const id = (response.body as { data: { id: number } }).data.id
 
-      return { uid: spare.uid, email: spare.email, id: spare.id }
+          return { uid, email, id }
+        })
     })
 }
 
@@ -142,23 +144,18 @@ function waitForProcessedEvaluation(
 }
 
 let fixtureDepartment: { id: number }
-let director: DirectorUser
+let director: DirectorAccount
 let createdEvaluationId: number | undefined
 
 before(() => {
-  findExistingSpareDirector().then((account) => {
-    director = account
+  findOrCreateFixtureDepartment().then(({ id, hasDirector }) => {
+    fixtureDepartment = { id }
 
-    cy.api('PATCH', `/users/${director.uid}/status`, { active: true })
+    if (hasDirector) cy.api('DELETE', `/departments/${fixtureDepartment.id}/director`)
 
-    findOrCreateFixtureDepartment().then(({ id, hasDirector }) => {
-      fixtureDepartment = { id }
-
-      if (hasDirector) cy.api('DELETE', `/departments/${fixtureDepartment.id}/director`)
-
-      cy.api('POST', `/departments/${fixtureDepartment.id}/director`, {
-        user_id: director.id,
-      })
+    createDirectorAccount().then((account) => {
+      director = account
+      cy.api('POST', `/departments/${fixtureDepartment.id}/director`, { user_id: account.id })
     })
   })
 })
@@ -170,34 +167,17 @@ after(() => {
     cy.apiAs(director.email, THROWAWAY_PASSWORD, 'DELETE', `/evaluations/${createdEvaluationId}`)
   }
 
-  // Deja la cuenta reutilizada exactamente como la encontró: sin
-  // departamento e inactiva otra vez. No hace falta reponer roles a mano:
-  // `_retire_director_role` (en `api.evd`) ya deja el rol
-  // `DIRECTOR DE DEPARTAMENTO` puesto cuando es el único que tiene el
-  // usuario — justo el caso de esta cuenta —, y llamar aquí a
-  // `PUT /users/{uid}/roles` sería contraproducente: ese endpoint le añade
-  // el rol `ADMIN` del propio llamador (`cy.api` opera como la cuenta de
-  // pruebas compartida, que sí lo tiene) a CUALQUIER usuario cuyos roles se
-  // reemplacen, no solo cuando el objetivo ya era admin (ver
-  // `UserService.replace_roles` en `api.evd`) — un bug de escalación de
-  // privilegios más amplio que el ya documentado en `E2E.md` ("el rol ADMIN
-  // no se puede quitar"), que aquí se evita simplemente no llamando a ese
-  // endpoint cuando no hace falta.
   cy.api('DELETE', `/departments/${fixtureDepartment.id}/director`)
   cy.api('PATCH', `/users/${director.uid}/status`, { active: false })
 })
 
 describe('Clasificación de comentarios por IA (riesgo y categoría pedagógica)', () => {
   it('analiza los comentarios al hacer clic en "Analizar" y quedan con nivel de riesgo y categoría', () => {
-    cy.request<{ idToken: string }>({
-      method: 'POST',
-      url: `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${Cypress.expose('firebaseApiKey')}`,
-      body: { email: director.email, password: THROWAWAY_PASSWORD, returnSecureToken: true },
-    })
-      .then((signIn) =>
+    tokenFor(director.email, THROWAWAY_PASSWORD)
+      .then((token) =>
         cy.task('uploadMultipart', {
           url: apiUrl('/evaluations/upload'),
-          token: signIn.body.idToken,
+          token,
           files: [{ filename: '2025-1.pdf', path: FIXTURE }],
         }),
       )

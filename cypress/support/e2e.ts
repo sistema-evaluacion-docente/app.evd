@@ -1,3 +1,5 @@
+import 'cypress-mochawesome-reporter/register'
+
 import './commands'
 
 // Estas pruebas hablan con el backend real, así que una página puede reventar

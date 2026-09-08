@@ -35,7 +35,7 @@
  * sondeo, por si esto cambia.
  */
 
-import { apiUrl } from '../../support/commands'
+import { apiUrl, tokenFor } from '../../support/commands'
 
 const marca = `e2e-procstatus-${Date.now()}`
 const FIXTURE = 'cypress/files/2025-1.pdf'
@@ -126,18 +126,6 @@ function findOrCreateFixtureDepartment(): Cypress.Chainable<{ id: number; hasDir
   })
 }
 
-/** ID token de Firebase del director, para el `cy.task` que sube el PDF y
- * escucha el WebSocket. */
-function directorIdToken(director: DirectorAccount): Cypress.Chainable<string> {
-  return cy
-    .request<{ idToken: string }>({
-      method: 'POST',
-      url: `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${Cypress.expose('firebaseApiKey')}`,
-      body: { email: director.email, password: director.password, returnSecureToken: true },
-    })
-    .then((signIn) => signIn.body.idToken)
-}
-
 let fixtureDepartment: { id: number }
 let director: DirectorAccount
 let createdEvaluationId: number | undefined
@@ -168,7 +156,7 @@ after(() => {
 
 describe('Procesamiento en segundo plano de una evaluación', () => {
   it('responde de inmediato en PROCESSING, reporta el avance por WebSocket en tiempo real y termina en COMPLETED', () => {
-    directorIdToken(director).then((token) => {
+    tokenFor(director.email, director.password).then((token) => {
       cy.task('uploadAndWatchProgress', {
         url: apiUrl('/evaluations/upload'),
         wsBase: apiUrl('/ws/evaluations').replace(/^http/, 'ws'),

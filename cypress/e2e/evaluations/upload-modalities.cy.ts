@@ -35,7 +35,7 @@
  * departamento intentando subir un PDF que no es el suyo.
  */
 
-import { apiUrl } from '../../support/commands'
+import { apiUrl, tokenFor } from '../../support/commands'
 
 const marca = `e2e-evalmodalidades-${Date.now()}`
 const FIXTURE_PRESENCIAL = 'cypress/files/2025-1.pdf'
@@ -195,18 +195,14 @@ describe('Fusión de los dos PDF de una evaluación (presencial y a distancia)',
   })
 
   it('rechaza dos PDF de la misma modalidad, sin pasar por el selector de archivos', () => {
-    cy.request<{ idToken: string }>({
-      method: 'POST',
-      url: `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${Cypress.expose('firebaseApiKey')}`,
-      body: { email: director.email, password: director.password, returnSecureToken: true },
-    }).then((signIn) => {
+    tokenFor(director.email, director.password).then((token) => {
       // El mismo PDF de distancia, subido dos veces con nombres distintos:
       // dos documentos, misma modalidad — justo lo que este RF prohíbe. Va
       // por `cy.task` (ver `cypress.config.ts`), no por `cy.request`, que
       // corrompería el binario del PDF.
       cy.task('uploadMultipart', {
         url: apiUrl('/evaluations/upload'),
-        token: signIn.body.idToken,
+        token,
         files: [
           { filename: 'a.pdf', path: FIXTURE_DISTANCIA },
           { filename: 'b.pdf', path: FIXTURE_DISTANCIA },

@@ -30,7 +30,7 @@
  * elegido en el momento porque no puede aleatorizarse con `marca`.
  */
 
-import { apiUrl } from '../../support/commands'
+import { apiUrl, tokenFor } from '../../support/commands'
 
 const marca = `e2e-evalaccess-${Date.now()}`
 const FIXTURE = 'cypress/files/2025-1.pdf'
@@ -130,17 +130,6 @@ function findDepartmentWithoutDirector(excludingCode: string): Cypress.Chainable
   })
 }
 
-/** ID token de Firebase de una cuenta, para el `cy.task` que sube el PDF. */
-function idToken(account: DirectorAccount): Cypress.Chainable<string> {
-  return cy
-    .request<{ idToken: string }>({
-      method: 'POST',
-      url: `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${Cypress.expose('firebaseApiKey')}`,
-      body: { email: account.email, password: account.password, returnSecureToken: true },
-    })
-    .then((signIn) => signIn.body.idToken)
-}
-
 /** Sondea `GET /evaluations/{id}` hasta que el procesamiento del PDF termina
  * (igual que `pdf-extraction.cy.ts`). */
 function waitForProcessedEvaluation(
@@ -193,7 +182,7 @@ before(() => {
       owner = account
       cy.api('POST', `/departments/${fixtureDepartment.id}/director`, { user_id: account.id }).then(
         () => {
-          idToken(owner).then((token) => {
+          tokenFor(owner.email, owner.password).then((token) => {
             cy.task('uploadMultipart', {
               url: apiUrl('/evaluations/upload'),
               token,

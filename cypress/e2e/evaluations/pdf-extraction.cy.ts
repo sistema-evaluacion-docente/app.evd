@@ -29,7 +29,7 @@
  * director.
  */
 
-import { apiUrl } from '../../support/commands'
+import { apiUrl, tokenFor } from '../../support/commands'
 
 const marca = `e2e-extraccion-${Date.now()}`
 const FIXTURE = 'cypress/files/2025-1.pdf'
@@ -132,17 +132,6 @@ function findOrCreateFixtureDepartment(): Cypress.Chainable<{ id: number; hasDir
   })
 }
 
-/** ID token de Firebase del director, para el `cy.task` de subida multipart. */
-function directorIdToken(director: DirectorAccount): Cypress.Chainable<string> {
-  return cy
-    .request<{ idToken: string }>({
-      method: 'POST',
-      url: `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${Cypress.expose('firebaseApiKey')}`,
-      body: { email: director.email, password: director.password, returnSecureToken: true },
-    })
-    .then((signIn) => signIn.body.idToken)
-}
-
 /** Sondea `GET /evaluations/{id}` hasta que el procesamiento del PDF termina.
  * No hay retry-ability nativo para `cy.request`, así que reintenta a mano:
  * hasta veinte veces con un segundo de espera entre cada una, más que de
@@ -200,7 +189,7 @@ after(() => {
 
 describe('Extracción de los datos del PDF de evaluación', () => {
   it('extrae el docente, el curso, el grupo, las 4 dimensiones con sus 22 preguntas, los puntajes y los comentarios', () => {
-    directorIdToken(director).then((token) => {
+    tokenFor(director.email, director.password).then((token) => {
       cy.task('uploadMultipart', {
         url: apiUrl('/evaluations/upload'),
         token,
