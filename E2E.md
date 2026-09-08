@@ -28,6 +28,9 @@ Cubren estos RF:
   los comentarios.**
 - **El procesamiento de las evaluaciones debe ejecutarse en segundo plano y reportar su progreso en
   tiempo real. La evaluación transita por los estados PROCESSING, COMPLETED o FAILED.**
+- **El sistema debe permitir consultar evaluaciones por identificador, por periodo y en listado
+  paginado, junto con su resumen, sus promedios por dimensión y su detalle por dimensión. Solo por
+  el director que tenga asignado ese departamento.**
 
 Corren contra la pila real: el proyecto real de Firebase y el backend real. No hay mocks de
 autenticación ni de la API — `cy.intercept` aparece solo para _observar_ una petición o para
@@ -361,6 +364,35 @@ comodidad; el candado real está en la API.
   universidad. Los dos docentes de la prueba y la asignación de director se crean y se limpian solos,
   sin dejar nada detrás.
 
+`cypress/e2e/security/evaluation-access.cy.ts`
+
+- El director dueño consulta su propia evaluación por identificador, por periodo, en el listado
+  paginado, su resumen, sus promedios por dimensión y su detalle por dimensión — los 6 endpoints que
+  cubre el RF, los 6 en `200`.
+- Un director de otro departamento recibe `403` en 5 de esos 6 (por identificador, por periodo, el
+  resumen, los promedios por dimensión y el detalle por dimensión) — no un `200` con los datos de una
+  evaluación ajena.
+- El sexto, el listado paginado, aísla distinto: no hace falta un `403` porque `GET /evaluations/`
+  sustituye en silencio el `department_id` de la consulta por el del director (como `GET /teachers/`
+  en `department-isolation.cy.ts`), así que la evaluación ajena simplemente no aparece en la página
+  del director de otro departamento.
+
+Arreglado — 4 de esos 6 endpoints no comprobaban el departamento en absoluto (`api.evd`). Al
+verificar el RF contra el servidor real con dos directores de departamentos distintos apareció un
+director cualquiera viendo, con `200` y los datos completos, la evaluación de OTRO departamento por
+`GET /evaluations/{id}`, `GET /evaluations/by-period/{id}`, `GET /evaluations/{id}/summary` y
+`GET /evaluations/{id}/dimension-averages` — ninguno de los cuatro comprobaba el departamento del
+llamador contra el de la evaluación, solo el rol. Solo `GET /evaluations/{id}/dimensions/detail` ya
+tenía esa comprobación. Se corrigió en `api.evd`
+(`EvaluationService._assert_can_view_department`, la misma regla que ya usaba `get_dimension_detail`
+— ADMIN o el director del departamento de la evaluación — aplicada también a los otros cuatro),
+verificado con la suite de `api.evd` (1737 tests) y de nuevo contra el servidor real antes de escribir
+esta prueba. No hay pantalla propia para el resumen ni para los promedios por dimensión (el frontend
+no los consume), así que la prueba se queda en la capa de API, como `department-isolation.cy.ts`. La
+evaluación de fixture es un PDF real subido por el director dueño (departamento fijo `99`, ver
+`upload.cy.ts`); el director ajeno es de un departamento real distinto. Los dos directores y la
+evaluación se crean y se limpian solos.
+
 `cypress/e2e/auth/token.cy.ts`
 
 - Cada petición al backend viaja firmada con un ID token vigente de esta sesión.
@@ -530,6 +562,16 @@ PUT   roles=['DIRECTOR']  ->  ['DIRECTOR', 'ADMIN']
 Por eso la prueba de reemplazo cambia entre Docente y Director sin pasar por Administrador: con
 ADMIN de por medio estaría comprobando un reemplazo que el backend no llega a hacer. El arreglo va en
 `api.evd`, no aquí.
+
+**Arreglado, y es del backend — 4 de las 6 formas de consultar una evaluación no aislaban por
+departamento.** `GET /evaluations/{id}`, `GET /evaluations/by-period/{id}`,
+`GET /evaluations/{id}/summary` y `GET /evaluations/{id}/dimension-averages` solo comprobaban el rol
+(`ADMIN` o `DIRECTOR DE DEPARTAMENTO`), no si la evaluación pedida era del departamento del director
+que llamaba: un director cualquiera veía, con `200` y los datos completos, la evaluación de otro
+departamento. Solo `GET /evaluations/{id}/dimensions/detail` ya tenía la comprobación correcta
+(`director.department_id == evaluation.department_id`). Se corrigió aplicando esa misma regla a los
+otros cuatro (`EvaluationService._assert_can_view_department`, en `api.evd`), verificado con la suite
+de `api.evd` y con `security/evaluation-access.cy.ts`.
 
 ## Lo que no cubren
 
