@@ -161,13 +161,13 @@ describe('courses', () => {
     expect(call[1].params).not.toHaveProperty('department_id')
   })
 
-  it('updates a course', async () => {
+  it('renames a course, keeping its code, via the director-scoped endpoint', async () => {
     await mutate(() => courses.useUpdateCourse(), {
       courseId: 8,
       payload: { name: 'Cálculo' } as never,
     })
 
-    expect(mockApi.put).toHaveBeenCalledWith('/courses/8', { name: 'Cálculo' })
+    expect(mockApi.patch).toHaveBeenCalledWith('/courses/8/name', { name: 'Cálculo' })
   })
 })
 
