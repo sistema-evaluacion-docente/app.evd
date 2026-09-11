@@ -9,27 +9,93 @@
  * RF-6.6 (Media) — Catálogo de acciones sugeridas por defecto del
  * departamento.
  *
- * Corre contra la pila real, departamento "Sistemas" (código 52), periodo
- * 2026-1 salvo donde se indique. Docentes reales usados, con su promedio y
- * situación real confirmados contra la API antes de escribir estas pruebas:
- *   - SOFIA VALENTINA MORENO RUIZ (id 15): 3.20, ningún indicador bajo el
- *     umbral — sugerida solo por el promedio general.
- *   - JULIAN ALFONSO RODRIGUEZ CASTRO TP (id 13): 3.57 (sano, por encima del
- *     umbral de 3.5), pero con 7 indicadores bajo el umbral — sugerido solo
- *     por indicador, con el promedio sano.
- *   - MAURICIO DI DONATO SANCHEZ (id 12): 3.90, sin nada bajo el umbral — no
- *     se le sugiere plan.
- *   - PEREZ PEREZ HC (id 14): usado para el ciclo completo de creación.
+ * Corre contra la pila real. Dos fuentes de datos, según lo que cada prueba
+ * necesita:
  *
- * La sugerencia por acumulación de comentarios de alto riesgo no se prueba
- * aquí con datos reales: ningún docente del departamento tiene hoy un
- * comentario clasificado como alto riesgo (confirmado contra la API), y
- * fabricar esa clasificación a mano contradice el criterio de este spec de
- * sembrar datos solo a través de la propia canalización del backend. Esa vía
- * ya está probada exhaustivamente en unitarias (planSuggestion.test.ts).
+ * - Las que pasan por el asistente (`/planes/nuevo`) necesitan un periodo con
+ *   evaluación real `COMPLETED` — `GET /improvement-plans/periods` y
+ *   `/candidates` solo devuelven lo que ya tiene una cargada. Usan el
+ *   departamento `99` fijo y sus dos periodos reales (ver
+ *   `evaluationFixtures.ts`), con un director desechable propio: docentes
+ *   reales, promedio y situación confirmados contra la API antes de escribir
+ *   estas pruebas —
+ *     DOCENTE 1: 3.90 en 2026-1, sin nada bajo el umbral — sano.
+ *     DOCENTE 2: 3.57 en 2026-1 (sano), pero con 7 preguntas bajo el
+ *       umbral — sugerido solo por indicador.
+ *     DOCENTE 3: 3.08 en 2026-1, bajo el umbral, y con las 22 preguntas
+ *       también bajas — sugerido por las dos razones a la vez (no hay,
+ *       con solo 3 docentes reales, un caso de "solo promedio, indicadores
+ *       sanos" que aislar).
+ *   La sugerencia por acumulación de comentarios de alto riesgo sigue sin
+ *   poder probarse con datos reales: el análisis de IA corre, pero
+ *   `risk_level` queda `null` para todo comentario en este entorno — bug
+ *   real, reportado aparte (`task_26984f7a`), no de este spec.
+ *
+ * - Las que siembran el plan directo por API (periodo de origen, aislamiento
+ *   por docente) no necesitan evaluación real — un docente y un periodo
+ *   desechables (`planFixtures.ts`) bastan, y corren con la cuenta de
+ *   pruebas de siempre.
  */
 
+import { directorDepartmentId, ownTeacherId, seedPeriod, seedTeacher } from '../../support/planFixtures'
+import {
+  createDirectorAccount,
+  seedFixtureEvaluations,
+  findOrCreateFixtureDepartment,
+  type DirectorAccount,
+} from '../../support/evaluationFixtures'
+
 const marca = `${Date.now()}`
+
+/** Docente y periodo desechables, para las dos pruebas que siembran el plan por API. */
+let otherTeacherId: number
+let selfTeacherId: number
+let periodName: string
+let periodId: number
+
+/** Departamento 99 fijo, con las dos evaluaciones reales cargadas — para las pruebas que pasan por el asistente. */
+let fixtureDepartment: { id: number }
+let fixtureDirector: DirectorAccount
+
+before(() => {
+  directorDepartmentId().then((departmentId) => {
+    seedTeacher(`Docente Creación ${marca}`, departmentId).then((id) => (otherTeacherId = id))
+  })
+  ownTeacherId().then((id) => (selfTeacherId = id))
+  periodName = `Periodo Creación ${marca}`
+  seedPeriod(periodName).then((id) => (periodId = id))
+
+  findOrCreateFixtureDepartment().then(({ id, hasDirector }) => {
+    fixtureDepartment = { id }
+
+    if (hasDirector) cy.api('DELETE', `/departments/${fixtureDepartment.id}/director`)
+
+    createDirectorAccount('creacion').then((account) => {
+      fixtureDirector = account
+      cy.api('POST', `/departments/${fixtureDepartment.id}/director`, { user_id: account.id })
+      seedFixtureEvaluations(account)
+    })
+  })
+})
+
+after(() => {
+  cy.api('DELETE', `/teachers/${otherTeacherId}`)
+  cy.api('DELETE', `/academic-periods/${periodId}`)
+
+  cy.apiAs(
+    fixtureDirector.email,
+    fixtureDirector.password,
+    'GET',
+    `/evaluations/?department_id=${fixtureDepartment.id}`,
+  ).then((response) => {
+    const evaluations = (response.body as { data: Array<{ id: number }> }).data
+    for (const evaluation of evaluations) {
+      cy.apiAs(fixtureDirector.email, fixtureDirector.password, 'DELETE', `/evaluations/${evaluation.id}`)
+    }
+  })
+  cy.api('DELETE', `/departments/${fixtureDepartment.id}/director`)
+  cy.api('PATCH', `/users/${fixtureDirector.uid}/status`, { active: false })
+})
 
 /** Abre el buscador de docentes del formulario de creación. */
 function openTeacherPicker() {
@@ -54,61 +120,72 @@ function addManualCommitment(aspectLabel: string, title: string, description: st
   cy.contains('[role="dialog"] button', 'Guardar').click()
 }
 
+/** Sesión como el director desechable del departamento 99 — para las pruebas que pasan por el asistente. */
+function loginAsFixtureDirector() {
+  cy.visitApp('/login', 'DIRECTOR DE DEPARTAMENTO')
+  cy.loginWithEmail(fixtureDirector.email, fixtureDirector.password)
+  cy.location('pathname').should('eq', '/home')
+}
+
 describe('Creación de planes de mejoramiento', () => {
   let createdPlanIds: number[] = []
+  // Planes creados como el director desechable del departamento 99 — solo
+  // ese director (no la cuenta de pruebas de siempre) puede borrarlos.
+  let fixtureCreatedPlanIds: number[] = []
 
   beforeEach(() => {
     createdPlanIds = []
+    fixtureCreatedPlanIds = []
     cy.watchApi()
-    cy.visitApp('/login', 'DIRECTOR DE DEPARTAMENTO')
-    cy.loginWithEmail()
-    cy.location('pathname').should('eq', '/home')
   })
 
   afterEach(() => {
     for (const id of createdPlanIds) {
       cy.api('DELETE', `/improvement-plans/${id}`)
     }
+    for (const id of fixtureCreatedPlanIds) {
+      cy.apiAs(fixtureDirector.email, fixtureDirector.password, 'DELETE', `/improvement-plans/${id}`)
+    }
   })
 
   describe('RF-6.1 — sugerencia de candidatos', () => {
     beforeEach(() => {
+      loginAsFixtureDirector()
       cy.visit('/planes/nuevo')
       cy.contains('label', 'Periodo de origen', { timeout: 20000 }).should('be.visible')
       pickPeriod('2026-1')
     })
 
-    it('sugiere por promedio general bajo el umbral, con los indicadores sanos', () => {
+    it('sugiere por promedio general y por indicadores bajo el umbral a la vez', () => {
       openTeacherPicker()
-      cy.get('#teacher').type('SOFIA')
+      cy.get('#teacher').type('DOCENTE 3')
 
-      cy.contains('[role="option"]', 'SOFIA VALENTINA MORENO RUIZ')
+      cy.contains('[role="option"]', 'DOCENTE 3')
         .should('contain.text', 'promedio general bajo el umbral')
-        .and('not.contain.text', 'indicador')
+        .and('contain.text', 'indicadores bajo el umbral')
     })
 
     it('sugiere por un indicador bajo el umbral, con el promedio general sano', () => {
       openTeacherPicker()
-      cy.get('#teacher').type('JULIAN')
+      cy.get('#teacher').type('DOCENTE 2')
 
-      cy.contains('[role="option"]', 'JULIAN ALFONSO RODRIGUEZ CASTRO')
+      cy.contains('[role="option"]', 'DOCENTE 2')
         .should('contain.text', 'indicadores bajo el umbral')
         .and('not.contain.text', 'promedio general')
     })
 
     it('no sugiere nada para un docente sano', () => {
       openTeacherPicker()
-      cy.get('#teacher').type('MAURICIO')
+      cy.get('#teacher').type('DOCENTE 1')
 
-      cy.contains('[role="option"]', 'MAURICIO DI DONATO SANCHEZ').should(
-        'not.contain.text',
-        'Plan sugerido',
-      )
+      cy.contains('[role="option"]', 'DOCENTE 1').should('not.contain.text', 'Plan sugerido')
     })
   })
 
   describe('RF-6.2/6.3 — ciclo de creación y periodo de origen', () => {
     it('crea un plan real de principio a fin y aparece en el listado del director', () => {
+      loginAsFixtureDirector()
+
       const title = `Plan de prueba Cypress ${marca}`
 
       cy.visit('/planes/nuevo')
@@ -116,8 +193,8 @@ describe('Creación de planes de mejoramiento', () => {
       pickPeriod('2026-1')
 
       openTeacherPicker()
-      cy.get('#teacher').type('PEREZ')
-      cy.contains('[role="option"]', 'PEREZ PEREZ HC').click()
+      cy.get('#teacher').type('DOCENTE 1')
+      cy.contains('[role="option"]', 'DOCENTE 1').click()
 
       addManualCommitment(
         'Desempeño Docente',
@@ -134,11 +211,11 @@ describe('Creación de planes de mejoramiento', () => {
       cy.location('pathname', { timeout: 20000 }).should('match', /^\/planes\/\d+$/)
       cy.location('pathname').then((pathname) => {
         const id = Number(pathname.split('/').pop())
-        createdPlanIds.push(id)
+        fixtureCreatedPlanIds.push(id)
       })
 
       cy.contains('h1', title).should('be.visible')
-      cy.contains('PEREZ PEREZ HC').should('be.visible')
+      cy.contains('DOCENTE 1').should('be.visible')
 
       // Y de verdad quedó filed en el listado del director, no solo en el detalle.
       cy.visit('/planes?periodo=todos')
@@ -146,9 +223,13 @@ describe('Creación de planes de mejoramiento', () => {
     })
 
     it('el periodo de origen queda fijo aunque el plan avance', () => {
+      cy.visitApp('/login', 'DIRECTOR DE DEPARTAMENTO')
+      cy.loginWithEmail()
+      cy.location('pathname').should('eq', '/home')
+
       cy.api('POST', '/improvement-plans/', {
-        teacher_id: 14,
-        origin_period_id: 2,
+        teacher_id: otherTeacherId,
+        origin_period_id: periodId,
         title: `Plan periodo de origen ${marca}`,
         // Con al menos un compromiso, una asignatura y los datos del acta,
         // para que el formulario de edición no bloquee el guardado por
@@ -169,7 +250,7 @@ describe('Creación de planes de mejoramiento', () => {
         createdPlanIds.push(id)
 
         cy.visit(`/planes/${id}`)
-        cy.contains('Periodo 2026-1', { timeout: 20000 }).should('be.visible')
+        cy.contains(`Periodo ${periodName}`, { timeout: 20000 }).should('be.visible')
 
         // Editar otros datos del plan no debe tocar el periodo de origen.
         cy.visit(`/planes/${id}/editar`)
@@ -177,26 +258,30 @@ describe('Creación de planes de mejoramiento', () => {
         cy.contains('button', /Guardar cambios/).click()
 
         cy.location('pathname', { timeout: 20000 }).should('eq', `/planes/${id}`)
-        cy.contains('Periodo 2026-1').should('be.visible')
+        cy.contains(`Periodo ${periodName}`).should('be.visible')
       })
     })
   })
 
   describe('RF-6.2 — el docente solo ve sus propios planes', () => {
     it('en /mis-planes no aparece el plan de otro docente', () => {
-      // Dos planes reales, de dos docentes distintos — uno de ellos (teacher_id
-      // 1) es la misma cuenta de pruebas, que también opera como DOCENTE.
+      cy.visitApp('/login', 'DIRECTOR DE DEPARTAMENTO')
+      cy.loginWithEmail()
+      cy.location('pathname').should('eq', '/home')
+
+      // Dos planes reales, de dos docentes distintos — uno de ellos es la
+      // misma cuenta de pruebas, que también opera como DOCENTE.
       cy.api('POST', '/improvement-plans/', {
-        teacher_id: 1,
-        origin_period_id: 1,
+        teacher_id: selfTeacherId,
+        origin_period_id: periodId,
         title: `Plan propio del docente ${marca}`,
       }).then((response) => {
         createdPlanIds.push((response.body as { data: { id: number } }).data.id)
       })
 
       cy.api('POST', '/improvement-plans/', {
-        teacher_id: 14,
-        origin_period_id: 2,
+        teacher_id: otherTeacherId,
+        origin_period_id: periodId,
         title: `Plan de otro docente ${marca}`,
       }).then((response) => {
         createdPlanIds.push((response.body as { data: { id: number } }).data.id)
@@ -215,6 +300,8 @@ describe('Creación de planes de mejoramiento', () => {
 
   describe('RF-6.6 — catálogo de acciones sugeridas del departamento', () => {
     it('una acción del catálogo aparece y se puede usar al redactar un compromiso', () => {
+      loginAsFixtureDirector()
+
       const actionText = `Socializar la rúbrica de evaluación ${marca}`
 
       cy.visit('/acciones')
@@ -234,8 +321,8 @@ describe('Creación de planes de mejoramiento', () => {
       pickPeriod('2026-1')
 
       openTeacherPicker()
-      cy.get('#teacher').type('MAURICIO')
-      cy.contains('[role="option"]', 'MAURICIO DI DONATO SANCHEZ').click()
+      cy.get('#teacher').type('DOCENTE 1')
+      cy.contains('[role="option"]', 'DOCENTE 1').click()
 
       cy.contains('button', /Añadir compromiso/).click()
       cy.contains('[role="menuitem"]', 'Desempeño Docente').click()
