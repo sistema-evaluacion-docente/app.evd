@@ -44,6 +44,7 @@ import {
   findOrCreateFixtureDepartment,
   type DirectorAccount,
 } from '../../support/evaluationFixtures'
+import { credentials } from '../../support/commands'
 
 const marca = `${Date.now()}`
 
@@ -120,11 +121,50 @@ function addManualCommitment(aspectLabel: string, title: string, description: st
   cy.contains('[role="dialog"] button', 'Guardar').click()
 }
 
+/**
+ * Cuenta cuya sesión de Firebase está activa ahora mismo en el navegador, o
+ * `null` si todavía no se ha hecho ningún login real en este spec. Este
+ * archivo alterna entre dos cuentas (la de pruebas de siempre y el director
+ * desechable), así que no basta con "ya hicimos login antes" — hay que saber
+ * con cuál, para no reutilizar por error la sesión de la otra.
+ */
+let sessionEmail: string | null = null
+
+/**
+ * Deja la sesión de `email` activa, evitando un `signInWithPassword` real si
+ * ya es la que está abierta: Firebase limita cuántos acepta por proyecto en
+ * una ventana de tiempo (ver E2E.md "Problemas conocidos"). Cuando ya es la
+ * cuenta correcta, la sesión sigue en la IndexedDB de Firebase —Cypress no la
+ * limpia entre pruebas, solo cookies/localStorage— así que alcanza con
+ * reponer el rol y aterrizar en /home.
+ */
+function ensureSession(email: string, password: string, role: string) {
+  if (sessionEmail === email) {
+    cy.visit('/home', {
+      onBeforeLoad(win) {
+        win.localStorage.setItem('selectedRole', role)
+      },
+    })
+    cy.location('pathname').should('eq', '/home')
+    return
+  }
+
+  cy.visitApp('/login', role)
+  cy.loginWithEmail(email, password)
+  cy.location('pathname').should('eq', '/home')
+  sessionEmail = email
+}
+
 /** Sesión como el director desechable del departamento 99 — para las pruebas que pasan por el asistente. */
 function loginAsFixtureDirector() {
-  cy.visitApp('/login', 'DIRECTOR DE DEPARTAMENTO')
-  cy.loginWithEmail(fixtureDirector.email, fixtureDirector.password)
-  cy.location('pathname').should('eq', '/home')
+  ensureSession(fixtureDirector.email, fixtureDirector.password, 'DIRECTOR DE DEPARTAMENTO')
+}
+
+/** Sesión con la cuenta de pruebas de siempre (director real). */
+function loginAsDefaultDirector() {
+  credentials().then(({ email, password }) => {
+    ensureSession(email, password, 'DIRECTOR DE DEPARTAMENTO')
+  })
 }
 
 describe('Creación de planes de mejoramiento', () => {
@@ -223,9 +263,7 @@ describe('Creación de planes de mejoramiento', () => {
     })
 
     it('el periodo de origen queda fijo aunque el plan avance', () => {
-      cy.visitApp('/login', 'DIRECTOR DE DEPARTAMENTO')
-      cy.loginWithEmail()
-      cy.location('pathname').should('eq', '/home')
+      loginAsDefaultDirector()
 
       cy.api('POST', '/improvement-plans/', {
         teacher_id: otherTeacherId,
@@ -265,9 +303,7 @@ describe('Creación de planes de mejoramiento', () => {
 
   describe('RF-6.2 — el docente solo ve sus propios planes', () => {
     it('en /mis-planes no aparece el plan de otro docente', () => {
-      cy.visitApp('/login', 'DIRECTOR DE DEPARTAMENTO')
-      cy.loginWithEmail()
-      cy.location('pathname').should('eq', '/home')
+      loginAsDefaultDirector()
 
       // Dos planes reales, de dos docentes distintos — uno de ellos es la
       // misma cuenta de pruebas, que también opera como DOCENTE.

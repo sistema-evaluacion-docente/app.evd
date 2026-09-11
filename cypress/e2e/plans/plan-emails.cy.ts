@@ -37,6 +37,16 @@ before(() => {
   // coinciden en el mismo número por casualidad.
   ownTeacherId().then((id) => (teacherId = id))
   seedPeriod(`Periodo Correos ${Date.now()}`).then((id) => (periodId = id))
+
+  // Un solo login real por UI para todo el spec, no uno por test: Firebase
+  // limita cuántos `signInWithPassword` acepta por proyecto en una ventana de
+  // tiempo (ver E2E.md "Problemas conocidos"). La sesión que deja este login
+  // vive en la IndexedDB de Firebase, que Cypress no limpia entre pruebas
+  // (solo cookies/localStorage), así que sigue ahí para el resto del spec —
+  // ver `beforeEach`.
+  cy.visitApp('/login', 'DIRECTOR DE DEPARTAMENTO')
+  cy.loginWithEmail()
+  cy.location('pathname').should('eq', '/home')
 })
 
 after(() => {
@@ -55,8 +65,16 @@ beforeEach(() => {
     planId = (response.body as { data: { id: number } }).data.id
   })
 
-  cy.visitApp('/login', 'DIRECTOR DE DEPARTAMENTO')
-  cy.loginWithEmail()
+  // Reaprovecha la sesión abierta en el before(): solo hace falta reponer el
+  // rol (el localStorage sí se limpia entre pruebas) y aterrizar en /home.
+  // Firebase restaura el usuario desde la IndexedDB que sigue ahí y refresca
+  // el token (operación sin límite de cuota), sin pasar de nuevo por el
+  // formulario de login.
+  cy.visit('/home', {
+    onBeforeLoad(win) {
+      win.localStorage.setItem('selectedRole', 'DIRECTOR DE DEPARTAMENTO')
+    },
+  })
   cy.location('pathname').should('eq', '/home')
 })
 
