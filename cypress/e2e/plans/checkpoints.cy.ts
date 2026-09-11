@@ -8,12 +8,18 @@
  * guardado incompleto, y el docente lo ve de solo lectura.
  */
 
+import { directorDepartmentId, ownTeacherId, seedPeriod, seedTeacher } from '../../support/planFixtures'
+
 const marca = `${Date.now()}`
+
+let otherTeacherId: number
+let selfTeacherId: number
+let periodId: number
 
 function seedPlan() {
   return cy.api('POST', '/improvement-plans/', {
-    teacher_id: 12,
-    origin_period_id: 3,
+    teacher_id: otherTeacherId,
+    origin_period_id: periodId,
     title: `Plan seguimientos ${marca}`,
     items: [
       { description: 'Asistir puntualmente a clase', commitment: 'Llegar a tiempo', aspect: 2 },
@@ -24,6 +30,19 @@ function seedPlan() {
 
 describe('Formato 3 — puntos de control', () => {
   let createdPlanIds: number[] = []
+
+  before(() => {
+    directorDepartmentId().then((departmentId) => {
+      seedTeacher(`Docente Seguimientos ${marca}`, departmentId).then((id) => (otherTeacherId = id))
+    })
+    ownTeacherId().then((id) => (selfTeacherId = id))
+    seedPeriod(`Periodo Seguimientos ${marca}`).then((id) => (periodId = id))
+  })
+
+  after(() => {
+    cy.api('DELETE', `/teachers/${otherTeacherId}`)
+    cy.api('DELETE', `/academic-periods/${periodId}`)
+  })
 
   beforeEach(() => {
     createdPlanIds = []
@@ -89,8 +108,8 @@ describe('Formato 3 — puntos de control', () => {
 
   it('el docente ve sus seguimientos de solo lectura', () => {
     cy.api('POST', '/improvement-plans/', {
-      teacher_id: 1,
-      origin_period_id: 3,
+      teacher_id: selfTeacherId,
+      origin_period_id: periodId,
       title: `Plan propio seguimientos ${marca}`,
       items: [
         { description: 'Asistir puntualmente a clase', commitment: 'Llegar a tiempo', aspect: 2 },

@@ -14,7 +14,13 @@
  * sin necesitar un PDF real de fixture.
  */
 
+import { directorDepartmentId, ownTeacherId, seedPeriod, seedTeacher } from '../../support/planFixtures'
+
 const marca = `${Date.now()}`
+
+let otherTeacherId: number
+let selfTeacherId: number
+let periodId: number
 
 function fakePdf(name = 'caso-reportado.pdf') {
   return {
@@ -24,7 +30,7 @@ function fakePdf(name = 'caso-reportado.pdf') {
   }
 }
 
-function seedPlan(teacherId: number, periodId: number, title: string) {
+function seedPlan(teacherId: number, title: string) {
   return cy.api('POST', '/improvement-plans/', {
     teacher_id: teacherId,
     origin_period_id: periodId,
@@ -36,6 +42,19 @@ function seedPlan(teacherId: number, periodId: number, title: string) {
 
 describe('Formato 1 — caso reportado', () => {
   let createdPlanIds: number[] = []
+
+  before(() => {
+    directorDepartmentId().then((departmentId) => {
+      seedTeacher(`Docente Formato1 ${marca}`, departmentId).then((id) => (otherTeacherId = id))
+    })
+    ownTeacherId().then((id) => (selfTeacherId = id))
+    seedPeriod(`Periodo Formato1 ${marca}`).then((id) => (periodId = id))
+  })
+
+  after(() => {
+    cy.api('DELETE', `/teachers/${otherTeacherId}`)
+    cy.api('DELETE', `/academic-periods/${periodId}`)
+  })
 
   beforeEach(() => {
     createdPlanIds = []
@@ -52,7 +71,7 @@ describe('Formato 1 — caso reportado', () => {
   })
 
   it('adjunta el PDF del caso reportado y luego lo quita', () => {
-    seedPlan(14, 2, `Plan Formato 1 ${marca}`).then((response) => {
+    seedPlan(otherTeacherId, `Plan Formato 1 ${marca}`).then((response) => {
       const planId = (response.body as { data: { id: number } }).data.id
       createdPlanIds.push(planId)
 
@@ -105,7 +124,7 @@ describe('Formato 1 — caso reportado', () => {
     // El título deliberadamente no contiene "Formato 1": la aserción de
     // abajo busca ese texto en la página, y el propio título del plan lo
     // habría hecho encontrarlo sin que viniera de la interfaz.
-    seedPlan(1, 1, `Plan propio de prueba ${marca}`).then((response) => {
+    seedPlan(selfTeacherId, `Plan propio de prueba ${marca}`).then((response) => {
       const ownPlanId = (response.body as { data: { id: number } }).data.id
       createdPlanIds.push(ownPlanId)
 
