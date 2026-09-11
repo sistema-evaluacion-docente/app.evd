@@ -200,7 +200,7 @@ export default function SubjectComparisonPage() {
                           <PdfFactGrid
                             facts={[
                               {
-                                label: 'Mejor',
+                                label: 'Mayor nota',
                                 value: `${best.entry.teacher_name} (${formatPdfAverage(best.dimension?.average)})`,
                                 color: pdfColors.riskLow,
                               },
@@ -233,7 +233,7 @@ export default function SubjectComparisonPage() {
                           <PdfTable
                             columns={[
                               { header: 'N°', width: '6%' },
-                              { header: 'Indicador', width: '34%' },
+                              { header: 'Ítem', width: '34%' },
                               ...rows.map(({ entry }) => ({
                                 header: shortTeacherName(entry.teacher_name),
                                 width: `${60 / rows.length}%`,
