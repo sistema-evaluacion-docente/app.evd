@@ -10,19 +10,43 @@
  * periodos académicos.
  * RF-5.9 (Media) — Descarga del reporte de evaluación del docente.
  *
- * Docente de prueba: Orlando José Beltrán Valero (id 11, código 01111),
- * departamento "Sistemas". Tiene evaluaciones reales sembradas en tres
- * periodos — 2025-2 (4.00, un solo grupo, sembrado a mano para que exista un
- * "periodo anterior" real de 2026-1) y 2026-1 (4.51, tres materias) — así
+ * Corre contra la pila real, departamento `99` fijo (ver
+ * `evaluationFixtures.ts`) — dos periodos reales, `2025-2` y `2026-1`, así
  * que el contraste y la tendencia entre periodos son datos de verdad.
+ *
+ * Docente examinado: DOCENTE 1. La propia cuenta del director desechable de
+ * este spec se enlaza a su fila de docente (`PUT /teachers/{id}`) y suma el
+ * rol DOCENTE — el mismo patrón que ya usa la cuenta compartida de pruebas
+ * ("System Admin") para operar como director y como docente a la vez — así
+ * RF-5.4 puede cambiar de rol y ver su propia matriz con datos reales, sin
+ * necesitar una segunda cuenta.
+ *
+ * Las cifras no se hardcodean: se leen de la propia API dentro de cada
+ * prueba y se comparan contra lo que muestra la interfaz.
  */
-/**
- * Cambia al rol DOCENTE desde el menú del avatar — mismo flujo real que
- * `auth/roles.cy.ts`. La cuenta semilla opera como Orlando en el resto del
- * archivo (rol DIRECTOR DE DEPARTAMENTO), pero la matriz por pregunta
- * (`TeacherQuestionMatrix`) solo se muestra en el panel propio del docente
- * (`/home` en DOCENTE), así que RF-5.4 necesita este cambio de rol.
- */
+
+import {
+  createDirectorAccount,
+  seedFixtureEvaluations,
+  findOrCreateFixtureDepartment,
+  type DirectorAccount,
+} from '../../support/evaluationFixtures'
+
+function fmt(value: number): string {
+  return value.toFixed(2)
+}
+
+interface DimensionDetail {
+  dimension: string
+  average: number
+  questions: Array<{ code: string; text: string; average: number }>
+}
+
+interface DimensionsDetailResponse {
+  dimensions: DimensionDetail[]
+}
+
+/** Cambia al rol DOCENTE desde el menú del avatar — mismo flujo real que `auth/roles.cy.ts`. */
 function switchToDocenteRole() {
   cy.get('[data-testid="user-menu"]').click()
   cy.contains('Cambiar de rol').click()
@@ -30,99 +54,180 @@ function switchToDocenteRole() {
   cy.location('pathname').should('eq', '/home')
 }
 
+let fixtureDepartment: { id: number }
+let director: DirectorAccount
+let teacherIds: { docente1: number; docente2: number; docente3: number }
+let eval2026Id: number
+/** El nombre visible de DOCENTE 1 pasa a ser el del director una vez
+ * enlazados (`teacher.user.name` sigue al usuario vinculado) — se lee de la
+ * API en vez de asumir el formato exacto que arma `createDirectorAccount`. */
+let docente1Name: string
+
+before(() => {
+  findOrCreateFixtureDepartment().then(({ id, hasDirector }) => {
+    fixtureDepartment = { id }
+
+    if (hasDirector) cy.api('DELETE', `/departments/${fixtureDepartment.id}/director`)
+
+    createDirectorAccount('detalle').then((account) => {
+      director = account
+      cy.api('POST', `/departments/${fixtureDepartment.id}/director`, { user_id: account.id })
+      seedFixtureEvaluations(account).then((seeded) => {
+        teacherIds = seeded.teacherIds
+        eval2026Id = seeded.eval2026.id
+
+        // DOCENTE 1 es la propia cuenta del director, para poder cambiar a
+        // Docente y ver su matriz con datos reales (RF-5.4).
+        cy.api('PUT', `/teachers/${teacherIds.docente1}`, { user_id: account.id })
+        cy.api('PUT', `/users/${account.uid}/roles`, {
+          roles: ['DIRECTOR DE DEPARTAMENTO', 'DOCENTE'],
+        })
+
+        cy.apiAs(account.email, account.password, 'GET', '/users/auth').then((response) => {
+          docente1Name = (response.body as { data: { name: string } }).data.name
+        })
+      })
+    })
+  })
+})
+
+after(() => {
+  cy.apiAs(
+    director.email,
+    director.password,
+    'GET',
+    `/evaluations/?department_id=${fixtureDepartment.id}`,
+  ).then((response) => {
+    const evaluations = (response.body as { data: Array<{ id: number }> }).data
+    for (const evaluation of evaluations) {
+      cy.apiAs(director.email, director.password, 'DELETE', `/evaluations/${evaluation.id}`)
+    }
+  })
+  cy.api('DELETE', `/departments/${fixtureDepartment.id}/director`)
+  cy.api('PATCH', `/users/${director.uid}/status`, { active: false })
+})
+
 describe('Detalle del docente', () => {
   beforeEach(() => {
     cy.watchApi()
     cy.visitApp('/login', 'DIRECTOR DE DEPARTAMENTO')
-    cy.loginWithEmail()
+    cy.loginWithEmail(director.email, director.password)
     cy.location('pathname').should('eq', '/home')
   })
 
   describe('RF-5.3 — Historial y comparaciones', () => {
     beforeEach(() => {
-      cy.visit('/docentes/11?period=2026-1')
-      // Primera carga de la corrida: árbol pesado (gráficas, PDF) en frío.
-      cy.contains('ORLANDO JOSE BELTRAN VALERO', { timeout: 20000 }).should('be.visible')
+      cy.visit(`/docentes/${teacherIds.docente1}?period=2026-1`)
+      cy.contains(docente1Name, { timeout: 20000 }).should('be.visible')
     })
 
     it('muestra el promedio frente al periodo anterior', () => {
-      cy.contains('Promedio general del periodo')
-        .parent()
-        .find('[aria-label*="periodo anterior"]')
-        .should('have.attr', 'aria-label')
-        .and('include', 'aumentó')
-        .and('include', '0.51')
+      cy.apiAs(
+        director.email,
+        director.password,
+        'GET',
+        `/evaluations/teachers/${teacherIds.docente1}/detail?period_name=2026-1&compare_previous=true`,
+      ).then((response) => {
+        const detail = (
+          response.body as {
+            data: { overall_average: number; previous_period: { overall_average: number } | null }
+          }
+        ).data
+        const delta = Number(
+          (detail.overall_average - detail.previous_period!.overall_average).toFixed(2),
+        )
+        const trend = delta >= 0 ? 'aumentó' : 'disminuyó'
+
+        cy.contains('Promedio general del periodo')
+          .parent()
+          .find('[aria-label*="periodo anterior"]')
+          .should('have.attr', 'aria-label')
+          .and('include', trend)
+          .and('include', Math.abs(delta).toFixed(2))
+      })
     })
 
     it('compara al docente consigo mismo a lo largo del tiempo', () => {
-      // La evolución del propio docente semestre a semestre — comparar
-      // cualquiera de sus dos puntos es "compararse consigo mismo".
       cy.contains('h2', 'Evolución del promedio por periodo').scrollIntoView()
       cy.contains('2025-2').should('be.visible')
       cy.contains('2026-1').should('be.visible')
     })
 
     it('compara al docente con el promedio del departamento', () => {
-      // Esta comparación vive en el detalle por dimensiones de la
-      // evaluación, filtrado a este docente — no en /docentes/:id. El
-      // filtro de docente vive en el estado del componente, no en la URL,
-      // así que hay que seleccionarlo desde el panel de Filtros.
-      //
-      // La comparación real y correcta está por dimensión, no en el número
-      // grande de la cabecera: la API devuelve el mismo `department_average`
-      // (departamental, sin filtrar) esté o no filtrada por docente — un bug
-      // de backend confirmado y reportado aparte — así que ese número no
-      // sirve para afirmar "el docente vs. el departamento". Cada fila de
-      // "Detalle por dimensión" sí compara bien: su `ScoreBadge` usa el
-      // promedio filtrado por docente contra `overallDimension` (el mismo
-      // departamental, sin filtrar).
-      cy.visit('/evaluaciones/2/dimensiones')
-      cy.contains('h2', 'Desglose por dimensión pedagógica', { timeout: 20000 }).should(
-        'be.visible',
-      )
+      cy.apiAs(
+        director.email,
+        director.password,
+        'GET',
+        `/evaluations/${eval2026Id}/dimensions/detail`,
+      ).then((overallResponse) => {
+        const overall = (overallResponse.body as { data: DimensionsDetailResponse }).data.dimensions
+        const overallDim = overall.find((d) => d.dimension === 'Desarrollo del Conocimiento')!
 
-      cy.contains('button', 'Filtros').click()
-      cy.get('[aria-label="Docente"]').click().type('Orlando')
-      cy.contains('[data-slot="combobox-item"]:visible', 'ORLANDO').click()
+        cy.apiAs(
+          director.email,
+          director.password,
+          'GET',
+          `/evaluations/${eval2026Id}/dimensions/detail?teacher_id=${teacherIds.docente1}`,
+        ).then((filteredResponse) => {
+          const filtered = (filteredResponse.body as { data: DimensionsDetailResponse }).data
+            .dimensions
+          const filteredDim = filtered.find((d) => d.dimension === 'Desarrollo del Conocimiento')!
 
-      // El docente (4.59 en esta dimensión) está por encima del promedio del
-      // departamento (3.93, confirmado por API) — 0.66 puntos de diferencia.
-      cy.contains('Desarrollo del Conocimiento')
-        .closest('[data-slot="collapsible-trigger"]')
-        .find('[aria-label*="promedio del departamento"]')
-        .should('have.attr', 'aria-label')
-        .and('include', 'aumentó')
-        .and('include', '0.66')
+          const delta = Number((filteredDim.average - overallDim.average).toFixed(2))
+          const trend = delta >= 0 ? 'aumentó' : 'disminuyó'
+
+          cy.visit(`/evaluaciones/${eval2026Id}/dimensiones`)
+          cy.contains('h2', 'Desglose por dimensión pedagógica', { timeout: 20000 }).should(
+            'be.visible',
+          )
+
+          cy.contains('button', 'Filtros').click()
+          cy.get('[aria-label="Docente"]').click().type(docente1Name.split(' ')[0])
+          cy.contains('[data-slot="combobox-item"]:visible', docente1Name).click()
+
+          cy.contains('Desarrollo del Conocimiento')
+            .closest('[data-slot="collapsible-trigger"]')
+            .find('[aria-label*="promedio del departamento"]')
+            .should('have.attr', 'aria-label')
+            .and('include', trend)
+            .and('include', Math.abs(delta).toFixed(2))
+        })
+      })
     })
   })
 
   describe('RF-5.4 — Dimensiones y matriz de resultados', () => {
     beforeEach(() => {
-      cy.visit('/docentes/11?period=2026-1')
-      cy.contains('ORLANDO JOSE BELTRAN VALERO', { timeout: 20000 }).should('be.visible')
+      cy.visit(`/docentes/${teacherIds.docente1}?period=2026-1`)
+      cy.contains(docente1Name, { timeout: 20000 }).should('be.visible')
     })
 
     it('muestra el promedio de las cuatro dimensiones pedagógicas', () => {
-      cy.contains('Desarrollo del Conocimiento').should('be.visible')
-      cy.contains('Desempeño Docente').should('be.visible')
-      cy.contains('Procesos de Evaluación').should('be.visible')
-      cy.contains('Integración Interpersonal').should('be.visible')
+      cy.apiAs(
+        director.email,
+        director.password,
+        'GET',
+        `/evaluations/${eval2026Id}/dimensions/detail?teacher_id=${teacherIds.docente1}`,
+      ).then((response) => {
+        const dimensions = (response.body as { data: DimensionsDetailResponse }).data.dimensions
+        const conocimiento = dimensions.find((d) => d.dimension === 'Desarrollo del Conocimiento')!
 
-      // Promedios reales agregados de sus tres materias en 2026-1.
-      cy.contains('Desarrollo del Conocimiento').parent().should('contain.text', '4.59')
+        cy.contains('Desarrollo del Conocimiento').should('be.visible')
+        cy.contains('Desempeño Docente').should('be.visible')
+        cy.contains('Procesos de Evaluación').should('be.visible')
+        cy.contains('Integración Interpersonal').should('be.visible')
+
+        cy.contains('Desarrollo del Conocimiento')
+          .parent()
+          .should('contain.text', fmt(conocimiento.average))
+      })
     })
 
     it('despliega la matriz de resultados por pregunta y por materia', () => {
-      // La matriz por pregunta (`TeacherQuestionMatrix`) vive en el panel
-      // propio del docente, no en el detalle que ve el director — cambiar
-      // de rol lleva a la cuenta semilla a su propio `/home` como docente,
-      // con su propia evaluación real sembrada (2025-1, "Fundamentos de
-      // Programación").
+      // La matriz por pregunta vive en el panel propio del docente — cambiar
+      // de rol lleva a la cuenta al propio `/home` como DOCENTE 1.
       switchToDocenteRole()
 
-      // El botón queda justo bajo la cabecera fija de la app tras el
-      // scroll automático de Cypress — mismo motivo que el `force` ya usado
-      // en otros popovers de este proyecto (ver `pickPeriodOption`).
       cy.contains('button', /Ver preguntas/, { timeout: 20000 })
         .scrollIntoView()
         .click({ force: true })
@@ -130,48 +235,47 @@ describe('Detalle del docente', () => {
       // Una pregunta real del instrumento, con su código.
       cy.contains('Da a conocer la programación al inicio del semestre.').should('be.visible')
 
-      // La única materia dictada ese periodo es la columna de la matriz.
+      // DOCENTE 1 dicta varias materias ese periodo — la matriz trae al
+      // menos dos de sus columnas reales.
+      cy.contains('th', 'ESTRUCTURAS DE DATOS').should('be.visible')
       cy.contains('th', 'FUNDAMENTOS DE PROGRAMACION').should('be.visible')
     })
   })
 
   describe('RF-5.5 — Cursos por periodo y comentarios por materia', () => {
     beforeEach(() => {
-      cy.visit('/docentes/11?period=2026-1')
-      cy.contains('ORLANDO JOSE BELTRAN VALERO', { timeout: 20000 }).should('be.visible')
+      cy.visit(`/docentes/${teacherIds.docente1}?period=2026-1`)
+      cy.contains(docente1Name, { timeout: 20000 }).should('be.visible')
     })
 
     it('lista las materias que dictó el docente ese periodo', () => {
       cy.contains('h2', 'Resultados por asignatura').should('be.visible')
 
-      cy.contains('PROGRAMACION ORIENTADA A OBJETOS I').should('be.visible')
-      cy.contains('CALCULO DIFERENCIAL').should('be.visible')
+      cy.contains('ESTRUCTURAS DE DATOS').should('be.visible')
+      cy.contains('FUNDAMENTOS DE PROGRAMACION').should('be.visible')
+      cy.contains('CALCULO INTEGRAL').should('be.visible')
       cy.contains('PROGRAMACION WEB').should('be.visible')
     })
 
     it('agrupa los comentarios de los estudiantes por materia', () => {
-      // Cada materia es su propio `Collapsible` (encabezado + comentarios),
-      // no un `<article>` por comentario — así se ve de qué asignatura habla
-      // un comentario en concreto.
-      cy.contains('Explica bien, aunque a veces avanza un poco rapido')
+      cy.contains('Buen acompanamiento en las asesorias, se nota que le gusta ensenar')
+        .first()
         .closest('[data-slot="collapsible"]')
-        .should('contain.text', 'CALCULO DIFERENCIAL')
+        .should('contain.text', 'FUNDAMENTOS DE PROGRAMACION')
 
-      cy.contains('Las clases son dinamicas y los ejemplos ayudan a entender mejor')
+      cy.contains('Organizado y puntual, los talleres practicos son muy utiles')
         .closest('[data-slot="collapsible"]')
-        .should('contain.text', 'PROGRAMACION WEB')
+        .should('contain.text', 'CALCULO INTEGRAL')
     })
   })
 
   describe('RF-5.8 — Comparación entre dos periodos académicos', () => {
     it('dibuja los dos periodos reales del docente, para leer la comparación entre ellos', () => {
-      cy.visit('/docentes/11?period=2026-1')
-      cy.contains('ORLANDO JOSE BELTRAN VALERO', { timeout: 20000 }).should('be.visible')
+      cy.visit(`/docentes/${teacherIds.docente1}?period=2026-1`)
+      cy.contains(docente1Name, { timeout: 20000 }).should('be.visible')
 
       cy.contains('h2', 'Evolución del promedio por periodo').scrollIntoView()
 
-      // Los dos periodos sembrados, con promedios distintos de verdad:
-      // 2025-2 (4.00) y 2026-1 (4.51).
       cy.contains('2025-2').should('be.visible')
       cy.contains('2026-1').should('be.visible')
     })
@@ -179,8 +283,8 @@ describe('Detalle del docente', () => {
 
   describe('RF-5.9 — Descarga del reporte de evaluación', () => {
     beforeEach(() => {
-      cy.visit('/docentes/11?period=2026-1')
-      cy.contains('ORLANDO JOSE BELTRAN VALERO', { timeout: 20000 }).should('be.visible')
+      cy.visit(`/docentes/${teacherIds.docente1}?period=2026-1`)
+      cy.contains(docente1Name, { timeout: 20000 }).should('be.visible')
     })
 
     it('ofrece descargar el reporte del docente en PDF', () => {
