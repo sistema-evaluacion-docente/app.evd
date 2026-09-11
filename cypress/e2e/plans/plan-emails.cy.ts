@@ -25,16 +25,22 @@
  * docente cae en la bandeja de la misma cuenta con la que se prueba.
  */
 
+import { ownTeacherId, seedPeriod } from '../../support/planFixtures'
+
 let teacherId: number
+let periodId: number
 let planId: number
 
 before(() => {
-  cy.api('GET', '/users/auth').then((response) => {
-    // `teacher_id` (la fila de la tabla `teachers`), no `id` (la de `users`)
-    // — el plan se crea contra la primera, y para esta cuenta ambas
-    // coinciden en el mismo número por casualidad (las dos son 1).
-    teacherId = (response.body as { data: { teacher_id: number } }).data.teacher_id
-  })
+  // `teacher_id` (la fila de la tabla `teachers`), no `id` (la de `users`)
+  // — el plan se crea contra la primera, y para esta cuenta ambas
+  // coinciden en el mismo número por casualidad.
+  ownTeacherId().then((id) => (teacherId = id))
+  seedPeriod(`Periodo Correos ${Date.now()}`).then((id) => (periodId = id))
+})
+
+after(() => {
+  cy.api('DELETE', `/academic-periods/${periodId}`)
 })
 
 beforeEach(() => {
@@ -43,7 +49,7 @@ beforeEach(() => {
 
   cy.api('POST', '/improvement-plans/', {
     teacher_id: teacherId,
-    origin_period_id: 1,
+    origin_period_id: periodId,
     title: `Plan de prueba Cypress ${Date.now()}`,
   }).then((response) => {
     planId = (response.body as { data: { id: number } }).data.id

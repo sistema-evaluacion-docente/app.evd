@@ -13,6 +13,8 @@
  * (`plan-emails.cy.ts`) — aquí el foco es el ciclo de estados y el hilo.
  */
 
+import { ownTeacherId, seedPeriod } from '../../support/planFixtures'
+
 const marca = `${Date.now()}`
 
 function fakePdf(name: string) {
@@ -23,10 +25,13 @@ function fakePdf(name: string) {
   }
 }
 
+let teacherId: number
+let periodId: number
+
 function seedPlan(title: string) {
   return cy.api('POST', '/improvement-plans/', {
-    teacher_id: 1,
-    origin_period_id: 3,
+    teacher_id: teacherId,
+    origin_period_id: periodId,
     title,
     items: [
       { description: 'Asistir puntualmente a clase', commitment: 'Llegar a tiempo', aspect: 2 },
@@ -44,6 +49,15 @@ function switchRole(role: 'Director de Departamento' | 'Docente') {
 
 describe('Ciclo de evidencias', () => {
   let createdPlanIds: number[] = []
+
+  before(() => {
+    ownTeacherId().then((id) => (teacherId = id))
+    seedPeriod(`Periodo Evidencias ${marca}`).then((id) => (periodId = id))
+  })
+
+  after(() => {
+    cy.api('DELETE', `/academic-periods/${periodId}`)
+  })
 
   beforeEach(() => {
     createdPlanIds = []

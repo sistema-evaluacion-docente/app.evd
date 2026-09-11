@@ -18,7 +18,12 @@
  * su descarga, así que "generar" y "descargar" son el mismo clic.
  */
 
+import { directorDepartmentId, seedPeriod, seedTeacher } from '../../support/planFixtures'
+
 const marca = `${Date.now()}`
+
+let teacherId: number
+let periodId: number
 
 function fakePdf(name: string) {
   return {
@@ -30,8 +35,8 @@ function fakePdf(name: string) {
 
 function seedPlan(overrides: Record<string, unknown> = {}) {
   return cy.api('POST', '/improvement-plans/', {
-    teacher_id: 12,
-    origin_period_id: 3,
+    teacher_id: teacherId,
+    origin_period_id: periodId,
     title: `Plan acta y documentos ${marca}`,
     ...overrides,
   })
@@ -39,6 +44,18 @@ function seedPlan(overrides: Record<string, unknown> = {}) {
 
 describe('Formato 2 (acta) y los tres formatos', () => {
   let createdPlanIds: number[] = []
+
+  before(() => {
+    directorDepartmentId().then((departmentId) => {
+      seedTeacher(`Docente Acta ${marca}`, departmentId).then((id) => (teacherId = id))
+    })
+    seedPeriod(`Periodo Acta ${marca}`).then((id) => (periodId = id))
+  })
+
+  after(() => {
+    cy.api('DELETE', `/teachers/${teacherId}`)
+    cy.api('DELETE', `/academic-periods/${periodId}`)
+  })
 
   beforeEach(() => {
     createdPlanIds = []

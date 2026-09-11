@@ -16,6 +16,8 @@
  * existan: "aún no llegaron las notas", no una verificación inventada.
  */
 
+import { directorDepartmentId, seedPeriod, seedTeacher } from '../../support/planFixtures'
+
 const marca = `${Date.now()}`
 
 function fakePdf(name: string) {
@@ -26,8 +28,37 @@ function fakePdf(name: string) {
   }
 }
 
+// Año sintético, lejos de cualquier periodo real, para no chocar con datos
+// sembrados a mano — pero con el formato "AAAA-N" que
+// `ImprovementPlansRepository._next_period_code` exige para derivar el
+// periodo de verificación (el siguiente semestre) al crear el plan.
+const syntheticYear = 9000 + (Date.now() % 900)
+const originCode = `${syntheticYear}-1`
+const verificationCode = `${syntheticYear}-2`
+
 describe('Cierre del plan y verificación automática', () => {
   let createdPlanIds: number[] = []
+  let teacherId: number
+  let periodId: number
+  let verificationPeriodId: number
+
+  before(() => {
+    directorDepartmentId().then((departmentId) => {
+      seedTeacher(`Docente Cierre ${marca}`, departmentId).then((id) => (teacherId = id))
+    })
+    seedPeriod(originCode).then((id) => (periodId = id))
+    // Sin este periodo, `origin_period_id` no encuentra a quién asignar la
+    // verificación automática (RF-6.13) y el plan queda sin
+    // `verification_period_id` — la segunda prueba de este archivo depende
+    // de que exista, aunque no tenga ninguna evaluación cargada todavía.
+    seedPeriod(verificationCode).then((id) => (verificationPeriodId = id))
+  })
+
+  after(() => {
+    cy.api('DELETE', `/teachers/${teacherId}`)
+    cy.api('DELETE', `/academic-periods/${periodId}`)
+    cy.api('DELETE', `/academic-periods/${verificationPeriodId}`)
+  })
 
   beforeEach(() => {
     createdPlanIds = []
@@ -45,8 +76,8 @@ describe('Cierre del plan y verificación automática', () => {
 
   it('no deja cerrar el plan hasta que el Formato 3 está firmado, y cierra con motivo una vez lo está', () => {
     cy.api('POST', '/improvement-plans/', {
-      teacher_id: 1,
-      origin_period_id: 1,
+      teacher_id: teacherId,
+      origin_period_id: periodId,
       title: `Plan cierre ${marca}`,
       items: [
         { description: 'Asistir puntualmente a clase', commitment: 'Llegar a tiempo', aspect: 2 },
@@ -102,8 +133,8 @@ describe('Cierre del plan y verificación automática', () => {
 
   it('un plan recién cerrado dice honestamente que las notas de verificación aún no llegan', () => {
     cy.api('POST', '/improvement-plans/', {
-      teacher_id: 1,
-      origin_period_id: 1,
+      teacher_id: teacherId,
+      origin_period_id: periodId,
       title: `Plan verificación pendiente ${marca}`,
       items: [
         { description: 'Asistir puntualmente a clase', commitment: 'Llegar a tiempo', aspect: 2 },
