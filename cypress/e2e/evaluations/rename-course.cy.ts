@@ -102,6 +102,16 @@ function createDirectorAccount(): Cypress.Chainable<DirectorAccount> {
     })
 }
 
+/** `cy.apiAs` con las credenciales de la directora que crea esta prueba, para
+ * las rutas de `/courses/` — restringidas al departamento de quien pregunta. */
+function apiAsDirector(
+  method: string,
+  path: string,
+  body?: unknown,
+): Cypress.Chainable<Cypress.Response<unknown>> {
+  return cy.apiAs(director.email, director.password, method, path, body)
+}
+
 let fixtureDepartment: { id: number }
 let director: DirectorAccount
 let evaluationId: number | undefined
@@ -172,7 +182,15 @@ describe('Renombrar una materia sin perder su código', () => {
     cy.contains(COURSE_CODE, { timeout: 15000 }).should('be.visible')
     cy.contains('SISTEMAS OPERATIVOS').should('be.visible')
 
-    cy.api('GET', `/courses/?search=${COURSE_CODE}&limit=1`).then((response) => {
+    // Como director, no como la cuenta de pruebas compartida: `/courses/` está
+    // acotado al departamento del propio solicitante (ver `api/routes/courses.py`),
+    // y el `before` de esta prueba acaba de dejar a esta cuenta —  no a la
+    // compartida — como directora del departamento `99`. Con `cy.api` la
+    // respuesta llegaba `200` pero con la lista vacía, y la prueba moría al
+    // desestructurarla.
+    apiAsDirector('GET', `/courses/?search=${COURSE_CODE}&limit=1`).then((response) => {
+      expect(response.status, 'listado de materias del departamento').to.eq(200)
+
       const [course] = (
         response.body as { data: Array<{ id: number; code: string; name: string }> }
       ).data
@@ -202,7 +220,9 @@ describe('Renombrar una materia sin perder su código', () => {
 
     // `courseId` se resolvió en un `.then()` anterior — envolver en otro para
     // que el template string no se evalúe antes de que la variable exista.
-    cy.then(() => cy.api('GET', `/courses/${courseId}`)).then((response) => {
+    cy.then(() => apiAsDirector('GET', `/courses/${courseId}`)).then((response) => {
+      expect(response.status, 'materia renombrada').to.eq(200)
+
       const course = (response.body as { data: { code: string; name: string } }).data
       expect(course.name).to.eq(newName.toUpperCase())
       expect(course.code).to.eq(COURSE_CODE)
