@@ -464,6 +464,53 @@ describe('PlanFormPage · creación', () => {
     expect(screen.queryByText(/plan sugerido por sus resultados/)).not.toBeInTheDocument()
   })
 
+  it('says "ya tiene plan" next to a teacher who already has one', async () => {
+    mockQueries({ candidates: [{ ...CANDIDATE, has_plan: true }] })
+
+    renderAt(<PlanFormPage />)
+
+    await userEvent.click(screen.getByRole('combobox', { name: 'Docente' }))
+
+    expect(screen.getByRole('option', { name: /\(ya tiene plan\)/ })).toBeInTheDocument()
+  })
+
+  // RF-6.1: un plan se sugiere por tres vías independientes — el promedio
+  // general bajo el umbral (ya cubierto arriba con CANDIDATE), cualquier
+  // indicador bajo el umbral, o la acumulación de comentarios de alto riesgo.
+  // Cada una se confirma aquí por separado, con el promedio general sano en
+  // las otras dos, para que quede claro que cada vía basta por sí sola.
+  it('sugiere un plan por un indicador bajo el umbral, con el promedio general sano', async () => {
+    const weakIndicator: PlanCandidate = {
+      ...HEALTHY_CANDIDATE,
+      weak_questions: [{ code: '011' } as PlanCandidate['weak_questions'][number]],
+    }
+    mockQueries({ candidates: [weakIndicator] })
+
+    renderAt(<PlanFormPage />)
+
+    await userEvent.click(screen.getByRole('combobox', { name: 'Docente' }))
+
+    expect(
+      screen.getByRole('option', { name: /1 indicador bajo el umbral/ }),
+    ).toBeInTheDocument()
+  })
+
+  it('sugiere un plan por comentarios de alto riesgo acumulados, con todo lo demás sano', async () => {
+    const riskyComments: PlanCandidate = {
+      ...HEALTHY_CANDIDATE,
+      high_risk_comment_count: 3,
+    }
+    mockQueries({ candidates: [riskyComments] })
+
+    renderAt(<PlanFormPage />)
+
+    await userEvent.click(screen.getByRole('combobox', { name: 'Docente' }))
+
+    expect(
+      screen.getByRole('option', { name: /3 comentarios de alto riesgo/ }),
+    ).toBeInTheDocument()
+  })
+
   it('narrows the teacher list as it is typed into, without going back to the API', async () => {
     mockQueries({ candidates: [CANDIDATE, HEALTHY_CANDIDATE] })
 
@@ -777,6 +824,74 @@ describe('PlanFormPage · creación', () => {
     // "faltan campos obligatorios" to someone who only saved one commitment.
     expect(createMutate).not.toHaveBeenCalled()
     expect(toast.warning).not.toHaveBeenCalled()
+  })
+
+  // RF-6.7: el Formato 1 (caso reportado) se adjunta al crear el plan, pero
+  // solo puede subirse una vez el plan existe — así que el archivo se guarda
+  // aparte y se sube justo después de que la creación responde con éxito.
+  it('sube el Formato 1 adjunto justo después de crear el plan', async () => {
+    const createMutate = vi.fn((_payload, options: { onSuccess: (r: unknown) => void }) =>
+      options.onSuccess({ data: { id: 99 } }),
+    )
+    const mutateAsync = vi.fn().mockResolvedValue({})
+
+    mockQueries({ subjects: SUBJECTS, createMutate })
+    vi.mocked(useUploadPlanDocument).mockReturnValue({
+      mutateAsync,
+      isPending: false,
+    } as unknown as ReturnType<typeof useUploadPlanDocument>)
+
+    renderAt(<PlanFormPage />, '/planes/nuevo?teacher=7&period=2')
+
+    const pdf = new File(['x'], 'caso.pdf', { type: 'application/pdf' })
+    await userEvent.upload(screen.getByLabelText('Formato 1 firmado'), pdf)
+
+    await userEvent.click(screen.getByRole('button', { name: /Añadir compromiso/ }))
+    await userEvent.click(await screen.findByRole('menuitem', { name: /Planeación del curso/ }))
+    await userEvent.type(screen.getByLabelText(/Título del compromiso/), 'Metodología')
+    await userEvent.type(screen.getByLabelText(/Descripción del compromiso/), 'Rediseñar')
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+
+    await userEvent.type(screen.getByLabelText(/Acta N/), '012')
+    await userEvent.click(screen.getByRole('button', { name: /Crear plan/ }))
+
+    await waitFor(() =>
+      expect(mutateAsync).toHaveBeenCalledWith({ planId: 99, format: 'formato-1', file: pdf }),
+    )
+  })
+
+  it('igual navega al plan nuevo, avisando con un toast, si el Formato 1 falla al subir', async () => {
+    const createMutate = vi.fn((_payload, options: { onSuccess: (r: unknown) => void }) =>
+      options.onSuccess({ data: { id: 99 } }),
+    )
+    const mutateAsync = vi.fn().mockRejectedValue(new Error('falló'))
+
+    mockQueries({ subjects: SUBJECTS, createMutate })
+    vi.mocked(useUploadPlanDocument).mockReturnValue({
+      mutateAsync,
+      isPending: false,
+    } as unknown as ReturnType<typeof useUploadPlanDocument>)
+
+    renderAt(<PlanFormPage />, '/planes/nuevo?teacher=7&period=2')
+
+    const pdf = new File(['x'], 'caso.pdf', { type: 'application/pdf' })
+    await userEvent.upload(screen.getByLabelText('Formato 1 firmado'), pdf)
+
+    await userEvent.click(screen.getByRole('button', { name: /Añadir compromiso/ }))
+    await userEvent.click(await screen.findByRole('menuitem', { name: /Planeación del curso/ }))
+    await userEvent.type(screen.getByLabelText(/Título del compromiso/), 'Metodología')
+    await userEvent.type(screen.getByLabelText(/Descripción del compromiso/), 'Rediseñar')
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+
+    await userEvent.type(screen.getByLabelText(/Acta N/), '012')
+    await userEvent.click(screen.getByRole('button', { name: /Crear plan/ }))
+
+    await waitFor(() =>
+      expect(toast.warning).toHaveBeenCalledWith(
+        'El plan se creó, pero no se pudo adjuntar el Formato 1.',
+        expect.anything(),
+      ),
+    )
   })
 
   it('leaves nothing behind when the commitment dialog is cancelled', async () => {

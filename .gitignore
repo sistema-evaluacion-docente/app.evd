@@ -37,4 +37,7 @@ cypress.env.json
 cypress/screenshots
 cypress/videos
 cypress/downloads
+
+# Scratch space for local scripts/tokens during test work — never committed.
+scratchpad
 cypress/reports

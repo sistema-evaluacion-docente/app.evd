@@ -244,4 +244,18 @@ describe('PlanCheckpoints', () => {
     expect(screen.getByText(/No hay compromisos a los que hacer seguimiento/)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Registrar' })).not.toBeInTheDocument()
   })
+
+  // RF-6.9: el docente ve sus propios seguimientos, pero de solo lectura.
+  it('el docente ve las notas de solo lectura, sin botón de Registrar ni de Editar', () => {
+    mockUpdate()
+
+    const plan = buildPlan()
+    plan.checkpoints[0].aspect_notes = [{ id: 99, aspect: 1, note: 'Va mejorando' }]
+
+    render(<PlanCheckpoints plan={plan} aspects={ASPECTS} canManage={false} />)
+
+    expect(screen.getByText('Va mejorando')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Registrar' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Editar' })).not.toBeInTheDocument()
+  })
 })

@@ -186,6 +186,41 @@ describe('usePlanWorkbench', () => {
     expect(result.current.allComments).toEqual([riskyComment])
   })
 
+  it('falls back to a null academic_group_id and program_name when a course has no matching group', async () => {
+    mockApi.get.mockImplementation((url: string) => {
+      if (url === '/evaluations/teachers/4/detail') return Promise.resolve({ data: DETAIL })
+      // The plans API never heard of "CAL" — only "FIS" comes back.
+      if (url === '/improvement-plans/teacher/4/courses')
+        return Promise.resolve({ data: [COURSES_RESPONSE[1]] })
+      if (url === '/evaluations/9/teachers/4/comments')
+        return Promise.resolve({ data: COMMENTS_RESPONSE })
+
+      return Promise.resolve({ data: null })
+    })
+
+    const { result } = renderApiHook(() =>
+      usePlanWorkbench({
+        teacherId: 4,
+        periodId: 10,
+        periodName: '2028-1',
+        threshold: 3.5,
+        onlyWeak: false,
+        subjectKey: SUBJECT_ALL,
+        catalogue: CATALOGUE,
+      }),
+    )
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+
+    const cal = result.current.allSubjects.find((s) => s.course_code === 'CAL')!
+    expect(cal.academic_group_id).toBeNull()
+    expect(cal.program_name).toBeNull()
+
+    const fis = result.current.allSubjects.find((s) => s.course_code === 'FIS')!
+    expect(fis.academic_group_id).toBe(101)
+    expect(fis.program_name).toBe('Ing. Sistemas')
+  })
+
   it('narrows subjectOptions to the ones with findings when onlyWeak is set', async () => {
     mockEndpoints()
 

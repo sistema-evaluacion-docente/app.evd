@@ -15,7 +15,10 @@
     "test:coverage": "vitest run --coverage",
     "e2e": "cypress run --browser chromium",
     "e2e:open": "cypress open --e2e --browser chromium",
-    "test:e2e": "start-server-and-test dev http://localhost:5173 e2e"
+    "e2e:chrome": "cypress run --browser chrome",
+    "e2e:chrome:open": "cypress open --e2e --browser chrome",
+    "test:e2e": "start-server-and-test dev http://localhost:5173 e2e",
+    "test:e2e:chrome": "start-server-and-test dev http://localhost:5173 e2e:chrome"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",

@@ -31,12 +31,19 @@ vi.mock('@/features/auth', () => ({
 }))
 
 // The panels below the commitments have their own tests; stubbed here so this
-// one stays on what the page itself decides to show.
+// one stays on what the page itself decides to show. `canManage` is echoed
+// into the DOM (not just swallowed) so a test can confirm what the page
+// actually decided to pass down, e.g. that it stays editable while only the
+// acta — not the whole plan — is locked.
 vi.mock('@/features/plans/components/PlanCheckpoints', () => ({
-  PlanCheckpoints: () => <div data-testid="checkpoints" />,
+  PlanCheckpoints: ({ canManage }: { canManage: boolean }) => (
+    <div data-testid="checkpoints" data-can-manage={String(canManage)} />
+  ),
 }))
 vi.mock('@/features/plans/components/PlanEvidences', () => ({
-  PlanEvidences: () => <div data-testid="evidences" />,
+  PlanEvidences: ({ canManage }: { canManage: boolean }) => (
+    <div data-testid="evidences" data-can-manage={String(canManage)} />
+  ),
 }))
 vi.mock('@/features/plans/components/PlanDocuments', () => ({
   PlanDocuments: () => <div data-testid="documents" />,
@@ -44,6 +51,12 @@ vi.mock('@/features/plans/components/PlanDocuments', () => ({
 vi.mock('@/features/plans/components/PlanClosure', () => ({
   PlanClosure: () => <div data-testid="closure" />,
   PlanClosedSummary: () => <div data-testid="closed-summary" />,
+}))
+// Needs `useGetPlans`, unrelated to what this page itself decides — only
+// whether to show the slot at all is this page's call, tested separately in
+// VerificationFollowUpAction.test.tsx for its own behavior.
+vi.mock('@/features/plans/components/VerificationFollowUpAction', () => ({
+  VerificationFollowUpAction: () => <div data-testid="follow-up-action" />,
 }))
 
 /** Shared so a test can assert what the confirmation ends up calling. */
@@ -301,6 +314,113 @@ describe('PlanDetailPage · la cabecera del plan', () => {
 
     expect(screen.getByText('25%')).toBeInTheDocument()
     expect(screen.queryByText('0%')).not.toBeInTheDocument()
+  })
+
+  // RF-6.3: el periodo de origen es un dato que nace con el plan y no se le
+  // pierde ni se confunde con el de verificación mientras el plan avanza.
+  it('muestra el periodo de origen en la cabecera', () => {
+    mockPlan([item(1, 1, 'Expresa sus ideas')], { origin_period_code: '2025-2' })
+
+    renderPage()
+
+    expect(screen.getByText('Periodo 2025-2')).toBeInTheDocument()
+  })
+
+  it('no muestra un badge de periodo de origen cuando la API no lo trae', () => {
+    mockPlan([item(1, 1, 'Expresa sus ideas')], { origin_period_code: null })
+
+    renderPage()
+
+    expect(screen.queryByText(/^Periodo /)).not.toBeInTheDocument()
+  })
+
+  it('distingue el periodo de origen del de verificación cuando los dos están presentes', () => {
+    mockPlan([item(1, 1, 'Expresa sus ideas')], {
+      origin_period_code: '2025-2',
+      verification_period_code: '2026-1',
+    })
+
+    renderPage()
+
+    expect(screen.getByText('Periodo 2025-2')).toBeInTheDocument()
+    expect(screen.getByText('Verificación 2026-1')).toBeInTheDocument()
+  })
+})
+
+describe('PlanDetailPage · el acta firmada no congela el resto del plan', () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  // RF-6.8: cerrar/firmar el acta (Formato 2) congela sus propios campos,
+  // pero los seguimientos y las evidencias del plan siguen editables — lo que
+  // de verdad lo cierra es `plan.status`, no `acta_status`.
+  it('deja los seguimientos y las evidencias editables con el acta ya firmada', () => {
+    mockPlan([item(1, 1, 'Expresa sus ideas')], {
+      status: 'EN_SEGUIMIENTO',
+      acta_status: 'FIRMADA',
+      documents: SIGNED_ACTA,
+    })
+
+    renderPage()
+
+    expect(screen.getByTestId('checkpoints')).toHaveAttribute('data-can-manage', 'true')
+    expect(screen.getByTestId('evidences')).toHaveAttribute('data-can-manage', 'true')
+  })
+
+  it('sí los congela una vez el plan mismo queda cerrado', () => {
+    mockPlan([item(1, 1, 'Expresa sus ideas')], {
+      status: 'CERRADO_CUMPLIDO',
+      acta_status: 'FIRMADA',
+      documents: SIGNED_ACTA,
+    })
+
+    renderPage()
+
+    expect(screen.getByTestId('checkpoints')).toHaveAttribute('data-can-manage', 'false')
+    expect(screen.getByTestId('evidences')).toHaveAttribute('data-can-manage', 'false')
+  })
+})
+
+describe('PlanDetailPage · la acción de seguimiento por no haber mejorado', () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  // RF-6.13: el atajo para abrir un plan nuevo solo tiene sentido cuando la
+  // verificación dice que el docente no mejoró — con cualquier otro
+  // resultado sería sugerir un plan que la propia verificación no respalda.
+  it('ofrece la acción de seguimiento cuando la verificación dice que no mejoró', () => {
+    mockPlan([item(1, 1, 'Expresa sus ideas')], {
+      status: 'CERRADO_NO_CUMPLIDO',
+      verification: { result: 'NO_MEJORO', items: [], comment_findings: [] } as unknown as Plan['verification'],
+    })
+
+    renderPage()
+
+    expect(screen.getByTestId('follow-up-action')).toBeInTheDocument()
+  })
+
+  it('no la ofrece cuando la verificación dice que sí mejoró', () => {
+    mockPlan([item(1, 1, 'Expresa sus ideas')], {
+      status: 'CERRADO_NO_CUMPLIDO',
+      verification: { result: 'MEJORO', items: [], comment_findings: [] } as unknown as Plan['verification'],
+    })
+
+    renderPage()
+
+    expect(screen.queryByTestId('follow-up-action')).not.toBeInTheDocument()
+  })
+
+  it('no la ofrece sin datos suficientes para verificar', () => {
+    mockPlan([item(1, 1, 'Expresa sus ideas')], {
+      status: 'CERRADO_NO_CUMPLIDO',
+      verification: { result: 'SIN_DATOS', items: [], comment_findings: [] } as unknown as Plan['verification'],
+    })
+
+    renderPage()
+
+    expect(screen.queryByTestId('follow-up-action')).not.toBeInTheDocument()
   })
 })
 
