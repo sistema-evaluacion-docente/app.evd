@@ -20,6 +20,15 @@ export default defineConfig([
     },
   },
   {
+    files: ['cypress/**/*.ts', 'cypress.config.ts'],
+    languageOptions: {
+      globals: { ...globals.browser, ...globals.mocha, cy: 'readonly', Cypress: 'readonly' },
+    },
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
+  {
     files: ['**/*.test.{ts,tsx}', 'src/test/**'],
     rules: {
       'react-refresh/only-export-components': 'off',

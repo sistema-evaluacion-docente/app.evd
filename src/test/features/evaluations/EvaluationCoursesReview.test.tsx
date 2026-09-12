@@ -5,7 +5,7 @@ import api from '@/config/axios'
 import { EvaluationCoursesReview } from '@/features/evaluations/components/EvaluationCoursesReview'
 import { renderRouted, screen, waitFor } from '@/test/render'
 
-vi.mock('@/config/axios', () => ({ default: { get: vi.fn(), put: vi.fn() } }))
+vi.mock('@/config/axios', () => ({ default: { get: vi.fn(), patch: vi.fn() } }))
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
@@ -58,7 +58,7 @@ beforeEach(() => {
     if (url === '/stats/departments/period-range/subjects') return Promise.resolve(page(SUBJECTS))
     return Promise.resolve(page([]))
   })
-  mockApi.put.mockResolvedValue({ data: {} })
+  mockApi.patch.mockResolvedValue({ data: {} })
 })
 
 describe('EvaluationCoursesReview', () => {
@@ -92,7 +92,9 @@ describe('EvaluationCoursesReview', () => {
     await user.click(screen.getByRole('button', { name: 'Guardar' }))
 
     await waitFor(() =>
-      expect(mockApi.put).toHaveBeenCalledWith('/courses/100', { name: 'CÁLCULO DIFERENCIAL' }),
+      expect(mockApi.patch).toHaveBeenCalledWith('/courses/100/name', {
+        name: 'CÁLCULO DIFERENCIAL',
+      }),
     )
     expect(await screen.findByText('Actualizada')).toBeInTheDocument()
   })

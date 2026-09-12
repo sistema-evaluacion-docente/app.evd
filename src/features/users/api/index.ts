@@ -23,11 +23,21 @@ async function createUser(payload: CreateUserPayload): Promise<ResponseAPI<Admin
   return api.post('/users/', payload)
 }
 
+/**
+ * Replaces a user's roles and sets their active status.
+ *
+ * There is no single endpoint that updates another user: `PUT /users/` only
+ * touches the caller's own record, so roles and status each have their own
+ * route. Both address the user by their Firebase `uid` — the numeric `id` that
+ * the list shows is not a key the API answers to.
+ */
 async function updateUser(
   uid: string,
   payload: UpdateUserPayload,
 ): Promise<ResponseAPI<AdminUser>> {
-  return api.put(`/users/${uid}`, payload)
+  await api.put(`/users/${uid}/roles`, { roles: payload.roles })
+
+  return api.patch(`/users/${uid}/status`, { active: payload.active })
 }
 
 /** Query-key factory so list invalidations stay consistent. */
@@ -65,8 +75,8 @@ export function useGetUsers({
 }
 
 /**
- * Updates a user's profile (`PUT /users/{user_id}`).
- * Invalidates the users list on success.
+ * Replaces a user's roles and status (`PUT /users/{uid}/roles` plus
+ * `PATCH /users/{uid}/status`). Invalidates the users list on success.
  *
  * @example
  * const { mutate: updateUser } = useUpdateUser();

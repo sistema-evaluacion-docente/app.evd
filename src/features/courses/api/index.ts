@@ -27,7 +27,10 @@ async function updateCourse(
   courseId: number,
   payload: UpdateCoursePayload,
 ): Promise<ResponseAPI<CourseRecord>> {
-  return api.put(`/courses/${courseId}`, payload)
+  // PATCH .../name, not PUT /courses/{id}: that one is ADMIN-only, and every
+  // caller of this function is a director-only screen (EvaluationCoursesReview,
+  // SubjectsList) renaming a materia in their own department.
+  return api.patch(`/courses/${courseId}/name`, payload)
 }
 
 /** Query-key factory so list invalidations stay consistent. */
@@ -71,7 +74,8 @@ export function useListCourses({
 }
 
 /**
- * Updates a course's name (`PUT /courses/{course_id}`).
+ * Renames a course while keeping its code (`PATCH /courses/{course_id}/name`),
+ * restricted to the director of the course's own department.
  *
  * @example
  * const { mutate } = useUpdateCourse();

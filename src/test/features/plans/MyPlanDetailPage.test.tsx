@@ -80,7 +80,7 @@ const downloadGenerated = vi.fn()
 const downloadSigned = vi.fn()
 const previewSigned = vi.fn()
 
-function plan(documents: PlanDocument[]): Plan {
+function plan(documents: PlanDocument[], overrides: Partial<Plan> = {}): Plan {
   return {
     id: 5,
     title: 'Plan de Ada',
@@ -92,6 +92,7 @@ function plan(documents: PlanDocument[]): Plan {
     evidences: [],
     courses: [],
     documents,
+    ...overrides,
   } as unknown as Plan
 }
 
@@ -192,5 +193,24 @@ describe('MyPlanDetailPage', () => {
     renderAt('/mis-planes/999')
 
     expect(screen.getByRole('alert')).toHaveTextContent(/No encontramos este plan/)
+  })
+
+  // RF-6.3: el periodo de origen también se le muestra al propio docente, y
+  // no se confunde con el de verificación cuando los dos están presentes.
+  it('muestra el periodo de origen del plan', () => {
+    mockPlan(plan([], { origin_period_code: '2025-2' }))
+
+    renderAt()
+
+    expect(screen.getByText('Origen 2025-2')).toBeInTheDocument()
+  })
+
+  it('distingue el periodo de origen del de verificación', () => {
+    mockPlan(plan([], { origin_period_code: '2025-2', verification_period_code: '2026-1' }))
+
+    renderAt()
+
+    expect(screen.getByText('Origen 2025-2')).toBeInTheDocument()
+    expect(screen.getByText('Se verifica en 2026-1')).toBeInTheDocument()
   })
 })

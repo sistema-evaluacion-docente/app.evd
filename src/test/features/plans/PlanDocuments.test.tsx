@@ -130,6 +130,20 @@ describe('PlanDocuments', () => {
     expect(mutate).toHaveBeenCalledWith('formato-2')
   })
 
+  it('descarga la copia Word cuando se elige ese formato del menú', async () => {
+    const user = userEvent.setup()
+    const mutate = vi.fn()
+
+    vi.mocked(useDownloadDocumentWord).mockReturnValue({ mutate, isPending: false } as never)
+
+    render(<PlanDocuments plan={buildPlan()} canManage />)
+
+    await user.click(within(rowOf(/Formato 2/)).getByRole('button', { name: /Descargar/ }))
+    await user.click(await screen.findByRole('menuitem', { name: /Formato Word/ }))
+
+    expect(mutate).toHaveBeenCalledWith('formato-2')
+  })
+
   it('keeps the Word copy away from the teacher, who cannot fetch it', async () => {
     const user = userEvent.setup()
 

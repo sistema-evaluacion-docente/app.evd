@@ -52,20 +52,10 @@ export function UsersList() {
   const users = data?.data ?? []
   const pageCount = data?.pagination?.pages ?? 1
 
+  // Solo roles y estado: son las dos únicas cosas que la API deja cambiar de
+  // otro usuario. Un campo de nombre aquí se enviaría a ninguna parte.
   const editFields: FieldConfig[] = editTarget
     ? [
-        {
-          name: 'name',
-          label: 'Nombre',
-          required: true,
-          defaultValue: editTarget.name,
-        },
-        {
-          name: 'avatar_url',
-          label: 'URL del avatar',
-          type: 'url',
-          defaultValue: editTarget.avatar_url ?? '',
-        },
         {
           name: 'role',
           label: 'Roles',
@@ -86,13 +76,21 @@ export function UsersList() {
   const handleUpdateSubmit = (values: Record<string, string>) => {
     if (!editTarget) return
 
+    // La API direcciona a los usuarios por su `uid` de Firebase, que solo
+    // existe cuando la persona ya ha entrado alguna vez. Sin él no hay a quién
+    // dirigir la petición, y decirlo es mejor que mandarla y fallar.
+    if (!editTarget.uid) {
+      toast.error(
+        'Este usuario aún no ha iniciado sesión, así que todavía no se le pueden cambiar los roles ni el estado',
+      )
+      return
+    }
+
     updateUser(
       {
         uid: editTarget.uid,
         payload: {
-          name: values.name,
           active: values.active === 'true',
-          avatar_url: values.avatar_url,
           roles: values.role.split(',').filter(Boolean),
         },
       },
@@ -155,7 +153,7 @@ export function UsersList() {
         <DynamicFormDrawer
           key={editTarget.id}
           title={`Editar usuario: ${editTarget.name}`}
-          description="Actualiza los datos del usuario"
+          description="Reemplaza sus roles o cambia su estado"
           hideTrigger
           open
           onOpenChange={(open) => {

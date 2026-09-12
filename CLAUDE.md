@@ -22,12 +22,29 @@ pnpm preview           # preview production build
 pnpm test              # vitest (watch mode)
 pnpm test:run          # vitest run (single pass, use this in CI/scripts)
 pnpm test:coverage     # vitest run --coverage
+pnpm e2e               # cypress run (requiere `pnpm dev` y la API arriba)
+pnpm e2e:open          # runner interactivo de Cypress
+pnpm test:e2e          # levanta el dev server y corre los e2e de un tirón
 ```
 
 Run a single test file: `pnpm vitest run path/to/file.test.tsx`.
 
-Vitest is configured (`vite.config.ts`, jsdom env, `src/test/setup.ts`) but no `*.test.*` files exist
-yet in `src/` — this is not a codebase with an established testing pattern to follow by example.
+Vitest is configured (`vite.config.ts`, jsdom env, `src/test/setup.ts`) for unit and component tests
+next to the code they cover.
+
+End-to-end tests live in `cypress/e2e/` and run against the **real** stack: real Firebase project and
+real backend, no mocks. That means they need `.env` filled in, the API reachable at `VITE_API_URL`,
+and a test account **with at least two roles, one of them `ADMIN`** (specs cover role switching and
+the admin user management): copy
+`cypress.env.example.json` to `cypress.env.json` (gitignored) with the `email` and `password` of that
+account, or export `CYPRESS_email` / `CYPRESS_password`. The role-restriction spec additionally
+creates its own single-role scratch accounts on the fly (Firebase signup + backend user), since
+proving a role is denied needs an account that genuinely lacks it. They run in Chromium, not the
+bundled Electron — `E2E.md` explains why. Public config
+is read with `Cypress.expose('apiUrl')`; the credentials with `cy.env([...])`, which keeps them out of
+the logs. `cy.intercept` appears only to _observe_ or to _tamper with_ a request on its way to the
+real API (`cy.watchApi()`, `cy.tamperToken()`) — never to fake a response. Setup, commands and known
+environment quirks are documented in `E2E.md`.
 
 ## TypeScript / lint quirks (enforced, will fail build)
 

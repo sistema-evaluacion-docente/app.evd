@@ -12,7 +12,7 @@ import { renderRouted, screen, waitFor, within } from '@/test/render'
  * the period selector run.
  */
 
-vi.mock('@/config/axios', () => ({ default: { get: vi.fn(), put: vi.fn() } }))
+vi.mock('@/config/axios', () => ({ default: { get: vi.fn(), patch: vi.fn() } }))
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
@@ -90,7 +90,7 @@ function serve({ subjects = SUBJECTS, pages = 1, periods = PERIODS, fail = false
 beforeEach(() => {
   vi.clearAllMocks()
   serve()
-  mockApi.put.mockResolvedValue({ data: {} })
+  mockApi.patch.mockResolvedValue({ data: {} })
 })
 
 /** The subject list only queries once the period selector has resolved a period. */
@@ -281,8 +281,8 @@ describe('SubjectsList', () => {
     )
 
     await waitFor(() =>
-      expect(mockApi.put).toHaveBeenCalledWith(
-        '/courses/8',
+      expect(mockApi.patch).toHaveBeenCalledWith(
+        '/courses/8/name',
         expect.objectContaining({ name: 'CÁLCULO I' }),
       ),
     )

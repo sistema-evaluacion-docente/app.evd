@@ -6,10 +6,12 @@ import { UsersList } from '@/features/users/components/UsersList'
 import { renderRouted, screen, waitFor, within } from '@/test/render'
 
 vi.mock('@/config/axios', () => ({
-  default: { get: vi.fn(), put: vi.fn() },
+  default: { get: vi.fn(), put: vi.fn(), patch: vi.fn() },
 }))
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
+
+const { toast } = await import('sonner')
 
 const mockApi = vi.mocked(api)
 
@@ -44,6 +46,7 @@ beforeEach(() => {
   })
 
   mockApi.put.mockResolvedValue({ data: {} })
+  mockApi.patch.mockResolvedValue({ data: {} })
 })
 
 describe('UsersList', () => {
@@ -68,15 +71,35 @@ describe('UsersList', () => {
     await user.click(screen.getByRole('button', { name: 'Administrador' }))
     await user.click(screen.getByRole('button', { name: /Guardar/ }))
 
+    // Roles y estado van por rutas separadas, y ambas se direccionan por el
+    // `uid` de Firebase: el id numérico de la fila no es una clave que la API
+    // reconozca.
     await waitFor(() =>
-      expect(mockApi.put).toHaveBeenCalledWith(
-        '/users/u1',
-        expect.objectContaining({
-          name: 'Ada Lovelace',
-          roles: expect.arrayContaining(['DOCENTE', 'ADMIN']),
-        }),
-      ),
+      expect(mockApi.put).toHaveBeenCalledWith('/users/u1/roles', {
+        roles: expect.arrayContaining(['DOCENTE', 'ADMIN']),
+      }),
     )
+
+    expect(mockApi.patch).toHaveBeenCalledWith('/users/u1/status', { active: true })
+  })
+
+  it('no intenta editar a quien todavía no tiene uid, y dice por qué', async () => {
+    const user = userEvent.setup()
+
+    mockApi.get.mockImplementation((url: string) => {
+      if (url.startsWith('/users')) return Promise.resolve(page([{ ...USERS[0], uid: null }]))
+      return Promise.resolve(page([]))
+    })
+
+    renderRouted(<UsersList />)
+    const row = (await screen.findByText('Ada Lovelace')).closest('tr')!
+    await user.click(within(row).getByRole('button', { name: 'Acciones' }))
+    await user.click(await screen.findByRole('menuitem', { name: 'Editar' }))
+    await user.click(await screen.findByRole('button', { name: /Guardar/ }))
+
+    expect(mockApi.put).not.toHaveBeenCalled()
+    expect(mockApi.patch).not.toHaveBeenCalled()
+    expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('aún no ha iniciado sesión'))
   })
 
   it('searches on the server rather than filtering the page in the browser', async () => {

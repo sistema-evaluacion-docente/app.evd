@@ -63,6 +63,19 @@ describe('PlanClosure', () => {
     expect(screen.getByText(/Formato 3 firmado/)).toBeInTheDocument()
   })
 
+  it('avisa que el docente recibirá una notificación y un correo al cerrar', async () => {
+    const user = userEvent.setup()
+    render(<PlanClosure plan={plan({ documents: [document({ has_signed: true })] })} />)
+
+    await user.click(screen.getByRole('button', { name: 'Cerrar plan' }))
+
+    expect(
+      await screen.findByText(
+        /el docente recibirá una notificación en la plataforma y un correo con el resultado del cierre/,
+      ),
+    ).toBeInTheDocument()
+  })
+
   it('keeps the confirm button off until a result is picked, then submits it with the reason', async () => {
     const user = userEvent.setup()
     render(
