@@ -88,7 +88,7 @@ export function UsersList() {
 
     updateUser(
       {
-        userId: editTarget.id,
+        uid: editTarget.uid,
         payload: {
           name: values.name,
           active: values.active === 'true',

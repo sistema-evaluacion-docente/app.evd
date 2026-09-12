@@ -24,10 +24,10 @@ async function createUser(payload: CreateUserPayload): Promise<ResponseAPI<Admin
 }
 
 async function updateUser(
-  userId: number,
+  uid: string,
   payload: UpdateUserPayload,
 ): Promise<ResponseAPI<AdminUser>> {
-  return api.put(`/users/${userId}`, payload)
+  return api.put(`/users/${uid}`, payload)
 }
 
 /** Query-key factory so list invalidations stay consistent. */
@@ -70,13 +70,13 @@ export function useGetUsers({
  *
  * @example
  * const { mutate: updateUser } = useUpdateUser();
- * updateUser({ userId: 1, payload: { name: 'Juan', active: true, avatar_url: '', roles: ['DOCENTE'] } });
+ * updateUser({ uid: 'abc123', payload: { name: 'Juan', active: true, avatar_url: '', roles: ['DOCENTE'] } });
  */
 export function useUpdateUser() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ userId, payload }: { userId: number; payload: UpdateUserPayload }) =>
-      updateUser(userId, payload),
+    mutationFn: ({ uid, payload }: { uid: string; payload: UpdateUserPayload }) =>
+      updateUser(uid, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: usersKeys.lists() })
     },

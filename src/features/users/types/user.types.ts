@@ -23,7 +23,7 @@ export interface UserParams {
   limit: number
 }
 
-/** Payload for updating a user via `PUT /users/{user_id}`. */
+/** Payload for updating a user via `PUT /users/{uid}` (ADMIN only). */
 export interface UpdateUserPayload {
   name: string
   active: boolean
