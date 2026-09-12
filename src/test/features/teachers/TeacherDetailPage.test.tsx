@@ -148,7 +148,7 @@ describe('TeacherDetailPage', () => {
     await screen.findAllByText('Ada Lovelace')
 
     expect(screen.getByText('Perfil por dimensiones')).toBeInTheDocument()
-    expect(screen.getByText('Indicadores del periodo')).toBeInTheDocument()
+    expect(screen.getByText('Ítems del periodo')).toBeInTheDocument()
     expect(screen.getByText('Comentarios de los estudiantes')).toBeInTheDocument()
   })
 

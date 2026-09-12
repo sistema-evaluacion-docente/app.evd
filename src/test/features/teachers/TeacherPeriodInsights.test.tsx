@@ -146,8 +146,8 @@ describe('TeacherPeriodInsights', () => {
     renderRouted(<TeacherPeriodInsights />)
 
     expect(await screen.findByText('Por nivel de riesgo')).toBeInTheDocument()
-    const matrixTrigger = screen.getByRole('button', { name: /Ver preguntas/ })
-    expect(matrixTrigger).toHaveTextContent('Ver preguntas (1)')
+    const matrixTrigger = screen.getByRole('button', { name: /Ver ítems/ })
+    expect(matrixTrigger).toHaveTextContent('Ver ítems (1)')
   })
 
   it('shows the question matrix table once expanded', async () => {
@@ -155,7 +155,7 @@ describe('TeacherPeriodInsights', () => {
     const user = userEvent.setup()
 
     renderRouted(<TeacherPeriodInsights />)
-    await user.click(await screen.findByRole('button', { name: /Ver preguntas/ }))
+    await user.click(await screen.findByRole('button', { name: /Ver ítems/ }))
 
     const row = (await screen.findByText('011')).closest('tr')!
     expect(within(row).getByText('Asiste puntualmente a clase.')).toBeInTheDocument()
@@ -168,7 +168,7 @@ describe('TeacherPeriodInsights', () => {
     renderRouted(<TeacherPeriodInsights />)
 
     expect(
-      await screen.findByLabelText('Periodo del resumen de comentarios y preguntas'),
+      await screen.findByLabelText('Periodo del resumen de comentarios e ítems'),
     ).toBeInTheDocument()
   })
 
@@ -185,7 +185,7 @@ describe('TeacherPeriodInsights', () => {
 
     await screen.findByText('Por nivel de riesgo')
     expect(
-      screen.queryByLabelText('Periodo del resumen de comentarios y preguntas'),
+      screen.queryByLabelText('Periodo del resumen de comentarios e ítems'),
     ).not.toBeInTheDocument()
   })
 })

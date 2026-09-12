@@ -70,7 +70,7 @@ describe('UsersList', () => {
 
     await waitFor(() =>
       expect(mockApi.put).toHaveBeenCalledWith(
-        '/users/1',
+        '/users/u1',
         expect.objectContaining({
           name: 'Ada Lovelace',
           roles: expect.arrayContaining(['DOCENTE', 'ADMIN']),

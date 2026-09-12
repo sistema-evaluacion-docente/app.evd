@@ -215,10 +215,10 @@ describe('users', () => {
     expect(mockApi.post).toHaveBeenCalledWith('/users/', { email: 'ada@ufps.edu.co' })
 
     await mutate(() => users.useUpdateUser(), {
-      userId: 7,
+      uid: 'uid-7',
       payload: { active: false } as never,
     })
-    expect(mockApi.put).toHaveBeenCalledWith('/users/7', { active: false })
+    expect(mockApi.put).toHaveBeenCalledWith('/users/uid-7', { active: false })
   })
 })
 
