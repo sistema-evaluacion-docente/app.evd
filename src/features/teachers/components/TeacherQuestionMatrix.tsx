@@ -130,7 +130,7 @@ export function TeacherQuestionMatrix({
                 aria-hidden="true"
                 className="size-3.5 shrink-0 transition-transform group-data-panel-open:rotate-90"
               />
-              Ver indicadores ({codes.length})
+              Ver ítems ({codes.length})
             </CollapsibleTrigger>
 
             <CollapsibleContent>
@@ -142,7 +142,7 @@ export function TeacherQuestionMatrix({
                         N°
                       </th>
                       <th scope="col" className="py-2 pr-3 font-medium">
-                        Indicador
+                        Ítem
                       </th>
 
                       {courses.map((course) => (
@@ -224,7 +224,7 @@ function QuestionGroupRows({
                 style={{ backgroundColor: dimensionColor(group.dimension) }}
               />
             )}
-            {group.dimension ?? 'Otras preguntas'}
+            {group.dimension ?? 'Otros ítems'}
           </span>
         </td>
       </tr>

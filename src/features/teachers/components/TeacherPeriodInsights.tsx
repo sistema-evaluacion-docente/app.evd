@@ -113,7 +113,7 @@ export function TeacherPeriodInsights({ teacherId, className }: TeacherPeriodIns
               value={selectedPeriod?.period_id}
               onValueChange={setPeriodId}
               size="sm"
-              ariaLabel="Periodo del resumen de comentarios y preguntas"
+              ariaLabel="Periodo del resumen de comentarios e ítems"
             />
           </div>
         )}
