@@ -80,7 +80,7 @@ export function useGetUsers({
  *
  * @example
  * const { mutate: updateUser } = useUpdateUser();
- * updateUser({ uid: 'abc123', payload: { active: true, roles: ['DOCENTE'] } });
+ * updateUser({ uid: 'abc123', payload: { name: 'Juan', active: true, avatar_url: '', roles: ['DOCENTE'] } });
  */
 export function useUpdateUser() {
   const queryClient = useQueryClient()

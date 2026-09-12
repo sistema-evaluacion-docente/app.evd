@@ -246,7 +246,7 @@ export default function EvaluationDetailPage() {
                     >
                       <PdfTable
                         columns={[
-                          { header: 'Pregunta', width: '78%' },
+                          { header: 'Ítem', width: '78%' },
                           { header: 'Promedio', width: '22%', align: 'center' },
                         ]}
                         rows={dimension.questions.map((question) => [

@@ -281,7 +281,7 @@ export function CourseTeacherDetail({
                   columns={
                     previousDimension
                       ? [
-                          { header: 'Pregunta', width: '50%' },
+                          { header: 'Ítem', width: '50%' },
                           { header: `Actual (${period})`, width: '25%', align: 'center' },
                           {
                             header: `Comparación (${selectedComparison?.period_name})`,
@@ -290,7 +290,7 @@ export function CourseTeacherDetail({
                           },
                         ]
                       : [
-                          { header: 'Pregunta', width: '78%' },
+                          { header: 'Ítem', width: '78%' },
                           { header: 'Promedio', width: '22%', align: 'center' },
                         ]
                   }

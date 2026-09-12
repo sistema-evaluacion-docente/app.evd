@@ -554,7 +554,7 @@ function DimensionBlock({
 
           {questions.length === 0 && comments.length === 0 && (
             <li className="text-muted-foreground px-4 py-2.5 pl-10 text-sm">
-              Sin preguntas por debajo del umbral.
+              Sin ítems por debajo del umbral.
             </li>
           )}
 

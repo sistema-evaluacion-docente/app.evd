@@ -292,7 +292,7 @@ function IndicatorsTable({
           aria-hidden="true"
           className="size-3.5 shrink-0 transition-transform group-data-panel-open:rotate-90"
         />
-        Indicadores de desempeño
+        Ítems de desempeño
       </CollapsibleTrigger>
 
       <CollapsibleContent>
@@ -304,7 +304,7 @@ function IndicatorsTable({
                   N°
                 </th>
                 <th scope="col" className="py-2 pr-3 font-medium">
-                  Indicador
+                  Ítem
                 </th>
 
                 {rows.map(({ entry }) => (

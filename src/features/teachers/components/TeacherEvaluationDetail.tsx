@@ -138,9 +138,9 @@ export function TeacherEvaluationDetail({
 
       <section className="border-border bg-background rounded-md border">
         <div className="border-border border-b px-6 py-4">
-          <h2 className="text-sm font-medium">Indicadores del periodo</h2>
+          <h2 className="text-sm font-medium">Ítems del periodo</h2>
           <p className="text-muted-foreground text-xs">
-            Promedio de cada indicador en todos los grupos que dictó, sin separar por asignatura.
+            Promedio de cada ítem en todos los grupos que dictó, sin separar por asignatura.
           </p>
         </div>
 

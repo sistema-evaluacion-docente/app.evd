@@ -71,7 +71,7 @@ export function EvaluationDimensionDetailCard({
         <div className="space-y-6 px-6 pb-6">
           <div className="space-y-4">
             <h3 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-              Preguntas
+              Ítems
             </h3>
 
             {dimension.questions.map((question) => {
