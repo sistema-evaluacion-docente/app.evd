@@ -1,6 +1,7 @@
 import { DynamicFormDrawer, type FieldConfig } from '@/components/common/DynamicFormDrawer'
 import { PageTitle } from '@/components/common/PageTitle'
 import { useGetFaculties } from '@/features/faculties'
+import useAuth from '@/hooks/useAuth'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -14,6 +15,8 @@ import { DepartmentsList } from '../components'
  * <Route path="/admin/departments" component={DepartmentsPage} />
  */
 export function DepartmentsPage() {
+  const { selectedRole } = useAuth()
+  const canManage = selectedRole === 'ADMIN'
   const [createDrawerOpen, setCreateDrawerOpen] = useState(false)
   const createDepartment = useCreateDepartment()
 
@@ -63,26 +66,28 @@ export function DepartmentsPage() {
     <>
       <PageTitle
         action={
-          <DynamicFormDrawer
-            title="Crear departamento"
-            description="Ingresa los datos del nuevo departamento"
-            triggerLabel="Crear departamento"
-            triggerIcon={Plus}
-            triggerVariant="default"
-            fields={departmentFields}
-            onSubmit={handleSubmit}
-            isSubmitting={createDepartment.isPending}
-            submitLabel="Crear"
-            submitSubmittingLabel="Creando..."
-            open={createDrawerOpen}
-            onOpenChange={setCreateDrawerOpen}
-          />
+          canManage ? (
+            <DynamicFormDrawer
+              title="Crear departamento"
+              description="Ingresa los datos del nuevo departamento"
+              triggerLabel="Crear departamento"
+              triggerIcon={Plus}
+              triggerVariant="default"
+              fields={departmentFields}
+              onSubmit={handleSubmit}
+              isSubmitting={createDepartment.isPending}
+              submitLabel="Crear"
+              submitSubmittingLabel="Creando..."
+              open={createDrawerOpen}
+              onOpenChange={setCreateDrawerOpen}
+            />
+          ) : undefined
         }
       >
         Departamentos
       </PageTitle>
 
-      <DepartmentsList />
+      <DepartmentsList canManage={canManage} />
     </>
   )
 }
