@@ -1,7 +1,7 @@
 import { PageTitle } from '@/components/common/PageTitle'
 import { UserNotAuth } from '@/features/auth'
 import { PeriodAverageTrend } from '@/features/periods'
-import { DepartmentPeriodRangeSummary } from '@/features/stats'
+import { DepartmentPeriodRangeSummary, FacultiesOverview, FacultyPeriodSummary } from '@/features/stats'
 import { TeacherPeriodInsights, TeacherStatsHero } from '@/features/teachers'
 import useAuth from '@/hooks/useAuth'
 import { useNavigate } from '@/hooks/useNavigate'
@@ -23,7 +23,7 @@ function TeacherDashboard() {
 }
 
 export default function DashboardPage() {
-  const { selectedRole } = useAuth()
+  const { selectedRole, user } = useAuth()
 
   const navigate = useNavigate()
 
@@ -35,6 +35,33 @@ export default function DashboardPage() {
     return (
       <section className="mb-20">
         <DepartmentPeriodRangeSummary />
+      </section>
+    )
+  }
+
+  if (selectedRole === 'DECANO') {
+    if (user?.faculty_id == null) {
+      return (
+        <>
+          <PageTitle>Resumen de la facultad</PageTitle>
+          <p className="text-muted-foreground py-10 text-center text-sm">
+            Tu cuenta no tiene una facultad asignada todavía.
+          </p>
+        </>
+      )
+    }
+
+    return (
+      <section className="mb-20">
+        <FacultyPeriodSummary facultyId={user.faculty_id} />
+      </section>
+    )
+  }
+
+  if (selectedRole === 'VICERRECTOR ACADEMICO') {
+    return (
+      <section className="mb-20">
+        <FacultiesOverview />
       </section>
     )
   }
