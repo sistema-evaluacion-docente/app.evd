@@ -4,7 +4,6 @@ import { PeriodAverageTrend } from '@/features/periods'
 import {
   DepartmentPeriodRangeSummary,
   FacultiesOverview,
-  FacultyDepartmentsOverview,
   FacultyPeriodSummary,
 } from '@/features/stats'
 import { TeacherPeriodInsights, TeacherStatsHero } from '@/features/teachers'
@@ -57,9 +56,8 @@ export default function DashboardPage() {
     }
 
     return (
-      <section className="mb-20 space-y-10">
-        <FacultyPeriodSummary facultyId={user.faculty_id} />
-        <FacultyDepartmentsOverview facultyId={user.faculty_id} />
+      <section className="mb-20">
+        <FacultyPeriodSummary facultyId={user.faculty_id} backButton={false} showDepartmentsList />
       </section>
     )
   }

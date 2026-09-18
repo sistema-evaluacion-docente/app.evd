@@ -1,21 +1,23 @@
 import { LayoutGrid } from 'lucide-react'
 
 import { InlineError } from '@/components/common/InlineError'
-import { ScoreBadge } from '@/components/common/ScoreBadge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useGetDepartments } from '@/features/departments'
 import { useNavigate } from '@/hooks/useNavigate'
 import { cn } from '@/lib/utils'
 import { useGetDepartmentAverages } from '../api'
+import { OverviewRow } from './OverviewRow'
 
 export interface FacultyDepartmentsOverviewProps {
   facultyId: number
+  /** Academic period the averages are read for. */
+  periodId: number
   className?: string
 }
 
 /**
- * DECANO's own-faculty department ranking: every department of their
- * faculty, each with its most recent evaluated period's average, sorted
+ * DECANO's own-faculty department ranking: every active department of their
+ * faculty, each with its average in the chosen period, sorted
  * best-first — plus a headcount line (departments/teachers). Built purely
  * from department-level aggregates (`GET /departments/`,
  * `GET /stats/departments/averages`, the latter auto-scoped to the caller's
@@ -25,10 +27,11 @@ export interface FacultyDepartmentsOverviewProps {
  * general summary at `/departamentos/{id}`.
  *
  * @example
- * <FacultyDepartmentsOverview facultyId={user.faculty_id} />
+ * <FacultyDepartmentsOverview facultyId={user.faculty_id} periodId={12} />
  */
 export function FacultyDepartmentsOverview({
   facultyId,
+  periodId,
   className,
 }: FacultyDepartmentsOverviewProps) {
   const navigate = useNavigate()
@@ -37,19 +40,17 @@ export function FacultyDepartmentsOverview({
     data: departmentsData,
     isPending: isDepartmentsPending,
     error: departmentsError,
-  } = useGetDepartments({ facultyId, limit: 100 })
+  } = useGetDepartments({ facultyId, active: true, limit: 100 })
   const departments = departmentsData?.data ?? []
 
   const { data: averagesData, isPending: isAveragesPending, error: averagesError } =
     useGetDepartmentAverages()
   const averages = averagesData?.data ?? []
 
-  // One row per department, keeping only its most recent evaluated period —
-  // the endpoint returns one row per (department, period) combination.
+  // The endpoint returns one row per (department, period) combination.
   const latestByDepartment = new Map<number, (typeof averages)[number]>()
   for (const average of averages) {
-    const current = latestByDepartment.get(average.department_id)
-    if (!current || average.academic_period_code > current.academic_period_code) {
+    if (average.academic_period_id === periodId) {
       latestByDepartment.set(average.department_id, average)
     }
   }
@@ -93,33 +94,21 @@ export function FacultyDepartmentsOverview({
       )}
 
       {!isPending && !error && rows.length > 0 && (
-        <div className="border-border divide-border divide-y overflow-hidden rounded-md border">
-          {rows.map(({ department, latest }) => (
-            <button
+        <div className="border-border bg-background divide-border divide-y overflow-hidden rounded-md border shadow-xs">
+          {rows.map(({ department, latest }, index) => (
+            <OverviewRow
               key={department.id}
-              type="button"
+              icon={<LayoutGrid aria-hidden="true" />}
+              title={department.name}
+              subtitle={
+                latest
+                  ? `Periodo ${latest.academic_period_name || latest.academic_period_code}`
+                  : 'Sin evaluaciones en este periodo'
+              }
+              rank={latest ? index + 1 : undefined}
+              score={latest?.global_average}
               onClick={() => navigate(`/departamentos/${department.id}`)}
-              className="hover:bg-muted/40 flex w-full flex-wrap items-center justify-between gap-4 px-6 py-4 text-left transition-colors"
-            >
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-full">
-                  <LayoutGrid className="text-muted-foreground size-5" aria-hidden="true" />
-                </div>
-
-                <div className="min-w-0">
-                  <p className="text-foreground truncate font-medium">{department.name}</p>
-                  <p className="text-muted-foreground text-xs">
-                    {latest
-                      ? `Periodo ${latest.academic_period_name || latest.academic_period_code}`
-                      : 'Sin evaluaciones cargadas'}
-                  </p>
-                </div>
-              </div>
-
-              {latest && (
-                <ScoreBadge value={latest.global_average ?? undefined} tone="auto" size="lg" />
-              )}
-            </button>
+            />
           ))}
         </div>
       )}
