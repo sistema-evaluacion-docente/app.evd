@@ -1,7 +1,12 @@
 import { PageTitle } from '@/components/common/PageTitle'
 import { UserNotAuth } from '@/features/auth'
 import { PeriodAverageTrend } from '@/features/periods'
-import { DepartmentPeriodRangeSummary, FacultiesOverview, FacultyPeriodSummary } from '@/features/stats'
+import {
+  DepartmentPeriodRangeSummary,
+  FacultiesOverview,
+  FacultyDepartmentsOverview,
+  FacultyPeriodSummary,
+} from '@/features/stats'
 import { TeacherPeriodInsights, TeacherStatsHero } from '@/features/teachers'
 import useAuth from '@/hooks/useAuth'
 import { useNavigate } from '@/hooks/useNavigate'
@@ -52,8 +57,9 @@ export default function DashboardPage() {
     }
 
     return (
-      <section className="mb-20">
+      <section className="mb-20 space-y-10">
         <FacultyPeriodSummary facultyId={user.faculty_id} />
+        <FacultyDepartmentsOverview facultyId={user.faculty_id} />
       </section>
     )
   }
