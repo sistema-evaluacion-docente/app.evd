@@ -24,13 +24,21 @@ vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
 vi.mock('@/features/programs/components', () => ({ ProgramsList: () => <div /> }))
 vi.mock('@/features/faculties/components', () => ({ FacultiesList: () => <div /> }))
-vi.mock('@/features/departments/components', () => ({ DepartmentsList: () => <div /> }))
+vi.mock('@/features/departments/components', () => ({
+  DepartmentsList: () => <div />,
+  DepartmentsOverviewList: () => <div />,
+}))
 vi.mock('@/features/users/components', () => ({ UsersList: () => <div /> }))
 vi.mock('@/features/teachers/components', () => ({ TeachersList: () => <div /> }))
 
 vi.mock('@/features/auth', () => ({
-  useAuthStore: (selector: (s: unknown) => unknown) =>
-    selector({ user: { department_id: 3 } }),
+  // Called with a selector by some pages and bare (through `useAuth`) by the
+  // faculties and departments pages, which need the role to offer "Crear".
+  useAuthStore: (selector?: (s: unknown) => unknown) => {
+    const state = { user: { department_id: 3 }, selectedRole: 'ADMIN' }
+
+    return selector ? selector(state) : state
+  },
 }))
 
 const mockApi = vi.mocked(api)

@@ -2,6 +2,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import api from '@/config/axios'
+import { useAuthStore } from '@/features/auth'
 import type { DepartmentPeriodRangeStats } from '@/features/stats'
 import { DepartmentPeriodRangeSummary } from '@/features/stats/components/DepartmentPeriodRangeSummary'
 import { renderRouted, screen, waitFor } from '@/test/render'
@@ -109,6 +110,9 @@ function serve({
 
 beforeEach(() => {
   vi.clearAllMocks()
+  // A director's department is implicit on the backend; every other role has to
+  // pick one first, which is a different flow from the one tested here.
+  useAuthStore.setState({ selectedRole: 'DIRECTOR DE DEPARTAMENTO' })
   serve()
 })
 
