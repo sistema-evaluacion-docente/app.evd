@@ -1,4 +1,4 @@
-import { CalendarRange } from 'lucide-react'
+import { CalendarRange, ClipboardList } from 'lucide-react'
 
 import { ScoreBadge } from '@/components/common/ScoreBadge'
 import { Badge } from '@/components/ui/badge'
@@ -8,6 +8,8 @@ import type { FacultyPeriodAverage } from '../types'
 export interface FacultyStatsHeroProps {
   /** The faculty's most recent period average — the one the hero highlights. */
   latest: FacultyPeriodAverage
+  /** The faculty's average in the period right before `latest`, if any — renders a growth/decrease indicator next to the score. */
+  previousValue?: number
   className?: string
 }
 
@@ -15,11 +17,16 @@ export interface FacultyStatsHeroProps {
  * Flat, typographic hero for a faculty's global average in its most recent
  * evaluated period — same visual language as `DepartmentStatsHero`, one
  * level up: combines every department of the faculty instead of one.
+ * Includes participation counts (evaluations/respondents) so the average
+ * can be read alongside how much data backs it.
  *
  * @example
  * <FacultyStatsHero latest={averages[averages.length - 1]} />
+ *
+ * @example
+ * <FacultyStatsHero latest={latest} previousValue={averages[averages.length - 2]?.global_average ?? undefined} />
  */
-export function FacultyStatsHero({ latest, className }: FacultyStatsHeroProps) {
+export function FacultyStatsHero({ latest, previousValue, className }: FacultyStatsHeroProps) {
   return (
     <section
       className={cn(
@@ -65,12 +72,25 @@ export function FacultyStatsHero({ latest, className }: FacultyStatsHeroProps) {
 
           <ScoreBadge
             value={latest.global_average ?? undefined}
+            previousValue={previousValue}
             tone="auto"
             size="5xl"
             decimals={2}
             className="leading-none"
           />
         </div>
+      </div>
+
+      <div className="bg-muted/40 flex items-center gap-2 px-6 py-3">
+        <ClipboardList className="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
+
+        <p className="text-muted-foreground text-xs">
+          <span className="text-foreground font-semibold">{latest.evaluation_count}</span>{' '}
+          {latest.evaluation_count === 1 ? 'evaluación registrada' : 'evaluaciones registradas'}
+          {' · '}
+          <span className="text-foreground font-semibold">{latest.total_respondents}</span>{' '}
+          {latest.total_respondents === 1 ? 'respondiente' : 'respondientes'}
+        </p>
       </div>
     </section>
   )

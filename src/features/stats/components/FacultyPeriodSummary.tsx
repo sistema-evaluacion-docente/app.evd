@@ -25,6 +25,7 @@ export function FacultyPeriodSummary({ facultyId, className }: FacultyPeriodSumm
   // The backend returns every period the faculty has data for — oldest
   // first, same convention as `DepartmentPeriodRangeStats.period_averages`.
   const latest = averages[averages.length - 1]
+  const previous = averages[averages.length - 2]
 
   return (
     <div className={cn('space-y-6', className)}>
@@ -41,7 +42,7 @@ export function FacultyPeriodSummary({ facultyId, className }: FacultyPeriodSumm
 
       {!isPending && !error && latest && (
         <div className="space-y-6">
-          <FacultyStatsHero latest={latest} />
+          <FacultyStatsHero latest={latest} previousValue={previous?.global_average ?? undefined} />
 
           {averages.length > 1 && (
             <section className="border-border bg-background rounded-md border">
