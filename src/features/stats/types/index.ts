@@ -4,6 +4,7 @@ export type {
   DepartmentPeriodRangeStats,
   DepartmentSubjectAverage,
   DepartmentSubjectGroup,
+  FacultyPeriodAverage,
   StatsPeriodRef,
   TeacherComparisonDimension,
   TeacherComparisonEntry,
