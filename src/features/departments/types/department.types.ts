@@ -24,6 +24,26 @@ export interface Department {
   updated_at: string
 }
 
+/**
+ * One department's evaluation upload state in a period, as returned by
+ * `GET /stats/departments/uploads`. Departments that uploaded nothing are
+ * included (`has_uploaded: false`).
+ */
+export interface DepartmentUploadStatus {
+  department_id: number
+  department_name: string
+  department_code: string
+  evaluation_count: number
+  has_uploaded: boolean
+  last_uploaded_at: string | null
+  /** Processing status of the most recent evaluation, null when nothing was uploaded. */
+  status: 'PROCESSING' | 'COMPLETED' | 'FAILED' | null
+  /** AI analysis status of the most recent evaluation, null when nothing was uploaded. */
+  ai_status: 'PENDING' | 'ANALYZING' | 'ANALYZED' | 'FAILED' | null
+  /** Null until the evaluation is analysed. */
+  global_average: number | null
+}
+
 /** Query params accepted by `GET /departments/`. */
 export interface DepartmentParams {
   /** Free-text search over name and code. */
