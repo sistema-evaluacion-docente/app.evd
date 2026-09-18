@@ -4,6 +4,7 @@ import type { ResponseAPI } from '@/@types/Response'
 import api from '@/config/axios'
 import type { CourseModality } from '@/lib/modality'
 import type {
+  DepartmentGlobalAverage,
   DepartmentPeriodRangeStats,
   DepartmentSubjectAverage,
   FacultyPeriodAverage,
@@ -65,6 +66,12 @@ async function getFacultyAverages(facultyId: number): Promise<ResponseAPI<Facult
   return api.get(`/stats/faculties/${facultyId}/average`)
 }
 
+async function getDepartmentAverages(
+  departmentId?: number,
+): Promise<ResponseAPI<DepartmentGlobalAverage[]>> {
+  return api.get('/stats/departments/averages', { params: { department_id: departmentId } })
+}
+
 async function getCourseTeachersComparison(
   courseCode: string,
   period: string,
@@ -99,6 +106,8 @@ export const statsKeys = {
     [...statsKeys.all, 'course-teachers-comparison', courseCode, period] as const,
   facultyAverages: (facultyId?: number) =>
     [...statsKeys.all, 'faculty-averages', facultyId] as const,
+  departmentAverages: (departmentId?: number) =>
+    [...statsKeys.all, 'department-averages', departmentId] as const,
 }
 
 /**
@@ -285,5 +294,28 @@ export function useGetFacultyAveragesForFaculties(facultyIds: number[]) {
       queryFn: () => getFacultyAverages(facultyId),
       staleTime: 60_000,
     })),
+  })
+}
+
+/**
+ * Fetches global department averages by academic period
+ * (`GET /stats/departments/averages`). Without `departmentId`, a DECANO gets
+ * every department of their own faculty combined; a VICERRECTOR ACADEMICO or
+ * ADMIN gets every department in the university. With `departmentId`, only
+ * that department's own averages across periods — same shape as
+ * `useGetFacultyAverages`, one level down. A DECANO asking for a department
+ * outside their faculty gets a 403.
+ *
+ * @example
+ * const { data } = useGetDepartmentAverages(); // every department in scope
+ *
+ * @example
+ * const { data } = useGetDepartmentAverages(departmentId); // one department's history
+ */
+export function useGetDepartmentAverages(departmentId?: number) {
+  return useQuery({
+    queryKey: statsKeys.departmentAverages(departmentId),
+    queryFn: () => getDepartmentAverages(departmentId),
+    staleTime: 60_000,
   })
 }

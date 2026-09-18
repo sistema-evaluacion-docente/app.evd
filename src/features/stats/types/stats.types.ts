@@ -107,6 +107,19 @@ export interface FacultyPeriodAverage {
   evaluation_count: number
 }
 
+/** A department's global average for a single academic period (`GET /stats/departments/averages`). */
+export interface DepartmentGlobalAverage {
+  department_id: number
+  department_name: string
+  department_code: string
+  academic_period_id: number
+  academic_period_code: string
+  academic_period_name: string | null
+  global_average: number | null
+  total_respondents: number
+  evaluation_count: number
+}
+
 export interface DepartmentPeriodRangeStats {
   department_id: number
   department_name: string
