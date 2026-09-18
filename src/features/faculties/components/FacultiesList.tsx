@@ -8,6 +8,7 @@ import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { DataTable, type DataTableAction } from '@/components/common/DataTable'
 import { DataTableFilters, type FilterConfig } from '@/components/common/DataTableFilters'
 import { DynamicFormDrawer, type FieldConfig } from '@/components/common/DynamicFormDrawer'
+import { useNavigate } from '@/hooks/useNavigate'
 import { useTableFilters } from '@/hooks/useTableFilters'
 import { useDeleteFaculty, useGetFaculties, useUnassignDean, useUpdateFaculty } from '../api'
 import type { Faculty } from '../types'
@@ -31,12 +32,14 @@ const filterConfig: FilterConfig[] = [
 
 /**
  * Displays the paginated list of faculties with server-side search and
- * active status filter, powered by the shared `DataTable`.
+ * active status filter, powered by the shared `DataTable`. In read-only mode
+ * (VICERRECTOR ACADEMICO) a row opens the faculty's page at `/facultades/{id}`.
  *
  * @example
  * <FacultiesList />
  */
 export function FacultiesList({ canManage = true }: FacultiesListProps = {}) {
+  const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [debouncedSearch] = useDebounce(search, 400)
   const [sorting, setSorting] = useState<SortingState>([])
@@ -187,6 +190,7 @@ export function FacultiesList({ canManage = true }: FacultiesListProps = {}) {
         searchPlaceholder="Buscar por nombre o código..."
         emptyMessage="No hay facultades que coincidan."
         rowActions={rowActions}
+        onRowClick={canManage ? undefined : (row) => navigate(`/facultades/${row.id}`)}
         toolbar={
           <DataTableFilters
             filters={filterConfig}

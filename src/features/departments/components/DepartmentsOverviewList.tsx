@@ -136,6 +136,11 @@ const overviewColumns: ColumnDef<DepartmentOverviewRow>[] = [
   },
 ]
 
+interface DepartmentsOverviewListProps {
+  /** Pins the table to one faculty and drops the faculty filter — used on a faculty's own page. */
+  facultyId?: number
+}
+
 /**
  * Read-only departments table for DECANO and VICERRECTOR ACADEMICO: for a
  * chosen academic period it shows which departments uploaded evaluations
@@ -149,7 +154,7 @@ const overviewColumns: ColumnDef<DepartmentOverviewRow>[] = [
  * @example
  * <DepartmentsOverviewList />
  */
-export function DepartmentsOverviewList() {
+export function DepartmentsOverviewList({ facultyId }: DepartmentsOverviewListProps = {}) {
   const { selectedRole } = useAuth()
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
@@ -182,7 +187,7 @@ export function DepartmentsOverviewList() {
   } = useGetDepartments({
     limit: 100,
     active: debouncedFilters.active as boolean | undefined,
-    facultyId: debouncedFilters.facultyId as number | undefined,
+    facultyId: facultyId ?? (debouncedFilters.facultyId as number | undefined),
     search: debouncedSearch,
   })
   const { data: uploadsData, isFetching: isUploadsFetching } =
@@ -231,7 +236,7 @@ export function DepartmentsOverviewList() {
   // Un Decano solo ve su propia facultad (el backend ya lo acota) — el filtro
   // por facultad sería redundante para ese rol.
   const filterConfig: FilterConfig[] =
-    selectedRole === 'DECANO'
+    selectedRole === 'DECANO' || facultyId != null
       ? [activeFilter]
       : [
           activeFilter,
