@@ -6,7 +6,7 @@ import { Plus } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { useCreateDepartment } from '../api'
-import { DepartmentsList } from '../components'
+import { DepartmentsList, DepartmentsOverviewList } from '../components'
 
 /**
  * Admin page displaying the full list of departments with search and filters.
@@ -87,7 +87,7 @@ export function DepartmentsPage() {
         Departamentos
       </PageTitle>
 
-      <DepartmentsList canManage={canManage} />
+      {canManage ? <DepartmentsList /> : <DepartmentsOverviewList />}
     </>
   )
 }
