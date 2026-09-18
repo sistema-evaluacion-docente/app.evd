@@ -1,5 +1,5 @@
 import type { PaginationState, SortingState } from '@tanstack/react-table'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Trash2, UserMinus, UserPlus } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { useDebounce, useDebouncedCallback } from 'use-debounce'
@@ -9,9 +9,15 @@ import { DataTable, type DataTableAction } from '@/components/common/DataTable'
 import { DataTableFilters, type FilterConfig } from '@/components/common/DataTableFilters'
 import { DynamicFormDrawer, type FieldConfig } from '@/components/common/DynamicFormDrawer'
 import { useTableFilters } from '@/hooks/useTableFilters'
-import { useDeleteFaculty, useGetFaculties, useUpdateFaculty } from '../api'
+import { useDeleteFaculty, useGetFaculties, useUnassignDean, useUpdateFaculty } from '../api'
 import type { Faculty } from '../types'
+import { AssignDeanDrawer } from './AssignDeanDrawer'
 import { facultyColumns } from './columns'
+
+interface FacultiesListProps {
+  /** Whether to offer create/edit/delete/assign-dean actions. Read-only when false. */
+  canManage?: boolean
+}
 
 const filterConfig: FilterConfig[] = [
   {
@@ -30,13 +36,15 @@ const filterConfig: FilterConfig[] = [
  * @example
  * <FacultiesList />
  */
-export function FacultiesList() {
+export function FacultiesList({ canManage = true }: FacultiesListProps = {}) {
   const [search, setSearch] = useState('')
   const [debouncedSearch] = useDebounce(search, 400)
   const [sorting, setSorting] = useState<SortingState>([])
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 })
   const [editTarget, setEditTarget] = useState<Faculty | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Faculty | null>(null)
+  const [assignTarget, setAssignTarget] = useState<Faculty | null>(null)
+  const [unassignTarget, setUnassignTarget] = useState<Faculty | null>(null)
   const { filters, setFilters } = useTableFilters('faculties-list', {
     active: true,
   })
@@ -50,6 +58,7 @@ export function FacultiesList() {
   })
   const { mutate: updateFaculty, isPending: isUpdating } = useUpdateFaculty()
   const { mutate: deleteFaculty, isPending: isDeleting } = useDeleteFaculty()
+  const { mutate: unassignDean, isPending: isUnassigning } = useUnassignDean()
 
   const editFields: FieldConfig[] = editTarget
     ? [
@@ -106,6 +115,17 @@ export function FacultiesList() {
     })
   }
 
+  const handleUnassign = () => {
+    if (!unassignTarget) return
+
+    unassignDean(unassignTarget.id, {
+      onSuccess: () => {
+        toast.success('Decano desasignado exitosamente')
+        setUnassignTarget(null)
+      },
+    })
+  }
+
   const faculties = data?.data ?? []
   const pageCount = data?.pagination?.pages ?? 1
 
@@ -118,19 +138,34 @@ export function FacultiesList() {
     resetPage()
   }
 
-  const rowActions: DataTableAction<Faculty>[] = [
-    {
-      label: 'Editar',
-      icon: <Pencil className="size-4" />,
-      onClick: (row) => setEditTarget(row),
-    },
-    {
-      label: 'Eliminar',
-      icon: <Trash2 className="size-4" />,
-      onClick: (row) => setDeleteTarget(row),
-      variant: 'destructive',
-    },
-  ]
+  const rowActions: DataTableAction<Faculty>[] = canManage
+    ? [
+        {
+          label: 'Asignar decano',
+          icon: <UserPlus className="size-4" />,
+          onClick: (row) => setAssignTarget(row),
+          visible: (row) => !row.dean,
+        },
+        {
+          label: 'Desasignar decano',
+          icon: <UserMinus className="size-4" />,
+          onClick: (row) => setUnassignTarget(row),
+          variant: 'destructive',
+          visible: (row) => !!row.dean,
+        },
+        {
+          label: 'Editar',
+          icon: <Pencil className="size-4" />,
+          onClick: (row) => setEditTarget(row),
+        },
+        {
+          label: 'Eliminar',
+          icon: <Trash2 className="size-4" />,
+          onClick: (row) => setDeleteTarget(row),
+          variant: 'destructive',
+        },
+      ]
+    : []
 
   return (
     <>
@@ -197,6 +232,35 @@ export function FacultiesList() {
         confirmIcon={<Trash2 />}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
         onConfirm={handleDelete}
+      />
+
+      {assignTarget && (
+        <AssignDeanDrawer
+          faculty={assignTarget}
+          open
+          onOpenChange={(open) => {
+            if (!open) setAssignTarget(null)
+          }}
+        />
+      )}
+
+      <ConfirmDialog
+        open={unassignTarget !== null}
+        title="Desasignar decano"
+        description={
+          unassignTarget ? (
+            <>
+              ¿Estás seguro de que deseas desasignar a <strong>{unassignTarget.dean?.name}</strong>{' '}
+              como decano de la facultad <strong>{unassignTarget.name}</strong>?
+            </>
+          ) : null
+        }
+        confirmLabel="Desasignar"
+        pendingLabel="Desasignando..."
+        isPending={isUnassigning}
+        confirmIcon={<UserMinus />}
+        onOpenChange={(open) => !open && setUnassignTarget(null)}
+        onConfirm={handleUnassign}
       />
     </>
   )
