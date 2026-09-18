@@ -7,6 +7,7 @@ import { PeriodSelect } from '@/components/common/PeriodSelect'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { useGetFacultyAverages } from '../api'
+import { FacultyCasesSummary } from './FacultyCasesSummary'
 import { FacultyDepartmentsComparison } from './FacultyDepartmentsComparison'
 import { FacultyDepartmentsOverview } from './FacultyDepartmentsOverview'
 import { FacultyStatsHero } from './FacultyStatsHero'
@@ -79,6 +80,8 @@ export function FacultyPeriodSummary({
       {!isPending && !error && selected && (
         <div className="space-y-6">
           <FacultyStatsHero latest={selected} previousValue={previous?.global_average ?? undefined} />
+
+          <FacultyCasesSummary facultyId={facultyId} periodId={selected.academic_period_id} />
 
           <FacultyDepartmentsComparison
             facultyId={facultyId}

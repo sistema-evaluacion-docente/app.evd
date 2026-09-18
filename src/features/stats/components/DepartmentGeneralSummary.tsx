@@ -7,6 +7,7 @@ import { PeriodSelect } from '@/components/common/PeriodSelect'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { useGetDepartmentAverages } from '../api'
+import { DepartmentCasesSummary } from './DepartmentCasesSummary'
 import { DepartmentFacultyContext } from './DepartmentFacultyContext'
 import { DepartmentGeneralHero } from './DepartmentGeneralHero'
 
@@ -76,6 +77,11 @@ export function DepartmentGeneralSummary({ departmentId, className }: Department
           />
 
           <DepartmentFacultyContext
+            departmentId={departmentId}
+            periodId={selected.academic_period_id}
+          />
+
+          <DepartmentCasesSummary
             departmentId={departmentId}
             periodId={selected.academic_period_id}
           />

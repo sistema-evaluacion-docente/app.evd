@@ -5,6 +5,7 @@ import { InlineError } from '@/components/common/InlineError'
 import { PageTitle } from '@/components/common/PageTitle'
 import { PeriodSelect } from '@/components/common/PeriodSelect'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useGetDepartmentCases } from '@/features/departments'
 import { useGetFaculties } from '@/features/faculties'
 import { useNavigate } from '@/hooks/useNavigate'
 import { cn } from '@/lib/utils'
@@ -66,6 +67,18 @@ export function FacultiesOverview({ className }: FacultiesOverviewProps) {
 
   const isPending = isFacultiesPending || isAveragesPending
 
+  const { data: casesData } = useGetDepartmentCases(effectivePeriodId)
+  const casesLabel = (facultyId: number) => {
+    const rows = (casesData?.data ?? []).filter((row) => row.faculty_id === facultyId)
+
+    if (!casesData) return ''
+
+    const highRisk = rows.reduce((sum, row) => sum + row.high_risk_comments, 0)
+    const plans = rows.reduce((sum, row) => sum + row.plans_total, 0)
+
+    return ` · ${highRisk} riesgo alto · ${plans} ${plans === 1 ? 'plan' : 'planes'}`
+  }
+
   return (
     <div className={cn('space-y-6', className)}>
       <PageTitle
@@ -118,7 +131,7 @@ export function FacultiesOverview({ className }: FacultiesOverviewProps) {
                   title={faculty.name}
                   subtitle={
                     forPeriod
-                      ? `Periodo ${forPeriod.academic_period_name || forPeriod.academic_period_code}`
+                      ? `Periodo ${forPeriod.academic_period_name || forPeriod.academic_period_code}${casesLabel(faculty.id)}`
                       : 'Sin evaluaciones en este periodo'
                   }
                   rank={forPeriod ? index + 1 : undefined}

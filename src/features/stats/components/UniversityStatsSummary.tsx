@@ -3,10 +3,11 @@ import type { ReactNode } from 'react'
 import { AverageTrendChart } from '@/components/common/AverageTrendChart'
 import { RankedBarChart } from '@/components/common/RankedBarChart'
 import { ScoreBadge } from '@/components/common/ScoreBadge'
-import { useGetDepartmentUploads } from '@/features/departments'
+import { useGetDepartmentCases, useGetDepartmentUploads } from '@/features/departments'
 import { useNavigate } from '@/hooks/useNavigate'
 import { cn } from '@/lib/utils'
 import type { FacultyPeriodAverage } from '../types'
+import { CasesSummary } from './CasesSummary'
 
 export interface UniversityStatsSummaryProps {
   /** Every faculty, in the same order as `averagesByFaculty`. */
@@ -76,6 +77,12 @@ export function UniversityStatsSummary({
   const { data: uploadsData } = useGetDepartmentUploads(periodId)
   const uploads = uploadsData?.data ?? []
   const uploadedCount = uploads.filter((department) => department.has_uploaded).length
+  const notAnalysed = uploads.filter(
+    (department) => department.has_uploaded && department.global_average == null,
+  ).length
+
+  const { data: casesData } = useGetDepartmentCases(periodId)
+  const cases = casesData?.data ?? []
 
   const facultyRows = faculties.map((faculty, index) => ({
     faculty,
@@ -125,6 +132,22 @@ export function UniversityStatsSummary({
           <span className="text-muted-foreground text-xs">en {selected.label}</span>
         </Fact>
       </section>
+
+      {casesData && (
+        <CasesSummary
+          highRiskComments={cases.reduce((sum, row) => sum + row.high_risk_comments, 0)}
+          plansTotal={cases.reduce((sum, row) => sum + row.plans_total, 0)}
+          reclassifiedByDirector={cases.reduce(
+            (sum, row) => sum + row.risk_reclassified_by_director,
+            0,
+          )}
+          note={
+            notAnalysed > 0
+              ? `${notAnalysed} ${notAnalysed === 1 ? 'departamento subió' : 'departamentos subieron'} evaluaciones que aún no se analizan: sus comentarios de riesgo no se cuentan todavía.`
+              : undefined
+          }
+        />
+      )}
 
       <section className="border-border bg-background rounded-md border">
         <h2 className="border-border text-muted-foreground border-b px-6 py-4 text-sm font-medium">

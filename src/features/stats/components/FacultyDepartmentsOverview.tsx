@@ -2,7 +2,7 @@ import { LayoutGrid } from 'lucide-react'
 
 import { InlineError } from '@/components/common/InlineError'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useGetDepartments } from '@/features/departments'
+import { useGetDepartmentCases, useGetDepartments } from '@/features/departments'
 import { useNavigate } from '@/hooks/useNavigate'
 import { cn } from '@/lib/utils'
 import { useGetDepartmentAverages } from '../api'
@@ -59,6 +59,16 @@ export function FacultyDepartmentsOverview({
     .map((department) => ({ department, latest: latestByDepartment.get(department.id) }))
     .sort((a, b) => (b.latest?.global_average ?? -1) - (a.latest?.global_average ?? -1))
 
+  const { data: casesData } = useGetDepartmentCases(periodId)
+  const casesByDepartment = new Map((casesData?.data ?? []).map((row) => [row.department_id, row]))
+  const casesLabel = (departmentId: number) => {
+    const cases = casesByDepartment.get(departmentId)
+
+    if (!cases) return ''
+
+    return ` · ${cases.high_risk_comments} riesgo alto · ${cases.plans_total} ${cases.plans_total === 1 ? 'plan' : 'planes'}`
+  }
+
   const isPending = isDepartmentsPending || isAveragesPending
   const error = departmentsError || averagesError
   const totalTeachers = departments.reduce((sum, department) => sum + department.teacher_count, 0)
@@ -102,7 +112,7 @@ export function FacultyDepartmentsOverview({
               title={department.name}
               subtitle={
                 latest
-                  ? `Periodo ${latest.academic_period_name || latest.academic_period_code}`
+                  ? `Periodo ${latest.academic_period_name || latest.academic_period_code}${casesLabel(department.id)}`
                   : 'Sin evaluaciones en este periodo'
               }
               rank={latest ? index + 1 : undefined}
