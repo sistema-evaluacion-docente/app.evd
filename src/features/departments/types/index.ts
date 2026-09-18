@@ -1,6 +1,7 @@
 export type {
   CreateDepartmentPayload,
   Department,
+  DepartmentCases,
   DepartmentParams,
   DepartmentUploadStatus,
   Director,
