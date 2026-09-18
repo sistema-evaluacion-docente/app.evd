@@ -16,14 +16,15 @@ import useAuth from '@/hooks/useAuth'
 import { useNavigate } from '@/hooks/useNavigate'
 import { useTableFilters } from '@/hooks/useTableFilters'
 import { STATUS_TONE_CLASS } from '@/lib/statusTone'
-import { useGetDepartments, useGetDepartmentUploads } from '../api'
-import type { Department, DepartmentUploadStatus } from '../types'
+import { useGetDepartmentCases, useGetDepartments, useGetDepartmentUploads } from '../api'
+import type { Department, DepartmentCases, DepartmentUploadStatus } from '../types'
 
 const PAGE_SIZE_DEFAULT = 10
 
 /** A department plus what it uploaded in the selected period. */
 interface DepartmentOverviewRow extends Department {
   upload: DepartmentUploadStatus | undefined
+  cases: DepartmentCases | undefined
 }
 
 /** Where a department stands in the selected period, from most to least advanced. */
@@ -121,6 +122,40 @@ const overviewColumns: ColumnDef<DepartmentOverviewRow>[] = [
     },
   },
   {
+    id: 'highRisk',
+    header: 'Riesgo alto',
+    enableSorting: false,
+    cell: ({ row }) => {
+      const { cases, upload } = row.original
+
+      // Risk comments only exist once the evaluation is analysed, so a zero
+      // before that would read as "no problems" — show a dash instead.
+      if (!cases || upload?.global_average == null) {
+        return <span className="text-muted-foreground text-sm">—</span>
+      }
+
+      return (
+        <span
+          className={
+            cases.high_risk_comments > 0
+              ? 'font-semibold text-red-600 tabular-nums dark:text-red-400'
+              : 'text-foreground tabular-nums'
+          }
+        >
+          {cases.high_risk_comments}
+        </span>
+      )
+    },
+  },
+  {
+    id: 'plans',
+    header: 'Planes',
+    enableSorting: false,
+    cell: ({ row }) => (
+      <span className="text-foreground tabular-nums">{row.original.cases?.plans_total ?? '—'}</span>
+    ),
+  },
+  {
     id: 'average',
     header: 'Promedio',
     enableSorting: false,
@@ -193,12 +228,19 @@ export function DepartmentsOverviewList({ facultyId }: DepartmentsOverviewListPr
   const { data: uploadsData, isFetching: isUploadsFetching } =
     useGetDepartmentUploads(effectivePeriodId)
 
+  const { data: casesData, isFetching: isCasesFetching } = useGetDepartmentCases(effectivePeriodId)
+
   const uploadsByDepartment = new Map(
     (uploadsData?.data ?? []).map((upload) => [upload.department_id, upload]),
   )
+  const casesByDepartment = new Map((casesData?.data ?? []).map((row) => [row.department_id, row]))
 
   const rows: DepartmentOverviewRow[] = (departmentsData?.data ?? [])
-    .map((department) => ({ ...department, upload: uploadsByDepartment.get(department.id) }))
+    .map((department) => ({
+      ...department,
+      upload: uploadsByDepartment.get(department.id),
+      cases: casesByDepartment.get(department.id),
+    }))
     .sort((a, b) => {
       const aAverage = a.upload?.global_average
       const bAverage = b.upload?.global_average
@@ -263,7 +305,7 @@ export function DepartmentsOverviewList({ facultyId }: DepartmentsOverviewListPr
       data={pageRows}
       pageCount={pageCount}
       isLoading={isDepartmentsPending || isPeriodsPending}
-      isFetching={isDepartmentsFetching || isUploadsFetching}
+      isFetching={isDepartmentsFetching || isUploadsFetching || isCasesFetching}
       search={search}
       onSearchChange={(value) => {
         setSearch(value)
