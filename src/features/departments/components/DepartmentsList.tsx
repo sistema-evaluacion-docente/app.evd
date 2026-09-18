@@ -1,5 +1,5 @@
 import type { PaginationState, SortingState } from '@tanstack/react-table'
-import { Pencil, Trash2, UserMinus, UserPlus } from 'lucide-react'
+import { BarChart3, Pencil, Trash2, UserMinus, UserPlus } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { useDebounce, useDebouncedCallback } from 'use-debounce'
@@ -10,6 +10,7 @@ import { DataTableFilters, type FilterConfig } from '@/components/common/DataTab
 import { DynamicFormDrawer, type FieldConfig } from '@/components/common/DynamicFormDrawer'
 import { useGetFaculties } from '@/features/faculties'
 import useAuth from '@/hooks/useAuth'
+import { useNavigate } from '@/hooks/useNavigate'
 import { useTableFilters } from '@/hooks/useTableFilters'
 import {
   useDeleteDepartment,
@@ -35,6 +36,7 @@ interface DepartmentsListProps {
  */
 export function DepartmentsList({ canManage = true }: DepartmentsListProps = {}) {
   const { selectedRole } = useAuth()
+  const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [debouncedSearch] = useDebounce(search, 400)
   const [sorting, setSorting] = useState<SortingState>([])
@@ -151,34 +153,41 @@ export function DepartmentsList({ canManage = true }: DepartmentsListProps = {})
     resetPage()
   }
 
-  const rowActions: DataTableAction<Department>[] = canManage
-    ? [
-        {
-          label: 'Asignar director',
-          icon: <UserPlus className="size-4" />,
-          onClick: (row) => setAssignTarget(row),
-          visible: (row) => !row.director,
-        },
-        {
-          label: 'Desasignar director',
-          icon: <UserMinus className="size-4" />,
-          onClick: (row) => setUnassignTarget(row),
-          variant: 'destructive',
-          visible: (row) => !!row.director,
-        },
-        {
-          label: 'Editar',
-          icon: <Pencil className="size-4" />,
-          onClick: (row) => setEditTarget(row),
-        },
-        {
-          label: 'Eliminar',
-          icon: <Trash2 className="size-4" />,
-          onClick: (row) => setDeleteTarget(row),
-          variant: 'destructive',
-        },
-      ]
-    : []
+  const rowActions: DataTableAction<Department>[] = [
+    {
+      label: 'Ver resumen general',
+      icon: <BarChart3 className="size-4" />,
+      onClick: (row) => navigate(`/departamentos/${row.id}`),
+    },
+    ...(canManage
+      ? [
+          {
+            label: 'Asignar director',
+            icon: <UserPlus className="size-4" />,
+            onClick: (row: Department) => setAssignTarget(row),
+            visible: (row: Department) => !row.director,
+          },
+          {
+            label: 'Desasignar director',
+            icon: <UserMinus className="size-4" />,
+            onClick: (row: Department) => setUnassignTarget(row),
+            variant: 'destructive' as const,
+            visible: (row: Department) => !!row.director,
+          },
+          {
+            label: 'Editar',
+            icon: <Pencil className="size-4" />,
+            onClick: (row: Department) => setEditTarget(row),
+          },
+          {
+            label: 'Eliminar',
+            icon: <Trash2 className="size-4" />,
+            onClick: (row: Department) => setDeleteTarget(row),
+            variant: 'destructive' as const,
+          },
+        ]
+      : []),
+  ]
 
   // Un Decano solo ve los departamentos de su propia facultad (el backend ya
   // lo acota) — el filtro por facultad sería redundante para ese rol.
