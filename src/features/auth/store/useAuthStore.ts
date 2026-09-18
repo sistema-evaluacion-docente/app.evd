@@ -137,6 +137,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
           username: firebaseUser.email.split('@')[0],
           department_id: null,
           department_name: null,
+          faculty_id: null,
+          faculty_name: null,
           avatar_url: firebaseUser.photoURL || '',
           active: true,
           roles: [],

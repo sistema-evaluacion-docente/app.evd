@@ -281,6 +281,18 @@ function App() {
             </AppLayout>
           </Route>
 
+          <Route path="/facultades">
+            <AppLayout>
+              <FacultiesPage />
+            </AppLayout>
+          </Route>
+
+          <Route path="/departamentos">
+            <AppLayout>
+              <DepartmentsPage />
+            </AppLayout>
+          </Route>
+
           <Route path="/admin/periodos">
             <AppLayout>
               <AdminPeriodsPage />

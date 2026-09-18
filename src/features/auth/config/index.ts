@@ -9,12 +9,16 @@ const ROLE = {
   ADMIN: 'ADMIN',
   TEACHER: 'DOCENTE',
   DEPARTMENT_DIRECTOR: 'DIRECTOR DE DEPARTAMENTO',
+  DEAN: 'DECANO',
+  VICE_CHANCELLOR: 'VICERRECTOR ACADEMICO',
 } as const
 
 const ROLES_LABEL: Record<string, string> = {
   [ROLE.ADMIN]: 'Administrador',
   [ROLE.TEACHER]: 'Docente',
   [ROLE.DEPARTMENT_DIRECTOR]: 'Director de Departamento',
+  [ROLE.DEAN]: 'Decano',
+  [ROLE.VICE_CHANCELLOR]: 'Vicerrector Académico',
 }
 
 export { ROLE, ROLES_LABEL }
