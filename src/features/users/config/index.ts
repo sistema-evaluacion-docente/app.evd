@@ -6,6 +6,8 @@ export const ROLE_LABELS: Record<string, string> = {
   ADMIN: 'Administrador',
   DOCENTE: 'Docente',
   'DIRECTOR DE DEPARTAMENTO': 'Director de departamento',
+  DECANO: 'Decano',
+  'VICERRECTOR ACADEMICO': 'Vicerrector académico',
 }
 
 /** Role options for the edit form (label/value pairs). */

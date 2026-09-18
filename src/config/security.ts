@@ -17,7 +17,13 @@ const securityConfig: { pages: SecurityPage[] } = {
     {
       path: '/home',
       name: 'Resumen',
-      roles: ['DIRECTOR DE DEPARTAMENTO', 'ADMIN', 'DOCENTE'],
+      roles: [
+        'DIRECTOR DE DEPARTAMENTO',
+        'ADMIN',
+        'DOCENTE',
+        'DECANO',
+        'VICERRECTOR ACADEMICO',
+      ],
     },
 
     {
@@ -86,6 +92,21 @@ const securityConfig: { pages: SecurityPage[] } = {
       path: '/admin/departamentos',
       name: 'Departamentos',
       roles: ['ADMIN'],
+    },
+    {
+      // Misma pantalla que /admin/facultades, en modo lectura — el
+      // Vicerrector ve todas las facultades, el Decano no la necesita (la
+      // suya ya es su resumen en /home).
+      path: '/facultades',
+      name: 'Facultades',
+      roles: ['VICERRECTOR ACADEMICO'],
+    },
+    {
+      // Misma pantalla que /admin/departamentos, en modo lectura — el
+      // backend acota al Decano a los departamentos de su propia facultad.
+      path: '/departamentos',
+      name: 'Departamentos',
+      roles: ['VICERRECTOR ACADEMICO', 'DECANO'],
     },
     {
       path: '/programas',

@@ -1,6 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table'
 
 import { ActiveBadge } from '@/components/common/ActiveBadge'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import formatDate from '@/lib/formatDate'
 import type { Faculty } from '../types'
 
@@ -31,6 +32,29 @@ export const facultyColumns: ColumnDef<Faculty>[] = [
         <code className="bg-muted text-muted-foreground rounded px-1.5 py-0.5 font-mono text-xs">
           {code}
         </code>
+      )
+    },
+  },
+  {
+    accessorKey: 'dean',
+    header: 'Decano',
+    cell: ({ row }) => {
+      const dean = row.original.dean
+
+      if (!dean) {
+        return <span className="text-muted-foreground text-sm">Sin asignar</span>
+      }
+
+      return (
+        <div className="flex items-center gap-2">
+          <Avatar className="border-border/70 size-7 border">
+            <AvatarImage src={dean.avatar_url ?? undefined} alt={dean.name} />
+            <AvatarFallback>
+              <span className="text-xs font-semibold">{dean.name.slice(0, 2).toUpperCase()}</span>
+            </AvatarFallback>
+          </Avatar>
+          <span className="text-foreground text-sm">{dean.name}</span>
+        </div>
       )
     },
   },
