@@ -186,7 +186,10 @@ export function DepartmentPeriodRangeSummaryLayout({
                       Por nivel de riesgo
                     </h3>
 
-                    <DepartmentCommentRiskChart counts={stats.comments_risk_counts} />
+                    <DepartmentCommentRiskChart
+                      counts={stats.comments_risk_counts}
+                      emptyMessage="No hay comentarios clasificados por nivel de riesgo en este rango de periodos."
+                    />
                   </div>
                 )}
 
@@ -198,6 +201,7 @@ export function DepartmentPeriodRangeSummaryLayout({
 
                     <DepartmentCommentCategoriesChart
                       counts={stats.comments_pedagogical_category_counts}
+                      emptyMessage="No hay comentarios clasificados por categoría en este rango de periodos."
                     />
                   </div>
                 )}

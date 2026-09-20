@@ -211,7 +211,7 @@ export function DepartmentCommentsSummary({
             {viewMode !== 'bar' && (
               <CountPieChart
                 entries={riskEntries}
-                emptyMessage="No hay comentarios clasificados por nivel de riesgo en este rango de periodos."
+                emptyMessage="No hay comentarios clasificados por nivel de riesgo en este periodo."
                 onEntryClick={
                   onRiskLevelClick
                     ? (entry) => {
@@ -236,7 +236,7 @@ export function DepartmentCommentsSummary({
             {viewMode !== 'bar' && (
               <CountPieChart
                 entries={categoryEntries}
-                emptyMessage="No hay comentarios clasificados por categoría en este rango de periodos."
+                emptyMessage="No hay comentarios clasificados por categoría en este periodo."
                 className={viewMode === 'both' ? 'border-border mt-4 border-t pt-4' : undefined}
               />
             )}

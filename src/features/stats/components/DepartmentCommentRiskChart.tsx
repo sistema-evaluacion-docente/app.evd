@@ -6,6 +6,8 @@ export interface DepartmentCommentRiskChartProps {
   counts: { BAJO: number; MEDIO: number; ALTO: number } | undefined
   /** Makes each bar clickable, e.g. to open that level's comments. */
   onRiskLevelClick?: (level: RiskLevelMeta) => void
+  /** Wording when nothing is classified. Defaults to the single-period one. */
+  emptyMessage?: string
   className?: string
 }
 
@@ -25,6 +27,7 @@ export interface DepartmentCommentRiskChartProps {
 export function DepartmentCommentRiskChart({
   counts,
   onRiskLevelClick,
+  emptyMessage = 'No hay comentarios clasificados por nivel de riesgo en este periodo.',
   className,
 }: DepartmentCommentRiskChartProps) {
   const entries = RISK_LEVELS.map((level) => ({
@@ -36,13 +39,23 @@ export function DepartmentCommentRiskChart({
   const rawMax = Math.max(1, ...entries.map((entry) => entry.count))
   const max = Math.max(10, Math.ceil(rawMax / 10) * 10)
 
+  // Nothing classified reads as nothing written: three bars at zero draw as a
+  // bare axis, which is the same picture a department nobody commented on
+  // gets. Handing the chart no scores at all is what makes it say so instead —
+  // the rule `CountPieChart` already applies, so bar and donut now agree.
+  // Individual zeros stay: a level with none, next to levels with some, is a
+  // real reading.
+  const anyClassified = entries.some((entry) => entry.count > 0)
+
   return (
     <DimensionComparisonChart
       series={[
         {
           id: 'count',
           label: 'Comentarios',
-          scores: entries.map((entry) => ({ dimension: entry.key, value: entry.count })),
+          scores: anyClassified
+            ? entries.map((entry) => ({ dimension: entry.key, value: entry.count }))
+            : [],
         },
       ]}
       dimensions={RISK_LEVELS.map((level) => ({
@@ -55,7 +68,7 @@ export function DepartmentCommentRiskChart({
       max={max}
       decimals={0}
       showLegend={false}
-      emptyMessage="No hay comentarios clasificados por nivel de riesgo en este rango de periodos."
+      emptyMessage={emptyMessage}
       onDimensionClick={
         onRiskLevelClick
           ? (key) => {
