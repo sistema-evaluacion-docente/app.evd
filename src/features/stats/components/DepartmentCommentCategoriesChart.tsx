@@ -7,6 +7,8 @@ const ANALYZABLE_CATEGORIES = CATEGORIES.filter((category) => category.code !== 
 export interface DepartmentCommentCategoriesChartProps {
   /** Comment count per pedagogical category code (`LABEL_0`…`LABEL_4`), as returned by the API. */
   counts: Record<string, number> | undefined
+  /** Wording when nothing is classified. Defaults to the single-period one. */
+  emptyMessage?: string
   className?: string
 }
 
@@ -21,6 +23,7 @@ export interface DepartmentCommentCategoriesChartProps {
  */
 export function DepartmentCommentCategoriesChart({
   counts,
+  emptyMessage = 'No hay comentarios clasificados por categoría en este periodo.',
   className,
 }: DepartmentCommentCategoriesChartProps) {
   const entries = ANALYZABLE_CATEGORIES.map((category) => ({
@@ -31,13 +34,19 @@ export function DepartmentCommentCategoriesChart({
   const rawMax = Math.max(1, ...entries.map((entry) => entry.count))
   const max = Math.max(10, Math.ceil(rawMax / 10) * 10)
 
+  // See `DepartmentCommentRiskChart`: all-zero is "not classified yet", not
+  // "nobody wrote anything", and an empty axis cannot tell the two apart.
+  const anyClassified = entries.some((entry) => entry.count > 0)
+
   return (
     <DimensionComparisonChart
       series={[
         {
           id: 'count',
           label: 'Comentarios',
-          scores: entries.map((entry) => ({ dimension: entry.key, value: entry.count })),
+          scores: anyClassified
+            ? entries.map((entry) => ({ dimension: entry.key, value: entry.count }))
+            : [],
         },
       ]}
       dimensions={ANALYZABLE_CATEGORIES.map((category) => ({
@@ -51,7 +60,7 @@ export function DepartmentCommentCategoriesChart({
       max={max}
       decimals={0}
       showLegend={false}
-      emptyMessage="No hay comentarios clasificados por categoría en este rango de periodos."
+      emptyMessage={emptyMessage}
       className={className}
     />
   )

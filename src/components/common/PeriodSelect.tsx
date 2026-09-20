@@ -69,8 +69,19 @@ export function PeriodSelect({
     }
   }, [periodsData, setPeriods])
 
-  const options = (externalOptions ?? periodsData?.data ?? cachedPeriods ?? []).sort((a, b) =>
-    b.name.localeCompare(a.name),
+  // Copied before sorting: `.sort()` works in place, so this was reordering the
+  // array held inside the React Query cache and the Zustand store — shared
+  // state, mutated during render, and with the same identity afterwards, so
+  // nothing downstream could tell it had changed.
+  //
+  // `name` is optional on the API's periods (the `urlId` lookup below says so),
+  // and `null.localeCompare` throws, taking the whole select down with it.
+  const options = useMemo(
+    () =>
+      [...(externalOptions ?? periodsData?.data ?? cachedPeriods ?? [])].sort((a, b) =>
+        (b.name || b.code || '').localeCompare(a.name || a.code || ''),
+      ),
+    [externalOptions, periodsData?.data, cachedPeriods],
   )
 
   const isUrlMode = searchParam !== undefined

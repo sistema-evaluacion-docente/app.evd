@@ -142,3 +142,71 @@ describe('DepartmentCommentsSummary · comentarios sin analizar', () => {
     expect(screen.getByRole('group', { name: 'Forma de ver los comentarios' })).toBeInTheDocument()
   })
 })
+
+describe('DepartmentCommentsSummary · analizado pero sin clasificar', () => {
+  // The case the notice above cannot catch: the evaluation is marked ANALYZED,
+  // so the card draws its charts, but no comment of the period came back with a
+  // classification. Both breakdowns are then all-zero, and a bare axis reads as
+  // "nobody wrote anything" rather than "nothing was classified".
+  it('says so in the bar view instead of drawing a bare axis', () => {
+    render(
+      <DepartmentCommentsSummary riskCounts={COUNTS} categoryCounts={{}} aiStatus="ANALYZED" />,
+    )
+
+    expect(
+      screen.getByText('No hay comentarios clasificados por nivel de riesgo en este periodo.'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('No hay comentarios clasificados por categoría en este periodo.'),
+    ).toBeInTheDocument()
+  })
+
+  it('says so in the donut view too, which is where the rule came from', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <DepartmentCommentsSummary riskCounts={COUNTS} categoryCounts={{}} aiStatus="ANALYZED" />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Dona' }))
+
+    expect(
+      screen.getByText('No hay comentarios clasificados por nivel de riesgo en este periodo.'),
+    ).toBeInTheDocument()
+  })
+
+  it('still draws a level with none next to levels with some', () => {
+    // A zero among real counts is a reading, not an absence: only an all-zero
+    // breakdown is the ambiguous one.
+    render(
+      <DepartmentCommentsSummary
+        riskCounts={{ BAJO: 4, MEDIO: 0, ALTO: 1 }}
+        categoryCounts={{ LABEL_0: 3 }}
+        aiStatus="ANALYZED"
+      />,
+    )
+
+    expect(
+      screen.queryByText('No hay comentarios clasificados por nivel de riesgo en este periodo.'),
+    ).not.toBeInTheDocument()
+  })
+
+  it('only the half that is empty says it', () => {
+    // Risk classified, categories not — which is what a category model whose
+    // labels never resolved actually looks like on this card.
+    render(
+      <DepartmentCommentsSummary
+        riskCounts={{ BAJO: 4, MEDIO: 2, ALTO: 1 }}
+        categoryCounts={{}}
+        aiStatus="ANALYZED"
+      />,
+    )
+
+    expect(
+      screen.queryByText('No hay comentarios clasificados por nivel de riesgo en este periodo.'),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByText('No hay comentarios clasificados por categoría en este periodo.'),
+    ).toBeInTheDocument()
+  })
+})

@@ -149,7 +149,16 @@ export function CommentsList({
 
   const selectedRiskLevel = riskLevel ?? urlRiskLevel
 
-  const resetPage = useDebouncedCallback(() => setPage(1), 400)
+  // Only the search box: the page reset is held back so it lands together with
+  // the debounced text, instead of firing a request for page 1 with the old
+  // query and another one 400ms later with the new one.
+  //
+  // A dropdown gets `setPage(1)` straight away. Debouncing that is what made
+  // switching period look frozen: the period itself changes at once, so the
+  // list refetched with the *previous* page number — page 3 of a period with
+  // one page answers empty — and `keepPreviousData` held the old comments on
+  // screen until the reset finally landed and a second request replaced them.
+  const resetSearchPage = useDebouncedCallback(() => setPage(1), 400)
 
   const { data, isPending, error } = useGetComments({
     page,
@@ -198,7 +207,7 @@ export function CommentsList({
             value={search}
             onChange={(event) => {
               setSearch(event.target.value)
-              resetPage()
+              resetSearchPage()
             }}
             placeholder="Buscar en los comentarios..."
             aria-label="Buscar en los comentarios"
@@ -210,7 +219,7 @@ export function CommentsList({
           value={periodId}
           onValueChange={(id) => {
             setPeriodId(id)
-            resetPage()
+            setPage(1)
           }}
           searchParam="period"
         />
@@ -219,7 +228,7 @@ export function CommentsList({
           idValue={teacherId}
           onIdChange={(id) => {
             setTeacherId(id)
-            resetPage()
+            setPage(1)
           }}
         />
 
@@ -232,8 +241,7 @@ export function CommentsList({
 
             if (!riskLevel) setRiskLevel(nextRiskLevel as number | undefined)
 
-            if (nextModality === modality && nextRiskLevel === urlRiskLevel) resetPage()
-            else setPage(1)
+            setPage(1)
           }}
         />
       </div>

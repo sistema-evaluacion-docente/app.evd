@@ -7227,7 +7227,7 @@
       "post": {
         "tags": ["Improvement Plans"],
         "summary": "Reopen Acta",
-        "description": "Reopen a closed acta to correct it (ADMIN only).",
+        "description": "Reopen a CERRADA acta to correct it (ADMIN only).\n\nRefused on a FIRMADA acta: taking a signature back goes through deleting\nthe signed Formato 2, which only the plan's own department director may do\nand which notifies the teacher.",
         "operationId": "reopen_acta_improvement_plans__plan_id__acta_reopen_post",
         "security": [{ "HTTPBearer": [] }],
         "parameters": [
