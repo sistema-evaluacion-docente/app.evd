@@ -226,7 +226,10 @@ describe('PlanDetailPage · editar el plan', () => {
     expect(screen.getByRole('link', { name: /Editar/ })).toHaveAttribute('href', '/planes/7/editar')
   })
 
-  it('deja de ofrecerlo en cuanto la ficha firmada está subida', () => {
+  it('deja el botón a la vista, pero inerte, con la ficha firmada subida', () => {
+    // A la vista y no escondido: el director va a buscarlo justo cuando el
+    // docente no estuvo de acuerdo con algo, y un botón ausente no le dice ni
+    // que está bloqueado ni cómo desbloquearlo.
     mockPlan([item(1, 1, 'Expresa sus ideas')], {
       documents: SIGNED_ACTA,
       acta_status: 'FIRMADA',
@@ -236,6 +239,25 @@ describe('PlanDetailPage · editar el plan', () => {
     renderPage()
 
     expect(screen.queryByRole('link', { name: /Editar/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Editar/ })).toHaveAttribute('aria-disabled', 'true')
+  })
+
+  it('explica cómo volver a editarlo', async () => {
+    const user = userEvent.setup()
+
+    mockPlan([item(1, 1, 'Expresa sus ideas')], {
+      documents: SIGNED_ACTA,
+      acta_status: 'FIRMADA',
+      acta_locked: true,
+    })
+
+    renderPage()
+
+    // `aria-disabled` y no `disabled`: un botón deshabilitado de verdad no
+    // recibe el hover que su propio tooltip necesita.
+    await user.hover(screen.getByRole('button', { name: /Editar/ }))
+
+    expect(await screen.findByText(/elimina primero la Ficha de acuerdo firmada/)).toBeVisible()
   })
 
   it('tampoco lo ofrece con el plan ya cerrado', () => {
@@ -393,7 +415,11 @@ describe('PlanDetailPage · la acción de seguimiento por no haber mejorado', ()
   it('ofrece la acción de seguimiento cuando la verificación dice que no mejoró', () => {
     mockPlan([item(1, 1, 'Expresa sus ideas')], {
       status: 'CERRADO_NO_CUMPLIDO',
-      verification: { result: 'NO_MEJORO', items: [], comment_findings: [] } as unknown as Plan['verification'],
+      verification: {
+        result: 'NO_MEJORO',
+        items: [],
+        comment_findings: [],
+      } as unknown as Plan['verification'],
     })
 
     renderPage()
@@ -404,7 +430,11 @@ describe('PlanDetailPage · la acción de seguimiento por no haber mejorado', ()
   it('no la ofrece cuando la verificación dice que sí mejoró', () => {
     mockPlan([item(1, 1, 'Expresa sus ideas')], {
       status: 'CERRADO_NO_CUMPLIDO',
-      verification: { result: 'MEJORO', items: [], comment_findings: [] } as unknown as Plan['verification'],
+      verification: {
+        result: 'MEJORO',
+        items: [],
+        comment_findings: [],
+      } as unknown as Plan['verification'],
     })
 
     renderPage()
@@ -415,7 +445,11 @@ describe('PlanDetailPage · la acción de seguimiento por no haber mejorado', ()
   it('no la ofrece sin datos suficientes para verificar', () => {
     mockPlan([item(1, 1, 'Expresa sus ideas')], {
       status: 'CERRADO_NO_CUMPLIDO',
-      verification: { result: 'SIN_DATOS', items: [], comment_findings: [] } as unknown as Plan['verification'],
+      verification: {
+        result: 'SIN_DATOS',
+        items: [],
+        comment_findings: [],
+      } as unknown as Plan['verification'],
     })
 
     renderPage()

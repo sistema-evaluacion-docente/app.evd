@@ -86,11 +86,15 @@ afterEach(() => {
 })
 
 /**
- * The row of one of the three forms, found by the heading it carries. Scoped to
- * the heading itself: the Formato 1 row also names the form on its own button.
+ * The row of one of the three forms, found by the heading it carries. Scoped
+ * twice over: to the list, because the signed-acta banner above it also names
+ * the Formato 2, and to the heading itself, because the Formato 1 row names the
+ * form again on its own button.
  */
 function rowOf(name: RegExp) {
-  return screen.getByText(name, { selector: 'p' }).closest('li') as HTMLElement
+  const list = screen.getByRole('list')
+
+  return within(list).getByText(name, { selector: 'p' }).closest('li') as HTMLElement
 }
 
 describe('PlanDocuments', () => {
