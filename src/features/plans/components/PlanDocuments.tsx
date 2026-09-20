@@ -97,7 +97,8 @@ export function PlanDocuments({ plan, canManage }: PlanDocumentsProps) {
 
           <p className="flex-1">
             Acuerdo firmado: el plan está en vigencia y el contenido del acta ya no se modifica. El
-            seguimiento sigue su curso.
+            seguimiento sigue su curso. Para volver a editar los compromisos, elimina primero el
+            Formato 2 firmado — al docente se le notifica cuando eso ocurre.
           </p>
 
           <Button
@@ -383,8 +384,8 @@ function FormatRow({
           isCaseReport
             ? 'Se quitará el caso reportado adjunto al plan. Podrás volver a adjuntarlo cuando quieras.'
             : isActa
-              ? 'El acuerdo volverá a estado borrador y podrás editar el plan de nuevo. El formato en blanco se conserva y se te pedirá otra vez la versión firmada.'
-              : 'Se te pedirá de nuevo la versión firmada de este formato. El formato en blanco se conserva.'
+              ? 'El acuerdo volverá a estado borrador y podrás editar el plan de nuevo. El PDF firmado se elimina y no se puede recuperar, así que al docente se le notifica que su acta firmada fue eliminada. El formato en blanco se conserva y se te pedirá otra vez la versión firmada.'
+              : 'El PDF firmado se elimina y no se puede recuperar; al docente se le notifica. Se te pedirá de nuevo la versión firmada de este formato, y el formato en blanco se conserva.'
         }
         confirmLabel="Eliminar"
         pendingLabel="Eliminando…"

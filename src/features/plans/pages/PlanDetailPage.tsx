@@ -9,6 +9,7 @@ import PlanDetailSkeleton from '@/components/skeletons/PlanDetailSkeleton'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ROLE, useAuthStore } from '@/features/auth'
 import { NotFoundPage } from '@/features/not-found'
 import { useNavigate } from '@/hooks/useNavigate'
@@ -58,7 +59,13 @@ export default function PlanDetailPage() {
 
   const signedActa = plan ? hasSignedActa(plan) : false
   const closed = plan ? isPlanClosed(plan.status) : false
-  const canEdit = Boolean(canManage && plan && !closed && !signedActa)
+  // Two different things, on purpose. A closed plan is over and the button
+  // goes with it; a signed acta is a *temporary* lock with a way out, so the
+  // button stays and explains itself instead of vanishing — a director who
+  // finds no button has no way to guess that deleting the Formato 2 firmado is
+  // what brings it back.
+  const canEdit = Boolean(canManage && plan && !closed)
+  const editBlocked = canEdit && signedActa
 
   if (isPending) return <PlanDetailSkeleton withAvatar />
 
@@ -116,16 +123,7 @@ export default function PlanDetailPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              {canEdit && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  render={<Link href={`/planes/${plan.id}/editar`} />}
-                >
-                  <Pencil className="size-4" aria-hidden="true" />
-                  Editar
-                </Button>
-              )}
+              {canEdit && <EditPlanAction planId={plan.id} blocked={editBlocked} />}
 
               {canManage && (
                 <Button
@@ -256,7 +254,65 @@ export default function PlanDetailPage() {
   )
 }
 
-/** One agreed commitment: what was detected, what was promised, how it stands. */
+/**
+ * The "Editar" button, which a signed Ficha de acuerdo turns into an
+ * explanation of itself.
+ *
+ * It used to be dropped from the page entirely while the acta was signed. That
+ * is unhelpful in the one case it matters: the director goes looking for the
+ * button precisely because the teacher disagreed with something, finds nothing,
+ * and has no way to learn that the lock is undone by deleting the signed
+ * Formato 2. Keeping the button in place — visibly inert, with the way out in
+ * its tooltip — answers the question where it is actually asked.
+ *
+ * `aria-disabled` and not `disabled`: the shared button styles carry
+ * `disabled:pointer-events-none`, so a natively disabled button never receives
+ * the hover its own tooltip needs. This also leaves it focusable, so the
+ * explanation is reachable by keyboard instead of by mouse alone.
+ */
+function EditPlanAction({ planId, blocked }: { planId: number; blocked: boolean }) {
+  if (!blocked) {
+    return (
+      <Button size="sm" variant="outline" render={<Link href={`/planes/${planId}/editar`} />}>
+        <Pencil className="size-4" aria-hidden="true" />
+        Editar
+      </Button>
+    )
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            size="sm"
+            variant="outline"
+            type="button"
+            aria-disabled="true"
+            // Not the `disabled:` variants: there is no `disabled` attribute to
+            // match. The cursor says "inert" while the element stays alive.
+            className="cursor-not-allowed opacity-50"
+          />
+        }
+      >
+        <Pencil className="size-4" aria-hidden="true" />
+        Editar
+      </TooltipTrigger>
+
+      <TooltipContent className="max-w-72">
+        <span className="block">
+          El <strong>Formato 2</strong> está firmado y el acuerdo está en vigencia, así que los
+          compromisos y las observaciones ya no se pueden modificar.
+        </span>
+        <span className="mt-1 block">
+          Para editarlo, elimina primero la Ficha de acuerdo firmada en los formatos oficiales del
+          plan. Al docente se le avisa cuando eso ocurre.
+        </span>
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
 /**
  * The line under "Compromisos", which leads with the commitments themselves.
  *
@@ -274,6 +330,7 @@ function commitmentsSummary(total: number): string {
   return `${total} ${total === 1 ? 'compromiso' : 'compromisos'} `
 }
 
+/** One agreed commitment: what was detected, what was promised, how it stands. */
 function CommitmentCard({ item }: { item: PlanItem }) {
   return (
     <li className="border-border rounded-md border p-3">
