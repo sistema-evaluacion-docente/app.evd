@@ -96,7 +96,7 @@ function CaseReportHelp() {
           <strong>
             Casos de docentes reportados por programas académicos a las direcciones de departamento.
           </strong>{' '}
-          Lo diligencia y firma el director o coordinador del programa, con la queja presentada y el
+          Lo diligencia y firma el director del programa académico, con la queja presentada y el
           acta del Comité Curricular donde se analizó el caso.
         </span>
         <span className="mt-1 block">

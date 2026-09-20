@@ -96,9 +96,8 @@ export function PlanDocuments({ plan, canManage }: PlanDocumentsProps) {
           <Info className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
 
           <p className="flex-1">
-            Acuerdo firmado: el plan está en vigencia y el contenido del acta ya no se modifica. El
-            seguimiento sigue su curso. Para volver a editar los compromisos, elimina primero el
-            Formato 2 firmado — al docente se le notifica cuando eso ocurre.
+            Acuerdo firmado: el plan está en vigencia y el contenido del acta ya no se modifica. Para volver a editar los compromisos, elimina primero el
+            Formato 2 firmado. Al docente se le notifica cuando eso ocurre.
           </p>
 
           <Button
