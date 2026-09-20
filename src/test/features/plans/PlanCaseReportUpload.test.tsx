@@ -36,7 +36,7 @@ describe('PlanCaseReportUpload · reconocer el formato', () => {
     await user.hover(screen.getByRole('button', { name: /Qué es el Formato 1/ }))
 
     expect(
-      await screen.findByText(/Lo diligencia y firma el director o coordinador del programa/),
+      await screen.findByText(/Lo diligencia y firma el director del programa académico/),
     ).toBeVisible()
   })
 
