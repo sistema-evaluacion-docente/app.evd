@@ -57,12 +57,16 @@ function FormDrawer({
           ) : null}
         </DrawerHeader>
 
-        <form
-          onSubmit={onSubmit}
-          className={cn("space-y-4 px-4 pb-4", formClassName)}
-        >
-          {children}
-          <DrawerFooter className={cn("px-0 pb-0", footerClassName)}>
+        <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
+          <div
+            className={cn(
+              "min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 pb-4",
+              formClassName,
+            )}
+          >
+            {children}
+          </div>
+          <DrawerFooter className={cn("border-t pt-4", footerClassName)}>
             <Button type="submit" disabled={submitDisabled ?? isSubmitting}>
               <Save />
               {isSubmitting
