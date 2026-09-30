@@ -136,6 +136,37 @@ describe('DynamicFormDrawer', () => {
     expect(screen.getByText('Nuevo docente')).toBeInTheDocument()
   })
 
+  it('opens a mounted drawer with the defaults of the fields it has now', () => {
+    const fieldsFor = (name: string): FieldConfig[] => [
+      { name: 'name', label: 'Nombre', defaultValue: name },
+    ]
+
+    const { rerender } = render(
+      <DynamicFormDrawer
+        title="Editar"
+        fields={fieldsFor('Ada')}
+        onSubmit={vi.fn()}
+        open={false}
+        onOpenChange={vi.fn()}
+        hideTrigger
+      />,
+    )
+
+    // Stays mounted while closed; its fields switch to another record, then it opens.
+    rerender(
+      <DynamicFormDrawer
+        title="Editar"
+        fields={fieldsFor('Grace')}
+        onSubmit={vi.fn()}
+        open
+        onOpenChange={vi.fn()}
+        hideTrigger
+      />,
+    )
+
+    expect(screen.getByLabelText('Nombre')).toHaveValue('Grace')
+  })
+
   it('reports the controlled open state through onOpenChange when cancelled', async () => {
     const user = userEvent.setup()
     const onOpenChange = vi.fn()

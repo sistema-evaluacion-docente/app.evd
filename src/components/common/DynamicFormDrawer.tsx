@@ -133,12 +133,12 @@ export function DynamicFormDrawer({
   const [values, setValues] = useState<FormValues>(() => buildInitialValues(fields))
   const [prevOpen, setPrevOpen] = useState(open)
 
+  // Rebuilt on every open/close, not just on close: a drawer kept mounted to
+  // animate (e.g. an edit form) gets new `fields` while closed, and must open
+  // with those defaults rather than the ones it was mounted with.
   if (prevOpen !== open) {
     setPrevOpen(open)
-
-    if (!open) {
-      setValues(buildInitialValues(fields))
-    }
+    setValues(buildInitialValues(fields))
   }
 
   const handleOpenChange = (nextOpen: boolean) => {
