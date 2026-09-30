@@ -24,26 +24,38 @@ async function createUser(payload: CreateUserPayload): Promise<ResponseAPI<Admin
 }
 
 /**
- * Replaces a user's roles and sets their active status.
- *
- * There is no single endpoint that updates another user: `PUT /users/` only
- * touches the caller's own record, so roles and status each have their own
- * route. Both address the user by their Firebase `uid` — the numeric `id` that
- * the list shows is not a key the API answers to.
+ * Full detail of one user, including the department and faculty that the
+ * list endpoint leaves out. By numeric `id`, so it works without a `uid`.
  */
-async function updateUser(
-  uid: string,
-  payload: UpdateUserPayload,
-): Promise<ResponseAPI<AdminUser>> {
-  await api.put(`/users/${uid}/roles`, { roles: payload.roles })
+async function getUserById(id: number): Promise<ResponseAPI<AdminUser>> {
+  return api.get(`/users/by-id/${id}`)
+}
 
-  return api.patch(`/users/${uid}/status`, { active: payload.active })
+/** Edits any user in a single request (`PUT /users/by-id/{id}`, ADMIN only). */
+async function updateUser(id: number, payload: UpdateUserPayload): Promise<ResponseAPI<AdminUser>> {
+  return api.put(`/users/by-id/${id}`, payload)
 }
 
 /** Query-key factory so list invalidations stay consistent. */
 export const usersKeys = {
   all: ['users'] as const,
   lists: () => [...usersKeys.all, 'list'] as const,
+  detail: (id: number) => [...usersKeys.all, 'detail', id] as const,
+}
+
+/**
+ * Fetches one user's full detail (`GET /users/by-id/{id}`). Idle until an
+ * `id` is given, so it can back an edit drawer that opens on demand.
+ *
+ * @example
+ * const { data } = useGetUserById(editTarget?.id);
+ */
+export function useGetUserById(id?: number) {
+  return useQuery({
+    queryKey: usersKeys.detail(id ?? 0),
+    queryFn: () => getUserById(id!),
+    enabled: id != null,
+  })
 }
 
 /**
@@ -75,20 +87,21 @@ export function useGetUsers({
 }
 
 /**
- * Replaces a user's roles and status (`PUT /users/{uid}/roles` plus
- * `PATCH /users/{uid}/status`). Invalidates the users list on success.
+ * Edits a user's name, email, code, roles, status and teacher department
+ * (`PUT /users/by-id/{id}`). Invalidates the list and that user's detail.
  *
  * @example
  * const { mutate: updateUser } = useUpdateUser();
- * updateUser({ uid: 'abc123', payload: { name: 'Juan', active: true, avatar_url: '', roles: ['DOCENTE'] } });
+ * updateUser({ id: 5, payload: { name: 'Juan', email: 'juan@ufps.edu.co', institutional_code: '115', roles: ['DOCENTE'], active: true } });
  */
 export function useUpdateUser() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ uid, payload }: { uid: string; payload: UpdateUserPayload }) =>
-      updateUser(uid, payload),
-    onSuccess: () => {
+    mutationFn: ({ id, payload }: { id: number; payload: UpdateUserPayload }) =>
+      updateUser(id, payload),
+    onSuccess: (_data, { id }) => {
       queryClient.invalidateQueries({ queryKey: usersKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: usersKeys.detail(id) })
     },
   })
 }
