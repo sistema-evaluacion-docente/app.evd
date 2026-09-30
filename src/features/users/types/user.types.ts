@@ -19,6 +19,8 @@ export interface UserParams {
   active?: boolean
   /** Filter by roles (e.g. `['DOCENTE', 'DIRECTOR DE DEPARTAMENTO']`). */
   roles?: string[]
+  /** Users of a department: those who teach in it or direct it. */
+  department_id?: number
   page: number
   limit: number
 }

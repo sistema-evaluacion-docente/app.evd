@@ -149,6 +149,45 @@ describe('UsersList', () => {
     expect(mockApi.put).not.toHaveBeenCalled()
   })
 
+  it('filtra por el departamento de la URL y lo nombra en el aviso', async () => {
+    renderRouted(<UsersList />, { path: '/admin/usuarios?departamento=7' })
+
+    expect(await screen.findByText('Sistemas')).toBeInTheDocument()
+    expect(screen.getByText(/Usuarios del departamento/)).toBeInTheDocument()
+
+    await waitFor(() =>
+      expect(
+        mockApi.get.mock.calls.some(
+          ([url, config]) => url === '/users/' && config?.params?.department_id === 7,
+        ),
+      ).toBe(true),
+    )
+  })
+
+  it('quita el filtro de departamento y vuelve a listar a todos', async () => {
+    const user = userEvent.setup()
+
+    const { history } = renderRouted(<UsersList />, { path: '/admin/usuarios?departamento=7' })
+    await user.click(await screen.findByRole('button', { name: /Quitar filtro/ }))
+
+    expect(screen.queryByText(/Usuarios del departamento/)).not.toBeInTheDocument()
+    expect(history.at(-1)).not.toContain('departamento')
+    await waitFor(() => {
+      const [, config] = mockApi.get.mock.calls.filter(([url]) => url === '/users/').at(-1)!
+      expect(config?.params).not.toHaveProperty('department_id')
+    })
+  })
+
+  it('ignora un departamento que no es un id válido', async () => {
+    renderRouted(<UsersList />, { path: '/admin/usuarios?departamento=abc' })
+
+    await screen.findByText('Ada Lovelace')
+
+    expect(screen.queryByText(/Usuarios del departamento/)).not.toBeInTheDocument()
+    const usersCalls = mockApi.get.mock.calls.filter(([url]) => url === '/users/')
+    expect(usersCalls.every(([, config]) => config?.params?.department_id === undefined)).toBe(true)
+  })
+
   it('searches on the server rather than filtering the page in the browser', async () => {
     const user = userEvent.setup()
 

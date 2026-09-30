@@ -12,6 +12,7 @@ async function getUsers(params: UserParams): Promise<ResponseAPI<AdminUser[]>> {
   if (params.search) query['search'] = params.search
   if (params.active !== undefined) query['active'] = params.active
   if (params.roles?.length) query['roles'] = params.roles
+  if (params.department_id != null) query['department_id'] = params.department_id
 
   return api.get('/users/', {
     params: query,
@@ -60,7 +61,7 @@ export function useGetUserById(id?: number) {
 
 /**
  * Fetches the paginated list of users (`GET /users/`) with optional
- * search, active status and roles filters.
+ * search, active status, roles and department filters.
  *
  * @example
  * const { data, isPending } = useGetUsers({ page: 1, limit: 10, search: 'juan', active: true, roles: ['DOCENTE'] });
@@ -71,16 +72,19 @@ export function useGetUsers({
   search = '',
   active,
   roles,
+  departmentId,
 }: {
   page?: number
   limit?: number
   search?: string
   active?: boolean
   roles?: string[]
+  /** Users who teach in or direct this department. */
+  departmentId?: number
 } = {}) {
   return useQuery({
-    queryKey: [...usersKeys.lists(), { page, limit, search, active, roles }],
-    queryFn: () => getUsers({ page, limit, search, active, roles }),
+    queryKey: [...usersKeys.lists(), { page, limit, search, active, roles, departmentId }],
+    queryFn: () => getUsers({ page, limit, search, active, roles, department_id: departmentId }),
     staleTime: 60_000,
     placeholderData: keepPreviousData,
   })
