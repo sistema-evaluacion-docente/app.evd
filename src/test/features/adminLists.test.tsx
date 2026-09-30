@@ -203,6 +203,34 @@ describe('DepartmentsList', () => {
     await waitFor(() => expect(mockApi.delete).toHaveBeenCalledWith('/departments/3'))
   })
 
+  it('clicking a department opens its users in the admin users list', async () => {
+    const user = userEvent.setup()
+
+    const { history } = renderRouted(<DepartmentsList />, { path: '/admin/departamentos' })
+    await user.click(await screen.findByText('Sistemas'))
+
+    expect(history.at(-1)).toBe('/admin/usuarios?departamento=3')
+  })
+
+  it('offers the same through a "Ver usuarios" row action', async () => {
+    const user = userEvent.setup()
+
+    const { history } = renderRouted(<DepartmentsList />, { path: '/admin/departamentos' })
+    await openRowMenu(user, 'Matemáticas')
+    await user.click(await screen.findByRole('menuitem', { name: 'Ver usuarios' }))
+
+    expect(history.at(-1)).toBe('/admin/usuarios?departamento=4')
+  })
+
+  it('does not navigate when a row menu is opened', async () => {
+    const user = userEvent.setup()
+
+    const { history } = renderRouted(<DepartmentsList />, { path: '/admin/departamentos' })
+    await openRowMenu(user, 'Sistemas')
+
+    expect(history.at(-1)).toBe('/admin/departamentos')
+  })
+
   it('searches on the server rather than filtering the page in the browser', async () => {
     const user = userEvent.setup()
 
