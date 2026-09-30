@@ -37,14 +37,27 @@ function page(rows: unknown[]) {
   return { data: rows, pagination: { total: rows.length, page: 1, pages: 1, limit: 10 } }
 }
 
-beforeEach(() => {
-  vi.clearAllMocks()
+const DEPARTMENTS = [{ id: 7, name: 'Sistemas' }]
 
+function mockBackend(user = USERS[0]) {
   mockApi.get.mockImplementation((url: string) => {
-    if (url.startsWith('/users')) return Promise.resolve(page(USERS))
+    if (url.startsWith('/users/by-id/')) return Promise.resolve({ data: user })
+    if (url.startsWith('/users')) return Promise.resolve(page([user]))
+    if (url.startsWith('/departments')) return Promise.resolve(page(DEPARTMENTS))
     return Promise.resolve(page([]))
   })
+}
 
+async function openEditDrawer(user: ReturnType<typeof userEvent.setup>) {
+  const row = (await screen.findByText('Ada Lovelace')).closest('tr')!
+  await user.click(within(row).getByRole('button', { name: 'Acciones' }))
+  await user.click(await screen.findByRole('menuitem', { name: 'Editar' }))
+  expect(await screen.findByText('Editar usuario: Ada Lovelace')).toBeInTheDocument()
+}
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  mockBackend()
   mockApi.put.mockResolvedValue({ data: {} })
   mockApi.patch.mockResolvedValue({ data: {} })
 })
@@ -58,48 +71,82 @@ describe('UsersList', () => {
     expect(screen.getByText('Docente')).toBeInTheDocument()
   })
 
-  it('edits a user, toggling a role and saving through the drawer', async () => {
+  it('edits name, email, code and roles in a single request by id', async () => {
     const user = userEvent.setup()
 
     renderRouted(<UsersList />)
-    const row = (await screen.findByText('Ada Lovelace')).closest('tr')!
-    await user.click(within(row).getByRole('button', { name: 'Acciones' }))
-    await user.click(await screen.findByRole('menuitem', { name: 'Editar' }))
+    await openEditDrawer(user)
 
-    expect(await screen.findByText('Editar usuario: Ada Lovelace')).toBeInTheDocument()
-
+    const email = screen.getByLabelText(/Correo institucional/)
+    await user.clear(email)
+    await user.type(email, 'Ada.L@ufps.edu.co')
     await user.click(screen.getByRole('button', { name: 'Administrador' }))
     await user.click(screen.getByRole('button', { name: /Guardar/ }))
 
-    // Roles y estado van por rutas separadas, y ambas se direccionan por el
-    // `uid` de Firebase: el id numérico de la fila no es una clave que la API
-    // reconozca.
     await waitFor(() =>
-      expect(mockApi.put).toHaveBeenCalledWith('/users/u1/roles', {
+      expect(mockApi.put).toHaveBeenCalledWith('/users/by-id/1', {
+        name: 'Ada Lovelace',
+        email: 'ada.l@ufps.edu.co',
+        institutional_code: 'U-001',
         roles: expect.arrayContaining(['DOCENTE', 'ADMIN']),
+        active: true,
       }),
     )
-
-    expect(mockApi.patch).toHaveBeenCalledWith('/users/u1/status', { active: true })
+    // Un departamento sin tocar no se reenvía.
+    expect(mockApi.put.mock.calls[0][1]).not.toHaveProperty('department_id')
+    expect(mockApi.patch).not.toHaveBeenCalled()
   })
 
-  it('no intenta editar a quien todavía no tiene uid, y dice por qué', async () => {
+  it('cierra al guardar y, al reabrir, trae los datos actuales del usuario', async () => {
     const user = userEvent.setup()
 
-    mockApi.get.mockImplementation((url: string) => {
-      if (url.startsWith('/users')) return Promise.resolve(page([{ ...USERS[0], uid: null }]))
-      return Promise.resolve(page([]))
+    // El guardado cambia lo que el servidor devuelve de ahí en adelante.
+    mockApi.put.mockImplementation(async () => {
+      mockBackend({ ...USERS[0], name: 'Ada King' })
+      return { data: {} }
     })
 
     renderRouted(<UsersList />)
-    const row = (await screen.findByText('Ada Lovelace')).closest('tr')!
+    await openEditDrawer(user)
+    await user.click(screen.getByRole('button', { name: /Guardar/ }))
+
+    await waitFor(() =>
+      expect(screen.queryByText('Editar usuario: Ada Lovelace')).not.toBeInTheDocument(),
+    )
+
+    const row = (await screen.findByText('Ada King')).closest('tr')!
     await user.click(within(row).getByRole('button', { name: 'Acciones' }))
     await user.click(await screen.findByRole('menuitem', { name: 'Editar' }))
-    await user.click(await screen.findByRole('button', { name: /Guardar/ }))
 
+    await waitFor(() => expect(screen.getByLabelText(/Nombre completo/)).toHaveValue('Ada King'))
+  })
+
+  it('edita también a quien nunca ha iniciado sesión (sin uid)', async () => {
+    const user = userEvent.setup()
+    mockBackend({ ...USERS[0], uid: null as unknown as string })
+
+    renderRouted(<UsersList />)
+    await openEditDrawer(user)
+    await user.click(screen.getByRole('button', { name: /Guardar/ }))
+
+    await waitFor(() =>
+      expect(mockApi.put).toHaveBeenCalledWith('/users/by-id/1', expect.any(Object)),
+    )
+  })
+
+  it('rechaza un correo fuera del dominio institucional sin llamar a la API', async () => {
+    const user = userEvent.setup()
+
+    renderRouted(<UsersList />)
+    await openEditDrawer(user)
+
+    const email = screen.getByLabelText(/Correo institucional/)
+    await user.clear(email)
+    await user.type(email, 'ada@gmail.com')
+    await user.click(screen.getByRole('button', { name: /Guardar/ }))
+
+    expect(toast.error).toHaveBeenCalledWith('El correo debe terminar en @ufps.edu.co')
     expect(mockApi.put).not.toHaveBeenCalled()
-    expect(mockApi.patch).not.toHaveBeenCalled()
-    expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('aún no ha iniciado sesión'))
   })
 
   it('searches on the server rather than filtering the page in the browser', async () => {

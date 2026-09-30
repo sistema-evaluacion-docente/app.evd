@@ -215,14 +215,17 @@ describe('users', () => {
     await mutate(() => users.useCreateUser(), { email: 'ada@ufps.edu.co' } as never)
     expect(mockApi.post).toHaveBeenCalledWith('/users/', { email: 'ada@ufps.edu.co' })
 
-    // Roles y estado viajan por rutas distintas, ambas direccionadas por el
-    // `uid` de Firebase y no por el id numérico que muestra el listado.
-    await mutate(() => users.useUpdateUser(), {
-      uid: 'abc123',
-      payload: { active: false, roles: ['DOCENTE'] },
-    })
-    expect(mockApi.put).toHaveBeenCalledWith('/users/abc123/roles', { roles: ['DOCENTE'] })
-    expect(mockApi.patch).toHaveBeenCalledWith('/users/abc123/status', { active: false })
+    // Una sola petición por id numérico: sirve también sin `uid` de Firebase.
+    const payload = {
+      name: 'Ada',
+      email: 'ada@ufps.edu.co',
+      institutional_code: '115',
+      roles: ['DOCENTE'],
+      active: false,
+    }
+    await mutate(() => users.useUpdateUser(), { id: 5, payload })
+    expect(mockApi.put).toHaveBeenCalledWith('/users/by-id/5', payload)
+    expect(mockApi.patch).not.toHaveBeenCalled()
   })
 })
 
