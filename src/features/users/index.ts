@@ -1,4 +1,5 @@
 export * from './api'
 export * from './components'
+export { usersOfDepartmentHref } from './config/usersOfDepartment'
 export * from './pages'
 export * from './types'

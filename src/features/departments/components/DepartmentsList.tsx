@@ -1,5 +1,5 @@
 import type { PaginationState, SortingState } from '@tanstack/react-table'
-import { BarChart3, Pencil, Trash2, UserMinus, UserPlus } from 'lucide-react'
+import { BarChart3, Pencil, Trash2, UserMinus, UserPlus, Users } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { useDebounce, useDebouncedCallback } from 'use-debounce'
@@ -9,6 +9,7 @@ import { DataTable, type DataTableAction } from '@/components/common/DataTable'
 import { DataTableFilters, type FilterConfig } from '@/components/common/DataTableFilters'
 import { DynamicFormDrawer, type FieldConfig } from '@/components/common/DynamicFormDrawer'
 import { useGetFaculties } from '@/features/faculties'
+import { usersOfDepartmentHref } from '@/features/users'
 import useAuth from '@/hooks/useAuth'
 import { useNavigate } from '@/hooks/useNavigate'
 import { useTableFilters } from '@/hooks/useTableFilters'
@@ -162,6 +163,11 @@ export function DepartmentsList({ canManage = true }: DepartmentsListProps = {})
     ...(canManage
       ? [
           {
+            label: 'Ver usuarios',
+            icon: <Users className="size-4" />,
+            onClick: (row: Department) => navigate(usersOfDepartmentHref(row.id)),
+          },
+          {
             label: 'Asignar director',
             icon: <UserPlus className="size-4" />,
             onClick: (row: Department) => setAssignTarget(row),
@@ -239,6 +245,8 @@ export function DepartmentsList({ canManage = true }: DepartmentsListProps = {})
         searchPlaceholder="Buscar por nombre o código..."
         emptyMessage="No hay departamentos que coincidan."
         rowActions={rowActions}
+        // Para el admin, la fila lleva a sus usuarios, donde se pueden corregir.
+        onRowClick={canManage ? (row) => navigate(usersOfDepartmentHref(row.id)) : undefined}
         toolbar={
           <DataTableFilters
             filters={filterConfig}

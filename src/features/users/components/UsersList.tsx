@@ -1,16 +1,19 @@
 import type { PaginationState, SortingState } from '@tanstack/react-table'
-import { Pencil } from 'lucide-react'
+import { Building2, Pencil, X } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { useDebounce, useDebouncedCallback } from 'use-debounce'
+import { useSearchParams } from 'wouter'
 
 import { DataTable, type DataTableAction } from '@/components/common/DataTable'
 import { DataTableFilters, type FilterConfig } from '@/components/common/DataTableFilters'
 import { DynamicFormDrawer, type FieldConfig } from '@/components/common/DynamicFormDrawer'
+import { Button } from '@/components/ui/button'
 import { useGetDepartments } from '@/features/departments'
 import { useTableFilters } from '@/hooks/useTableFilters'
 import { useGetUserById, useGetUsers, useUpdateUser } from '../api'
 import { ROLE_OPTIONS } from '../config'
+import { DEPARTMENT_FILTER_PARAM, parseDepartmentId } from '../config/usersOfDepartment'
 import type { AdminUser, UpdateUserPayload } from '../types'
 import { userColumns } from './columns'
 
@@ -28,8 +31,9 @@ const filterConfig: FilterConfig[] = [
 ]
 
 /**
- * Displays the paginated list of users with server-side search and an
- * active status filter, powered by the shared `DataTable`.
+ * Displays the paginated list of users with server-side search, an active
+ * status filter and an optional `?departamento=` filter from the URL, powered
+ * by the shared `DataTable`.
  *
  * @example
  * <UsersList />
@@ -48,11 +52,17 @@ export function UsersList() {
   })
   const [debouncedFilters] = useDebounce(filters, 400)
 
+  // El departamento viaja en la URL (`?departamento=7`) para que se pueda
+  // llegar desde la tabla de departamentos y volver con "atrás".
+  const [searchParams, setSearchParams] = useSearchParams()
+  const departmentId = parseDepartmentId(searchParams.get(DEPARTMENT_FILTER_PARAM))
+
   const { data, isPending, isFetching } = useGetUsers({
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     active: debouncedFilters.active as boolean | undefined,
     search: debouncedSearch,
+    departmentId,
   })
   const { mutate: updateUser, isPending: isUpdating } = useUpdateUser()
 
@@ -66,6 +76,22 @@ export function UsersList() {
 
   const users = data?.data ?? []
   const pageCount = data?.pagination?.pages ?? 1
+
+  const filteredDepartmentName = departments.find(
+    (department) => department.id === departmentId,
+  )?.name
+
+  const clearDepartment = () => {
+    setSearchParams(
+      (previous) => {
+        const next = new URLSearchParams(previous)
+        next.delete(DEPARTMENT_FILTER_PARAM)
+        return next
+      },
+      { replace: true },
+    )
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }))
+  }
 
   const initialDepartment =
     detail?.department_id != null ? String(detail.department_id) : NO_DEPARTMENT
@@ -190,6 +216,21 @@ export function UsersList() {
 
   return (
     <>
+      {departmentId != null && (
+        <div className="border-border bg-muted/30 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border px-4 py-3">
+          <p className="flex items-center gap-2 text-sm">
+            <Building2 className="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
+            Usuarios del departamento{' '}
+            <span className="font-medium">{filteredDepartmentName ?? 'seleccionado'}</span>
+          </p>
+
+          <Button variant="outline" size="sm" onClick={clearDepartment}>
+            <X className="size-4" aria-hidden="true" />
+            Quitar filtro
+          </Button>
+        </div>
+      )}
+
       <DataTable
         columns={userColumns}
         data={users}
