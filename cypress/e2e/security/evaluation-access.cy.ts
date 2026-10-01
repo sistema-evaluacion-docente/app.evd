@@ -253,11 +253,14 @@ describe('Consultar una evaluación: solo el director de su propio departamento'
       .its('status')
       .should('eq', 403)
 
+    // `by-period` resuelve siempre el departamento: sin él, el director ajeno
+    // recibe la evaluación de SU departamento en ese periodo (no tiene, 404).
+    // Lo que debe quedar cerrado es pedir la del departamento dueño.
     cy.apiAs(
       outsider.email,
       outsider.password,
       'GET',
-      `/evaluations/by-period/${evaluation.academic_period_id}`,
+      `/evaluations/by-period/${evaluation.academic_period_id}?department_id=${fixtureDepartment.id}`,
     )
       .its('status')
       .should('eq', 403)
