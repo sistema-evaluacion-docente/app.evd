@@ -15,11 +15,14 @@ import {
   UserRoundX,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 
+import { LogoImage } from '@/components/common/Logo'
 import { ThemeToggle } from '@/components/common/ThemeToggle'
 import { TransitionLink } from '@/components/common/TransitionLink'
 import { useInView } from '@/hooks/useInView'
+
+import { AUTHORS } from '../authors'
 
 const ICON_STROKE = 1.5
 
@@ -87,7 +90,7 @@ function SiteNav() {
     <header className="border-ink-200 bg-background/90 sticky top-0 z-40 border-b backdrop-blur-sm">
       <div className="mx-auto flex h-[68px] max-w-[1240px] items-center justify-between gap-8 px-5 lg:px-8">
         <a href="#inicio" className="flex items-baseline gap-2 whitespace-nowrap">
-          <img src="/logo.png" alt="Logo de la UFPS" width={32} height={32} className="h-8 w-8" />
+          <LogoImage className="h-10" />
         </a>
 
         <nav className="hidden items-center gap-7 lg:flex">
@@ -819,27 +822,6 @@ function Límites() {
 
 /* ------------------------------------------------------------------ autores -- */
 
-const AUTHORS = [
-  {
-    photo: '/orlando-beltran.jpeg',
-    name: 'Orlando José Beltrán Valero',
-    code: '1152167',
-    url: 'https://github.com/DevOB31',
-  },
-  {
-    photo: 'https://www.byandrev.dev/assets/andres-parra.jpg',
-    name: 'Andrés Alfonso Parra Garzón',
-    code: '1152185',
-    url: 'https://www.byandrev.dev/',
-  },
-  {
-    photo: 'https://avatars.githubusercontent.com/u/114622930?v=4',
-    name: 'Alessandro Umberto Daniele Saltarín',
-    code: '1152194',
-    url: 'https://github.com/AlessandroDani',
-  },
-]
-
 const ADVISORS = [
   {
     photo:
@@ -966,6 +948,13 @@ function SiteFooter() {
 /* --------------------------------------------------------------------- page -- */
 
 export default function AboutPage() {
+  // Llegar desde la app a `/#autores` es navegación SPA: el navegador no salta
+  // solo al ancla, así que se hace aquí una vez montada la página.
+  useEffect(() => {
+    const id = window.location.hash.slice(1)
+    if (id) document.getElementById(id)?.scrollIntoView()
+  }, [])
+
   return (
     <div className="bg-background text-ink-900 min-h-[100dvh]">
       <SiteNav />
