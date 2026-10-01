@@ -36,6 +36,7 @@ import { useLocation } from 'wouter'
 import { getMenus, type SecurityConfig } from '@/config/security'
 import useAuth from '@/hooks/useAuth'
 import { useNavigate } from '@/hooks/useNavigate'
+import { DevelopedBy } from './DevelopedBy'
 import Logo from './Logo'
 
 const DEFAULT_ICON = FileText
@@ -100,9 +101,11 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="offcanvas" side="left" variant="sidebar">
       <SidebarHeader className="p-4">
-        <div className="flex items-center gap-2.5">
-          <Logo className="h-7! w-7!" />
-          <span className="text-sm leading-tight font-semibold">Evaluación Docente</span>
+        <div className="flex flex-col gap-2">
+          <Logo className="h-auto w-full" />
+          <span className="text-muted-foreground text-xs leading-tight font-semibold">
+            Evaluación Docente
+          </span>
         </div>
       </SidebarHeader>
 
@@ -140,6 +143,10 @@ export function AppSidebar() {
 
       <SidebarFooter>
         <SidebarMenu>
+          <SidebarMenuItem className="border-sidebar-border border-b pb-2">
+            <DevelopedBy />
+          </SidebarMenuItem>
+
           <SidebarMenuItem>
             <button
               type="button"
