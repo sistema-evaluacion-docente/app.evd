@@ -226,8 +226,13 @@ export function useGetEvaluation(evaluationId?: number, modality?: CourseModalit
     // back to its full skeleton for a report it is already showing.
     placeholderData: keepPreviousData,
     staleTime: 60_000,
+    // Both background jobs end without anything pushing it here: the upload's
+    // processing and the AI analysis.
     refetchInterval: (query) =>
-      query.state.data?.data?.status === 'PROCESSING' ? EVALUATION_POLL_INTERVAL : false,
+      query.state.data?.data?.status === 'PROCESSING' ||
+      query.state.data?.data?.ai_status === 'ANALYZING'
+        ? EVALUATION_POLL_INTERVAL
+        : false,
   })
 }
 
@@ -383,8 +388,13 @@ export function useAnalyzeEvaluation() {
 
   return useMutation({
     mutationFn: (evaluationId: number) => analyzeEvaluation(evaluationId),
-    onSuccess: () => {
+    onSuccess: (_data, evaluationId) => {
       queryClient.invalidateQueries({ queryKey: evaluationsKeys.lists() })
+      // Every modality of its detail, so the page it was started from picks up
+      // `ANALYZING` and starts polling.
+      queryClient.invalidateQueries({
+        queryKey: [...evaluationsKeys.all, 'byId', evaluationId],
+      })
       toast.success('Análisis con IA iniciado exitosamente')
     },
   })

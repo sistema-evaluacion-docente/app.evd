@@ -2,11 +2,11 @@ import { BarChart3, LayoutGrid, PieChart as PieChartIcon, Sparkles } from 'lucid
 import { useState } from 'react'
 
 import { CountPieChart } from '@/components/common/CountPieChart'
-import { LoadingButton } from '@/components/common/LoadingButton'
 import ChartColumnSkeleton from '@/components/skeletons/ChartColumnSkeleton'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Spinner } from '@/components/ui/spinner'
 import { AI_STATUS_DISPLAY, type AiStatus } from '@/features/evaluations'
 import { CATEGORIES, categoryColor, categoryLabel, UNCATEGORIZED } from '@/lib/categoryLabel'
 import { cn } from '@/lib/utils'
@@ -266,7 +266,11 @@ function AnalysisNotice({
   onAnalyze?: () => void
   isAnalyzing: boolean
 }) {
-  const statusConfig = aiStatus ? AI_STATUS_DISPLAY[aiStatus] : undefined
+  // From the click on, the run is what matters: the row may still read
+  // `PENDING` (or `FAILED`) until the queued job picks it up, and a button left
+  // on screen in that gap is one a second click can reach.
+  const shownStatus = isAnalyzing ? 'ANALYZING' : aiStatus
+  const statusConfig = shownStatus ? AI_STATUS_DISPLAY[shownStatus] : undefined
 
   return (
     <div className="flex flex-col items-center gap-3 px-6 py-10 text-center">
@@ -274,25 +278,26 @@ function AnalysisNotice({
         <Sparkles className="text-muted-foreground size-5" aria-hidden="true" />
       </div>
 
-      {statusConfig && <Badge className={statusConfig.className}>{statusConfig.label}</Badge>}
+      {statusConfig && (
+        <Badge className={statusConfig.className}>
+          {shownStatus === 'ANALYZING' && <Spinner className="size-3" aria-hidden="true" />}
+          {statusConfig.label}
+        </Badge>
+      )}
 
       <p className="text-muted-foreground max-w-sm text-sm text-balance">
-        {aiStatus === 'FAILED'
-          ? 'El análisis anterior falló. Analiza los comentarios con IA para poder mostrar las estadísticas.'
-          : 'Analiza los comentarios con IA para poder mostrar las estadísticas.'}
+        {isAnalyzing
+          ? 'Los comentarios se están analizando con IA. Las estadísticas aparecerán aquí al terminar.'
+          : aiStatus === 'FAILED'
+            ? 'El análisis anterior falló. Analiza los comentarios con IA para poder mostrar las estadísticas.'
+            : 'Analiza los comentarios con IA para poder mostrar las estadísticas.'}
       </p>
 
-      {onAnalyze && (
-        <LoadingButton
-          type="button"
-          size="sm"
-          pending={isAnalyzing}
-          pendingLabel="Analizando…"
-          onClick={onAnalyze}
-        >
+      {onAnalyze && !isAnalyzing && (
+        <Button type="button" size="sm" onClick={onAnalyze}>
           <Sparkles className="size-4" aria-hidden="true" />
           Analizar
-        </LoadingButton>
+        </Button>
       )}
     </div>
   )

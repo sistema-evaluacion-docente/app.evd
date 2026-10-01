@@ -3,8 +3,7 @@ import { useEffect, useRef } from 'react'
 
 import {
   evaluationsKeys,
-  useAnalyzeEvaluation,
-  useEvaluationLogs,
+  useEvaluationAnalysis,
   useGetEvaluations,
   type AiStatus,
 } from '@/features/evaluations'
@@ -50,8 +49,6 @@ export interface PeriodCommentsAnalysis {
  */
 export function usePeriodCommentsAnalysis(periodId?: number): PeriodCommentsAnalysis {
   const queryClient = useQueryClient()
-  const { connect } = useEvaluationLogs()
-  const { mutate, isPending: isStarting, isSuccess: hasStarted } = useAnalyzeEvaluation()
 
   const { data, isPending, isPlaceholderData } = useGetEvaluations({
     period_id: periodId,
@@ -68,14 +65,9 @@ export function usePeriodCommentsAnalysis(periodId?: number): PeriodCommentsAnal
   // stays on screen, and its status does not describe the one now selected.
   const isStatusPending = periodId != null && (isPending || isPlaceholderData)
 
-  // The run is queued as a background task, so the 202 comes back before the
-  // row says `ANALYZING`. The request having gone through is what carries the
-  // button across that window — without it it would blink back to "Analizar"
-  // for the one refetch that still reads `PENDING`. It stops counting once the
-  // row reaches a verdict of its own.
-  const settled = aiStatus === 'ANALYZED' || aiStatus === 'FAILED'
-
-  const isAnalyzing = aiStatus === 'ANALYZING' || ((isStarting || hasStarted) && !settled)
+  const { isAnalyzing, analyze } = useEvaluationAnalysis(evaluation, {
+    queryKeysToInvalidate: [statsKeys.all, evaluationsKeys.lists()],
+  })
 
   // The socket is the fast path; this is the one that still fires when it never
   // connected. Only the ANALYZING → ANALYZED edge invalidates, so a summary
@@ -93,18 +85,6 @@ export function usePeriodCommentsAnalysis(periodId?: number): PeriodCommentsAnal
       queryClient.invalidateQueries({ queryKey: statsKeys.all })
     }
   }, [aiStatus, queryClient])
-
-  function analyze() {
-    if (!evaluation) return
-
-    connect({
-      evaluationId: evaluation.id,
-      queryKeysToInvalidate: [statsKeys.all, evaluationsKeys.lists()],
-      detailsUrl: `/evaluaciones/${evaluation.id}`,
-    })
-
-    mutate(evaluation.id)
-  }
 
   return { aiStatus, isStatusPending, isAnalyzing, analyze }
 }

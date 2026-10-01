@@ -100,9 +100,24 @@ describe('DepartmentCommentsSummary · comentarios sin analizar', () => {
       />,
     )
 
-    const button = screen.getByRole('button', { name: /Analizando/ })
+    expect(screen.getByText('Analizando')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Analizar' })).not.toBeInTheDocument()
+  })
 
-    expect(button).toBeDisabled()
+  it('swaps the button for the badge as soon as the run is asked for', () => {
+    // The row can still read `PENDING` for a refetch or two after the click.
+    render(
+      <DepartmentCommentsSummary
+        riskCounts={COUNTS}
+        categoryCounts={{}}
+        aiStatus="PENDING"
+        onAnalyze={vi.fn()}
+        isAnalyzing
+      />,
+    )
+
+    expect(screen.getByText('Analizando')).toBeInTheDocument()
+    expect(screen.queryByText('Pendiente')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Analizar' })).not.toBeInTheDocument()
   })
 
