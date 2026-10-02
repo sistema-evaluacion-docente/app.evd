@@ -265,7 +265,7 @@ export function DynamicFormDrawer({
                   onValueChange={(value) => handleChange(field.name, String(value))}
                   disabled={field.disabled ?? isSubmitting}
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger id={field.name} className="w-full">
                     <SelectValue
                       placeholder={field.placeholder ?? `Selecciona ${field.label.toLowerCase()}`}
                     >

@@ -9,6 +9,12 @@ export type AdminUser = Omit<User, 'username' | 'id'> & {
   id: number
   /** Institutional code of the user. */
   institutional_code: string
+  /**
+   * Department of the user's teacher record, or `null` without one. Not the
+   * same as `department_id`: for a director that one is the department they
+   * direct, which can differ from where their teacher record sits.
+   */
+  teacher_department_id?: number | null
 }
 
 /** Query params accepted by `GET /users/`. */
