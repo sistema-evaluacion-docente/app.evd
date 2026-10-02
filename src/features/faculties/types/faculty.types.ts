@@ -1,3 +1,10 @@
+/** Lightweight dean summary as returned by `GET /faculties/`. */
+export interface Dean {
+  id: number
+  name: string
+  avatar_url: string | null
+}
+
 /** A single faculty record as returned by `GET /faculties/`. */
 export interface Faculty {
   id: number
@@ -9,6 +16,8 @@ export interface Faculty {
   active: boolean
   /** Number of departments in this faculty. */
   department_count: number
+  /** Summary of the dean of this faculty. */
+  dean: Dean | null
   created_at: string
   updated_at: string
 }

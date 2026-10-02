@@ -9,6 +9,12 @@ export type AdminUser = Omit<User, 'username' | 'id'> & {
   id: number
   /** Institutional code of the user. */
   institutional_code: string
+  /**
+   * Department of the user's teacher record, or `null` without one. Not the
+   * same as `department_id`: for a director that one is the department they
+   * direct, which can differ from where their teacher record sits.
+   */
+  teacher_department_id?: number | null
 }
 
 /** Query params accepted by `GET /users/`. */
@@ -19,22 +25,31 @@ export interface UserParams {
   active?: boolean
   /** Filter by roles (e.g. `['DOCENTE', 'DIRECTOR DE DEPARTAMENTO']`). */
   roles?: string[]
+  /** Users of a department: those who teach in it or direct it. */
+  department_id?: number
   page: number
   limit: number
 }
 
 /**
- * What an admin can change about another user, via `PUT /users/{uid}/roles` and
- * `PATCH /users/{uid}/status`.
+ * What an admin can change about another user, via `PUT /users/by-id/{id}`.
  *
- * Name and avatar are deliberately absent: the API has no route to change them
- * on someone else's record, so offering them in the form would only mean
- * throwing the input away in silence.
+ * Addressed by the numeric `id`, so it also works for someone who never
+ * logged in (no Firebase `uid` yet). Changing the email of someone who did
+ * log in unlinks their Firebase account: they sign in again with the new one.
  */
 export interface UpdateUserPayload {
-  active: boolean
+  name: string
+  email: string
+  institutional_code: string
   /** Roles assigned to the user, replacing whatever they had (e.g. `['DOCENTE']`). */
   roles: string[]
+  active: boolean
+  /**
+   * Department of the user's teacher record; `null` clears it. Only valid
+   * when the roles include `DOCENTE` — send it only when it actually changed.
+   */
+  department_id?: number | null
 }
 
 /** Payload for creating a user via `POST /users/`. */

@@ -84,7 +84,7 @@ export default function TeachersPage() {
             submitSubmittingLabel="Creando..."
           />
         }
-        secondaryActionLabel="Subir docentes"
+        secondaryActionLabel="Registrar correos docentes"
         secondaryActionIcon={CloudUpload}
         onSecondaryAction={() => nagivate('/docentes/cargar')}
       >

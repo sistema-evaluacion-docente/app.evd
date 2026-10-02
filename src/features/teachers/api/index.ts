@@ -396,8 +396,9 @@ export function useGetTeacherMatrix({
 }
 
 /**
- * Uploads a CSV/XLSX file with teacher records (`POST /teachers/upload`) as
- * multipart/form-data. Resolves with the created, skipped and error entries.
+ * Uploads a CSV/XLSX with two columns, code and institutional email
+ * (`POST /teachers/upload`), as multipart/form-data. Resolves with a summary
+ * and the outcome of every row.
  *
  * @example
  * const { mutate: upload, isPending } = useUploadTeachers();

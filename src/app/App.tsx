@@ -68,6 +68,10 @@ const DepartmentsPage = lazy(() =>
     default: module.DepartmentsPage,
   })),
 )
+const FacultyDetailPage = lazy(() => import('@/features/faculties/pages/FacultyDetailPage'))
+const DepartmentDetailPage = lazy(
+  () => import('@/features/departments/pages/DepartmentDetailPage'),
+)
 const ProgramsPage = lazy(() =>
   import('@/features/programs/pages/ProgramsPage').then((module) => ({
     default: module.ProgramsPage,
@@ -278,6 +282,30 @@ function App() {
           <Route path="/admin/departamentos">
             <AppLayout>
               <DepartmentsPage />
+            </AppLayout>
+          </Route>
+
+          <Route path="/facultades">
+            <AppLayout>
+              <FacultiesPage />
+            </AppLayout>
+          </Route>
+
+          <Route path="/facultades/:id">
+            <AppLayout>
+              <FacultyDetailPage />
+            </AppLayout>
+          </Route>
+
+          <Route path="/departamentos">
+            <AppLayout>
+              <DepartmentsPage />
+            </AppLayout>
+          </Route>
+
+          <Route path="/departamentos/:id">
+            <AppLayout>
+              <DepartmentDetailPage />
             </AppLayout>
           </Route>
 

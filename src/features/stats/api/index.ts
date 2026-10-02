@@ -4,8 +4,10 @@ import type { ResponseAPI } from '@/@types/Response'
 import api from '@/config/axios'
 import type { CourseModality } from '@/lib/modality'
 import type {
+  DepartmentGlobalAverage,
   DepartmentPeriodRangeStats,
   DepartmentSubjectAverage,
+  FacultyPeriodAverage,
   TeacherComparisonEntry,
 } from '../types'
 
@@ -25,9 +27,14 @@ interface DepartmentPeriodRangeSubjectsParams {
 async function getDepartmentPeriodRangeStats(
   startPeriod: string,
   endPeriod: string,
+  departmentId?: number,
 ): Promise<ResponseAPI<DepartmentPeriodRangeStats>> {
   return api.get('/stats/departments/period-range', {
-    params: { start_period: startPeriod, end_period: endPeriod },
+    params: {
+      start_period: startPeriod,
+      end_period: endPeriod,
+      department_id: departmentId,
+    },
   })
 }
 
@@ -55,6 +62,16 @@ async function getDepartmentPeriodRangeSubjects({
   })
 }
 
+async function getFacultyAverages(facultyId: number): Promise<ResponseAPI<FacultyPeriodAverage[]>> {
+  return api.get(`/stats/faculties/${facultyId}/average`)
+}
+
+async function getDepartmentAverages(
+  departmentId?: number,
+): Promise<ResponseAPI<DepartmentGlobalAverage[]>> {
+  return api.get('/stats/departments/averages', { params: { department_id: departmentId } })
+}
+
 async function getCourseTeachersComparison(
   courseCode: string,
   period: string,
@@ -68,8 +85,8 @@ async function getCourseTeachersComparison(
 /** Query-key factory so range invalidations stay consistent. */
 export const statsKeys = {
   all: ['stats'] as const,
-  departmentPeriodRange: (startPeriod?: string, endPeriod?: string) =>
-    [...statsKeys.all, 'department-period-range', { startPeriod, endPeriod }] as const,
+  departmentPeriodRange: (startPeriod?: string, endPeriod?: string, departmentId?: number) =>
+    [...statsKeys.all, 'department-period-range', { startPeriod, endPeriod, departmentId }] as const,
   departmentPeriodRangeSubjects: (
     startPeriod?: string,
     endPeriod?: string,
@@ -87,6 +104,10 @@ export const statsKeys = {
     ] as const,
   courseTeachersComparison: (courseCode: string, period: string) =>
     [...statsKeys.all, 'course-teachers-comparison', courseCode, period] as const,
+  facultyAverages: (facultyId?: number) =>
+    [...statsKeys.all, 'faculty-averages', facultyId] as const,
+  departmentAverages: (departmentId?: number) =>
+    [...statsKeys.all, 'department-averages', departmentId] as const,
 }
 
 /**
@@ -101,17 +122,26 @@ export const statsKeys = {
  *   startPeriod: '2020-1',
  *   endPeriod: '2022-1',
  * });
+ *
+ * @example
+ * // ADMIN, VICERRECTOR ACADEMICO and DECANO must say which department —
+ * // unlike a DIRECTOR DE DEPARTAMENTO, the backend has no department of
+ * // their own to default to.
+ * useGetDepartmentPeriodRangeStats({ startPeriod: '2020-1', endPeriod: '2022-1', departmentId: 4 });
  */
 export function useGetDepartmentPeriodRangeStats({
   startPeriod,
   endPeriod,
+  departmentId,
 }: {
   startPeriod?: string
   endPeriod?: string
+  departmentId?: number
 }) {
   return useQuery({
-    queryKey: statsKeys.departmentPeriodRange(startPeriod, endPeriod),
-    queryFn: () => getDepartmentPeriodRangeStats(startPeriod as string, endPeriod as string),
+    queryKey: statsKeys.departmentPeriodRange(startPeriod, endPeriod, departmentId),
+    queryFn: () =>
+      getDepartmentPeriodRangeStats(startPeriod as string, endPeriod as string, departmentId),
     enabled: Boolean(startPeriod) && Boolean(endPeriod),
     placeholderData: keepPreviousData,
     staleTime: 60_000,
@@ -225,6 +255,67 @@ export function useGetCourseTeachersComparison({
     queryKey: statsKeys.courseTeachersComparison(courseCode ?? '', period ?? ''),
     queryFn: () => getCourseTeachersComparison(courseCode!, period!),
     enabled: Boolean(courseCode) && Boolean(period),
+    staleTime: 60_000,
+  })
+}
+
+/**
+ * Fetches one faculty's global average by academic period — every period it
+ * has evaluation data for, combining all of its departments
+ * (`GET /stats/faculties/{faculty_id}/average`). A DECANO only ever gets
+ * their own faculty; anyone else asking for another one gets a 403.
+ *
+ * @example
+ * const { data, isPending } = useGetFacultyAverages(facultyId);
+ */
+export function useGetFacultyAverages(facultyId?: number) {
+  return useQuery({
+    queryKey: statsKeys.facultyAverages(facultyId),
+    queryFn: () => getFacultyAverages(facultyId as number),
+    enabled: facultyId != null,
+    staleTime: 60_000,
+  })
+}
+
+/**
+ * Fetches the per-period averages of several faculties in parallel — one
+ * query per faculty, run together — for a side-by-side comparison (the
+ * VICERRECTOR ACADEMICO's overview of every faculty in the university).
+ *
+ * @returns One query result per faculty, in the same order as `facultyIds`.
+ *
+ * @example
+ * const results = useGetFacultyAveragesForFaculties(faculties.map((f) => f.id));
+ */
+export function useGetFacultyAveragesForFaculties(facultyIds: number[]) {
+  return useQueries({
+    queries: facultyIds.map((facultyId) => ({
+      queryKey: statsKeys.facultyAverages(facultyId),
+      queryFn: () => getFacultyAverages(facultyId),
+      staleTime: 60_000,
+    })),
+  })
+}
+
+/**
+ * Fetches global department averages by academic period
+ * (`GET /stats/departments/averages`). Without `departmentId`, a DECANO gets
+ * every department of their own faculty combined; a VICERRECTOR ACADEMICO or
+ * ADMIN gets every department in the university. With `departmentId`, only
+ * that department's own averages across periods — same shape as
+ * `useGetFacultyAverages`, one level down. A DECANO asking for a department
+ * outside their faculty gets a 403.
+ *
+ * @example
+ * const { data } = useGetDepartmentAverages(); // every department in scope
+ *
+ * @example
+ * const { data } = useGetDepartmentAverages(departmentId); // one department's history
+ */
+export function useGetDepartmentAverages(departmentId?: number) {
+  return useQuery({
+    queryKey: statsKeys.departmentAverages(departmentId),
+    queryFn: () => getDepartmentAverages(departmentId),
     staleTime: 60_000,
   })
 }

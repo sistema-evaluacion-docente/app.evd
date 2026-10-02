@@ -1,5 +1,6 @@
 import { DynamicFormDrawer, type FieldConfig } from '@/components/common/DynamicFormDrawer'
 import { PageTitle } from '@/components/common/PageTitle'
+import useAuth from '@/hooks/useAuth'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -28,6 +29,8 @@ const facultyFields: FieldConfig[] = [
  * <Route path="/admin/faculties" component={FacultiesPage} />
  */
 export function FacultiesPage() {
+  const { selectedRole } = useAuth()
+  const canManage = selectedRole === 'ADMIN'
   const [createDrawerOpen, setCreateDrawerOpen] = useState(false)
   const createFaculty = useCreateFaculty()
 
@@ -50,26 +53,28 @@ export function FacultiesPage() {
     <>
       <PageTitle
         action={
-          <DynamicFormDrawer
-            title="Crear facultad"
-            description="Ingresa los datos de la nueva facultad"
-            triggerLabel="Crear facultad"
-            triggerIcon={Plus}
-            triggerVariant="default"
-            fields={facultyFields}
-            onSubmit={handleSubmit}
-            isSubmitting={createFaculty.isPending}
-            submitLabel="Crear"
-            submitSubmittingLabel="Creando..."
-            open={createDrawerOpen}
-            onOpenChange={setCreateDrawerOpen}
-          />
+          canManage ? (
+            <DynamicFormDrawer
+              title="Crear facultad"
+              description="Ingresa los datos de la nueva facultad"
+              triggerLabel="Crear facultad"
+              triggerIcon={Plus}
+              triggerVariant="default"
+              fields={facultyFields}
+              onSubmit={handleSubmit}
+              isSubmitting={createFaculty.isPending}
+              submitLabel="Crear"
+              submitSubmittingLabel="Creando..."
+              open={createDrawerOpen}
+              onOpenChange={setCreateDrawerOpen}
+            />
+          ) : undefined
         }
       >
         Facultades
       </PageTitle>
 
-      <FacultiesList />
+      <FacultiesList canManage={canManage} />
     </>
   )
 }

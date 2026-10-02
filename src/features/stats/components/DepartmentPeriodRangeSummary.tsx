@@ -9,10 +9,13 @@ import { PdfFactGrid } from '@/components/common/pdf/PdfFactGrid'
 import { PdfPage } from '@/components/common/pdf/PdfPage'
 import { PdfSection } from '@/components/common/pdf/PdfSection'
 import { PeriodSelect } from '@/components/common/PeriodSelect'
+import { SearchSelect } from '@/components/common/SearchSelect'
 import { Label } from '@/components/ui/label'
 import { Spinner } from '@/components/ui/spinner'
 import { Switch } from '@/components/ui/switch'
+import { useGetDepartments, type Department } from '@/features/departments'
 import { useGetAcademicPeriods } from '@/features/periods'
+import useAuth from '@/hooks/useAuth'
 import { useNavigate } from '@/hooks/useNavigate'
 import { CATEGORIES, categoryLabel, UNCATEGORIZED } from '@/lib/categoryLabel'
 import { formatPdfAverage } from '@/lib/pdf/formatPdfAverage'
@@ -63,6 +66,19 @@ export function DepartmentPeriodRangeSummary({
 }: DepartmentPeriodRangeSummaryProps) {
   const compareRangeId = useId()
   const navigate = useNavigate()
+  const { selectedRole } = useAuth()
+
+  // A DIRECTOR DE DEPARTAMENTO has an implicit department on the backend
+  // token — everyone else (ADMIN, VICERRECTOR ACADEMICO, DECANO) has to pick
+  // one explicitly, since none of them is scoped to a single department by
+  // default (a DECANO is scoped to a faculty, not a department).
+  const needsDepartmentPicker = selectedRole !== 'DIRECTOR DE DEPARTAMENTO'
+  const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null)
+  const { data: departmentsData, isPending: isDepartmentsPending } = useGetDepartments({
+    limit: 100,
+  })
+  const departmentOptions = departmentsData?.data ?? []
+
   const { data: periodsData, isPending: isPeriodsPending } = useGetAcademicPeriods()
   const periods = periodsData?.data ?? []
   const sortedPeriods = [...periods].sort((a, b) => a.code.localeCompare(b.code))
@@ -105,8 +121,9 @@ export function DepartmentPeriodRangeSummary({
   }
 
   const { data, isPending, isFetching, error } = useGetDepartmentPeriodRangeStats({
-    startPeriod: startPeriod?.code,
-    endPeriod: endPeriod?.code,
+    startPeriod: needsDepartmentPicker && !selectedDepartment ? undefined : startPeriod?.code,
+    endPeriod: needsDepartmentPicker && !selectedDepartment ? undefined : endPeriod?.code,
+    departmentId: selectedDepartment?.id,
   })
 
   // Comparing a genuine range switches the comments card to
@@ -325,6 +342,21 @@ export function DepartmentPeriodRangeSummary({
             )}
           />
 
+          {needsDepartmentPicker && (
+            <SearchSelect<Department>
+              value={selectedDepartment}
+              onValueChange={setSelectedDepartment}
+              items={departmentOptions}
+              itemToKey={(department) => department.id}
+              itemToLabel={(department) => department.name}
+              placeholder="Departamento"
+              ariaLabel="Departamento"
+              loading={isDepartmentsPending}
+              clearable={false}
+              className="w-48"
+            />
+          )}
+
           {compareRange ? (
             <>
               <PeriodSelect
@@ -540,7 +572,9 @@ export function DepartmentPeriodRangeSummary({
 
       {!isPending && !data?.data && !error && (
         <p className="text-muted-foreground py-10 text-center text-sm">
-          No hay datos para el rango de periodos seleccionado.
+          {needsDepartmentPicker && !selectedDepartment
+            ? 'Elige un departamento para ver su resumen.'
+            : 'No hay datos para el rango de periodos seleccionado.'}
         </p>
       )}
     </div>

@@ -6,7 +6,9 @@ import { directorsKeys } from '@/features/directors'
 import type {
   CreateDepartmentPayload,
   Department,
+  DepartmentCases,
   DepartmentParams,
+  DepartmentUploadStatus,
   UpdateDepartmentPayload,
 } from '../types'
 
@@ -20,6 +22,22 @@ async function getDepartments(params: DepartmentParams): Promise<ResponseAPI<Dep
   if (params.faculty_id) query['faculty_id'] = params.faculty_id
 
   return api.get('/departments/', { params: query })
+}
+
+async function getDepartmentUploads(
+  academicPeriodId: number,
+): Promise<ResponseAPI<DepartmentUploadStatus[]>> {
+  return api.get('/stats/departments/uploads', {
+    params: { academic_period_id: academicPeriodId },
+  })
+}
+
+async function getDepartmentCases(
+  academicPeriodId: number,
+): Promise<ResponseAPI<DepartmentCases[]>> {
+  return api.get('/stats/departments/cases', {
+    params: { academic_period_id: academicPeriodId },
+  })
 }
 
 async function createDepartment(
@@ -86,6 +104,46 @@ export function useGetDepartments({
         active,
         faculty_id: facultyId,
       }),
+    staleTime: 60_000,
+    placeholderData: keepPreviousData,
+  })
+}
+
+/**
+ * Fetches, for one academic period, whether each department uploaded
+ * evaluations and how far along they are (`GET /stats/departments/uploads`).
+ * Read-only view for ADMIN, VICERRECTOR ACADEMICO and DECANO (scoped by the
+ * backend to their own faculty). Lives here rather than in `stats` because
+ * the rows are department records the departments table merges into.
+ *
+ * @example
+ * const { data } = useGetDepartmentUploads(periodId);
+ */
+export function useGetDepartmentUploads(academicPeriodId?: number) {
+  return useQuery({
+    queryKey: [...departmentsKeys.all, 'uploads', academicPeriodId],
+    queryFn: () => getDepartmentUploads(academicPeriodId as number),
+    enabled: academicPeriodId != null,
+    staleTime: 60_000,
+    placeholderData: keepPreviousData,
+  })
+}
+
+/**
+ * Fetches, for one academic period, the reported cases of each department:
+ * high-risk comments, improvement plans started and comments the director
+ * reclassified (`GET /stats/departments/cases`). Counts only. Read-only view
+ * for ADMIN, VICERRECTOR ACADEMICO and DECANO (scoped by the backend to their
+ * own faculty).
+ *
+ * @example
+ * const { data } = useGetDepartmentCases(periodId);
+ */
+export function useGetDepartmentCases(academicPeriodId?: number) {
+  return useQuery({
+    queryKey: [...departmentsKeys.all, 'cases', academicPeriodId],
+    queryFn: () => getDepartmentCases(academicPeriodId as number),
+    enabled: academicPeriodId != null,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
   })
