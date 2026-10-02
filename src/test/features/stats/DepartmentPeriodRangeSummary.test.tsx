@@ -123,7 +123,28 @@ function rangeCalls() {
     .map(([, config]) => config as { params?: Record<string, string> })
 }
 
+/** Whether `GET /departments` was asked for — only ADMIN/VICERRECTOR/DECANO may. */
+function askedForDepartments() {
+  return mockApi.get.mock.calls.some(([url]) => String(url).startsWith('/departments'))
+}
+
 describe('DepartmentPeriodRangeSummary', () => {
+  it('never asks a director for the departments list, which the API refuses them', async () => {
+    renderRouted(<DepartmentPeriodRangeSummary />)
+
+    await screen.findByText('Sistemas')
+
+    expect(askedForDepartments()).toBe(false)
+  })
+
+  it('does ask for it when the role has to pick a department', async () => {
+    useAuthStore.setState({ selectedRole: 'DECANO' })
+
+    renderRouted(<DepartmentPeriodRangeSummary />)
+
+    await waitFor(() => expect(askedForDepartments()).toBe(true))
+  })
+
   it('defaults to the latest period, asking for it at both ends of the range', async () => {
     renderRouted(<DepartmentPeriodRangeSummary />)
 
