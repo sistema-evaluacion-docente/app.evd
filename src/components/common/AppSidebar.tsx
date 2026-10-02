@@ -23,7 +23,6 @@ import {
   LayoutGrid,
   Library,
   Lightbulb,
-  LogOut,
   Logs,
   MessagesSquare,
   Settings,
@@ -88,7 +87,7 @@ function getActivePath(items: SecurityConfig['pages'], location: string): string
 export function AppSidebar() {
   const [location] = useLocation()
   const { setOpenMobile } = useSidebar()
-  const { handleLogout, selectedRole, user } = useAuth()
+  const { selectedRole, user } = useAuth()
   const navigate = useNavigate()
 
   if (!selectedRole) {
@@ -143,19 +142,8 @@ export function AppSidebar() {
 
       <SidebarFooter>
         <SidebarMenu>
-          <SidebarMenuItem className="border-sidebar-border border-b pb-2">
-            <DevelopedBy />
-          </SidebarMenuItem>
-
           <SidebarMenuItem>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex h-8 w-full items-center gap-2 rounded-md p-2 text-left text-sm transition-colors"
-            >
-              <LogOut className="size-4 shrink-0" />
-              <span>Cerrar Sesión</span>
-            </button>
+            <DevelopedBy />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

@@ -28,7 +28,6 @@ function renderAt(path = '/admin/facultades') {
 function mockAuth(overrides: Partial<ReturnType<typeof useAuth>> = {}) {
   vi.mocked(useAuth).mockReturnValue({
     selectedRole: 'ADMIN',
-    handleLogout: vi.fn(),
     ...overrides,
   } as ReturnType<typeof useAuth>)
 }
@@ -68,15 +67,14 @@ describe('AppSidebar', () => {
     expect(history.at(-1)).toBe('/admin/departamentos')
   })
 
-  it('runs handleLogout when "Cerrar Sesión" is clicked', async () => {
-    const user = userEvent.setup()
-    const handleLogout = vi.fn()
-    mockAuth({ handleLogout })
+  it('credits the authors with a link to their section on the public page', () => {
+    mockAuth()
 
     renderAt()
 
-    await user.click(screen.getByRole('button', { name: 'Cerrar Sesión' }))
-
-    expect(handleLogout).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole('link', { name: /Desarrollado por/ })).toHaveAttribute(
+      'href',
+      '/#autores',
+    )
   })
 })

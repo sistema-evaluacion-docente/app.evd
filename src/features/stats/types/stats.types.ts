@@ -9,6 +9,17 @@ export interface StatsPeriodRef {
   academic_period_name: string
 }
 
+/**
+ * An academic period the department has completed evaluations for
+ * (`GET /stats/departments/periods`) — unlike `/academic-periods`, which lists
+ * every period of the institution, each of these has data to report on.
+ */
+export interface DepartmentEvaluatedPeriod {
+  id: number
+  code: string
+  name: string | null
+}
+
 /** A single academic period's averages within a period-range report. */
 export interface DepartmentPeriodAverage extends StatsPeriodRef {
   overall_average: number

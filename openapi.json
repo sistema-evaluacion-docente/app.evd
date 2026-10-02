@@ -5487,6 +5487,54 @@
         }
       }
     },
+    "/stats/departments/periods": {
+      "get": {
+        "tags": ["Stats"],
+        "summary": "Get Department Evaluated Periods",
+        "description": "Academic periods a department has completed evaluations for, newest\nfirst — the periods `/departments/period-range` can report on, unlike\nthe institution-wide `/academic-periods`. A DIRECTOR defaults to their\nown department when `department_id` is omitted;\nADMIN/VICERRECTOR_ACADEMICO/DECANO must provide it (a DECANO's must fall\ninside their own faculty).",
+        "operationId": "get_department_evaluated_periods_stats_departments_periods_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "department_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "integer" }, { "type": "null" }],
+              "title": "Department Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ResponseEnvelope_list_EvaluatedPeriod__" }
+              }
+            }
+          },
+          "403": { "description": "Forbidden" },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/stats/departments/period-range": {
       "get": {
         "tags": ["Stats"],
@@ -13432,6 +13480,52 @@
         "required": ["id", "email"],
         "title": "UserSummary",
         "description": "Summary of user for nesting in DirectorOut."
+      },
+      "EvaluatedPeriod": {
+        "properties": {
+          "id": { "type": "integer", "title": "Id" },
+          "code": { "type": "string", "title": "Code" },
+          "name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Name" }
+        },
+        "type": "object",
+        "required": ["id", "code", "name"],
+        "title": "EvaluatedPeriod",
+        "description": "An academic period a department has completed evaluations for."
+      },
+      "ResponseEnvelope_list_EvaluatedPeriod__": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Response status: 'success' or 'error'",
+            "examples": ["success", "error"]
+          },
+          "data": {
+            "anyOf": [
+              { "items": { "$ref": "#/components/schemas/EvaluatedPeriod" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Data",
+            "description": "Response payload (null for error responses)"
+          },
+          "pagination": {
+            "anyOf": [{ "$ref": "#/components/schemas/Pagination" }, { "type": "null" }],
+            "description": "Pagination metadata (only for paginated list endpoints)"
+          },
+          "error": {
+            "anyOf": [{ "$ref": "#/components/schemas/ErrorDetail" }, { "type": "null" }],
+            "description": "Error details (null for success responses)"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "ISO 8601 UTC timestamp of the response"
+          }
+        },
+        "type": "object",
+        "required": ["status"],
+        "title": "ResponseEnvelope[list[EvaluatedPeriod]]"
       }
     },
     "securitySchemes": { "HTTPBearer": { "type": "http", "scheme": "bearer" } }

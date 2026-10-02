@@ -4,6 +4,7 @@ import type { ResponseAPI } from '@/@types/Response'
 import api from '@/config/axios'
 import type { CourseModality } from '@/lib/modality'
 import type {
+  DepartmentEvaluatedPeriod,
   DepartmentGlobalAverage,
   DepartmentPeriodRangeStats,
   DepartmentSubjectAverage,
@@ -23,6 +24,14 @@ interface DepartmentPeriodRangeSubjectsParams {
 }
 
 /** Raw request functions. Not exported — call through the hooks below. */
+
+async function getDepartmentEvaluatedPeriods(
+  departmentId?: number,
+): Promise<ResponseAPI<DepartmentEvaluatedPeriod[]>> {
+  return api.get('/stats/departments/periods', {
+    params: departmentId ? { department_id: departmentId } : undefined,
+  })
+}
 
 async function getDepartmentPeriodRangeStats(
   startPeriod: string,
@@ -85,6 +94,8 @@ async function getCourseTeachersComparison(
 /** Query-key factory so range invalidations stay consistent. */
 export const statsKeys = {
   all: ['stats'] as const,
+  departmentEvaluatedPeriods: (departmentId?: number) =>
+    [...statsKeys.all, 'department-evaluated-periods', departmentId] as const,
   departmentPeriodRange: (startPeriod?: string, endPeriod?: string, departmentId?: number) =>
     [...statsKeys.all, 'department-period-range', { startPeriod, endPeriod, departmentId }] as const,
   departmentPeriodRangeSubjects: (
@@ -108,6 +119,32 @@ export const statsKeys = {
     [...statsKeys.all, 'faculty-averages', facultyId] as const,
   departmentAverages: (departmentId?: number) =>
     [...statsKeys.all, 'department-averages', departmentId] as const,
+}
+
+/**
+ * Academic periods the department has completed evaluations for, newest first
+ * (`GET /stats/departments/periods`) — the only ones the period-range report
+ * has anything to say about. `/academic-periods` lists every period of the
+ * institution instead, most of them empty for any given department.
+ *
+ * @example
+ * // A DIRECTOR DE DEPARTAMENTO: the backend uses their own department.
+ * const { data } = useGetDepartmentEvaluatedPeriods()
+ *
+ * @example
+ * // Everyone else must say which department, so hold the request until then.
+ * useGetDepartmentEvaluatedPeriods({ departmentId: department?.id, enabled: department != null })
+ */
+export function useGetDepartmentEvaluatedPeriods({
+  departmentId,
+  enabled = true,
+}: { departmentId?: number; enabled?: boolean } = {}) {
+  return useQuery({
+    queryKey: statsKeys.departmentEvaluatedPeriods(departmentId),
+    queryFn: () => getDepartmentEvaluatedPeriods(departmentId),
+    enabled,
+    staleTime: 60_000,
+  })
 }
 
 /**
