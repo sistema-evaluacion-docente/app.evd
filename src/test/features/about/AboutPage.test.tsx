@@ -50,7 +50,8 @@ describe('AboutPage', () => {
   it('renders its images with alt text, since this is the one public page', () => {
     renderRouted(<AboutPage />)
 
-    expect(screen.getByAltText('Logo de la UFPS')).toBeInTheDocument()
+    // Dos variantes (clara y oscura); CSS oculta la que no corresponde.
+    expect(screen.getAllByAltText(/Programa de Ingeniería de Sistemas/)).toHaveLength(2)
   })
 
   it('offers the way in', () => {

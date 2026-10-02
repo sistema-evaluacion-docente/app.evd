@@ -268,8 +268,8 @@ describe('subscribeToAuth', () => {
     expect(state.isLoading).toBe(false)
   })
 
-  it('does nothing further once a user is already in the store', async () => {
-    useAuthStore.setState({ user: baseUser })
+  it('does nothing further once this account is already signed in', async () => {
+    useAuthStore.setState({ user: baseUser, loggedIn: true })
     useAuthStore.getState().subscribeToAuth()
 
     await fireAuthChange({
@@ -282,5 +282,75 @@ describe('subscribeToAuth', () => {
 
     expect(api.getAuthUser).not.toHaveBeenCalled()
     expect(useAuthStore.getState().isLoading).toBe(false)
+  })
+
+  it('looks up again an account whose earlier lookup failed (not registered)', async () => {
+    useAuthStore.setState({ user: { ...baseUser, roles: [] }, loggedIn: false })
+    api.getAuthUser.mockResolvedValue({ data: baseUser, status: 'success' })
+    useAuthStore.getState().subscribeToAuth()
+
+    await fireAuthChange({
+      email: baseUser.email,
+      uid: baseUser.uid,
+      displayName: baseUser.name,
+      photoURL: '',
+      getIdToken: vi.fn().mockResolvedValue('tok'),
+    })
+
+    expect(api.getAuthUser).toHaveBeenCalled()
+    expect(useAuthStore.getState().loggedIn).toBe(true)
+  })
+
+  it('looks up a different account instead of keeping the previous one', async () => {
+    useAuthStore.setState({ user: baseUser, loggedIn: true })
+    const other = { ...baseUser, uid: 'other', email: 'otro@ufps.edu.co' }
+    api.getAuthUser.mockResolvedValue({ data: other, status: 'success' })
+    useAuthStore.getState().subscribeToAuth()
+
+    await fireAuthChange({
+      email: other.email,
+      uid: other.uid,
+      displayName: other.name,
+      photoURL: '',
+      getIdToken: vi.fn().mockResolvedValue('tok'),
+    })
+
+    expect(useAuthStore.getState().user?.email).toBe('otro@ufps.edu.co')
+  })
+})
+
+describe('signing in after an unregistered account', () => {
+  const unregistered = { ...baseUser, email: 'nadie@gmail.com', roles: [] }
+
+  it('loginWithGoogle closes the leftover Firebase session first', async () => {
+    useAuthStore.setState({ user: unregistered, token: 't', loggedIn: false })
+    api.signInGoogle.mockResolvedValue({ status: 200 })
+
+    await useAuthStore.getState().loginWithGoogle()
+
+    expect(api.logoutUser).toHaveBeenCalled()
+    expect(api.logoutUser.mock.invocationCallOrder[0]).toBeLessThan(
+      api.signInGoogle.mock.invocationCallOrder[0],
+    )
+    expect(useAuthStore.getState().user).toBeNull()
+  })
+
+  it('loginWithEmail closes the leftover Firebase session first', async () => {
+    useAuthStore.setState({ user: unregistered, token: 't', loggedIn: false })
+    api.signInWithEmail.mockResolvedValue({ status: 200 })
+
+    await useAuthStore.getState().loginWithEmail('a@a.com', 'pw')
+
+    expect(api.logoutUser).toHaveBeenCalled()
+    expect(useAuthStore.getState().user).toBeNull()
+  })
+
+  it('leaves a working session alone', async () => {
+    useAuthStore.setState({ user: baseUser, token: 't', loggedIn: true })
+    api.signInGoogle.mockResolvedValue({ status: 200 })
+
+    await useAuthStore.getState().loginWithGoogle()
+
+    expect(api.logoutUser).not.toHaveBeenCalled()
   })
 })

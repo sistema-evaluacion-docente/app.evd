@@ -1,7 +1,9 @@
+import { UserX } from 'lucide-react'
 import { useEffect } from 'react'
 import { useSearchParams } from 'wouter'
 
 import AppLayoutSkeleton from '@/components/skeletons/AppLayoutSkeleton'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { useNavigate } from '@/hooks/useNavigate'
 import { LoginForm } from '../components/LoginForm'
 import { NEXT_PARAM, resolveNextPath } from '../lib/nextPath'
@@ -22,6 +24,9 @@ export default function LoginPage() {
   const loggedIn = useAuthStore((s) => s.loggedIn)
   const selectedRole = useAuthStore((s) => s.selectedRole)
   const hasDepartment = useAuthStore((s) => s.user?.department_id != null)
+  // Firebase let them in but the API does not know the account: the store keeps
+  // the bare Firebase profile with `loggedIn` off.
+  const rejectedEmail = useAuthStore((s) => (s.user && !s.loggedIn ? s.user.email : null))
 
   const next = searchParams.get(NEXT_PARAM)
 
@@ -44,7 +49,22 @@ export default function LoginPage() {
       </div>
 
       <main className="relative grid min-h-screen place-items-center px-6 py-12">
-        <LoginForm />
+        <div className="flex w-full max-w-sm flex-col items-center gap-6">
+          {rejectedEmail && (
+            <Alert variant="destructive" data-testid="login-unregistered">
+              <UserX aria-hidden="true" />
+
+              <AlertTitle>No se pudo ingresar</AlertTitle>
+
+              <AlertDescription>
+                La cuenta {rejectedEmail} no está registrada en el sistema o no se pudo verificar.
+                Ingrese con otra cuenta o comuníquese con su director de departamento.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <LoginForm />
+        </div>
       </main>
     </div>
   )

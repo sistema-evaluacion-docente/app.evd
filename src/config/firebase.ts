@@ -13,6 +13,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 const providerGoogle = new GoogleAuthProvider();
+// Always show the account chooser, so after an unregistered account the user
+// can pick another one instead of Google silently reusing the same.
+providerGoogle.setCustomParameters({ prompt: "select_account" });
 
 const auth = getAuth(app);
 
