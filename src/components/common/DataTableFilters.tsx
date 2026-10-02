@@ -261,7 +261,9 @@ function SelectFilter({
         value={value != null ? String(value) : undefined}
         onValueChange={(val) => onChange(val === '' || val == null ? undefined : val)}
       >
-        <SelectTrigger className="w-full">
+        {/* El id es al que apunta el <Label htmlFor> del panel: sin él, el
+            selector no tiene nombre para un lector de pantalla. */}
+        <SelectTrigger id={config.name} className="w-full">
           <SelectValue placeholder={config.placeholder || 'Seleccionar...'}>
             {config.options.find((option) => String(option.value) === String(value))?.label}
           </SelectValue>
