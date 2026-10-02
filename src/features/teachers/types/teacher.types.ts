@@ -57,11 +57,44 @@ export interface CourseDetail {
   dimensions: DimensionDetail[]
 }
 
-/** Result of a bulk teacher upload (`POST /teachers/upload`). */
+/**
+ * What happened to one row of the teacher email import:
+ * - `created` — unknown code, registered in the department;
+ * - `updated` — the placeholder email was replaced, so they can log in now;
+ * - `unchanged` — they already had that email;
+ * - `already_active` — they already log in, their email was kept;
+ * - `other_department` — a teacher of another department, left untouched;
+ * - `error` — the row could not be applied (see `detail`).
+ */
+export type TeacherEmailImportStatus =
+  'created' | 'updated' | 'unchanged' | 'already_active' | 'other_department' | 'error'
+
+/** One row of the teacher email import. */
+export interface TeacherEmailImportRow {
+  /** Row number in the uploaded file (the header is row 1). */
+  row: number
+  institutional_code: string
+  email: string
+  status: TeacherEmailImportStatus
+  /** Human-readable reason, in Spanish, ready to show. */
+  detail: string
+}
+
+/** How many rows ended in each outcome. */
+export interface TeacherEmailImportSummary {
+  total: number
+  created: number
+  updated: number
+  unchanged: number
+  already_active: number
+  other_department: number
+  errors: number
+}
+
+/** Result of importing teachers' emails (`POST /teachers/upload`). */
 export interface TeacherUploadData {
-  created: Record<string, unknown>[]
-  skipped: Record<string, unknown>[]
-  errors: Record<string, unknown>[]
+  summary: TeacherEmailImportSummary
+  rows: TeacherEmailImportRow[]
 }
 
 /** Full teacher detail as returned by `GET /evaluations/teachers/{id}/detail`. */
