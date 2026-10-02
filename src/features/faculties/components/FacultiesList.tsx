@@ -1,5 +1,5 @@
 import type { PaginationState, SortingState } from '@tanstack/react-table'
-import { Pencil, Trash2, UserMinus, UserPlus } from 'lucide-react'
+import { Building, Pencil, Trash2, UserMinus, UserPlus } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { useDebounce, useDebouncedCallback } from 'use-debounce'
@@ -8,6 +8,7 @@ import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { DataTable, type DataTableAction } from '@/components/common/DataTable'
 import { DataTableFilters, type FilterConfig } from '@/components/common/DataTableFilters'
 import { DynamicFormDrawer, type FieldConfig } from '@/components/common/DynamicFormDrawer'
+import { departmentsOfFacultyHref } from '@/features/departments'
 import { useNavigate } from '@/hooks/useNavigate'
 import { useTableFilters } from '@/hooks/useTableFilters'
 import { useDeleteFaculty, useGetFaculties, useUnassignDean, useUpdateFaculty } from '../api'
@@ -32,8 +33,9 @@ const filterConfig: FilterConfig[] = [
 
 /**
  * Displays the paginated list of faculties with server-side search and
- * active status filter, powered by the shared `DataTable`. In read-only mode
- * (VICERRECTOR ACADEMICO) a row opens the faculty's page at `/facultades/{id}`.
+ * active status filter, powered by the shared `DataTable`. For the admin a row
+ * opens the faculty's departments; in read-only mode (VICERRECTOR ACADEMICO)
+ * it opens the faculty's page at `/facultades/{id}`.
  *
  * @example
  * <FacultiesList />
@@ -144,6 +146,16 @@ export function FacultiesList({ canManage = true }: FacultiesListProps = {}) {
   const rowActions: DataTableAction<Faculty>[] = canManage
     ? [
         {
+          label: 'Ver departamentos',
+          icon: <Building className="size-4" />,
+          onClick: (row) => navigate(departmentsOfFacultyHref(row.id)),
+        },
+        {
+          label: 'Editar',
+          icon: <Pencil className="size-4" />,
+          onClick: (row) => setEditTarget(row),
+        },
+        {
           label: 'Asignar decano',
           icon: <UserPlus className="size-4" />,
           onClick: (row) => setAssignTarget(row),
@@ -155,11 +167,6 @@ export function FacultiesList({ canManage = true }: FacultiesListProps = {}) {
           onClick: (row) => setUnassignTarget(row),
           variant: 'destructive',
           visible: (row) => !!row.dean,
-        },
-        {
-          label: 'Editar',
-          icon: <Pencil className="size-4" />,
-          onClick: (row) => setEditTarget(row),
         },
         {
           label: 'Eliminar',
@@ -190,7 +197,10 @@ export function FacultiesList({ canManage = true }: FacultiesListProps = {}) {
         searchPlaceholder="Buscar por nombre o código..."
         emptyMessage="No hay facultades que coincidan."
         rowActions={rowActions}
-        onRowClick={canManage ? undefined : (row) => navigate(`/facultades/${row.id}`)}
+        // Para el admin, la fila lleva a sus departamentos; en modo lectura, a su página.
+        onRowClick={(row) =>
+          navigate(canManage ? departmentsOfFacultyHref(row.id) : `/facultades/${row.id}`)
+        }
         toolbar={
           <DataTableFilters
             filters={filterConfig}

@@ -146,6 +146,34 @@ describe('FacultiesList', () => {
 
     await waitFor(() => expect(mockApi.delete).toHaveBeenCalledWith('/faculties/2'))
   })
+
+  it('clicking a faculty opens its departments in the admin departments list', async () => {
+    const user = userEvent.setup()
+
+    const { history } = renderRouted(<FacultiesList />, { path: '/admin/facultades' })
+    await user.click(await screen.findByText('Ingeniería'))
+
+    expect(history.at(-1)).toBe('/admin/departamentos?facultad=2')
+  })
+
+  it('offers the same through a "Ver departamentos" row action', async () => {
+    const user = userEvent.setup()
+
+    const { history } = renderRouted(<FacultiesList />, { path: '/admin/facultades' })
+    await openRowMenu(user, 'Ingeniería')
+    await user.click(await screen.findByRole('menuitem', { name: 'Ver departamentos' }))
+
+    expect(history.at(-1)).toBe('/admin/departamentos?facultad=2')
+  })
+
+  it('in read-only mode a row still opens the faculty page', async () => {
+    const user = userEvent.setup()
+
+    const { history } = renderRouted(<FacultiesList canManage={false} />, { path: '/facultades' })
+    await user.click(await screen.findByText('Ingeniería'))
+
+    expect(history.at(-1)).toBe('/facultades/2')
+  })
 })
 
 describe('DepartmentsList', () => {
@@ -229,6 +257,51 @@ describe('DepartmentsList', () => {
     await openRowMenu(user, 'Sistemas')
 
     expect(history.at(-1)).toBe('/admin/departamentos')
+  })
+
+  it('filters by the faculty in the URL and names it in the notice', async () => {
+    renderRouted(<DepartmentsList />, { path: '/admin/departamentos?facultad=2' })
+
+    expect(await screen.findByText(/Departamentos de la facultad/)).toBeInTheDocument()
+    expect(await screen.findAllByText('Ingeniería')).not.toHaveLength(0)
+
+    await waitFor(() =>
+      expect(
+        mockApi.get.mock.calls.some(
+          ([url, config]) =>
+            String(url).startsWith('/departments') && config?.params?.faculty_id === 2,
+        ),
+      ).toBe(true),
+    )
+  })
+
+  it('clears the faculty filter and lists every department again', async () => {
+    const user = userEvent.setup()
+
+    const { history } = renderRouted(<DepartmentsList />, {
+      path: '/admin/departamentos?facultad=2',
+    })
+    await user.click(await screen.findByRole('button', { name: /Quitar filtro/ }))
+
+    expect(screen.queryByText(/Departamentos de la facultad/)).not.toBeInTheDocument()
+    expect(history.at(-1)).not.toContain('facultad')
+    await waitFor(
+      () => {
+        const [, config] = mockApi.get.mock.calls
+          .filter(([url]) => String(url).startsWith('/departments'))
+          .at(-1)!
+        expect(config?.params?.faculty_id).toBeUndefined()
+      },
+      { timeout: 2000 },
+    )
+  })
+
+  it('ignores a faculty that is not a valid id', async () => {
+    renderRouted(<DepartmentsList />, { path: '/admin/departamentos?facultad=abc' })
+
+    await screen.findByText('Sistemas')
+
+    expect(screen.queryByText(/Departamentos de la facultad/)).not.toBeInTheDocument()
   })
 
   it('searches on the server rather than filtering the page in the browser', async () => {
