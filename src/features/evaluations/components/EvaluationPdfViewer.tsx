@@ -2,7 +2,7 @@ import { Download, FileWarning } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Spinner } from '@/components/ui/spinner'
 import { cn } from '@/lib/utils'
 
 export interface EvaluationPdfViewerProps {
@@ -61,7 +61,12 @@ export function EvaluationPdfViewer({
       )}
 
       <div className={cn('h-[75vh]', frameClassName)}>
-        {isPending && <Skeleton className="size-full rounded-none" />}
+        {isPending && (
+          <div className="text-muted-foreground flex size-full items-center justify-center gap-3 px-6">
+            <Spinner aria-label="Cargando el documento" className="size-5" />
+            <p className="text-sm font-medium">Cargando el documento…</p>
+          </div>
+        )}
 
         {!isPending && error && (
           <div className="text-muted-foreground flex size-full flex-col items-center justify-center gap-3 px-6 text-center">

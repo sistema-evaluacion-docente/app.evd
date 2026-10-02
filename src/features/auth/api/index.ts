@@ -137,8 +137,8 @@ async function confirmPasswordResetCode(
     })
 }
 
-async function getAuthUser(): Promise<ResponseAPI<User>> {
-  return api.get('/users/auth')
+async function getAuthUser(options?: { skipErrorToast?: boolean }): Promise<ResponseAPI<User>> {
+  return api.get('/users/auth', { skipErrorToast: options?.skipErrorToast })
 }
 
 async function getToken(): Promise<string | null> {
@@ -167,7 +167,7 @@ export const authKeys = {
 export function useGetAuthUser() {
   return useQuery({
     queryKey: authKeys.user(),
-    queryFn: getAuthUser,
+    queryFn: () => getAuthUser(),
     staleTime: 5 * 60 * 1000,
   })
 }

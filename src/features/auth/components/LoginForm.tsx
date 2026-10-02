@@ -2,6 +2,7 @@ import { Eye, EyeOff } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
+import { LogoImage } from '@/components/common/Logo'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -63,8 +64,8 @@ export function LoginForm() {
 
   return (
     <section className="animate-rise flex w-full max-w-sm flex-col items-center">
-      <div className="bg-card mb-9 flex size-20 items-center justify-center rounded-2xl border">
-        <img src="/logo.png" alt="Logo" className="h-12 w-12" style={{ animationDelay: '60ms' }} />
+      <div className="mb-9 w-full" style={{ animationDelay: '60ms' }}>
+        <LogoImage className="h-auto w-full" />
       </div>
 
       <header className="mb-8 text-center" style={{ animationDelay: '120ms' }}>

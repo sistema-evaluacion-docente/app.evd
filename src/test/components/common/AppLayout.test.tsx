@@ -107,6 +107,27 @@ describe('AppLayout', () => {
     expect(screen.queryByText('Contenido protegido')).not.toBeInTheDocument()
   })
 
+  it("sends a blocked admin back to the faculties, the admin's starting page", () => {
+    mockAuth({ selectedRole: 'ADMIN' })
+
+    renderAt('/departamentos/3')
+
+    const back = screen.getByRole('button', { name: 'Volver al inicio' })
+    expect(back.closest('a')).toHaveAttribute('href', '/admin/facultades')
+  })
+
+  it('sends any other blocked role back to its dashboard, not the public landing', () => {
+    mockAuth({
+      selectedRole: 'DOCENTE',
+      user: { roles: ['DOCENTE'] } as ReturnType<typeof useAuth>['user'],
+    })
+
+    renderAt('/docentes')
+
+    const back = screen.getByRole('button', { name: 'Volver al inicio' })
+    expect(back.closest('a')).toHaveAttribute('href', '/home')
+  })
+
   it('keeps a director with a department on the improvement plans', () => {
     mockAuth({
       selectedRole: 'DIRECTOR DE DEPARTAMENTO',

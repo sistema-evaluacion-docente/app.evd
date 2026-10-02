@@ -150,6 +150,24 @@ describe('EvaluationDetailPage', () => {
     await waitFor(() => expect(mockApi.post).toHaveBeenCalledWith('/evaluations/9/analyze'))
   })
 
+  it('swaps the button for "Analizando" while the queued run has yet to show', async () => {
+    // The backend answers the 202 before the row says `ANALYZING`: the detail
+    // keeps reading `PENDING` for a moment, and a second click there queued a
+    // second run.
+    const user = userEvent.setup()
+
+    serve(evaluation({ ai_status: 'PENDING' }))
+
+    renderRouted(<EvaluationDetailPage />, { path: URL })
+
+    await user.click(await screen.findByRole('button', { name: /Analizar/i }))
+
+    await waitFor(() => expect(mockApi.post).toHaveBeenCalledOnce())
+    expect(screen.queryByRole('button', { name: /Analizar/i })).not.toBeInTheDocument()
+    expect(screen.getAllByText('Analizando').length).toBeGreaterThan(0)
+    expect(screen.queryByText('Pendiente')).not.toBeInTheDocument()
+  })
+
   it('compares against the previous period when the backend sent one', async () => {
     serve(
       evaluation({

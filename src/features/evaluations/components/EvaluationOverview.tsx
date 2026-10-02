@@ -28,7 +28,7 @@ export interface EvaluationOverviewProps {
    * menu the reader has to already know to open.
    */
   onAnalyze?: () => void
-  /** Whether the analysis request itself is in flight, on top of `ai_status === 'ANALYZING'`. */
+  /** Whether a run has been asked for and is going, on top of `ai_status === 'ANALYZING'`. */
   isAnalyzing?: boolean
   className?: string
 }
@@ -59,8 +59,14 @@ export function EvaluationOverview({
   const navigate = useNavigate()
 
   const statusConfig = EVALUATION_STATUS_DISPLAY[evaluation.status]
-  const aiStatusConfig = evaluation.ai_status ? AI_STATUS_DISPLAY[evaluation.ai_status] : undefined
   const isCurrentlyAnalyzing = evaluation.ai_status === 'ANALYZING' || isAnalyzing
+  // A run just asked for is "Analizando" even while the row still reads the
+  // status it had before the click.
+  const aiStatusConfig = isCurrentlyAnalyzing
+    ? AI_STATUS_DISPLAY.ANALYZING
+    : evaluation.ai_status
+      ? AI_STATUS_DISPLAY[evaluation.ai_status]
+      : undefined
   const canAnalyze =
     evaluation.status === 'COMPLETED' &&
     (evaluation.ai_status === 'PENDING' || evaluation.ai_status === 'FAILED')

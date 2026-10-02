@@ -29,6 +29,7 @@ interface AuthActions {
   sendPasswordReset: (email: string) => Promise<ResponseFirebase>
   confirmPasswordReset: (code: string, newPassword: string) => Promise<ResponseFirebase>
   handleLogout: () => Promise<void>
+  resetUnregisteredSession: () => Promise<void>
   refreshProfile: () => Promise<void>
   subscribeToAuth: () => () => void
 }
@@ -70,10 +71,12 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   loginWithEmail: async (email, password) => {
+    await get().resetUnregisteredSession()
     return signInWithEmail(email, password)
   },
 
   loginWithGoogle: async () => {
+    await get().resetUnregisteredSession()
     return signInGoogle()
   },
 
@@ -105,6 +108,17 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     } finally {
       set({ isLoading: false })
     }
+  },
+
+  // An account Firebase accepts but the API does not know keeps its Firebase
+  // session open, and the next sign-in attempt would land on top of it. Close
+  // it first so whoever signs in next is looked up from scratch.
+  resetUnregisteredSession: async () => {
+    const { user, loggedIn } = get()
+    if (!user || loggedIn) return
+
+    await logoutUser()
+    set({ user: null, token: null, loggedIn: false })
   },
 
   refreshProfile: async () => {
@@ -149,8 +163,11 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
         const token = await firebaseUser.getIdToken(true)
 
-        const { user } = get()
-        if (user) {
+        // Only a profile already loaded for this very account can be reused: a
+        // different account, or one whose lookup failed (not registered), has
+        // to go through `/users/auth` again.
+        const { user, loggedIn } = get()
+        if (user && loggedIn && user.uid === firebaseUser.uid) {
           set({ isLoading: false })
           return
         }
@@ -158,7 +175,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         set({ token })
 
         try {
-          const response = await getAuthUser()
+          // The login page explains a rejected account with its own toast.
+          const response = await getAuthUser({ skipErrorToast: true })
           const userProfile = (response.data ?? userInfo) as User
 
           set({ user: userProfile })

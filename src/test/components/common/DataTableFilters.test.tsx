@@ -77,6 +77,16 @@ describe('DataTableFilters', () => {
     expect(screen.getByRole('button', { name: /Filtros/ })).toHaveTextContent('1')
   })
 
+  it('names a select filter by its label, for screen readers', async () => {
+    const user = userEvent.setup()
+
+    render(<Harness filters={[SELECT_FILTER]} />)
+
+    await user.click(screen.getByRole('button', { name: 'Filtros' }))
+
+    expect(screen.getByRole('combobox', { name: 'Estado' })).toBeInTheDocument()
+  })
+
   it('clears a select filter through its clear button', async () => {
     const user = userEvent.setup()
 

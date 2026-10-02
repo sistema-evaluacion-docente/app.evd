@@ -87,12 +87,15 @@ export function useGetDepartments({
   search = '',
   active,
   facultyId,
+  enabled = true,
 }: {
   page?: number
   limit?: number
   search?: string
   active?: boolean
   facultyId?: number
+  /** `GET /departments` is ADMIN/VICERRECTOR/DECANO only; anyone else gets a 403. */
+  enabled?: boolean
 } = {}) {
   return useQuery({
     queryKey: [...departmentsKeys.lists(), { page, limit, search, active, facultyId }],
@@ -106,6 +109,7 @@ export function useGetDepartments({
       }),
     staleTime: 60_000,
     placeholderData: keepPreviousData,
+    enabled,
   })
 }
 

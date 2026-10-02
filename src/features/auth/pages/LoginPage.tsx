@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { toast } from 'sonner'
 import { useSearchParams } from 'wouter'
 
 import AppLayoutSkeleton from '@/components/skeletons/AppLayoutSkeleton'
@@ -6,6 +7,8 @@ import { useNavigate } from '@/hooks/useNavigate'
 import { LoginForm } from '../components/LoginForm'
 import { NEXT_PARAM, resolveNextPath } from '../lib/nextPath'
 import { useAuthStore } from '../store/useAuthStore'
+
+const UNREGISTERED_TOAST_ID = 'login-unregistered'
 
 /**
  * Login page: full-viewport centered composition with a soft layered
@@ -22,14 +25,31 @@ export default function LoginPage() {
   const loggedIn = useAuthStore((s) => s.loggedIn)
   const selectedRole = useAuthStore((s) => s.selectedRole)
   const hasDepartment = useAuthStore((s) => s.user?.department_id != null)
+  // Firebase let them in but the API does not know the account: the store keeps
+  // the bare Firebase profile with `loggedIn` off.
+  const rejectedEmail = useAuthStore((s) => (s.user && !s.loggedIn ? s.user.email : null))
 
   const next = searchParams.get(NEXT_PARAM)
 
   useEffect(() => {
     if (loggedIn) {
+      toast.dismiss(UNREGISTERED_TOAST_ID)
       navigate(resolveNextPath(next, selectedRole, { hasDepartment }))
     }
   }, [hasDepartment, loggedIn, navigate, next, selectedRole])
+
+  // Someone signing in for the first time has to read who to ask, so this one
+  // stays up longer than the rest (sonner's default is 4s). The fixed id keeps
+  // StrictMode's double effect, or a re-render, from stacking copies.
+  useEffect(() => {
+    if (!rejectedEmail) return
+
+    toast.error('No se pudo ingresar', {
+      id: UNREGISTERED_TOAST_ID,
+      description: `La cuenta ${rejectedEmail} no está registrada en el sistema o no se pudo verificar. Ingrese con otra cuenta o comuníquese con su director de departamento.`,
+      duration: 10000,
+    })
+  }, [rejectedEmail])
 
   if (isLoading) {
     return <AppLayoutSkeleton />

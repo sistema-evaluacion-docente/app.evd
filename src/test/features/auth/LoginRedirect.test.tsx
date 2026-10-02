@@ -1,21 +1,30 @@
-import { render, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { Route, Router, Switch } from 'wouter'
 import { memoryLocation } from 'wouter/memory-location'
+import { toast } from 'sonner'
 
 import LoginPage from '@/features/auth/pages/LoginPage'
 
-let state = { isLoading: false, loggedIn: true, selectedRole: 'DOCENTE' as string | null }
+let state: {
+  isLoading: boolean
+  loggedIn: boolean
+  selectedRole: string | null
+  user?: { email: string; department_id: number | null }
+} = { isLoading: false, loggedIn: true, selectedRole: 'DOCENTE' }
 
 vi.mock('@/features/auth/store/useAuthStore', () => ({
   useAuthStore: (selector: (s: unknown) => unknown) => selector(state),
 }))
+
+vi.mock('sonner', () => ({ toast: { error: vi.fn(), dismiss: vi.fn() } }))
 
 vi.mock('@/features/auth/components/LoginForm', () => ({
   LoginForm: () => <p>Formulario</p>,
 }))
 
 beforeEach(() => {
+  vi.clearAllMocks()
   state = { isLoading: false, loggedIn: true, selectedRole: 'DOCENTE' }
 })
 
@@ -61,5 +70,35 @@ describe('LoginPage · a dónde manda tras entrar', () => {
     const history = renderAt('/login?next=%2F%2Fevil.com')
 
     await waitFor(() => expect(history.at(-1)).toBe('/home'))
+  })
+})
+
+describe('LoginPage · cuenta no registrada', () => {
+  it('avisa con un toast que dura más que los demás, y deja el formulario', () => {
+    state = {
+      isLoading: false,
+      loggedIn: false,
+      selectedRole: null,
+      user: { email: 'nadie@gmail.com', department_id: null },
+    }
+
+    renderAt('/login')
+
+    expect(toast.error).toHaveBeenCalledWith(
+      'No se pudo ingresar',
+      expect.objectContaining({
+        description: expect.stringContaining('nadie@gmail.com'),
+        duration: 10000,
+      }),
+    )
+    expect(screen.getByText('Formulario')).toBeInTheDocument()
+  })
+
+  it('no avisa nada a quien simplemente viene a entrar', () => {
+    state = { isLoading: false, loggedIn: false, selectedRole: null }
+
+    renderAt('/login')
+
+    expect(toast.error).not.toHaveBeenCalled()
   })
 })

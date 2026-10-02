@@ -2,6 +2,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import api from '@/config/axios'
+import { useAuthStore } from '@/features/auth'
 import { DepartmentsList } from '@/features/departments/components/DepartmentsList'
 import { FacultiesList } from '@/features/faculties/components/FacultiesList'
 import { ProgramsList } from '@/features/programs/components/ProgramsList'
@@ -81,6 +82,7 @@ function page(rows: unknown[]) {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  useAuthStore.setState({ selectedRole: null })
 
   mockApi.get.mockImplementation((url: string) => {
     if (url.startsWith('/faculties')) return Promise.resolve(page(FACULTIES))
@@ -145,6 +147,34 @@ describe('FacultiesList', () => {
     await user.click(within(dialog).getByRole('button', { name: /Eliminar/ }))
 
     await waitFor(() => expect(mockApi.delete).toHaveBeenCalledWith('/faculties/2'))
+  })
+
+  it('clicking a faculty opens its departments in the admin departments list', async () => {
+    const user = userEvent.setup()
+
+    const { history } = renderRouted(<FacultiesList />, { path: '/admin/facultades' })
+    await user.click(await screen.findByText('Ingeniería'))
+
+    expect(history.at(-1)).toBe('/admin/departamentos?facultad=2')
+  })
+
+  it('offers the same through a "Ver departamentos" row action', async () => {
+    const user = userEvent.setup()
+
+    const { history } = renderRouted(<FacultiesList />, { path: '/admin/facultades' })
+    await openRowMenu(user, 'Ingeniería')
+    await user.click(await screen.findByRole('menuitem', { name: 'Ver departamentos' }))
+
+    expect(history.at(-1)).toBe('/admin/departamentos?facultad=2')
+  })
+
+  it('in read-only mode a row still opens the faculty page', async () => {
+    const user = userEvent.setup()
+
+    const { history } = renderRouted(<FacultiesList canManage={false} />, { path: '/facultades' })
+    await user.click(await screen.findByText('Ingeniería'))
+
+    expect(history.at(-1)).toBe('/facultades/2')
   })
 })
 
@@ -229,6 +259,75 @@ describe('DepartmentsList', () => {
     await openRowMenu(user, 'Sistemas')
 
     expect(history.at(-1)).toBe('/admin/departamentos')
+  })
+
+  it('filters by the faculty in the URL and names it in the notice', async () => {
+    renderRouted(<DepartmentsList />, { path: '/admin/departamentos?facultad=2' })
+
+    expect(await screen.findByText(/Departamentos de la facultad/)).toBeInTheDocument()
+    expect(await screen.findAllByText('Ingeniería')).not.toHaveLength(0)
+
+    await waitFor(() =>
+      expect(
+        mockApi.get.mock.calls.some(
+          ([url, config]) =>
+            String(url).startsWith('/departments') && config?.params?.faculty_id === 2,
+        ),
+      ).toBe(true),
+    )
+  })
+
+  it('clears the faculty filter and lists every department again', async () => {
+    const user = userEvent.setup()
+
+    const { history } = renderRouted(<DepartmentsList />, {
+      path: '/admin/departamentos?facultad=2',
+    })
+    await user.click(await screen.findByRole('button', { name: /Quitar filtro/ }))
+
+    expect(screen.queryByText(/Departamentos de la facultad/)).not.toBeInTheDocument()
+    expect(history.at(-1)).not.toContain('facultad')
+    await waitFor(
+      () => {
+        const [, config] = mockApi.get.mock.calls
+          .filter(([url]) => String(url).startsWith('/departments'))
+          .at(-1)!
+        expect(config?.params?.faculty_id).toBeUndefined()
+      },
+      { timeout: 2000 },
+    )
+  })
+
+  it('ignores a faculty that is not a valid id', async () => {
+    renderRouted(<DepartmentsList />, { path: '/admin/departamentos?facultad=abc' })
+
+    await screen.findByText('Sistemas')
+
+    expect(screen.queryByText(/Departamentos de la facultad/)).not.toBeInTheDocument()
+  })
+
+  it('does not offer the general summary to the admin, whom that page refuses', async () => {
+    useAuthStore.setState({ selectedRole: 'ADMIN' })
+    const user = userEvent.setup()
+
+    renderRouted(<DepartmentsList />, { path: '/admin/departamentos' })
+    await openRowMenu(user, 'Sistemas')
+
+    expect(await screen.findByRole('menuitem', { name: 'Ver usuarios' })).toBeInTheDocument()
+    expect(screen.queryByRole('menuitem', { name: 'Ver resumen general' })).not.toBeInTheDocument()
+  })
+
+  it('offers the general summary to a role that may open it', async () => {
+    useAuthStore.setState({ selectedRole: 'VICERRECTOR ACADEMICO' })
+    const user = userEvent.setup()
+
+    const { history } = renderRouted(<DepartmentsList canManage={false} />, {
+      path: '/departamentos',
+    })
+    await openRowMenu(user, 'Sistemas')
+    await user.click(await screen.findByRole('menuitem', { name: 'Ver resumen general' }))
+
+    expect(history.at(-1)).toBe('/departamentos/3')
   })
 
   it('searches on the server rather than filtering the page in the browser', async () => {

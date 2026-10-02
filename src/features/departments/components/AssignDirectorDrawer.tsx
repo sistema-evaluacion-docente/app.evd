@@ -234,9 +234,6 @@ export function AssignDirectorDrawer({
         </div>
 
         <DrawerFooter className="border-t">
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Cancelar
-          </Button>
 
           <Button
             type="button"
@@ -245,6 +242,9 @@ export function AssignDirectorDrawer({
           >
             <UserPlus aria-hidden="true" />
             {isAssigning ? 'Asignando...' : 'Asignar director'}
+          </Button>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Cancelar
           </Button>
         </DrawerFooter>
       </DrawerContent>

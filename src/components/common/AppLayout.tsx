@@ -7,7 +7,7 @@ import { RouteError } from './RouteError'
 import { RouteFallback } from './RouteFallback'
 import { Button } from '@/components/ui/button'
 import { SidebarProvider } from '@/components/ui/sidebar'
-import { isAuthorizedForPage, pagesForPath } from '@/config/security'
+import { homePathFor, isAuthorizedForPage, pagesForPath } from '@/config/security'
 import { ROLES_LABEL, UserNotAuth } from '@/features/auth'
 import { nextParamFor } from '@/features/auth/lib/nextPath'
 import useAuth from '@/hooks/useAuth'
@@ -162,7 +162,12 @@ function AppLayoutContent({
                 <Suspense fallback={<RouteFallback />}>{children}</Suspense>
               </ErrorBoundary>
             ) : (
-              <PageBlocked reason={blocked} otherRole={otherRole} onSwitchRole={onSwitchRole} />
+              <PageBlocked
+                reason={blocked}
+                otherRole={otherRole}
+                onSwitchRole={onSwitchRole}
+                homePath={homePathFor(role)}
+              />
             )}
           </main>
         </div>
@@ -179,10 +184,13 @@ function PageBlocked({
   reason,
   otherRole,
   onSwitchRole,
+  homePath,
 }: {
   reason: 'role' | 'department'
   otherRole: string | null
   onSwitchRole: (role: string) => void
+  /** The current role's starting page, where "Volver al inicio" leads. */
+  homePath: string
 }) {
   const isDepartment = reason === 'department'
 
@@ -219,7 +227,7 @@ function PageBlocked({
           </Button>
         )}
 
-        <Link to="/">
+        <Link to={homePath}>
           <Button variant={otherRole ? 'outline' : 'default'}>Volver al inicio</Button>
         </Link>
       </div>

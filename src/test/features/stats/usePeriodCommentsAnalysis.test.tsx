@@ -1,31 +1,25 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook } from '@testing-library/react'
-import { act } from 'react'
 import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { useAnalyzeEvaluation, useEvaluationLogs, useGetEvaluations } from '@/features/evaluations'
+import { useEvaluationAnalysis, useGetEvaluations } from '@/features/evaluations'
 import { usePeriodCommentsAnalysis } from '@/features/stats/hooks/usePeriodCommentsAnalysis'
 
 // Both features are mocked wholesale: the real modules pull in the axios
 // instance and, with it, the auth store.
 vi.mock('@/features/evaluations', () => ({
   evaluationsKeys: { lists: () => ['evaluations', 'list'] },
-  useAnalyzeEvaluation: vi.fn(),
-  useEvaluationLogs: vi.fn(),
+  useEvaluationAnalysis: vi.fn(),
   useGetEvaluations: vi.fn(),
 }))
 
 vi.mock('@/features/stats/api', () => ({ statsKeys: { all: ['stats'] } }))
 
 const analyze = vi.fn()
-const connect = vi.fn()
 
-function mockMutation(state: { isPending: boolean; isSuccess: boolean }) {
-  vi.mocked(useAnalyzeEvaluation).mockReturnValue({
-    mutate: analyze,
-    ...state,
-  } as unknown as ReturnType<typeof useAnalyzeEvaluation>)
+function mockAnalysis(isAnalyzing: boolean) {
+  vi.mocked(useEvaluationAnalysis).mockReturnValue({ isAnalyzing, analyze })
 }
 
 function mockEvaluation(
@@ -59,11 +53,7 @@ describe('usePeriodCommentsAnalysis', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
-    mockMutation({ isPending: false, isSuccess: false })
-
-    vi.mocked(useEvaluationLogs).mockReturnValue({
-      connect,
-    } as unknown as ReturnType<typeof useEvaluationLogs>)
+    mockAnalysis(false)
 
     mockEvaluation({ id: 12, ai_status: 'PENDING' })
   })
@@ -114,44 +104,22 @@ describe('usePeriodCommentsAnalysis', () => {
     expect(result.current.aiStatus).toBe('PENDING')
   })
 
-  it('starts the analysis on that evaluation, with the log stream watching it', () => {
+  it('hands the run of that evaluation over, with the stats to refresh once it ends', () => {
     const { result } = setup(7)
 
-    act(() => result.current.analyze())
-
-    expect(connect).toHaveBeenCalledWith(
-      expect.objectContaining({ evaluationId: 12, detailsUrl: '/evaluaciones/12' }),
+    expect(useEvaluationAnalysis).toHaveBeenLastCalledWith(
+      { id: 12, ai_status: 'PENDING' },
+      { queryKeysToInvalidate: [['stats'], ['evaluations', 'list']] },
     )
-    expect(analyze).toHaveBeenCalledWith(12)
+    expect(result.current.analyze).toBe(analyze)
   })
 
-  it('keeps saying it is analyzing while the queued run has yet to say so', () => {
-    // The 202 lands before the background task marks the row `ANALYZING`, so
-    // for one refetch `ai_status` is still `PENDING`.
-    mockMutation({ isPending: false, isSuccess: true })
+  it('says it is analyzing whenever the run says so', () => {
+    mockAnalysis(true)
 
     const { result } = setup(7)
 
     expect(result.current.isAnalyzing).toBe(true)
-  })
-
-  it('stops once the row reaches a verdict of its own', () => {
-    mockMutation({ isPending: false, isSuccess: true })
-    mockEvaluation({ id: 12, ai_status: 'ANALYZED' })
-
-    const { result } = setup(7)
-
-    expect(result.current.isAnalyzing).toBe(false)
-  })
-
-  it('does nothing when there is no evaluation to analyze', () => {
-    mockEvaluation(undefined)
-
-    const { result } = setup(7)
-
-    act(() => result.current.analyze())
-
-    expect(analyze).not.toHaveBeenCalled()
   })
 
   it('refreshes the department stats when the run finishes', () => {

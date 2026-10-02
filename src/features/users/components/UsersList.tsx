@@ -28,11 +28,18 @@ const filterConfig: FilterConfig[] = [
     trueLabel: 'Sí',
     falseLabel: 'No',
   },
+  {
+    type: 'select',
+    name: 'role',
+    label: 'Rol',
+    options: ROLE_OPTIONS,
+    clearable: true,
+  },
 ]
 
 /**
- * Displays the paginated list of users with server-side search, an active
- * status filter and an optional `?departamento=` filter from the URL, powered
+ * Displays the paginated list of users with server-side search, active status
+ * and role filters, and an optional `?departamento=` filter from the URL, powered
  * by the shared `DataTable`.
  *
  * @example
@@ -49,6 +56,7 @@ export function UsersList() {
   const [editOpen, setEditOpen] = useState(false)
   const { filters, setFilters } = useTableFilters('users-list', {
     active: true,
+    role: undefined as string | undefined,
   })
   const [debouncedFilters] = useDebounce(filters, 400)
 
@@ -62,6 +70,7 @@ export function UsersList() {
     limit: pagination.pageSize,
     active: debouncedFilters.active as boolean | undefined,
     search: debouncedSearch,
+    roles: debouncedFilters.role ? [debouncedFilters.role as string] : undefined,
     departmentId,
   })
   const { mutate: updateUser, isPending: isUpdating } = useUpdateUser()

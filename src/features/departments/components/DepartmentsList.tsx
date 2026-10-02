@@ -1,13 +1,16 @@
 import type { PaginationState, SortingState } from '@tanstack/react-table'
-import { BarChart3, Pencil, Trash2, UserMinus, UserPlus, Users } from 'lucide-react'
+import { BarChart3, Building2, Pencil, Trash2, UserMinus, UserPlus, Users, X } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { useDebounce, useDebouncedCallback } from 'use-debounce'
+import { useSearchParams } from 'wouter'
 
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { DataTable, type DataTableAction } from '@/components/common/DataTable'
 import { DataTableFilters, type FilterConfig } from '@/components/common/DataTableFilters'
 import { DynamicFormDrawer, type FieldConfig } from '@/components/common/DynamicFormDrawer'
+import { Button } from '@/components/ui/button'
+import { isAuthorizedForPage } from '@/config/security'
 import { useGetFaculties } from '@/features/faculties'
 import { usersOfDepartmentHref } from '@/features/users'
 import useAuth from '@/hooks/useAuth'
@@ -19,6 +22,7 @@ import {
   useUnassignDirector,
   useUpdateDepartment,
 } from '../api'
+import { FACULTY_FILTER_PARAM, parseFacultyId } from '../config/departmentsOfFaculty'
 import type { Department } from '../types'
 import { AssignDirectorDrawer } from './AssignDirectorDrawer'
 import { departmentColumns } from './columns'
@@ -52,6 +56,14 @@ export function DepartmentsList({ canManage = true }: DepartmentsListProps = {})
   })
   const [debouncedFilters] = useDebounce(filters, 400)
 
+  // La facultad puede llegar en la URL (`?facultad=2`) desde la tabla de
+  // facultades. Mientras esté ahí manda sobre el filtro guardado, así se
+  // lista de una vez (sin esperar el debounce) y "atrás" vuelve a facultades.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const facultyIdFromUrl = parseFacultyId(searchParams.get(FACULTY_FILTER_PARAM))
+  const filterValues =
+    facultyIdFromUrl != null ? { ...filters, facultyId: facultyIdFromUrl } : filters
+
   // Fetch faculties for the filter dropdown
   const { data: facultiesData } = useGetFaculties({ limit: 100 })
   const faculties = facultiesData?.data ?? []
@@ -60,7 +72,7 @@ export function DepartmentsList({ canManage = true }: DepartmentsListProps = {})
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     active: debouncedFilters.active as boolean | undefined,
-    facultyId: debouncedFilters.facultyId as number | undefined,
+    facultyId: facultyIdFromUrl ?? (debouncedFilters.facultyId as number | undefined),
     search: debouncedSearch,
   })
   const { mutate: updateDepartment, isPending: isUpdating } = useUpdateDepartment()
@@ -149,16 +161,42 @@ export function DepartmentsList({ canManage = true }: DepartmentsListProps = {})
     setPagination((prev) => ({ ...prev, pageIndex: 0 }))
   }, 400)
 
+  const removeFacultyParam = () => {
+    setSearchParams(
+      (previous) => {
+        const next = new URLSearchParams(previous)
+        next.delete(FACULTY_FILTER_PARAM)
+        return next
+      },
+      { replace: true },
+    )
+  }
+
   const handleFiltersChange = (newFilters: Record<string, unknown>) => {
     setFilters(newFilters)
+    // Elegir otra facultad en el filtro deja atrás la que vino en la URL.
+    if (facultyIdFromUrl != null && newFilters.facultyId !== facultyIdFromUrl) {
+      removeFacultyParam()
+    }
     resetPage()
   }
+
+  const clearFaculty = () => {
+    setFilters({ ...filters, facultyId: undefined })
+    removeFacultyParam()
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }))
+  }
+
+  const filteredFacultyName = faculties.find((faculty) => faculty.id === facultyIdFromUrl)?.name
 
   const rowActions: DataTableAction<Department>[] = [
     {
       label: 'Ver resumen general',
       icon: <BarChart3 className="size-4" />,
       onClick: (row) => navigate(`/departamentos/${row.id}`),
+      // El resumen es del Decano y el Vicerrector; no se ofrece a quien la
+      // página luego rechazaría (el admin).
+      visible: (row) => isAuthorizedForPage(`/departamentos/${row.id}`, selectedRole),
     },
     ...(canManage
       ? [
@@ -166,6 +204,11 @@ export function DepartmentsList({ canManage = true }: DepartmentsListProps = {})
             label: 'Ver usuarios',
             icon: <Users className="size-4" />,
             onClick: (row: Department) => navigate(usersOfDepartmentHref(row.id)),
+          },
+          {
+            label: 'Editar',
+            icon: <Pencil className="size-4" />,
+            onClick: (row: Department) => setEditTarget(row),
           },
           {
             label: 'Asignar director',
@@ -179,11 +222,6 @@ export function DepartmentsList({ canManage = true }: DepartmentsListProps = {})
             onClick: (row: Department) => setUnassignTarget(row),
             variant: 'destructive' as const,
             visible: (row: Department) => !!row.director,
-          },
-          {
-            label: 'Editar',
-            icon: <Pencil className="size-4" />,
-            onClick: (row: Department) => setEditTarget(row),
           },
           {
             label: 'Eliminar',
@@ -227,6 +265,21 @@ export function DepartmentsList({ canManage = true }: DepartmentsListProps = {})
 
   return (
     <>
+      {facultyIdFromUrl != null && (
+        <div className="border-border bg-muted/30 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border px-4 py-3">
+          <p className="flex items-center gap-2 text-sm">
+            <Building2 className="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
+            Departamentos de la facultad{' '}
+            <span className="font-medium">{filteredFacultyName ?? 'seleccionada'}</span>
+          </p>
+
+          <Button variant="outline" size="sm" onClick={clearFaculty}>
+            <X className="size-4" aria-hidden="true" />
+            Quitar filtro
+          </Button>
+        </div>
+      )}
+
       <DataTable
         columns={departmentColumns}
         data={departments}
@@ -250,7 +303,7 @@ export function DepartmentsList({ canManage = true }: DepartmentsListProps = {})
         toolbar={
           <DataTableFilters
             filters={filterConfig}
-            values={filters}
+            values={filterValues}
             onChange={handleFiltersChange}
           />
         }

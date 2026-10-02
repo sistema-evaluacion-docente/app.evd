@@ -233,6 +233,28 @@ describe('UsersList', () => {
     expect(usersCalls.every(([, config]) => config?.params?.department_id === undefined)).toBe(true)
   })
 
+  it('filtra por rol en el servidor', async () => {
+    const user = userEvent.setup()
+
+    renderRouted(<UsersList />)
+    await screen.findByText('Ada Lovelace')
+
+    await user.click(screen.getByRole('button', { name: /Filtros/ }))
+    await user.click(await screen.findByRole('combobox', { name: 'Rol' }))
+    await user.click(await screen.findByRole('option', { name: 'Decano' }))
+
+    await waitFor(
+      () =>
+        expect(
+          mockApi.get.mock.calls.some(
+            ([url, config]) =>
+              url === '/users/' && JSON.stringify(config?.params?.roles) === '["DECANO"]',
+          ),
+        ).toBe(true),
+      { timeout: 2000 },
+    )
+  })
+
   it('searches on the server rather than filtering the page in the browser', async () => {
     const user = userEvent.setup()
 

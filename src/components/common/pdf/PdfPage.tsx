@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
     borderBottomColor: pdfColors.ink200,
     paddingBottom: 10,
   },
-  logo: { width: 30, height: 30 },
+  logo: { width: 42, height: 30 },
   headerText: { flexGrow: 1 },
   eyebrow: {
     fontSize: 7,
@@ -78,7 +78,7 @@ export function PdfPage({ title, subtitle, children }: PdfPageProps) {
     <Document>
       <Page size="LETTER" style={styles.page}>
         <View style={styles.header} fixed>
-          <Image src="/logo.png" style={styles.logo} />
+          <Image src="/logo-vertical.png" style={styles.logo} />
 
           <View style={styles.headerText}>
             <Text style={styles.eyebrow}>

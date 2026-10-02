@@ -74,8 +74,11 @@ export function DepartmentPeriodRangeSummary({
   // default (a DECANO is scoped to a faculty, not a department).
   const needsDepartmentPicker = selectedRole !== 'DIRECTOR DE DEPARTAMENTO'
   const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null)
+  // Only the picker needs the list, and `GET /departments` refuses a director:
+  // asking anyway shows them a "Required roles" toast on their own home.
   const { data: departmentsData, isPending: isDepartmentsPending } = useGetDepartments({
     limit: 100,
+    enabled: needsDepartmentPicker,
   })
   const departmentOptions = departmentsData?.data ?? []
 

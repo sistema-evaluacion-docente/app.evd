@@ -17,13 +17,7 @@ const securityConfig: { pages: SecurityPage[] } = {
     {
       path: '/home',
       name: 'Resumen',
-      roles: [
-        'DIRECTOR DE DEPARTAMENTO',
-        'ADMIN',
-        'DOCENTE',
-        'DECANO',
-        'VICERRECTOR ACADEMICO',
-      ],
+      roles: ['DIRECTOR DE DEPARTAMENTO', 'ADMIN', 'DOCENTE', 'DECANO', 'VICERRECTOR ACADEMICO'],
     },
 
     {
@@ -223,6 +217,20 @@ export function getMenus(role: string, context?: AccessContext): SecurityConfig[
   return securityConfig.pages.filter(
     (page) => !page.hidden && page.roles.includes(role) && meetsRequirements(page, context),
   )
+}
+
+/**
+ * Where a role's "inicio" is inside the app. The admin has no dashboard of its
+ * own — `/home` is hidden from its sidebar — so its starting point is the
+ * faculties catalogue. Not `/`, which is the public landing page and reads as
+ * if the session had been closed.
+ *
+ * @example
+ * homePathFor('ADMIN') // '/admin/facultades'
+ * homePathFor('DECANO') // '/home'
+ */
+export function homePathFor(role: string | null): string {
+  return role === 'ADMIN' ? '/admin/facultades' : '/home'
 }
 
 export type SecurityConfig = typeof securityConfig
