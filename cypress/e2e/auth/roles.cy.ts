@@ -99,7 +99,8 @@ describe('Selección de rol', () => {
         storedRole().then((rolInicial) => {
           selectOtherRole().then((rolNuevo) => {
             visibleRole().should('have.text', rolNuevo)
-            cy.location('pathname').should('eq', '/home')
+            // `/home`, salvo el admin, al que `/home` deja en facultades.
+            cy.location('pathname').should('be.oneOf', ['/home', '/admin/facultades'])
           })
 
           // El rol elegido reemplaza al anterior en el navegador...

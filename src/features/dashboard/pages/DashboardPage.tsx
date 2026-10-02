@@ -1,4 +1,7 @@
+import { Redirect } from 'wouter'
+
 import { PageTitle } from '@/components/common/PageTitle'
+import { homePathFor } from '@/config/security'
 import { UserNotAuth } from '@/features/auth'
 import { PeriodAverageTrend } from '@/features/periods'
 import {
@@ -8,7 +11,6 @@ import {
 } from '@/features/stats'
 import { TeacherPeriodInsights, TeacherStatsHero } from '@/features/teachers'
 import useAuth from '@/hooks/useAuth'
-import { useNavigate } from '@/hooks/useNavigate'
 
 function TeacherDashboard() {
   return (
@@ -28,8 +30,6 @@ function TeacherDashboard() {
 
 export default function DashboardPage() {
   const { selectedRole, user } = useAuth()
-
-  const navigate = useNavigate()
 
   if (selectedRole === 'DOCENTE') {
     return <TeacherDashboard />
@@ -70,9 +70,9 @@ export default function DashboardPage() {
     )
   }
 
+  // El admin no tiene resumen propio: su inicio es el catálogo de facultades.
   if (selectedRole === 'ADMIN') {
-    navigate('/admin/historial')
-    return
+    return <Redirect to={homePathFor('ADMIN')} replace />
   }
 
   return <UserNotAuth />

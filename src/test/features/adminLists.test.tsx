@@ -2,6 +2,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import api from '@/config/axios'
+import { useAuthStore } from '@/features/auth'
 import { DepartmentsList } from '@/features/departments/components/DepartmentsList'
 import { FacultiesList } from '@/features/faculties/components/FacultiesList'
 import { ProgramsList } from '@/features/programs/components/ProgramsList'
@@ -81,6 +82,7 @@ function page(rows: unknown[]) {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  useAuthStore.setState({ selectedRole: null })
 
   mockApi.get.mockImplementation((url: string) => {
     if (url.startsWith('/faculties')) return Promise.resolve(page(FACULTIES))
@@ -302,6 +304,30 @@ describe('DepartmentsList', () => {
     await screen.findByText('Sistemas')
 
     expect(screen.queryByText(/Departamentos de la facultad/)).not.toBeInTheDocument()
+  })
+
+  it('does not offer the general summary to the admin, whom that page refuses', async () => {
+    useAuthStore.setState({ selectedRole: 'ADMIN' })
+    const user = userEvent.setup()
+
+    renderRouted(<DepartmentsList />, { path: '/admin/departamentos' })
+    await openRowMenu(user, 'Sistemas')
+
+    expect(await screen.findByRole('menuitem', { name: 'Ver usuarios' })).toBeInTheDocument()
+    expect(screen.queryByRole('menuitem', { name: 'Ver resumen general' })).not.toBeInTheDocument()
+  })
+
+  it('offers the general summary to a role that may open it', async () => {
+    useAuthStore.setState({ selectedRole: 'VICERRECTOR ACADEMICO' })
+    const user = userEvent.setup()
+
+    const { history } = renderRouted(<DepartmentsList canManage={false} />, {
+      path: '/departamentos',
+    })
+    await openRowMenu(user, 'Sistemas')
+    await user.click(await screen.findByRole('menuitem', { name: 'Ver resumen general' }))
+
+    expect(history.at(-1)).toBe('/departamentos/3')
   })
 
   it('searches on the server rather than filtering the page in the browser', async () => {

@@ -10,6 +10,7 @@ import { DataTable, type DataTableAction } from '@/components/common/DataTable'
 import { DataTableFilters, type FilterConfig } from '@/components/common/DataTableFilters'
 import { DynamicFormDrawer, type FieldConfig } from '@/components/common/DynamicFormDrawer'
 import { Button } from '@/components/ui/button'
+import { isAuthorizedForPage } from '@/config/security'
 import { useGetFaculties } from '@/features/faculties'
 import { usersOfDepartmentHref } from '@/features/users'
 import useAuth from '@/hooks/useAuth'
@@ -193,6 +194,9 @@ export function DepartmentsList({ canManage = true }: DepartmentsListProps = {})
       label: 'Ver resumen general',
       icon: <BarChart3 className="size-4" />,
       onClick: (row) => navigate(`/departamentos/${row.id}`),
+      // El resumen es del Decano y el Vicerrector; no se ofrece a quien la
+      // página luego rechazaría (el admin).
+      visible: (row) => isAuthorizedForPage(`/departamentos/${row.id}`, selectedRole),
     },
     ...(canManage
       ? [

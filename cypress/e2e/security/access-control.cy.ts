@@ -112,7 +112,8 @@ describe('Menú: solo lo que el rol operado puede abrir (comodidad de interfaz)'
     it(`como ${role}, el menú lateral muestra lo suyo y esconde lo demás`, () => {
       cy.visitApp('/home', role)
       cy.loginWithEmail()
-      cy.location('pathname').should('eq', '/home')
+      // El admin no tiene resumen: `/home` lo deja en facultades, su inicio.
+      cy.location('pathname').should('eq', role === 'ADMIN' ? '/admin/facultades' : '/home')
 
       cy.get('[data-slot="sidebar-menu"]')
         .invoke('text')
