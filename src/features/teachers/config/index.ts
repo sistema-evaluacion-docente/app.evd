@@ -1,7 +1,7 @@
 import type { SortField } from '@/components/common/DataTableFilters'
 
 export { courseTeacherHref } from './courseTeacherHref'
-export { EMAIL_IMPORT_COUNTERS, EMAIL_IMPORT_STATUS } from './emailImport'
+export { COUNTER_TONE_CLASS, EMAIL_IMPORT_COUNTERS, EMAIL_IMPORT_STATUS } from './emailImport'
 
 /**
  * Contract type options shared by the teacher filters and forms. Left
