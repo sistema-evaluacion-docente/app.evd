@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { Route, Router, Switch } from 'wouter'
 import { memoryLocation } from 'wouter/memory-location'
+import { toast } from 'sonner'
 
 import LoginPage from '@/features/auth/pages/LoginPage'
 
@@ -16,11 +17,14 @@ vi.mock('@/features/auth/store/useAuthStore', () => ({
   useAuthStore: (selector: (s: unknown) => unknown) => selector(state),
 }))
 
+vi.mock('sonner', () => ({ toast: { error: vi.fn(), dismiss: vi.fn() } }))
+
 vi.mock('@/features/auth/components/LoginForm', () => ({
   LoginForm: () => <p>Formulario</p>,
 }))
 
 beforeEach(() => {
+  vi.clearAllMocks()
   state = { isLoading: false, loggedIn: true, selectedRole: 'DOCENTE' }
 })
 
@@ -70,7 +74,7 @@ describe('LoginPage · a dónde manda tras entrar', () => {
 })
 
 describe('LoginPage · cuenta no registrada', () => {
-  it('avisa con qué cuenta no pudo entrar y deja el formulario', () => {
+  it('avisa con un toast que dura más que los demás, y deja el formulario', () => {
     state = {
       isLoading: false,
       loggedIn: false,
@@ -80,7 +84,13 @@ describe('LoginPage · cuenta no registrada', () => {
 
     renderAt('/login')
 
-    expect(screen.getByTestId('login-unregistered')).toHaveTextContent('nadie@gmail.com')
+    expect(toast.error).toHaveBeenCalledWith(
+      'No se pudo ingresar',
+      expect.objectContaining({
+        description: expect.stringContaining('nadie@gmail.com'),
+        duration: 10000,
+      }),
+    )
     expect(screen.getByText('Formulario')).toBeInTheDocument()
   })
 
@@ -89,6 +99,6 @@ describe('LoginPage · cuenta no registrada', () => {
 
     renderAt('/login')
 
-    expect(screen.queryByTestId('login-unregistered')).not.toBeInTheDocument()
+    expect(toast.error).not.toHaveBeenCalled()
   })
 })

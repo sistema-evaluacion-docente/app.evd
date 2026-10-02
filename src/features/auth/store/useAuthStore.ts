@@ -173,7 +173,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         set({ token })
 
         try {
-          const response = await getAuthUser()
+          // The login page explains a rejected account with its own toast.
+          const response = await getAuthUser({ skipErrorToast: true })
           const userProfile = (response.data ?? userInfo) as User
 
           set({ user: userProfile })

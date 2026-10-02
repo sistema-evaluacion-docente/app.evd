@@ -1,13 +1,14 @@
-import { UserX } from 'lucide-react'
 import { useEffect } from 'react'
+import { toast } from 'sonner'
 import { useSearchParams } from 'wouter'
 
 import AppLayoutSkeleton from '@/components/skeletons/AppLayoutSkeleton'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { useNavigate } from '@/hooks/useNavigate'
 import { LoginForm } from '../components/LoginForm'
 import { NEXT_PARAM, resolveNextPath } from '../lib/nextPath'
 import { useAuthStore } from '../store/useAuthStore'
+
+const UNREGISTERED_TOAST_ID = 'login-unregistered'
 
 /**
  * Login page: full-viewport centered composition with a soft layered
@@ -32,9 +33,23 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (loggedIn) {
+      toast.dismiss(UNREGISTERED_TOAST_ID)
       navigate(resolveNextPath(next, selectedRole, { hasDepartment }))
     }
   }, [hasDepartment, loggedIn, navigate, next, selectedRole])
+
+  // Someone signing in for the first time has to read who to ask, so this one
+  // stays up longer than the rest (sonner's default is 4s). The fixed id keeps
+  // StrictMode's double effect, or a re-render, from stacking copies.
+  useEffect(() => {
+    if (!rejectedEmail) return
+
+    toast.error('No se pudo ingresar', {
+      id: UNREGISTERED_TOAST_ID,
+      description: `La cuenta ${rejectedEmail} no está registrada en el sistema o no se pudo verificar. Ingrese con otra cuenta o comuníquese con su director de departamento.`,
+      duration: 10000,
+    })
+  }, [rejectedEmail])
 
   if (isLoading) {
     return <AppLayoutSkeleton />
@@ -49,22 +64,7 @@ export default function LoginPage() {
       </div>
 
       <main className="relative grid min-h-screen place-items-center px-6 py-12">
-        <div className="flex w-full max-w-sm flex-col items-center gap-6">
-          {rejectedEmail && (
-            <Alert variant="destructive" data-testid="login-unregistered">
-              <UserX aria-hidden="true" />
-
-              <AlertTitle>No se pudo ingresar</AlertTitle>
-
-              <AlertDescription>
-                La cuenta {rejectedEmail} no está registrada en el sistema o no se pudo verificar.
-                Ingrese con otra cuenta o comuníquese con su director de departamento.
-              </AlertDescription>
-            </Alert>
-          )}
-
-          <LoginForm />
-        </div>
+        <LoginForm />
       </main>
     </div>
   )

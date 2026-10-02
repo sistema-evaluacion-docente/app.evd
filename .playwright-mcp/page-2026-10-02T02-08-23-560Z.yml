@@ -1,0 +1,14 @@
+- generic [ref=e2]:
+  - status [ref=e3]:
+    - generic [ref=e4]: Cargando la aplicación…
+    - complementary [ref=e5]:
+      - list [ref=e11]:
+        - listitem [ref=e12]
+        - listitem [ref=e15]
+        - listitem [ref=e18]
+        - listitem [ref=e21]
+        - listitem [ref=e24]
+    - generic [ref=e31]:
+      - banner [ref=e32]
+      - main [ref=e43]
+  - region "Notifications alt+T"
