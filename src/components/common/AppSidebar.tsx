@@ -36,7 +36,8 @@ import { getMenus, type SecurityConfig } from '@/config/security'
 import useAuth from '@/hooks/useAuth'
 import { useNavigate } from '@/hooks/useNavigate'
 import { DevelopedBy } from './DevelopedBy'
-import Logo from './Logo'
+import { LogoImage } from './Logo'
+import { TransitionLink } from './TransitionLink'
 
 const DEFAULT_ICON = FileText
 
@@ -99,13 +100,20 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="offcanvas" side="left" variant="sidebar">
+      {/* Identidad del producto arriba; el respaldo institucional va en el pie. */}
       <SidebarHeader className="p-4">
-        <div className="flex flex-col gap-2">
-          <Logo className="h-auto w-full" />
-          <span className="text-muted-foreground text-xs leading-tight font-semibold">
-            Evaluación Docente
+        <TransitionLink href="/" className="flex items-center gap-3 rounded-md">
+          <span
+            aria-hidden
+            className="bg-primary text-primary-foreground flex size-9 shrink-0 items-center justify-center rounded-lg text-lg font-bold"
+          >
+            E
           </span>
-        </div>
+          <span className="flex min-w-0 flex-col leading-tight">
+            <span className="text-base font-semibold tracking-tight">EVIDE</span>
+            <span className="text-muted-foreground truncate text-xs">Evaluación docente</span>
+          </span>
+        </TransitionLink>
       </SidebarHeader>
 
       <SidebarContent>
@@ -142,6 +150,10 @@ export function AppSidebar() {
 
       <SidebarFooter>
         <SidebarMenu>
+          <SidebarMenuItem className="border-sidebar-border border-b pb-3 justify-around">
+            <LogoImage className="h-13" />
+          </SidebarMenuItem>
+
           <SidebarMenuItem>
             <DevelopedBy />
           </SidebarMenuItem>

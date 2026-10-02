@@ -234,7 +234,7 @@ describe('AppLayout', () => {
 
     renderAt('/')
 
-    expect(screen.getByText('Evaluación Docente')).toBeInTheDocument()
+    expect(screen.getByText('EVIDE')).toBeInTheDocument()
     expect(screen.getByTestId('avatar')).toBeInTheDocument()
     expect(screen.getByTestId('notifications-bell')).toBeInTheDocument()
   })

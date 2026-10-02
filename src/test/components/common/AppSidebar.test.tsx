@@ -42,7 +42,7 @@ describe('AppSidebar', () => {
 
     renderAt()
 
-    expect(screen.queryByText('Evaluación Docente')).not.toBeInTheDocument()
+    expect(screen.queryByText('EVIDE')).not.toBeInTheDocument()
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 
