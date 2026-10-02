@@ -309,7 +309,11 @@ export function TeachersList() {
               value={selectedPeriodId}
               onValueChange={(id) => {
                 setSelectedPeriodId(id)
-                resetPage()
+                // Not debounced, like the modality: a period is picked, not
+                // typed. The select also reports the URL's period once on
+                // mount, and a deferred reset from that would throw back to
+                // page 1 whoever paged on within the next 400ms.
+                setPagination((prev) => ({ ...prev, pageIndex: 0 }))
               }}
               searchParam="period"
             />

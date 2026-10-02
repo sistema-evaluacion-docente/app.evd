@@ -27,10 +27,24 @@ vi.stubGlobal(
 
 const mockApi = vi.mocked(api)
 
+/** The periods the department has evaluations for. */
 const PERIODS = [
-  { id: 2, name: '2027-1', code: '2027-1', active: false },
-  { id: 3, name: '2027-2', code: '2027-2', active: false },
-  { id: 4, name: '2028-1', code: '2028-1', active: true },
+  { id: 2, name: '2027-1', code: '2027-1' },
+  { id: 3, name: '2027-2', code: '2027-2' },
+  { id: 4, name: '2028-1', code: '2028-1' },
+]
+
+/**
+ * The institution-wide catalogue: every period anyone created, including a
+ * newer one this department never uploaded anything for. The summary must not
+ * offer it — picking it only ever shows an empty report.
+ */
+const ALL_PERIODS = [...PERIODS, { id: 5, name: '2028-2', code: '2028-2' }]
+
+const DEPARTMENTS = [
+  { id: 3, name: 'Sistemas', code: 'SIS' },
+  // Exists, but never uploaded an evaluation.
+  { id: 7, name: 'Química', code: 'QUI' },
 ]
 
 const DIMENSIONS = [
@@ -77,7 +91,12 @@ function serve({
   fail = false,
 } = {}) {
   mockApi.get.mockImplementation((url: string, config?: { params?: Record<string, string> }) => {
-    if (url.includes('/academic-periods')) return Promise.resolve({ data: periods })
+    if (url.includes('/academic-periods')) return Promise.resolve({ data: ALL_PERIODS })
+    if (url.endsWith('/stats/departments/periods')) {
+      const empty = Number(config?.params?.department_id) === 7
+      return Promise.resolve({ data: empty ? [] : periods })
+    }
+    if (url.startsWith('/departments')) return Promise.resolve({ data: DEPARTMENTS })
 
     if (url.includes('/stats/departments/period-range')) {
       if (fail) return Promise.reject(new Error('El servidor no respondió'))
@@ -123,6 +142,13 @@ function rangeCalls() {
     .map(([, config]) => config as { params?: Record<string, string> })
 }
 
+/** Every request for the department's evaluated periods, newest last. */
+function periodsCalls() {
+  return mockApi.get.mock.calls
+    .filter(([url]) => String(url).endsWith('/stats/departments/periods'))
+    .map(([, config]) => config as { params?: Record<string, unknown> } | undefined)
+}
+
 /** Whether `GET /departments` was asked for — only ADMIN/VICERRECTOR/DECANO may. */
 function askedForDepartments() {
   return mockApi.get.mock.calls.some(([url]) => String(url).startsWith('/departments'))
@@ -145,7 +171,72 @@ describe('DepartmentPeriodRangeSummary', () => {
     await waitFor(() => expect(askedForDepartments()).toBe(true))
   })
 
-  it('defaults to the latest period, asking for it at both ends of the range', async () => {
+  it('offers only the periods the department has evaluations for', async () => {
+    const user = userEvent.setup()
+
+    renderRouted(<DepartmentPeriodRangeSummary />)
+    await screen.findByText('Sistemas')
+
+    await user.click(screen.getByRole('combobox', { name: 'Periodo' }))
+
+    const options = await screen.findAllByRole('option')
+
+    expect(options.map((option) => option.textContent)).toEqual(['2028-1', '2027-2', '2027-1'])
+  })
+
+  it('lets the backend resolve a director’s own department', async () => {
+    renderRouted(<DepartmentPeriodRangeSummary />)
+
+    await screen.findByText('Sistemas')
+
+    expect(periodsCalls()).toHaveLength(1)
+    expect(periodsCalls()[0]?.params).toBeUndefined()
+  })
+
+  it('waits for a picked department before asking for its periods', async () => {
+    useAuthStore.setState({ selectedRole: 'DECANO' })
+    const user = userEvent.setup()
+
+    renderRouted(<DepartmentPeriodRangeSummary />)
+
+    expect(
+      await screen.findByText('Elige un departamento para ver su resumen.'),
+    ).toBeInTheDocument()
+    expect(periodsCalls()).toHaveLength(0)
+
+    await user.click(screen.getByRole('combobox', { name: 'Departamento' }))
+    await user.click(await screen.findByRole('option', { name: 'Sistemas' }))
+
+    await waitFor(() => expect(periodsCalls()[0]?.params).toEqual({ department_id: 3 }))
+    await waitFor(() =>
+      expect(rangeCalls().at(-1)?.params).toEqual({
+        start_period: '2028-1',
+        end_period: '2028-1',
+        department_id: 3,
+      }),
+    )
+  })
+
+  it('drops the previous department’s report when switching to one without evaluations', async () => {
+    useAuthStore.setState({ selectedRole: 'DECANO' })
+    const user = userEvent.setup()
+
+    renderRouted(<DepartmentPeriodRangeSummary />)
+
+    await user.click(await screen.findByRole('combobox', { name: 'Departamento' }))
+    await user.click(await screen.findByRole('option', { name: 'Sistemas' }))
+    expect(await screen.findByText('Promedios por dimensión pedagógica')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('combobox', { name: 'Departamento' }))
+    await user.click(await screen.findByRole('option', { name: 'Química' }))
+
+    expect(
+      await screen.findByText('Este departamento aún no tiene evaluaciones cargadas.'),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('Promedios por dimensión pedagógica')).not.toBeInTheDocument()
+  })
+
+  it('defaults to the latest period with evaluations, asking for it at both ends of the range', async () => {
     renderRouted(<DepartmentPeriodRangeSummary />)
 
     await screen.findByText('Sistemas')
@@ -164,14 +255,31 @@ describe('DepartmentPeriodRangeSummary', () => {
     expect(screen.getByText('Resumen del departamento')).toBeInTheDocument()
   })
 
-  it('says so when there are no academic periods at all', async () => {
+  it('says so when the department has no evaluations yet, without asking for a report', async () => {
     serve({ periods: [] })
 
     renderRouted(<DepartmentPeriodRangeSummary />)
 
     expect(
-      await screen.findByText('No existen periodos académicos para mostrar.'),
+      await screen.findByText('Este departamento aún no tiene evaluaciones cargadas.'),
     ).toBeInTheDocument()
+    expect(rangeCalls()).toHaveLength(0)
+  })
+
+  it('keeps the department picker on screen when the picked one has no evaluations', async () => {
+    useAuthStore.setState({ selectedRole: 'DECANO' })
+    serve({ periods: [] })
+    const user = userEvent.setup()
+
+    renderRouted(<DepartmentPeriodRangeSummary />)
+
+    await user.click(await screen.findByRole('combobox', { name: 'Departamento' }))
+    await user.click(await screen.findByRole('option', { name: 'Sistemas' }))
+
+    expect(
+      await screen.findByText('Este departamento aún no tiene evaluaciones cargadas.'),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Departamento' })).toBeInTheDocument()
   })
 
   it('says so when the selected range has no data', async () => {

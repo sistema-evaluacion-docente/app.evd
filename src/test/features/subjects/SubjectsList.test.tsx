@@ -245,6 +245,23 @@ describe('SubjectsList', () => {
     expect(screen.queryByRole('button', { name: 'Siguiente' })).not.toBeInTheDocument()
   })
 
+  it('stays on the page the user moved to once the URL period settles', async () => {
+    const user = userEvent.setup()
+
+    serve({ pages: 3 })
+    await renderList()
+
+    // Clicked right after the first load, within the 400ms window of the
+    // debounced page reset that text filters use. Resolving the period from
+    // the URL on mount is not a change of period and must not land on it.
+    await user.click(screen.getByRole('button', { name: 'Siguiente' }))
+    expect(await screen.findByText(/Página 2 de 3/)).toBeInTheDocument()
+
+    await new Promise((resolve) => setTimeout(resolve, 500))
+
+    expect(screen.getByText(/Página 2 de 3/)).toBeInTheDocument()
+  })
+
   it('pages through the results', async () => {
     const user = userEvent.setup()
 

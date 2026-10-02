@@ -14,7 +14,6 @@ import { Label } from '@/components/ui/label'
 import { Spinner } from '@/components/ui/spinner'
 import { Switch } from '@/components/ui/switch'
 import { useGetDepartments, type Department } from '@/features/departments'
-import { useGetAcademicPeriods } from '@/features/periods'
 import useAuth from '@/hooks/useAuth'
 import { useNavigate } from '@/hooks/useNavigate'
 import { CATEGORIES, categoryLabel, UNCATEGORIZED } from '@/lib/categoryLabel'
@@ -22,7 +21,7 @@ import { formatPdfAverage } from '@/lib/pdf/formatPdfAverage'
 import { pdfColors } from '@/lib/pdf/pdfColors'
 import type { RiskLevelMeta } from '@/lib/riskLevel'
 import { cn } from '@/lib/utils'
-import { useGetDepartmentPeriodRangeStats } from '../api'
+import { useGetDepartmentEvaluatedPeriods, useGetDepartmentPeriodRangeStats } from '../api'
 import { usePeriodCommentsAnalysis } from '../hooks/usePeriodCommentsAnalysis'
 import { DepartmentCommentPeriodBreakdown } from './DepartmentCommentPeriodBreakdown'
 import { DepartmentCommentsSummary } from './DepartmentCommentsSummary'
@@ -82,9 +81,25 @@ export function DepartmentPeriodRangeSummary({
   })
   const departmentOptions = departmentsData?.data ?? []
 
-  const { data: periodsData, isPending: isPeriodsPending } = useGetAcademicPeriods()
-  const periods = periodsData?.data ?? []
+  const awaitingDepartment = needsDepartmentPicker && !selectedDepartment
+
+  // Only the periods this department has evaluations for — the global
+  // `/academic-periods` catalogue lists every period of the institution, and
+  // picking one this department never uploaded just shows an empty report.
+  // A director's department is implicit; everyone else's has to be chosen
+  // before there is anything to ask for.
+  const { data: periodsData, isPending: isPeriodsPending } = useGetDepartmentEvaluatedPeriods({
+    departmentId: selectedDepartment?.id,
+    enabled: !awaitingDepartment,
+  })
+  // `name` is nullable on these; the labels and the `?period=` links below
+  // read it, so fall back to the code once here instead of at every use.
+  const periods = (periodsData?.data ?? []).map((period) => ({
+    ...period,
+    name: period.name ?? period.code,
+  }))
   const sortedPeriods = [...periods].sort((a, b) => a.code.localeCompare(b.code))
+  const hasNoEvaluatedPeriods = !awaitingDepartment && !isPeriodsPending && periods.length === 0
 
   // Until the user picks explicitly, default to the last `defaultRangeSize`
   // periods — derived from the loaded list rather than synced via an effect.
@@ -99,10 +114,26 @@ export function DepartmentPeriodRangeSummary({
   const trendCardRef = useRef<HTMLElement>(null)
   const dimensionsCardRef = useRef<HTMLElement>(null)
 
-  const effectiveEndId = endPeriodId ?? defaultEnd?.id
+  // A pick only counts while it is still one of this department's periods —
+  // the list changes under it whenever another department is chosen.
+  const isListed = (id: number | undefined) => periods.some((period) => period.id === id)
+
+  const effectiveEndId = isListed(endPeriodId) ? endPeriodId : defaultEnd?.id
   // Outside "comparar un rango" mode, start always tracks end — there's only
   // ever one period selector on screen, so nothing can drift out of sync.
-  const effectiveStartId = compareRange ? (startPeriodId ?? defaultStart?.id) : effectiveEndId
+  const effectiveStartId = compareRange
+    ? isListed(startPeriodId)
+      ? startPeriodId
+      : defaultStart?.id
+    : effectiveEndId
+
+  const handleDepartmentChange = (department: Department | null) => {
+    setSelectedDepartment(department)
+    // Back to that department's own defaults rather than whatever was picked
+    // for the previous one.
+    setStartPeriodId(undefined)
+    setEndPeriodId(undefined)
+  }
 
   const startPeriod = periods.find((period) => period.id === effectiveStartId)
   const endPeriod = periods.find((period) => period.id === effectiveEndId)
@@ -124,8 +155,8 @@ export function DepartmentPeriodRangeSummary({
   }
 
   const { data, isPending, isFetching, error } = useGetDepartmentPeriodRangeStats({
-    startPeriod: needsDepartmentPicker && !selectedDepartment ? undefined : startPeriod?.code,
-    endPeriod: needsDepartmentPicker && !selectedDepartment ? undefined : endPeriod?.code,
+    startPeriod: awaitingDepartment ? undefined : startPeriod?.code,
+    endPeriod: awaitingDepartment ? undefined : endPeriod?.code,
     departmentId: selectedDepartment?.id,
   })
 
@@ -224,14 +255,6 @@ export function DepartmentPeriodRangeSummary({
     worstTeacherMover.delta < 0 &&
     worstTeacherMover.item !== bestTeacherMover?.item
   */
-
-  if (!isPeriodsPending && sortedPeriods.length === 0) {
-    return (
-      <p className={cn('text-muted-foreground py-10 text-center text-sm', className)}>
-        No existen periodos académicos para mostrar.
-      </p>
-    )
-  }
 
   const periodLabel =
     compareRange && startPeriod && endPeriod && startPeriod !== endPeriod
@@ -348,7 +371,7 @@ export function DepartmentPeriodRangeSummary({
           {needsDepartmentPicker && (
             <SearchSelect<Department>
               value={selectedDepartment}
-              onValueChange={setSelectedDepartment}
+              onValueChange={handleDepartmentChange}
               items={departmentOptions}
               itemToKey={(department) => department.id}
               itemToLabel={(department) => department.name}
@@ -363,6 +386,8 @@ export function DepartmentPeriodRangeSummary({
           {compareRange ? (
             <>
               <PeriodSelect
+                options={sortedPeriods}
+                disabled={awaitingDepartment || hasNoEvaluatedPeriods}
                 value={effectiveStartId}
                 onValueChange={handleStartChange}
                 placeholder="Periodo inicial"
@@ -372,6 +397,8 @@ export function DepartmentPeriodRangeSummary({
               <span className="text-muted-foreground text-sm">hasta</span>
 
               <PeriodSelect
+                options={sortedPeriods}
+                disabled={awaitingDepartment || hasNoEvaluatedPeriods}
                 value={effectiveEndId}
                 onValueChange={handleEndChange}
                 placeholder="Periodo final"
@@ -380,6 +407,8 @@ export function DepartmentPeriodRangeSummary({
             </>
           ) : (
             <PeriodSelect
+              options={sortedPeriods}
+              disabled={awaitingDepartment || hasNoEvaluatedPeriods}
               value={effectiveEndId}
               onValueChange={handleEndChange}
               placeholder="Periodo"
@@ -406,14 +435,16 @@ export function DepartmentPeriodRangeSummary({
 
       {error && <InlineError message={error.message} />}
 
-      {isPending && !error && (
+      {isPending && !error && !awaitingDepartment && !hasNoEvaluatedPeriods && (
         <DepartmentPeriodRangeSummarySkeleton
           showTrendChart={showTrendChart}
           rangeCompare={rangeCompareActive}
         />
       )}
 
-      {!isPending && data?.data && (
+      {/* `keepPreviousData` would otherwise leave the previous department's
+          report on screen after switching to one with nothing to show. */}
+      {!isPending && data?.data && !hasNoEvaluatedPeriods && (
         <div
           className={cn(
             'space-y-6 transition-opacity',
@@ -573,11 +604,13 @@ export function DepartmentPeriodRangeSummary({
         </div>
       )}
 
-      {!isPending && !data?.data && !error && (
+      {(awaitingDepartment || hasNoEvaluatedPeriods || (!isPending && !data?.data)) && !error && (
         <p className="text-muted-foreground py-10 text-center text-sm">
-          {needsDepartmentPicker && !selectedDepartment
+          {awaitingDepartment
             ? 'Elige un departamento para ver su resumen.'
-            : 'No hay datos para el rango de periodos seleccionado.'}
+            : hasNoEvaluatedPeriods
+              ? 'Este departamento aún no tiene evaluaciones cargadas.'
+              : 'No hay datos para el rango de periodos seleccionado.'}
         </p>
       )}
     </div>

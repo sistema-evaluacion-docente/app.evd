@@ -1,5 +1,6 @@
 export type {
   DepartmentDimensionAverage,
+  DepartmentEvaluatedPeriod,
   DepartmentGlobalAverage,
   DepartmentPeriodAverage,
   DepartmentPeriodRangeStats,

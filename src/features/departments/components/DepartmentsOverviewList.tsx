@@ -325,7 +325,9 @@ export function DepartmentsOverviewList({ facultyId }: DepartmentsOverviewListPr
             value={effectivePeriodId}
             onValueChange={(id) => {
               setPeriodId(id)
-              resetPage()
+              // Not debounced: a period is picked, not typed, and the very
+              // next request should already ask for page 1.
+              setPagination((prev) => ({ ...prev, pageIndex: 0 }))
             }}
             ariaLabel="Periodo académico"
           />

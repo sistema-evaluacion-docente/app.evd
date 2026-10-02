@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "Sistema de Evaluación Docente UFPS",
-  "short_name": "EVD UFPS",
+  "name": "EVIDE · Evaluación Docente UFPS",
+  "short_name": "EVIDE",
   "description": "Resultados de la evaluación docente de la UFPS: informes por docente, comparativos por materia y planes de mejoramiento.",
   "lang": "es",
   "dir": "ltr",

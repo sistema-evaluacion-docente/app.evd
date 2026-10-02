@@ -178,7 +178,11 @@ export function SubjectsList({ className }: { className?: string }) {
           value={periodId}
           onValueChange={(id) => {
             setPeriodId(id)
-            resetPage()
+            // Not debounced: a period is picked, not typed. The select also
+            // reports the URL's period once on mount, and a deferred reset
+            // from that would throw back to page 1 whoever paged on within
+            // the next 400ms.
+            setPage(1)
           }}
           searchParam="period"
           ariaLabel="Periodo"
