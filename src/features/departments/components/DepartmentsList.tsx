@@ -202,6 +202,11 @@ export function DepartmentsList({ canManage = true }: DepartmentsListProps = {})
             onClick: (row: Department) => navigate(usersOfDepartmentHref(row.id)),
           },
           {
+            label: 'Editar',
+            icon: <Pencil className="size-4" />,
+            onClick: (row: Department) => setEditTarget(row),
+          },
+          {
             label: 'Asignar director',
             icon: <UserPlus className="size-4" />,
             onClick: (row: Department) => setAssignTarget(row),
@@ -213,11 +218,6 @@ export function DepartmentsList({ canManage = true }: DepartmentsListProps = {})
             onClick: (row: Department) => setUnassignTarget(row),
             variant: 'destructive' as const,
             visible: (row: Department) => !!row.director,
-          },
-          {
-            label: 'Editar',
-            icon: <Pencil className="size-4" />,
-            onClick: (row: Department) => setEditTarget(row),
           },
           {
             label: 'Eliminar',
