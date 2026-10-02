@@ -37,9 +37,23 @@ function page(rows: unknown[]) {
   return { data: rows, pagination: { total: rows.length, page: 1, pages: 1, limit: 10 } }
 }
 
-const DEPARTMENTS = [{ id: 7, name: 'Sistemas' }]
+const DEPARTMENTS = [
+  { id: 7, name: 'Sistemas' },
+  { id: 14, name: 'Ciencias Agrícolas y de la Tierra' },
+  { id: 15, name: 'Ciencias Agricolas y Pecuarias' },
+]
 
-function mockBackend(user = USERS[0]) {
+/** A director of department 15 whose teacher record was left in 14. */
+const MISPLACED_DIRECTOR = {
+  ...USERS[0],
+  roles: ['DOCENTE', 'DIRECTOR DE DEPARTAMENTO'],
+  department_id: 15,
+  department_name: 'Ciencias Agricolas y Pecuarias',
+  teacher_id: 146,
+  teacher_department_id: 14,
+}
+
+function mockBackend(user: Record<string, unknown> = USERS[0]) {
   mockApi.get.mockImplementation((url: string) => {
     if (url.startsWith('/users/by-id/')) return Promise.resolve({ data: user })
     if (url.startsWith('/users')) return Promise.resolve(page([user]))
@@ -119,6 +133,37 @@ describe('UsersList', () => {
     await user.click(await screen.findByRole('menuitem', { name: 'Editar' }))
 
     await waitFor(() => expect(screen.getByLabelText(/Nombre completo/)).toHaveValue('Ada King'))
+  })
+
+  it("prefills a director's teacher department, not the one they direct", async () => {
+    const user = userEvent.setup()
+    mockBackend(MISPLACED_DIRECTOR)
+
+    renderRouted(<UsersList />)
+    await openEditDrawer(user)
+
+    expect(screen.getByRole('combobox', { name: /Departamento/ })).toHaveTextContent(
+      'Ciencias Agrícolas y de la Tierra',
+    )
+  })
+
+  it("moves a director's teacher record to the department they direct", async () => {
+    const user = userEvent.setup()
+    mockBackend(MISPLACED_DIRECTOR)
+
+    renderRouted(<UsersList />)
+    await openEditDrawer(user)
+
+    await user.click(screen.getByRole('combobox', { name: /Departamento/ }))
+    await user.click(await screen.findByRole('option', { name: 'Ciencias Agricolas y Pecuarias' }))
+    await user.click(screen.getByRole('button', { name: /Guardar/ }))
+
+    await waitFor(() =>
+      expect(mockApi.put).toHaveBeenCalledWith(
+        '/users/by-id/1',
+        expect.objectContaining({ department_id: 15 }),
+      ),
+    )
   })
 
   it('edita también a quien nunca ha iniciado sesión (sin uid)', async () => {

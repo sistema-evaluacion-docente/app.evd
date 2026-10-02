@@ -93,8 +93,12 @@ export function UsersList() {
     setPagination((prev) => ({ ...prev, pageIndex: 0 }))
   }
 
+  // The teacher record's own department, not `department_id`: for a director
+  // that one is the department they direct. Prefilling with it hid a teacher
+  // record left in another department, and since only changes are sent, it
+  // could never be corrected from here.
   const initialDepartment =
-    detail?.department_id != null ? String(detail.department_id) : NO_DEPARTMENT
+    detail?.teacher_department_id != null ? String(detail.teacher_department_id) : NO_DEPARTMENT
 
   const editFields: FieldConfig[] = detail
     ? [
@@ -171,8 +175,8 @@ export function UsersList() {
       active: values.active === 'true',
     }
 
-    // Solo se envía si cambió: el departamento prellenado de un director es el
-    // de su dirección, y reenviarlo tal cual movería su registro de docente.
+    // Only sent when it changed from the teacher record's department, so saving
+    // other fields never touches it.
     if (values.department_id !== initialDepartment) {
       if (!roles.includes('DOCENTE')) {
         toast.error('El departamento solo se puede asignar a usuarios con rol Docente')
