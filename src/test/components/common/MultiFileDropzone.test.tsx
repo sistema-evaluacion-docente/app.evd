@@ -28,7 +28,7 @@ describe('MultiFileDropzone', () => {
     render(<MultiFileDropzone files={[]} onFilesAdded={vi.fn()} onRemove={vi.fn()} />)
 
     expect(screen.getByText('Selecciona los archivos')).toBeInTheDocument()
-    expect(screen.getByText(/Máximo 10\.00 MB por archivo/)).toBeInTheDocument()
+    expect(screen.getByText(/Máximo 20\.00 MB por archivo/)).toBeInTheDocument()
   })
 
   it('takes several files at once from the picker', async () => {

@@ -18,6 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { MAX_UPLOAD_SIZE } from '@/config'
 import { useFileUpload } from '@/hooks/useFileUpload'
 import { useNavigate } from '@/hooks/useNavigate'
 import { cn } from '@/lib/utils'
@@ -25,8 +26,6 @@ import { cn } from '@/lib/utils'
 import { useUploadTeachers } from '../api'
 import { COUNTER_TONE_CLASS, EMAIL_IMPORT_COUNTERS, EMAIL_IMPORT_STATUS } from '../config'
 import type { TeacherEmailImportSummary, TeacherUploadData } from '../types'
-
-const MAX_SIZE = 5 * 1024 * 1024
 
 /**
  * The import usually answers in a few hundred milliseconds, which made the
@@ -59,7 +58,7 @@ export function TeacherUploadForm() {
   const { file, error, handleFile } = useFileUpload({
     accept: ['text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
     extensions: ['.csv', '.xlsx'],
-    maxSize: MAX_SIZE,
+    maxSize: MAX_UPLOAD_SIZE,
   })
 
   const uploadError = isProcessing ? null : upload.error?.message || null
@@ -144,10 +143,10 @@ export function TeacherUploadForm() {
             error={displayedError}
             onFileChange={handleFile}
             accept="text/csv,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.xlsx"
-            maxSize={MAX_SIZE}
+            maxSize={MAX_UPLOAD_SIZE}
             disabled={isProcessing}
             isUploading={isProcessing}
-            subtitle="Arrastra y suelta o haz clic · CSV o XLSX · Máximo 5 MB"
+            subtitle="Arrastra y suelta o haz clic · CSV o XLSX · Máximo 20 MB"
           />
 
           <div className="flex items-center justify-end gap-3">

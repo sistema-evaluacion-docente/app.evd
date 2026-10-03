@@ -189,16 +189,16 @@ describe('TeacherUploadForm', () => {
     await waitFor(() => expect(history.at(-1)).toBe('/docentes'))
   })
 
-  it('rejects a file over the 5 MB limit, leaving the upload button disabled', async () => {
+  it('rejects a file over the 20 MB limit, leaving the upload button disabled', async () => {
     const user = setupUser()
     renderRouted(<TeacherUploadForm />)
     const tooLarge = csvFile()
-    Object.defineProperty(tooLarge, 'size', { value: 6 * 1024 * 1024 })
+    Object.defineProperty(tooLarge, 'size', { value: 21 * 1024 * 1024 })
 
     await user.upload(screen.getByLabelText('Archivo'), tooLarge)
 
     expect(
-      await screen.findByText('El archivo supera el máximo permitido de 5 MB.'),
+      await screen.findByText('El archivo supera el máximo permitido de 20 MB.'),
     ).toBeInTheDocument()
     expect(screen.getByRole('button', { name: SUBMIT })).toBeDisabled()
   })

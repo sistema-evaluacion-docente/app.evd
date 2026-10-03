@@ -17,7 +17,7 @@ import { useEvaluationLogs } from '../hooks'
 
 /**
  * Form that uploads the teacher-evaluation PDFs of a period: a picker taking up
- * to two documents (presencial and distancia) with PDF/10 MB validation, an
+ * to two documents (presencial and distancia) with PDF/20 MB validation, an
  * informational notice linking to the teacher upload page, and submit/cancel
  * actions. Only one document is required — the backend reads the modality out
  * of each PDF, so either one can travel alone — but both must belong to the
@@ -126,7 +126,7 @@ export function EvaluationUploadForm() {
               disabled={upload.isPending}
               isUploading={upload.isPending}
               title="Selecciona los PDF"
-              subtitle="Arrastra y suelta o haz clic · Máximo 10 MB por archivo"
+              subtitle="Arrastra y suelta o haz clic · Máximo 20 MB por archivo"
             />
 
             <p className="text-muted-foreground text-sm">
