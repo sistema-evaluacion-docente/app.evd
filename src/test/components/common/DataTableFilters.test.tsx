@@ -98,6 +98,24 @@ describe('DataTableFilters', () => {
     expect(screen.queryByRole('button', { name: 'Limpiar filtro' })).not.toBeInTheDocument()
   })
 
+  it('shows the placeholder again once a select filter is cleared, not its old value', async () => {
+    const user = userEvent.setup()
+
+    // Starts empty: a select mounted without a value is where the old
+    // `undefined` left Base UI uncontrolled, holding on to the pick after the
+    // filter was cleared.
+    render(<Harness filters={[SELECT_FILTER]} />)
+
+    await user.click(screen.getByRole('button', { name: 'Filtros' }))
+    await user.click(screen.getByRole('combobox', { name: 'Estado' }))
+    await user.click(await screen.findByRole('option', { name: 'Inactivo' }))
+    await user.click(screen.getByRole('button', { name: 'Limpiar filtro' }))
+
+    const select = screen.getByRole('combobox', { name: 'Estado' })
+    expect(select).toHaveTextContent('Seleccionar...')
+    expect(select).not.toHaveTextContent('inactive')
+  })
+
   it('renders custom filter content and reports its changes', async () => {
     const user = userEvent.setup()
 

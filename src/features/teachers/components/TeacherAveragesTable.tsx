@@ -10,6 +10,7 @@ import {
   type SortField,
 } from '@/components/common/DataTableFilters'
 import { PeriodSelect } from '@/components/common/PeriodSelect'
+import { EvaluatedPeriodSelect } from '@/features/stats'
 import type { CourseModality } from '@/lib/modality'
 import { useGetTeachers } from '../api'
 import { CONTRACT_TYPES, TEACHER_SORT_FIELDS } from '../config'
@@ -151,6 +152,20 @@ export function TeacherAveragesTable({
     },
   ]
 
+  const periodSelectProps = {
+    value: selectedPeriodId,
+    defaultValue: defaultPeriodId,
+    onValueChange: (id: number) => {
+      setSelectedPeriodId(id)
+      // Not debounced: a period is picked, not typed. With
+      // `periodSearchParam` the select also reports the URL's period
+      // once on mount, and a deferred reset from that would throw
+      // back to page 1 whoever paged on within the next 400ms.
+      setPagination((prev) => ({ ...prev, pageIndex: 0 }))
+    },
+    searchParam: periodSearchParam,
+  }
+
   const handleFiltersChange = (values: Record<string, unknown>) => {
     setContractType(values.contractType as string | undefined)
     setSortBy(values.sortBy as string | undefined)
@@ -185,19 +200,13 @@ export function TeacherAveragesTable({
         onRowClick={onTeacherClick && ((teacher) => onTeacherClick(teacher, selectedPeriodId))}
         toolbar={
           <div className="flex flex-wrap items-center gap-3">
-            <PeriodSelect
-              value={selectedPeriodId}
-              defaultValue={defaultPeriodId}
-              onValueChange={(id) => {
-                setSelectedPeriodId(id)
-                // Not debounced: a period is picked, not typed. With
-                // `periodSearchParam` the select also reports the URL's period
-                // once on mount, and a deferred reset from that would throw
-                // back to page 1 whoever paged on within the next 400ms.
-                setPagination((prev) => ({ ...prev, pageIndex: 0 }))
-              }}
-              searchParam={periodSearchParam}
-            />
+            {/* Scoped to one department, only the periods it has evaluations
+                for; across departments there is no such list, so every period. */}
+            {showDepartmentColumn ? (
+              <PeriodSelect {...periodSelectProps} />
+            ) : (
+              <EvaluatedPeriodSelect departmentId={departmentId} {...periodSelectProps} />
+            )}
             <DataTableFilters
               filters={filterConfig}
               values={{ contractType, sortBy }}

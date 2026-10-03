@@ -102,7 +102,8 @@ beforeEach(() => {
   vi.clearAllMocks()
 
   mockApi.get.mockImplementation((url: string) => {
-    if (url.includes('/academic-periods')) return Promise.resolve({ data: PERIODS })
+    if (url.includes('/academic-periods') || url.includes('/stats/departments/periods'))
+      return Promise.resolve({ data: PERIODS })
     if (url.startsWith('/evaluations')) return Promise.resolve(page(EVALUATIONS))
     if (url.includes('/teachers')) return Promise.resolve(page(TEACHERS))
     if (url.startsWith('/comments')) return Promise.resolve(page(COMMENTS))
@@ -187,7 +188,8 @@ describe('EvaluationsList', () => {
     const analyzing = [{ ...EVALUATIONS[0], ai_status: 'ANALYZING' }]
 
     mockApi.get.mockImplementation((url: string) => {
-      if (url.includes('/academic-periods')) return Promise.resolve({ data: PERIODS })
+      if (url.includes('/academic-periods') || url.includes('/stats/departments/periods'))
+        return Promise.resolve({ data: PERIODS })
       if (url.startsWith('/evaluations')) return Promise.resolve(page(analyzing))
 
       return Promise.resolve(page([]))
@@ -281,7 +283,8 @@ describe('CommentsList', () => {
 
   it('says so when no comment matches the filters', async () => {
     mockApi.get.mockImplementation((url: string) => {
-      if (url.includes('/academic-periods')) return Promise.resolve({ data: PERIODS })
+      if (url.includes('/academic-periods') || url.includes('/stats/departments/periods'))
+        return Promise.resolve({ data: PERIODS })
 
       return Promise.resolve(page([]))
     })
@@ -295,7 +298,8 @@ describe('CommentsList', () => {
 
   it('takes the caller’s own empty message when it was given one', async () => {
     mockApi.get.mockImplementation((url: string) => {
-      if (url.includes('/academic-periods')) return Promise.resolve({ data: PERIODS })
+      if (url.includes('/academic-periods') || url.includes('/stats/departments/periods'))
+        return Promise.resolve({ data: PERIODS })
 
       return Promise.resolve(page([]))
     })
@@ -332,7 +336,8 @@ describe('CommentsList', () => {
     const user = userEvent.setup()
 
     mockApi.get.mockImplementation((url: string) => {
-      if (url.includes('/academic-periods')) return Promise.resolve({ data: PERIODS })
+      if (url.includes('/academic-periods') || url.includes('/stats/departments/periods'))
+        return Promise.resolve({ data: PERIODS })
       if (url.startsWith('/comments')) return Promise.resolve(page(COMMENTS, 3))
 
       return Promise.resolve(page([]))
@@ -346,5 +351,40 @@ describe('CommentsList', () => {
     await user.click(screen.getByRole('button', { name: 'Página siguiente' }))
 
     await waitFor(() => expect(askedWith('/comments/', { page: 2 })).toBe(true))
+  })
+
+  it('keeps the risk level from the URL when a category is picked', async () => {
+    const user = userEvent.setup()
+
+    const { history } = renderRouted(<CommentsList />, {
+      path: '/comentarios?period=4&riskLevel=3',
+    })
+    await screen.findByText('Explica muy bien, pero califica lento.')
+
+    await user.click(screen.getByRole('button', { name: /Filtros/ }))
+    await user.click(await screen.findByRole('combobox', { name: 'Categoría pedagógica' }))
+    await user.click(await screen.findByRole('option', { name: 'Desempeño docente' }))
+
+    await waitFor(() =>
+      expect(askedWith('/comments/', { risk_level: 3, pedagogical_category_id: 2 })).toBe(true),
+    )
+    expect(history.at(-1)).toContain('riskLevel=3')
+    expect(history.at(-1)).toContain('category=2')
+  })
+
+  it('clears the category from the URL with its clear button', async () => {
+    const user = userEvent.setup()
+
+    const { history } = renderRouted(<CommentsList />, {
+      path: '/comentarios?period=4&category=2',
+    })
+    await screen.findByText('Explica muy bien, pero califica lento.')
+
+    await waitFor(() => expect(askedWith('/comments/', { pedagogical_category_id: 2 })).toBe(true))
+
+    await user.click(screen.getByRole('button', { name: /Filtros/ }))
+    await user.click(screen.getByRole('button', { name: 'Limpiar filtro' }))
+
+    await waitFor(() => expect(history.at(-1)).not.toContain('category='))
   })
 })

@@ -16,7 +16,13 @@ import { Switch } from '@/components/ui/switch'
 import { useGetDepartments, type Department } from '@/features/departments'
 import useAuth from '@/hooks/useAuth'
 import { useNavigate } from '@/hooks/useNavigate'
-import { CATEGORIES, categoryLabel, UNCATEGORIZED } from '@/lib/categoryLabel'
+import {
+  CATEGORIES,
+  categoryForDimension,
+  categoryLabel,
+  UNCATEGORIZED,
+  type CategoryMeta,
+} from '@/lib/categoryLabel'
 import { formatPdfAverage } from '@/lib/pdf/formatPdfAverage'
 import { pdfColors } from '@/lib/pdf/pdfColors'
 import type { RiskLevelMeta } from '@/lib/riskLevel'
@@ -270,6 +276,14 @@ export function DepartmentPeriodRangeSummary({
    */
   const commentsHrefForRisk = (level: RiskLevelMeta) => {
     const params = new URLSearchParams({ riskLevel: String(level.id) })
+
+    if (endPeriod?.name) params.set('period', endPeriod.name)
+
+    return `/comentarios?${params.toString()}`
+  }
+
+  const commentsHrefForCategory = (category: CategoryMeta) => {
+    const params = new URLSearchParams({ category: String(category.id) })
 
     if (endPeriod?.name) params.set('period', endPeriod.name)
 
@@ -561,6 +575,7 @@ export function DepartmentPeriodRangeSummary({
                     const href = commentsHrefForRisk(level)
                     navigate(href)
                   }}
+                  onCategoryClick={(category) => navigate(commentsHrefForCategory(category))}
                 />
               )}
             </div>
@@ -580,6 +595,12 @@ export function DepartmentPeriodRangeSummary({
                   Una gráfica por dimensión, un punto por periodo.
                 </p>
               )}
+
+              {!rangeCompareActive && (
+                <p className="text-muted-foreground/80 mt-0.5 text-xs">
+                  Haz clic en una dimensión para ver sus comentarios.
+                </p>
+              )}
             </div>
 
             <div className="px-6 py-4">
@@ -594,6 +615,11 @@ export function DepartmentPeriodRangeSummary({
                   dimensions={data?.data?.dimensions}
                   referenceValue={data?.data?.overall_average}
                   referenceLabel="Promedio general"
+                  onDimensionClick={(dimension) => {
+                    const category = categoryForDimension(dimension)
+
+                    if (category) navigate(commentsHrefForCategory(category))
+                  }}
                 />
               )}
             </div>

@@ -140,3 +140,35 @@ export function categoryDescription(name?: string | null, fallback?: string | nu
 export function isUncategorized(name?: string | null) {
   return !name || name.trim().toUpperCase() === UNCATEGORIZED
 }
+
+/**
+ * Reads a pedagogical category id off a query string, ignoring anything that
+ * isn't one — a hand-typed `?category=9` is dropped rather than forwarded to
+ * the API. Same guard `parseRiskLevelId` gives the risk level filter.
+ *
+ * @example
+ * parseCategoryId(searchParams.get('category')) // → 2, or undefined
+ */
+export function parseCategoryId(
+  raw: string | number | null | undefined,
+): CategoryMeta['id'] | undefined {
+  if (raw == null || raw === '') return undefined
+
+  const id = Number(raw)
+
+  return CATEGORIES.find((category) => category.id === id)?.id
+}
+
+/**
+ * The comment category matching an evaluation dimension — each dimension has
+ * a category of the same name (only the casing differs), so a dimension chart
+ * can lead to the comments about that dimension.
+ *
+ * @example
+ * categoryForDimension('Desempeño Docente')?.code // "LABEL_1"
+ */
+export function categoryForDimension(dimension: string): CategoryMeta | undefined {
+  const name = dimension.trim().toLowerCase()
+
+  return CATEGORIES.find((category) => category.label.toLowerCase() === name)
+}

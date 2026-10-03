@@ -1,5 +1,5 @@
 import { DimensionComparisonChart } from '@/components/common/DimensionComparisonChart'
-import { CATEGORIES, categoryLabel, UNCATEGORIZED } from '@/lib/categoryLabel'
+import { CATEGORIES, categoryLabel, UNCATEGORIZED, type CategoryMeta } from '@/lib/categoryLabel'
 
 /** Excludes "Sin categoría" — a non-classification, not useful for analysis. */
 const ANALYZABLE_CATEGORIES = CATEGORIES.filter((category) => category.code !== UNCATEGORIZED)
@@ -7,6 +7,8 @@ const ANALYZABLE_CATEGORIES = CATEGORIES.filter((category) => category.code !== 
 export interface DepartmentCommentCategoriesChartProps {
   /** Comment count per pedagogical category code (`LABEL_0`…`LABEL_4`), as returned by the API. */
   counts: Record<string, number> | undefined
+  /** Makes each bar clickable, e.g. to open that category's comments. */
+  onCategoryClick?: (category: CategoryMeta) => void
   /** Wording when nothing is classified. Defaults to the single-period one. */
   emptyMessage?: string
   className?: string
@@ -20,9 +22,14 @@ export interface DepartmentCommentCategoriesChartProps {
  *
  * @example
  * <DepartmentCommentCategoriesChart counts={stats.comments_pedagogical_category_counts} />
+ *
+ * @example
+ * // Each bar opens the comments filtered by the category clicked.
+ * <DepartmentCommentCategoriesChart counts={counts} onCategoryClick={(category) => navigate(hrefFor(category))} />
  */
 export function DepartmentCommentCategoriesChart({
   counts,
+  onCategoryClick,
   emptyMessage = 'No hay comentarios clasificados por categoría en este periodo.',
   className,
 }: DepartmentCommentCategoriesChartProps) {
@@ -61,6 +68,15 @@ export function DepartmentCommentCategoriesChart({
       decimals={0}
       showLegend={false}
       emptyMessage={emptyMessage}
+      onDimensionClick={
+        onCategoryClick
+          ? (key) => {
+              const category = ANALYZABLE_CATEGORIES.find((entry) => entry.code === key)
+
+              if (category) onCategoryClick(category)
+            }
+          : undefined
+      }
       className={className}
     />
   )

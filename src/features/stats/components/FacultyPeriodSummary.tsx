@@ -5,6 +5,7 @@ import { InlineError } from '@/components/common/InlineError'
 import { PageTitle } from '@/components/common/PageTitle'
 import { PeriodSelect } from '@/components/common/PeriodSelect'
 import { Skeleton } from '@/components/ui/skeleton'
+import { periodOptionsFrom } from '@/lib/periodOptions'
 import { cn } from '@/lib/utils'
 import { useGetFacultyAverages } from '../api'
 import { FacultyCasesSummary } from './FacultyCasesSummary'
@@ -47,7 +48,9 @@ export function FacultyPeriodSummary({
   // Until the reader picks one, the newest period with data — the latest
   // academic period overall may still be empty.
   const effectivePeriodId = selectedPeriodId ?? averages[averages.length - 1]?.academic_period_id
-  const selectedIndex = averages.findIndex((period) => period.academic_period_id === effectivePeriodId)
+  const selectedIndex = averages.findIndex(
+    (period) => period.academic_period_id === effectivePeriodId,
+  )
   const selected = selectedIndex >= 0 ? averages[selectedIndex] : undefined
   const previous = selectedIndex > 0 ? averages[selectedIndex - 1] : undefined
 
@@ -58,6 +61,7 @@ export function FacultyPeriodSummary({
         action={
           averages.length > 0 ? (
             <PeriodSelect
+              options={periodOptionsFrom(averages)}
               value={effectivePeriodId}
               onValueChange={setSelectedPeriodId}
               ariaLabel="Periodo académico"
@@ -79,7 +83,10 @@ export function FacultyPeriodSummary({
 
       {!isPending && !error && selected && (
         <div className="space-y-6">
-          <FacultyStatsHero latest={selected} previousValue={previous?.global_average ?? undefined} />
+          <FacultyStatsHero
+            latest={selected}
+            previousValue={previous?.global_average ?? undefined}
+          />
 
           <FacultyCasesSummary facultyId={facultyId} periodId={selected.academic_period_id} />
 

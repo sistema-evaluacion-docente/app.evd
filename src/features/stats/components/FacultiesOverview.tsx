@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useGetDepartmentCases } from '@/features/departments'
 import { useGetFaculties } from '@/features/faculties'
 import { useNavigate } from '@/hooks/useNavigate'
+import { periodOptionsFrom } from '@/lib/periodOptions'
 import { cn } from '@/lib/utils'
 import { useGetFacultyAveragesForFaculties } from '../api'
 import type { FacultyPeriodAverage } from '../types'
@@ -35,7 +36,11 @@ export interface FacultiesOverviewProps {
 export function FacultiesOverview({ className }: FacultiesOverviewProps) {
   const navigate = useNavigate()
   const [selectedPeriodId, setSelectedPeriodId] = useState<number | undefined>(undefined)
-  const { data: facultiesData, isPending: isFacultiesPending, error } = useGetFaculties({
+  const {
+    data: facultiesData,
+    isPending: isFacultiesPending,
+    error,
+  } = useGetFaculties({
     limit: 100,
   })
   const faculties = facultiesData?.data ?? []
@@ -86,6 +91,7 @@ export function FacultiesOverview({ className }: FacultiesOverviewProps) {
         action={
           effectivePeriodId != null ? (
             <PeriodSelect
+              options={periodOptionsFrom(averagesByFaculty.flat())}
               value={effectivePeriodId}
               onValueChange={setSelectedPeriodId}
               ariaLabel="Periodo académico"

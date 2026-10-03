@@ -7,9 +7,8 @@ import { useDebounce, useDebouncedCallback } from 'use-debounce'
 import { DataTable, type DataTableAction } from '@/components/common/DataTable'
 import { DataTableFilters, type FilterConfig } from '@/components/common/DataTableFilters'
 import { DynamicFormDrawer, type FieldConfig } from '@/components/common/DynamicFormDrawer'
-import { PeriodSelect } from '@/components/common/PeriodSelect'
 import { useAuthStore } from '@/features/auth'
-import { useAcademicPeriodsStore } from '@/features/periods'
+import { EvaluatedPeriodSelect, useEvaluatedPeriodOptions } from '@/features/stats'
 import { useModalityFilter } from '@/hooks/useModalityFilter'
 import { useNavigate } from '@/hooks/useNavigate'
 import { useTableFilters } from '@/hooks/useTableFilters'
@@ -29,6 +28,14 @@ const filterConfig: FilterConfig[] = [
     clearable: true,
   },
   {
+    type: 'select',
+    name: 'contractType',
+    label: 'Tipo de contrato',
+    // TODO: define contract typrs
+    options: CONTRACT_TYPES,
+    clearable: true,
+  },
+  {
     type: 'boolean',
     name: 'active',
     label: 'Activo',
@@ -41,14 +48,6 @@ const filterConfig: FilterConfig[] = [
     label: 'Con promedio',
     trueLabel: 'Sí',
     falseLabel: 'No',
-  },
-  {
-    type: 'select',
-    name: 'contractType',
-    label: 'Tipo de contrato',
-    // TODO: define contract typrs
-    options: CONTRACT_TYPES,
-    clearable: true,
   },
   {
     type: 'sort',
@@ -253,14 +252,14 @@ export function TeachersList() {
     else setPagination((prev) => ({ ...prev, pageIndex: 0 }))
   }
 
-  const periodsStore = useAcademicPeriodsStore()
+  const { options: periodOptions } = useEvaluatedPeriodOptions()
 
   const rowActions: DataTableAction<TeacherRecord>[] = [
     {
       label: 'Ver detalle',
       icon: <Eye className="size-4" />,
       onClick: (row) => {
-        const period = periodsStore.periods.find((p) => p.id === selectedPeriodId)
+        const period = periodOptions.find((p) => p.id === selectedPeriodId)
         navigate(`/docentes/${row.id}?period=${period?.name}`)
       },
     },
@@ -294,7 +293,7 @@ export function TeachersList() {
         }}
         sorting={sorting}
         onRowClick={(row) => {
-          const period = periodsStore.periods.find((p) => p.id === selectedPeriodId)
+          const period = periodOptions.find((p) => p.id === selectedPeriodId)
           navigate(`/docentes/${row.id}?period=${period?.name}`)
         }}
         onSortingChange={setSorting}
@@ -305,7 +304,7 @@ export function TeachersList() {
         rowActions={rowActions}
         toolbar={
           <div className="flex flex-wrap items-center gap-3">
-            <PeriodSelect
+            <EvaluatedPeriodSelect
               value={selectedPeriodId}
               onValueChange={(id) => {
                 setSelectedPeriodId(id)

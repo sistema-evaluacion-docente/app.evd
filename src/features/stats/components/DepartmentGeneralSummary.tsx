@@ -5,6 +5,7 @@ import { InlineError } from '@/components/common/InlineError'
 import { PageTitle } from '@/components/common/PageTitle'
 import { PeriodSelect } from '@/components/common/PeriodSelect'
 import { Skeleton } from '@/components/ui/skeleton'
+import { periodOptionsFrom } from '@/lib/periodOptions'
 import { cn } from '@/lib/utils'
 import { useGetDepartmentAverages } from '../api'
 import { DepartmentCasesSummary } from './DepartmentCasesSummary'
@@ -30,7 +31,10 @@ export interface DepartmentGeneralSummaryProps {
  * @example
  * <DepartmentGeneralSummary departmentId={department.id} />
  */
-export function DepartmentGeneralSummary({ departmentId, className }: DepartmentGeneralSummaryProps) {
+export function DepartmentGeneralSummary({
+  departmentId,
+  className,
+}: DepartmentGeneralSummaryProps) {
   const [selectedPeriodId, setSelectedPeriodId] = useState<number | undefined>(undefined)
   const { data, isPending, error } = useGetDepartmentAverages(departmentId)
   // The backend orders this endpoint newest-period-first — reverse it to the
@@ -40,7 +44,9 @@ export function DepartmentGeneralSummary({ departmentId, className }: Department
   // Until the reader picks one, show the newest period this department has
   // data for — the latest academic period overall may still be empty.
   const effectivePeriodId = selectedPeriodId ?? averages[averages.length - 1]?.academic_period_id
-  const selectedIndex = averages.findIndex((period) => period.academic_period_id === effectivePeriodId)
+  const selectedIndex = averages.findIndex(
+    (period) => period.academic_period_id === effectivePeriodId,
+  )
   const selected = selectedIndex >= 0 ? averages[selectedIndex] : undefined
   const previous = selectedIndex > 0 ? averages[selectedIndex - 1] : undefined
 
@@ -50,6 +56,7 @@ export function DepartmentGeneralSummary({ departmentId, className }: Department
         action={
           averages.length > 0 ? (
             <PeriodSelect
+              options={periodOptionsFrom(averages)}
               value={effectivePeriodId}
               onValueChange={setSelectedPeriodId}
               ariaLabel="Periodo académico"
