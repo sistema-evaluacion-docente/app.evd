@@ -258,7 +258,9 @@ function SelectFilter({
   return (
     <div className="flex items-center gap-2">
       <Select
-        value={value != null ? String(value) : undefined}
+        // `null`, not `undefined`: undefined turns Base UI's select uncontrolled,
+        // so a cleared filter kept showing its last raw value (e.g. "3").
+        value={value != null && value !== '' ? String(value) : null}
         onValueChange={(val) => onChange(val === '' || val == null ? undefined : val)}
       >
         {/* El id es al que apunta el <Label htmlFor> del panel: sin él, el
@@ -278,7 +280,7 @@ function SelectFilter({
         </SelectContent>
       </Select>
 
-      {config.clearable && value && (
+      {config.clearable && value != null && value !== '' && (
         <Button
           variant="ghost"
           size="icon-sm"

@@ -75,7 +75,8 @@ const SUBJECTS = [
 /** One page of subjects, plus whatever the period selector needs. */
 function serve({ subjects = SUBJECTS, pages = 1, periods = PERIODS, fail = false } = {}) {
   mockApi.get.mockImplementation((url: string) => {
-    if (url.includes('/academic-periods')) return Promise.resolve({ data: periods })
+    if (url.includes('/academic-periods') || url.includes('/stats/departments/periods'))
+      return Promise.resolve({ data: periods })
 
     if (url.includes('period-range/subjects')) {
       if (fail) return Promise.reject(new Error('El servidor no respondió'))
@@ -134,7 +135,7 @@ describe('SubjectsList', () => {
     renderRouted(<SubjectsList />, { path: '/materias' })
 
     expect(
-      await screen.findByText('No existen periodos académicos para mostrar.'),
+      await screen.findByText('Su departamento aún no tiene evaluaciones cargadas.'),
     ).toBeInTheDocument()
   })
 

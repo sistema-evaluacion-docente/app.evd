@@ -1,19 +1,22 @@
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react'
 import { useState, useSyncExternalStore } from 'react'
 import { useDebounce, useDebouncedCallback } from 'use-debounce'
+import { useSearchParams } from 'wouter'
 
 import { DataTableFilters, type FilterConfig } from '@/components/common/DataTableFilters'
-import { PeriodSelect } from '@/components/common/PeriodSelect'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Spinner } from '@/components/ui/spinner'
 import { useAuthStore } from '@/features/auth'
+import { EvaluatedPeriodSelect, useEvaluatedPeriodOptions } from '@/features/stats'
 import { CommentCard, CommentList, TeacherSelect } from '@/features/teachers'
+import { useCategoryFilter } from '@/hooks/useCategoryFilter'
 import { useModalityFilter } from '@/hooks/useModalityFilter'
 import { useRiskLevelFilter } from '@/hooks/useRiskLevelFilter'
-import { useTableFilters } from '@/hooks/useTableFilters'
-import { CATEGORIES } from '@/lib/categoryLabel'
-import { MODALITIES } from '@/lib/modality'
-import { RISK_LEVELS } from '@/lib/riskLevel'
+import { CATEGORIES, parseCategoryId } from '@/lib/categoryLabel'
+import { MODALITIES, parseModality } from '@/lib/modality'
+import { parseRiskLevelId, RISK_LEVELS } from '@/lib/riskLevel'
+import { cn } from '@/lib/utils'
 import { useGetComment, useGetComments } from '../api'
 
 function subscribeToHash(onChange: () => void) {
@@ -90,10 +93,11 @@ interface CommentsListProps {
 /**
  * Displays the paginated list of comments (`GET /comments/`) of a selected
  * academic period, with server-side search and filters by teacher, risk
- * level, pedagogical category and modality. The period, the modality and the
- * risk level are read from/written to the `period`, `modality` and `riskLevel`
- * URL query params, so a narrowed read stays linkable — the department
- * summary's risk chart links straight into one level's comments.
+ * level, pedagogical category and modality. The period, the modality, the
+ * risk level and the category are read from/written to the `period`,
+ * `modality`, `riskLevel` and `category` URL query params, so a narrowed read
+ * stays linkable — the department summary's risk, category and dimension
+ * charts link straight into one level's or one category's comments.
  *
  * @example
  * <CommentsList />
@@ -133,15 +137,38 @@ export function CommentsList({
     setPage(1)
   }
 
-  const { modality, setModality } = useModalityFilter()
-  const { riskLevel: urlRiskLevel, setRiskLevel } = useRiskLevelFilter()
+  const { modality } = useModalityFilter()
+  const { riskLevel: urlRiskLevel } = useRiskLevelFilter()
+  const { categoryId } = useCategoryFilter()
+  const [, setSearchParams] = useSearchParams()
 
-  const { filters, setFilters } = useTableFilters(
-    riskLevel ? `comments-risk-${riskLevel}` : 'comments',
-    {
-      pedagogicalCategoryId: undefined as string | undefined,
-    },
-  )
+  // The three filters are written back in one go. wouter keeps the pending
+  // query string per `useSearchParams` call, so the hooks' own setters, called
+  // one after the other, each start from the same snapshot and the last one
+  // wins — that is what silently dropped the modality and the category.
+  const applyUrlFilters = (next: Record<string, unknown>) => {
+    const values: Record<string, string | undefined> = {
+      modality: parseModality(next.modality as string | undefined),
+      category: parseCategoryId(next.pedagogicalCategoryId as string | undefined)?.toString(),
+      ...(riskLevel
+        ? {}
+        : { riskLevel: parseRiskLevelId(next.riskLevel as string | undefined)?.toString() }),
+    }
+
+    setSearchParams(
+      (previous) => {
+        const params = new URLSearchParams(previous)
+
+        for (const [key, value] of Object.entries(values)) {
+          if (value) params.set(key, value)
+          else params.delete(key)
+        }
+
+        return params
+      },
+      { replace: true },
+    )
+  }
 
   const availableFilters = riskLevel
     ? filterConfig.filter((filter) => filter.name !== 'riskLevel')
@@ -160,15 +187,16 @@ export function CommentsList({
   // screen until the reset finally landed and a second request replaced them.
   const resetSearchPage = useDebouncedCallback(() => setPage(1), 400)
 
-  const { data, isPending, error } = useGetComments({
+  const { options: periodOptions, isPending: isPeriodsPending } = useEvaluatedPeriodOptions()
+  const hasNoPeriods = !isPeriodsPending && periodOptions.length === 0
+
+  const { data, isPending, isFetching, error } = useGetComments({
     page,
     limit: 10,
     academicPeriodId: periodId,
     teacherId,
     riskLevel: selectedRiskLevel,
-    pedagogicalCategoryId: filters.pedagogicalCategoryId
-      ? Number(filters.pedagogicalCategoryId)
-      : undefined,
+    pedagogicalCategoryId: categoryId,
     search: debouncedSearch,
     modality,
     enabled: periodId !== undefined && Boolean(departmentId),
@@ -215,7 +243,7 @@ export function CommentsList({
           />
         </div>
 
-        <PeriodSelect
+        <EvaluatedPeriodSelect
           value={periodId}
           onValueChange={(id) => {
             setPeriodId(id)
@@ -234,16 +262,16 @@ export function CommentsList({
 
         <DataTableFilters
           filters={availableFilters}
-          values={{ ...filters, modality, riskLevel: urlRiskLevel }}
-          onChange={({ modality: nextModality, riskLevel: nextRiskLevel, ...rest }) => {
-            setFilters(rest)
-            setModality(nextModality as string | undefined)
-
-            if (!riskLevel) setRiskLevel(nextRiskLevel as number | undefined)
-
+          values={{ modality, riskLevel: urlRiskLevel, pedagogicalCategoryId: categoryId }}
+          onChange={(next) => {
+            applyUrlFilters(next)
             setPage(1)
           }}
         />
+
+        {(isFetching || search !== debouncedSearch) && (
+          <Spinner aria-label="Cargando comentarios" className="text-muted-foreground size-4" />
+        )}
       </div>
 
       {linkedCommentId !== undefined && (
@@ -267,12 +295,21 @@ export function CommentsList({
         </section>
       )}
 
-      <div className="bg-background border-border/70 rounded-lg border px-6">
+      <div
+        className={cn(
+          'bg-background border-border/70 rounded-lg border px-6 transition-opacity',
+          isFetching && !isPending && 'pointer-events-none opacity-60',
+        )}
+      >
         <CommentList
           comments={comments}
-          isLoading={isPending}
+          // With no evaluated period there is no period to ask for, so the
+          // query never runs and would otherwise stay "pending" forever.
+          isLoading={isPending && !hasNoPeriods}
           error={error ? error.message : null}
-          emptyMessage={emptyMessage}
+          emptyMessage={
+            hasNoPeriods ? 'Su departamento aún no tiene evaluaciones cargadas.' : emptyMessage
+          }
           renderComment={(comment, index) => (
             <CommentCard comment={comment} index={index} showTeacher showCourse />
           )}
@@ -286,7 +323,7 @@ export function CommentsList({
             variant="ghost"
             size="icon-sm"
             onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page <= 1}
+            disabled={page <= 1 || isFetching}
             aria-label="Página anterior"
           >
             <ChevronLeft aria-hidden="true" className="size-4" />
@@ -304,7 +341,7 @@ export function CommentsList({
             variant="ghost"
             size="icon-sm"
             onClick={() => setPage((p) => Math.min(pages, p + 1))}
-            disabled={page >= pages}
+            disabled={page >= pages || isFetching}
             aria-label="Página siguiente"
           >
             <ChevronRight aria-hidden="true" className="size-4" />

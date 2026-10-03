@@ -30,14 +30,17 @@ import {
 } from '@/components/common/DataTableFilters'
 import { DynamicFormDrawer, type FieldConfig } from '@/components/common/DynamicFormDrawer'
 import { InlineError } from '@/components/common/InlineError'
-import { PeriodSelect } from '@/components/common/PeriodSelect'
 import { ScoreBadge } from '@/components/common/ScoreBadge'
 import { ScoreLegend } from '@/components/common/ScoreLegend'
 import { TransitionLink } from '@/components/common/TransitionLink'
 import { useUpdateCourse } from '@/features/courses'
-import { useGetAcademicPeriods } from '@/features/periods'
 import type { DepartmentSubjectAverage, DepartmentSubjectGroup } from '@/features/stats'
-import { statsKeys, useGetDepartmentPeriodRangeSubjects } from '@/features/stats'
+import {
+  EvaluatedPeriodSelect,
+  statsKeys,
+  useEvaluatedPeriodOptions,
+  useGetDepartmentPeriodRangeSubjects,
+} from '@/features/stats'
 import { courseTeacherHref } from '@/features/teachers'
 import { MODALITIES, parseModality, type CourseModality } from '@/lib/modality'
 import { subjectComparisonHref } from '../config'
@@ -85,9 +88,7 @@ const FILTERS: FilterConfig[] = [
  */
 export function SubjectsList({ className }: { className?: string }) {
   const [searchParams, setSearchParams] = useSearchParams()
-  const { data: periodsData, isPending: isPeriodsPending } = useGetAcademicPeriods()
-
-  const periods = periodsData?.data ?? []
+  const { options: periods, isPending: isPeriodsPending } = useEvaluatedPeriodOptions()
 
   const [periodId, setPeriodId] = useState<number | undefined>(undefined)
   const [page, setPage] = useState(1)
@@ -166,7 +167,7 @@ export function SubjectsList({ className }: { className?: string }) {
   if (!isPeriodsPending && periods.length === 0) {
     return (
       <p className={cn('text-muted-foreground py-10 text-center text-sm', className)}>
-        No existen periodos académicos para mostrar.
+        Su departamento aún no tiene evaluaciones cargadas.
       </p>
     )
   }
@@ -174,7 +175,7 @@ export function SubjectsList({ className }: { className?: string }) {
   return (
     <div className={className}>
       <div className="mb-3 flex flex-wrap items-center gap-3">
-        <PeriodSelect
+        <EvaluatedPeriodSelect
           value={periodId}
           onValueChange={(id) => {
             setPeriodId(id)

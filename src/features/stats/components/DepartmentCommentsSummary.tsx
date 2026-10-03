@@ -8,7 +8,13 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { AI_STATUS_DISPLAY, type AiStatus } from '@/features/evaluations'
-import { CATEGORIES, categoryColor, categoryLabel, UNCATEGORIZED } from '@/lib/categoryLabel'
+import {
+  CATEGORIES,
+  categoryColor,
+  categoryLabel,
+  UNCATEGORIZED,
+  type CategoryMeta,
+} from '@/lib/categoryLabel'
 import { cn } from '@/lib/utils'
 import { RISK_LEVELS, type RiskLevelMeta } from '@/lib/riskLevel'
 import { DepartmentCommentCategoriesChart } from './DepartmentCommentCategoriesChart'
@@ -37,6 +43,11 @@ export interface DepartmentCommentsSummaryProps {
    * leave the charts as a read-only figure.
    */
   onRiskLevelClick?: (level: RiskLevelMeta) => void
+  /**
+   * Same as `onRiskLevelClick`, for the pedagogical category breakdown — bar
+   * and donut slice alike hand back the category picked.
+   */
+  onCategoryClick?: (category: CategoryMeta) => void
   /**
    * AI status of the period's evaluation. Anything other than `ANALYZED`
    * replaces the charts with the notice below: every count is zero until the
@@ -88,6 +99,7 @@ export function DepartmentCommentsSummary({
   riskCounts,
   categoryCounts,
   onRiskLevelClick,
+  onCategoryClick,
   aiStatus,
   onAnalyze,
   isAnalyzing = false,
@@ -106,6 +118,8 @@ export function DepartmentCommentsSummary({
   }))
 
   const riskLevelByKey = new Map(RISK_LEVELS.map((level) => [level.key, level]))
+
+  const categoryByCode = new Map(ANALYZABLE_CATEGORIES.map((category) => [category.code, category]))
 
   const categoryEntries = ANALYZABLE_CATEGORIES.map((category) => ({
     key: category.code,
@@ -231,12 +245,32 @@ export function DepartmentCommentsSummary({
               Por categoría pedagógica
             </h3>
 
-            {viewMode !== 'pie' && <DepartmentCommentCategoriesChart counts={categoryCounts} />}
+            {onCategoryClick && (
+              <p className="text-muted-foreground mb-3 text-xs">
+                Haz clic en una categoría para ver sus comentarios.
+              </p>
+            )}
+
+            {viewMode !== 'pie' && (
+              <DepartmentCommentCategoriesChart
+                counts={categoryCounts}
+                onCategoryClick={onCategoryClick}
+              />
+            )}
 
             {viewMode !== 'bar' && (
               <CountPieChart
                 entries={categoryEntries}
                 emptyMessage="No hay comentarios clasificados por categoría en este periodo."
+                onEntryClick={
+                  onCategoryClick
+                    ? (entry) => {
+                        const category = categoryByCode.get(entry.key)
+
+                        if (category) onCategoryClick(category)
+                      }
+                    : undefined
+                }
                 className={viewMode === 'both' ? 'border-border mt-4 border-t pt-4' : undefined}
               />
             )}

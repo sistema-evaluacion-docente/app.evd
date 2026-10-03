@@ -87,7 +87,8 @@ const GRACE = teacher({
 /** One page of teachers, plus whatever the period selector needs. */
 function serve({ teachers = [ADA, GRACE], pages = 1, periods = PERIODS } = {}) {
   mockApi.get.mockImplementation((url: string) => {
-    if (url.includes('/academic-periods')) return Promise.resolve({ data: periods })
+    if (url.includes('/academic-periods') || url.includes('/stats/departments/periods'))
+      return Promise.resolve({ data: periods })
 
     if (url.includes('/teachers/with-averages')) {
       return Promise.resolve({ data: teachers, pagination: { pages, page: 1, limit: 10 } })
