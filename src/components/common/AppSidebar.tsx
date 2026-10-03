@@ -103,12 +103,7 @@ export function AppSidebar() {
       {/* Identidad del producto arriba; el respaldo institucional va en el pie. */}
       <SidebarHeader className="p-4">
         <TransitionLink href="/" className="flex items-center gap-3 rounded-md">
-          <span
-            aria-hidden
-            className="bg-primary text-primary-foreground flex size-9 shrink-0 items-center justify-center rounded-lg text-lg font-bold"
-          >
-            E
-          </span>
+        <img src="/logo-vertical.png" alt="Logo" className="h-10 w-auto" />
           <span className="flex min-w-0 flex-col leading-tight">
             <span className="text-base font-semibold tracking-tight">EVIDE</span>
             <span className="text-muted-foreground truncate text-xs">Evaluación docente</span>
