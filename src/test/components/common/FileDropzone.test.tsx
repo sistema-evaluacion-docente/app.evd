@@ -28,7 +28,7 @@ describe('FileDropzone', () => {
     render(<FileDropzone file={null} onFileChange={vi.fn()} />)
 
     expect(screen.getByText('Selecciona un archivo')).toBeInTheDocument()
-    expect(screen.getByText(/Máximo 10\.00 MB/)).toBeInTheDocument()
+    expect(screen.getByText(/Máximo 20\.00 MB/)).toBeInTheDocument()
   })
 
   it('states the custom size limit in the hint', () => {

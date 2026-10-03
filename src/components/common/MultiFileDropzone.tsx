@@ -3,12 +3,13 @@ import { useId, useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
+import { MAX_UPLOAD_SIZE } from '@/config'
 import { formatBytes } from '@/lib/formatBytes'
 import { openLocalFile } from '@/lib/openLocalFile'
 import { cn } from '@/lib/utils'
 import { InlineError } from './InlineError'
 
-const DEFAULT_MAX_SIZE = 10 * 1024 * 1024
+const DEFAULT_MAX_SIZE = MAX_UPLOAD_SIZE
 
 export interface MultiFileDropzoneProps {
   /** The files selected so far. */
@@ -23,7 +24,7 @@ export interface MultiFileDropzoneProps {
   accept?: string
   /** How many files may be selected. Defaults to 2. */
   maxFiles?: number
-  /** Maximum file size in bytes, used in the hint. Defaults to 10 MB. */
+  /** Maximum file size in bytes, used in the hint. Defaults to `MAX_UPLOAD_SIZE` (20 MB). */
   maxSize?: number
   /** Title shown inside the box. Defaults to "Selecciona los archivos". */
   title?: string

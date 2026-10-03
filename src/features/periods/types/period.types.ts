@@ -17,6 +17,11 @@ export interface TeacherHistoryOut {
   teacher_id: number
   institutional_code: string
   name: string | null
+  /**
+   * Mean of the per-period averages across every evaluated period (not just
+   * this page), each period weighing the same. `null` without evaluations.
+   */
+  historical_average?: number | null
   items: TeacherPeriodHistory[]
   total: number
   page: number

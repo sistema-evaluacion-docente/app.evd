@@ -145,6 +145,46 @@ describe('PeriodAverageTrend', () => {
     ).toBeInTheDocument()
   })
 
+  it('muestra junto al título el promedio histórico total que calcula el backend', async () => {
+    teacherId.current = 7
+    // 4.37 a propósito: no es la media de los dos puntos dibujados (3.9), así
+    // que el test falla si la gráfica lo recalculara con solo lo que dibuja.
+    serve(history({ historical_average: 4.37 }))
+
+    const { container } = renderWithProviders(<PeriodAverageTrend />)
+
+    const label = await within(container).findByText('Promedio histórico total')
+    expect(within(container).getByText('4.37')).toBeInTheDocument()
+
+    // En la misma fila que el título, no encima de la gráfica.
+    expect(label.closest('div')).toContainElement(screen.getByText('Evolución de mi promedio'))
+  })
+
+  it('muestra el promedio histórico aunque la gráfica no lleve título', async () => {
+    teacherId.current = 7
+    serve(history({ historical_average: 4.37 }))
+
+    const { container } = renderWithProviders(<PeriodAverageTrend title={null} />)
+
+    expect(await within(container).findByText('Promedio histórico total')).toBeInTheDocument()
+  })
+
+  it('no muestra el promedio histórico si el backend no lo trae o se apaga', async () => {
+    teacherId.current = 7
+    serve(history({ historical_average: null }))
+
+    const { container, rerender } = renderWithProviders(<PeriodAverageTrend />)
+
+    await within(container).findByText('2028-1')
+    expect(within(container).queryByText('Promedio histórico total')).not.toBeInTheDocument()
+
+    serve(history({ historical_average: 4.37 }))
+    rerender(<PeriodAverageTrend teacherId={8} showHistoricalAverage={false} />)
+
+    await within(container).findByText('2028-1')
+    expect(within(container).queryByText('Promedio histórico total')).not.toBeInTheDocument()
+  })
+
   it('dibuja la meta institucional como referencia cuando se indica', async () => {
     teacherId.current = 7
     serve()

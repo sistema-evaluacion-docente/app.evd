@@ -1,4 +1,6 @@
 import { AverageTrendChart, type TrendSeries } from '@/components/common/AverageTrendChart'
+import { ScoreBadge } from '@/components/common/ScoreBadge'
+import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/features/auth'
 import { useGetTeacherHistory } from '../api'
 
@@ -15,6 +17,11 @@ export interface PeriodAverageTrendProps {
   min?: number
   /** When true, the Y axis lower bound is computed from the data instead of using the default 0. */
   autoMin?: boolean
+  /**
+   * Pins the teacher's historical average (every evaluated period, each
+   * weighing the same) next to the title, on the right. Defaults to `true`.
+   */
+  showHistoricalAverage?: boolean
   chartClassName?: string
   className?: string
 }
@@ -47,6 +54,7 @@ export function PeriodAverageTrend({
   target,
   min,
   autoMin = false,
+  showHistoricalAverage = true,
   chartClassName,
   className,
 }: PeriodAverageTrendProps) {
@@ -61,6 +69,8 @@ export function PeriodAverageTrend({
   })
 
   const history = data?.data ?? []
+  // From the backend, over every period: the chart plots at most `limit`.
+  const historicalAverage = data?.historical_average ?? null
 
   const series: TrendSeries[] = [
     {
@@ -81,12 +91,24 @@ export function PeriodAverageTrend({
 
   if (!effectiveTeacherId) return null
 
+  const withHistoricalAverage = showHistoricalAverage && historicalAverage != null
+
   return (
     <section className={`${className} bg-card border-border rounded-md border p-4`}>
-      {title && (
-        <h2 className="text-muted-foreground mb-3 text-xs font-medium tracking-wide uppercase">
-          {title}
-        </h2>
+      {(title || withHistoricalAverage) && (
+        // Same row as the title: the figure that sums up the whole line reads
+        // as part of its heading rather than sitting on top of the plot.
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          {title && (
+            <h2 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+              {title}
+            </h2>
+          )}
+
+          {withHistoricalAverage && (
+            <HistoricalAverageBadge value={historicalAverage} className="ml-auto" />
+          )}
+        </div>
       )}
 
       <AverageTrendChart
@@ -100,5 +122,23 @@ export function PeriodAverageTrend({
         chartClassName={chartClassName}
       />
     </section>
+  )
+}
+
+/** The historical average as a compact label: muted caption, toned score. */
+function HistoricalAverageBadge({ value, className }: { value: number; className?: string }) {
+  return (
+    <p
+      className={cn(
+        'border-border flex items-center gap-2 rounded-md border px-2.5 py-1',
+        className,
+      )}
+    >
+      <span className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+        Promedio histórico total
+      </span>
+
+      <ScoreBadge value={value} tone="auto" size="sm" decimals={2} />
+    </p>
   )
 }

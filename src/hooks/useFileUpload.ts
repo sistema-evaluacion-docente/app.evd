@@ -1,5 +1,6 @@
 import { useState } from 'react'
 
+import { MAX_UPLOAD_SIZE } from '@/config'
 import { formatBytes } from '@/lib/formatBytes'
 
 export interface FileUploadOptions {
@@ -7,7 +8,7 @@ export interface FileUploadOptions {
   accept?: string[]
   /** Accepted extensions (e.g. `".pdf"`) for files without a MIME type. Defaults to `['.pdf']`. */
   extensions?: string[]
-  /** Maximum file size in bytes. Defaults to 10 MB. */
+  /** Maximum file size in bytes. Defaults to `MAX_UPLOAD_SIZE` (20 MB). */
   maxSize?: number
   /** Called with the selected file once it passes validation. */
   onValidFile?: (file: File) => void
@@ -32,7 +33,7 @@ export interface FileUploadResult {
 function createFileValidator({
   accept = ['application/pdf'],
   extensions = ['.pdf'],
-  maxSize = 10 * 1024 * 1024,
+  maxSize = MAX_UPLOAD_SIZE,
 }: FileUploadOptions) {
   const extensionLabel = extensions.map((ext) => ext.replace(/^\./, '').toUpperCase()).join(', ')
 

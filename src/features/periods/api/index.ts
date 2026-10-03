@@ -3,7 +3,12 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import type { ResponseAPI } from '@/@types/Response'
 import api from '@/config/axios'
 import { useAuthStore } from '@/features/auth'
-import type { AcademicPeriod, HistorySortBy, TeacherHistoryOut, TeacherPeriodHistory } from '../types'
+import type {
+  AcademicPeriod,
+  HistorySortBy,
+  TeacherHistoryOut,
+  TeacherPeriodHistory,
+} from '../types'
 
 interface TeacherHistoryParams {
   page?: number
@@ -113,7 +118,9 @@ export function useGetTeacherHistory({
 
   return useQuery({
     queryKey: periodsKeys.history(teacherId, { page, limit, search, sort_by }),
-    queryFn: async (): Promise<ResponseAPI<TeacherPeriodHistory[]>> => {
+    queryFn: async (): Promise<
+      ResponseAPI<TeacherPeriodHistory[]> & { historical_average: number | null }
+    > => {
       const params: Record<string, unknown> = {}
 
       if (page) params['page'] = page
@@ -127,6 +134,9 @@ export function useGetTeacherHistory({
       return {
         ...response,
         data: history.items,
+        // Computed by the backend over every period, so it holds whatever
+        // `limit` this page asked for.
+        historical_average: history.historical_average ?? null,
         pagination: {
           total: history.total,
           page: history.page,
