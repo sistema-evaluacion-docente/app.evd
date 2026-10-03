@@ -28,6 +28,14 @@ const filterConfig: FilterConfig[] = [
     clearable: true,
   },
   {
+    type: 'select',
+    name: 'contractType',
+    label: 'Tipo de contrato',
+    // TODO: define contract typrs
+    options: CONTRACT_TYPES,
+    clearable: true,
+  },
+  {
     type: 'boolean',
     name: 'active',
     label: 'Activo',
@@ -40,14 +48,6 @@ const filterConfig: FilterConfig[] = [
     label: 'Con promedio',
     trueLabel: 'Sí',
     falseLabel: 'No',
-  },
-  {
-    type: 'select',
-    name: 'contractType',
-    label: 'Tipo de contrato',
-    // TODO: define contract typrs
-    options: CONTRACT_TYPES,
-    clearable: true,
   },
   {
     type: 'sort',
